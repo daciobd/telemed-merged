@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleMed Pro - Sistema de Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #059669, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #6b7280;
+        }
+        
+        .theme-status {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .page-category {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .page-category h3 {
+            color: #1e40af;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .page-list {
+            list-style: none;
+        }
+        
+        .page-list li {
+            margin: 8px 0;
+        }
+        
+        .page-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #374151;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .page-link:hover {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .controls-section {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .controls-section h4 {
+            color: #92400e;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #1e40af;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9rem;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 TeleMed Pro Preview</h1>
+            <p>Sistema de demonstração com temas automáticos</p>
+        </div>
+        
+        <div class="theme-status">
+            ✨ Tema TeleMed Pro ativo - Todos os links abaixo aplicam automaticamente o design premium
+        </div>
+        
+        <div class="pages-grid">
+            <div class="page-category">
+                <h3>🏥 Páginas Principais</h3>
+                <ul class="page-list">
+                    <li><a href="/preview/agenda-original.html" class="page-link">📅 Agenda Médica</a></li>
+                    <li><a href="/preview/consulta-original.html" class="page-link">🩺 Enhanced Consultation</a></li>
+                    <li><a href="/preview/meus-pacientes-original.html" class="page-link">👥 Meus Pacientes</a></li>
+                    <li><a href="/preview/registro-saude-original.html" class="page-link">📋 Registro de Saúde</a></li>
+                </ul>
+            </div>
+            
+            <div class="page-category">
+                <h3>🎯 Páginas Tematizadas</h3>
+                <ul class="page-list">
+                    <li><a href="/preview/avaliacoes-themed.html" class="page-link">⭐ Sistema de Avaliações</a></li>
+                    <li><a href="/preview/precos-themed.html" class="page-link">💰 Tabela de Preços</a></li>
+                    <li><a href="/preview/sobre-themed.html" class="page-link">ℹ️ Sobre o Sistema</a></li>
+                </ul>
+            </div>
+            
+            <div class="page-category">
+                <h3>🔬 Demonstrações</h3>
+                <ul class="page-list">
+                    <li><a href="/preview/demo-comparacao.html" class="page-link">🎨 Comparação de Temas</a></li>
+                    <li><a href="/preview/index-demo.html" class="page-link">🚀 Demo Interativo</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="controls-section">
+            <h4>🎛️ Controles de Tema</h4>
+            <p>Use os controles abaixo para personalizar a experiência visual:</p>
+            <div class="control-buttons">
+                <a href="?theme=telemed-pro" class="btn btn-primary">🌙 TeleMed Pro</a>
+                <a href="?theme=off" class="btn btn-secondary">🌞 Tema Original</a>
+            </div>
+            <p style="margin-top: 10px; font-size: 0.9rem;">
+                💡 <strong>Dica:</strong> Cada página individual também possui um botão flutuante no canto superior direito para alternar o tema.
+            </p>
+        </div>
+        
+        <div class="pages-grid">
+            <div class="page-category">
+                <h3>🔗 Navegação Principal</h3>
+                <ul class="page-list">
+                    <li><a href="/lp" class="page-link">🏠 Landing Page</a></li>
+                    <li><a href="/agenda/" class="page-link">📅 Agenda (Canônica)</a></li>
+                    <li><a href="/consulta/" class="page-link">🩺 Consulta (Canônica)</a></li>
+                    <li><a href="/dashboard/" class="page-link">📊 Dashboard (Canônico)</a></li>
+                </ul>
+            </div>
+            
+            <div class="page-category">
+                <h3>📈 Análises & Relatórios</h3>
+                <ul class="page-list">
+                    <li><a href="/perf" class="page-link">⚡ Performance Reports</a></li>
+                    <li><a href="/relatorio_navegacao.html" class="page-link">📊 Relatório de Navegação</a></li>
+                    <li><a href="#" onclick="window.open('https://dreampuf.github.io/GraphvizOnline/', '_blank')" class="page-link">🗺️ Mapa de Navegação</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>TeleMed Pro Theme System - Sistema completo implementado em 20/08/2025</p>
+            <p>412 páginas analisadas • 1,630 links mapeados • 6 rotas canônicas • 712 links identificados para correção</p>
+            <p>Taxa de sucesso: 53.4% • Hub principal: indice-completo.html • 81 páginas órfãs detectadas</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1 @@
+export default function Pay(){ const bidId=new URLSearchParams(location.search).get('bidId'); fetch((import.meta as any).env?.VITE_AUCTION_URL||'https://telemed-auction.onrender.com'+ '/payments/mock-capture',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ bidId })}); return <div className='p-6'>Confirmando pagamento (mock)...</div>; }

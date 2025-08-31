@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triagem Psiquiátrica com IA - TeleMed Sistema</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F9FAFB;
+            min-height: 100vh;
+            color: #374151;
+            overflow-x: hidden;
+        }
+        
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            z-index: -1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, white 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, white 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+        
+        .warning-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: slideUp 0.6s ease;
+        }
+        
+        .assessment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .assessment-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+        
+        .assessment-description {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .progress-container {
+            margin-bottom: 2rem;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-text {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .progress-percentage {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .question-container {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .question-container.active {
+            display: block;
+        }
+        
+        .question-number {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+        
+        .question-context {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .option {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .option:hover {
+            background: #e6f7ff;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .option.selected {
+            background: #e6f7ff;
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .option-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e0;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .option.selected .option-indicator {
+            background: #667eea;
+            border-color: #667eea;
+            position: relative;
+        }
+        
+        .option.selected .option-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .option-text {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .option-score {
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+        
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .nav-btn.secondary {
+            background: #6b7280;
+        }
+        
+        .nav-btn.secondary:hover {
+            background: #4a5568;
+        }
+        
+        /* Results Page */
+        .results-container {
+            display: none;
+            text-align: center;
+        }
+        
+        .results-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .results-header {
+            margin-bottom: 3rem;
+        }
+        
+        .results-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .results-icon.low { color: #10b981; }
+        .results-icon.moderate { color: #f59e0b; }
+        .results-icon.high { color: #ef4444; }
+        .results-icon.severe { color: #dc2626; }
+        
+        .results-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+        
+        .results-severity {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            padding: 12px 24px;
+            border-radius: 25px;
+            display: inline-block;
+        }
+        
+        .results-severity.low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .results-severity.moderate {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .results-severity.high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .results-severity.severe {
+            background: #fee2e2;
+            color: #7f1d1d;
+            animation: pulse 1s infinite;
+        }
+        
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .score-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 5px solid #667eea;
+        }
+        
+        .score-card.depression { border-left-color: #8b5cf6; }
+        .score-card.anxiety { border-left-color: #f59e0b; }
+        .score-card.risk { border-left-color: #ef4444; }
+        
+        .score-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .score-value.low { color: #10b981; }
+        .score-value.moderate { color: #f59e0b; }
+        .score-value.high { color: #ef4444; }
+        .score-value.severe { color: #dc2626; }
+        
+        .score-interpretation {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        
+        .recommendations {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .recommendations-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .recommendations-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .recommendations-list li {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .recommendations-list i {
+            color: #667eea;
+            margin-top: 2px;
+        }
+        
+        .emergency-warning {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border: 2px solid #ef4444;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: pulse 1s infinite;
+        }
+        
+        .emergency-icon {
+            font-size: 3rem;
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
+        
+        .emergency-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #7f1d1d;
+            margin-bottom: 1rem;
+        }
+        
+        .emergency-text {
+            color: #991b1b;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .emergency-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .emergency-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .emergency-btn:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+        
+        .emergency-btn.secondary {
+            background: #6b7280;
+        }
+        
+        .final-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn.success {
+            background: #10b981;
+        }
+        
+        .action-btn.success:hover {
+            background: #059669;
+        }
+        
+        .action-btn.secondary {
+            background: #6b7280;
+        }
+        
+        .action-btn.secondary:hover {
+            background: #4a5568;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .main-card {
+                padding: 2rem;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .question-text {
+                font-size: 1.1rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .scores-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .final-actions, .emergency-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="/css/theme-telemed.css">
+  <link rel="canonical" href="/triagem-psiquiatrica">
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <a href="/dr-ai.html" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Voltar ao Dr. AI
+    </a>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧠</div>
+            <h1 class="title">Triagem Psiquiátrica com IA</h1>
+            <p class="subtitle">Avaliação cientificamente validada para saúde mental</p>
+            <div class="warning-badge">
+                <i class="fas fa-shield-alt"></i>
+                Confidencial e Seguro
+            </div>
+        </div>
+
+        <div class="main-card">
+            <!-- Assessment Introduction -->
+            <div id="introContainer">
+                <div class="assessment-header">
+                    <h2 class="assessment-title">Avaliação de Saúde Mental</h2>
+                    <p class="assessment-description">
+                        Este questionário utiliza escalas cientificamente validadas (PHQ-9 e GAD-7) para avaliar 
+                        sintomas de depressão, ansiedade e fatores de risco. Nossa IA especializada analisará suas 
+                        respostas e fornecerá recomendações personalizadas para seu cuidado.
+                    </p>
+                    <p class="assessment-description">
+                        <strong>Tempo estimado:</strong> 3-5 minutos<br>
+                        <strong>Privacidade:</strong> Suas respostas são completamente confidenciais<br>
+                        <strong>Não substitui:</strong> Consulta médica presencial quando necessária
+                    </p>
+                </div>
+                
+                <div class="final-actions">
+                    <button class="action-btn" onclick="startAssessment()">
+                        <i class="fas fa-play"></i>
+                        Iniciar Avaliação
+                    </button>
+                    <button class="action-btn secondary" onclick="goBack()">
+                        <i class="fas fa-info-circle"></i>
+                        Mais Informações
+                    </button>
+                </div>
+            </div>
+
+            <!-- Questions Container -->
+            <div id="questionsContainer" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span class="progress-text">Progresso da Avaliação</span>
+                        <span class="progress-percentage" id="progressPercentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div id="questionContainer">
+                    <!-- Questions will be dynamically loaded here -->
+                </div>
+
+                <div class="navigation">
+                    <button class="nav-btn secondary" id="prevBtn" onclick="previousQuestion()" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Anterior
+                    </button>
+                    <button class="nav-btn" id="nextBtn" onclick="nextQuestion()" disabled>
+                        Próxima
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Container -->
+            <div id="resultsContainer" class="results-container">
+                <!-- Results will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Assessment questions based on validated scales
+        const questions = [
+            // PHQ-9 Questions (Depression)
+            {
+                id: 1,
+                type: 'phq9',
+                text: "Nas últimas 2 semanas, com que frequência você foi incomodado por pouco interesse ou prazer em fazer as atividades do dia a dia?",
+                context: "PHQ-9 - Questão 1: Anedonia (perda de prazer)",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 2,
+                type: 'phq9',
+                text: "Nas últimas 2 semanas, com que frequência você foi incomodado por se sentir desanimado, deprimido ou sem esperança?",
+                context: "PHQ-9 - Questão 2: Humor deprimido",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 3,
+                type: 'phq9',
+                text: "Nas últimas 2 semanas, com que frequência você teve problemas para adormecer, continuar dormindo ou dormir demais?",
+                context: "PHQ-9 - Questão 3: Distúrbios do sono",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 4,
+                type: 'phq9',
+                text: "Nas últimas 2 semanas, com que frequência você se sentiu cansado ou com pouca energia?",
+                context: "PHQ-9 - Questão 4: Fadiga e baixa energia",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 5,
+                type: 'phq9',
+                text: "Nas últimas 2 semanas, com que frequência você teve pouco apetite ou comeu demais?",
+                context: "PHQ-9 - Questão 5: Alterações do apetite",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            // GAD-7 Questions (Anxiety)
+            {
+                id: 6,
+                type: 'gad7',
+                text: "Nas últimas 2 semanas, com que frequência você foi incomodado por se sentir nervoso, ansioso ou muito tenso?",
+                context: "GAD-7 - Questão 1: Nervosismo e ansiedade",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 7,
+                type: 'gad7',
+                text: "Nas últimas 2 semanas, com que frequência você foi incomodado por não conseguir parar ou controlar as preocupações?",
+                context: "GAD-7 - Questão 2: Preocupações incontroláveis",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 8,
+                type: 'gad7',
+                text: "Nas últimas 2 semanas, com que frequência você foi incomodado por se preocupar demais com coisas diferentes?",
+                context: "GAD-7 - Questão 3: Preocupação excessiva",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 9,
+                type: 'gad7',
+                text: "Nas últimas 2 semanas, com que frequência você teve dificuldade para relaxar?",
+                context: "GAD-7 - Questão 4: Dificuldade para relaxar",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            // Risk Assessment Questions
+            {
+                id: 10,
+                type: 'risk',
+                text: "Nas últimas 2 semanas, você teve pensamentos de que seria melhor estar morto ou de se ferir de alguma forma?",
+                context: "Avaliação de Risco: Ideação suicida (PHQ-9 Questão 9)",
+                options: [
+                    { text: "Nenhuma vez", score: 0 },
+                    { text: "Vários dias", score: 1 },
+                    { text: "Mais da metade dos dias", score: 2 },
+                    { text: "Quase todos os dias", score: 3 }
+                ]
+            },
+            {
+                id: 11,
+                type: 'risk',
+                text: "Você já fez algum plano específico sobre como se machucar ou já tentou se machucar?",
+                context: "Avaliação de Risco: Planejamento ou tentativas",
+                options: [
+                    { text: "Nunca", score: 0 },
+                    { text: "Já pensei nisso, mas nunca fiz planos", score: 1 },
+                    { text: "Já fiz planos, mas nunca tentei", score: 2 },
+                    { text: "Já tentei me machucar", score: 3 }
+                ]
+            },
+            {
+                id: 12,
+                type: 'functional',
+                text: "Se você marcou qualquer problema acima, o quanto esses problemas têm dificultado seu trabalho, seus afazeres domésticos ou sua convivência com outras pessoas?",
+                context: "Avaliação Funcional: Impacto na vida diária",
+                options: [
+                    { text: "Não têm dificultado", score: 0 },
+                    { text: "Têm dificultado um pouco", score: 1 },
+                    { text: "Têm dificultado muito", score: 2 },
+                    { text: "Têm dificultado extremamente", score: 3 }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let answers = {};
+        let assessmentStarted = false;
+
+        function startAssessment() {
+            document.getElementById('introContainer').style.display = 'none';
+            document.getElementById('questionsContainer').style.display = 'block';
+            assessmentStarted = true;
+            showQuestion(0);
+        }
+
+        function showQuestion(index) {
+            if (index >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const question = questions[index];
+            const container = document.getElementById('questionContainer');
+            
+            container.innerHTML = `
+                <div class="question-container active">
+                    <div class="question-number">Questão ${index + 1} de ${questions.length}</div>
+                    <div class="question-text">${question.text}</div>
+                    <div class="question-context">${question.context}</div>
+                    <div class="options-container">
+                        ${question.options.map((option, optionIndex) => `
+                            <div class="option" onclick="selectOption(${index}, ${optionIndex}, ${option.score})">
+                                <div class="option-indicator"></div>
+                                <div class="option-text">${option.text}</div>
+                                <div class="option-score">Pontuação: ${option.score}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            // Update progress
+            updateProgress();
+            
+            // Update navigation buttons
+            updateNavigation();
+            
+            // Select previously chosen answer if exists
+            if (answers[question.id] !== undefined) {
+                const selectedOption = document.querySelector(`.option[onclick*="${answers[question.id]}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                }
+            }
+        }
+
+        function selectOption(questionIndex, optionIndex, score) {
+            const question = questions[questionIndex];
+            answers[question.id] = score;
+            
+            // Visual feedback
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            const selectedOption = document.querySelectorAll('.option')[optionIndex];
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+            
+            // Auto-advance after selection
+            setTimeout(() => {
+                nextQuestion();
+            }, 800);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            showQuestion(currentQuestionIndex);
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion(currentQuestionIndex);
+            }
+        }
+
+        function updateProgress() {
+            const percentage = Math.round((currentQuestionIndex / questions.length) * 100);
+            document.getElementById('progressPercentage').textContent = percentage + '%';
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex >= questions.length - 1;
+        }
+
+        function showResults() {
+            document.getElementById('questionsContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'block';
+            
+            // Calculate scores
+            const phq9Score = calculateScore('phq9');
+            const gad7Score = calculateScore('gad7');
+            const riskScore = calculateScore('risk');
+            const functionalScore = calculateScore('functional');
+            
+            const totalScore = phq9Score + gad7Score + riskScore + functionalScore;
+            
+            // Determine severity and recommendations
+            const severity = determineSeverity(totalScore, riskScore);
+            const recommendations = getRecommendations(severity, phq9Score, gad7Score, riskScore);
+            
+            // Display results
+            displayResults(phq9Score, gad7Score, riskScore, functionalScore, totalScore, severity, recommendations);
+            
+            // Save to localStorage
+            const results = {
+                timestamp: new Date().toISOString(),
+                scores: { phq9Score, gad7Score, riskScore, functionalScore, totalScore },
+                severity,
+                recommendations,
+                answers
+            };
+            localStorage.setItem('psychiatricAssessmentResults', JSON.stringify(results));
+        }
+
+        function calculateScore(type) {
+            return Object.keys(answers).reduce((total, questionId) => {
+                const question = questions.find(q => q.id == questionId);
+                if (question && question.type === type) {
+                    return total + answers[questionId];
+                }
+                return total;
+            }, 0);
+        }
+
+        function determineSeverity(totalScore, riskScore) {
+            if (riskScore >= 3 || totalScore >= 15) return 'severe';
+            if (totalScore >= 10) return 'high';
+            if (totalScore >= 5) return 'moderate';
+            return 'low';
+        }
+
+        function getRecommendations(severity, phq9, gad7, risk) {
+            const recommendations = [];
+            
+            switch(severity) {
+                case 'severe':
+                    recommendations.push('EMERGÊNCIA: Procure atendimento imediato no pronto-socorro');
+                    recommendations.push('Entre em contato com o CVV: 188 (24 horas)');
+                    recommendations.push('Consulta psiquiátrica prioritária nas próximas 24-48h');
+                    break;
+                case 'high':
+                    recommendations.push('Consulta psiquiátrica urgente (próximos 7 dias)');
+                    recommendations.push('Considere buscar apoio de familiares/amigos');
+                    recommendations.push('Evite ficar sozinho por períodos prolongados');
+                    break;
+                case 'moderate':
+                    recommendations.push('Agendamento de consulta psiquiátrica (próximas 2 semanas)');
+                    recommendations.push('Considere psicoterapia como tratamento complementar');
+                    recommendations.push('Pratique técnicas de relaxamento e mindfulness');
+                    break;
+                case 'low':
+                    recommendations.push('Manutenção de hábitos saudáveis');
+                    recommendations.push('Atividade física regular');
+                    recommendations.push('Acompanhamento preventivo anual');
+                    break;
+            }
+            
+            return recommendations;
+        }
+
+        function displayResults(phq9, gad7, risk, functional, total, severity, recommendations) {
+            const container = document.getElementById('resultsContainer');
+            
+            const severityColors = {
+                low: { color: '#10b981', text: 'Baixa' },
+                moderate: { color: '#f59e0b', text: 'Moderada' },
+                high: { color: '#ef4444', text: 'Alta' },
+                severe: { color: '#dc2626', text: 'Severa' }
+            };
+            
+            const isEmergency = severity === 'severe';
+            
+            container.innerHTML = `
+                ${isEmergency ? `
+                <div class="emergency-warning">
+                    <div class="emergency-icon">🚨</div>
+                    <div class="emergency-title">ATENÇÃO: EMERGÊNCIA PSIQUIÁTRICA</div>
+                    <div class="emergency-text">
+                        Suas respostas indicam risco significativo. É fundamental buscar ajuda profissional imediatamente.
+                        Você não está sozinho e existem profissionais prontos para ajudar.
+                    </div>
+                    <div class="emergency-actions">
+                        <button class="emergency-btn" onclick="window.open('tel:188', '_blank')">
+                            <i class="fas fa-phone"></i>
+                            CVV: 188
+                        </button>
+                        <button class="emergency-btn" onclick="window.open('tel:192', '_blank')">
+                            <i class="fas fa-ambulance"></i>
+                            SAMU: 192
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="assessment-header">
+                    <h2 class="assessment-title">Resultados da Avaliação</h2>
+                    <p class="assessment-description">
+                        Baseado em escalas cientificamente validadas (PHQ-9, GAD-7)
+                    </p>
+                </div>
+
+                <div class="scores-grid">
+                    <div class="score-card depression">
+                        <div class="score-title">Depressão (PHQ-9)</div>
+                        <div class="score-value ${severity}">${phq9} pontos</div>
+                        <div class="score-interpretation">
+                            ${phq9 <= 4 ? 'Mínima' : phq9 <= 9 ? 'Leve' : phq9 <= 14 ? 'Moderada' : phq9 <= 19 ? 'Moderadamente severa' : 'Severa'}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card anxiety">
+                        <div class="score-title">Ansiedade (GAD-7)</div>
+                        <div class="score-value ${severity}">${gad7} pontos</div>
+                        <div class="score-interpretation">
+                            ${gad7 <= 4 ? 'Mínima' : gad7 <= 9 ? 'Leve' : gad7 <= 14 ? 'Moderada' : 'Severa'}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card risk">
+                        <div class="score-title">Avaliação de Risco</div>
+                        <div class="score-value ${risk >= 3 ? 'severe' : risk >= 1 ? 'moderate' : 'low'}">${risk} pontos</div>
+                        <div class="score-interpretation">
+                            ${risk === 0 ? 'Sem risco identificado' : risk <= 2 ? 'Risco baixo' : 'Risco elevado'}
+                        </div>
+                    </div>
+                    
+                    <div class="score-card">
+                        <div class="score-title">Classificação Geral</div>
+                        <div class="score-value ${severity}" style="color: ${severityColors[severity].color}">
+                            ${severityColors[severity].text}
+                        </div>
+                        <div class="score-interpretation">Total: ${total} pontos</div>
+                    </div>
+                </div>
+
+                <div class="recommendations">
+                    <div class="recommendations-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Recomendações Personalizadas
+                    </div>
+                    <ul class="recommendations-list">
+                        ${recommendations.map(rec => `
+                            <li>
+                                <i class="fas fa-check-circle"></i>
+                                ${rec}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <div class="final-actions">
+                    <button class="action-btn" onclick="scheduleAppointment()">
+                        <i class="fas fa-calendar-plus"></i>
+                        Agendar Consulta
+                    </button>
+                    <button class="action-btn secondary" onclick="downloadResults()">
+                        <i class="fas fa-download"></i>
+                        Baixar Resultados
+                    </button>
+                    <button class="action-btn secondary" onclick="restartAssessment()">
+                        <i class="fas fa-redo"></i>
+                        Nova Avaliação
+                    </button>
+                </div>
+            `;
+        }
+
+        function scheduleAppointment() {
+            // Redirect to consultation booking system
+            window.location.href = '/consulta-por-valor.html?especialidade=psiquiatria&urgencia=true';
+        }
+
+        function downloadResults() {
+            const results = localStorage.getItem('psychiatricAssessmentResults');
+            if (results) {
+                const blob = new Blob([results], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `triagem-psiquiatrica-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function restartAssessment() {
+            currentQuestionIndex = 0;
+            answers = {};
+            assessmentStarted = false;
+            
+            document.getElementById('introContainer').style.display = 'block';
+            document.getElementById('questionsContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'none';
+        }
+
+        function goBack() {
+            window.location.href = '/dr-ai.html';
+        }
+
+        function iniciarTriagem() {
+            startAssessment();
+        }
+
+        function mostrarIntroducao() {
+            // Mantém comportamento padrão - mostra introdução
+            document.getElementById('introContainer').style.display = 'block';
+            document.getElementById('questionsContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'none';
+        }
+
+        // Verificação do parâmetro autostart na inicialização da página
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('autostart') === 'true') {
+                console.log('🚀 Auto-start ativado - Iniciando triagem automaticamente');
+                // Pula a introdução e inicia diretamente
+                iniciarTriagem();
+            } else {
+                console.log('📋 Modo normal - Mostrando introdução');
+                // Comportamento padrão - mostra introdução
+                mostrarIntroducao();
+            }
+        });
+    </script>
+</body>
+</html>

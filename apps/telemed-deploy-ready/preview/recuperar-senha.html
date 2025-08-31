@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Recuperar Senha – TeleMed Pro</title>
+  <meta name="description" content="Recupere sua senha da TeleMed Pro de forma segura. Redefina o acesso à sua conta médica e retome suas consultas online.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://telemed.pro/recuperar-senha">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Recuperar Senha – TeleMed Pro">
+  <meta property="og:description" content="Recupere sua senha da TeleMed Pro de forma segura. Redefina o acesso à sua conta médica e retome suas consultas online.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://telemed.pro/recuperar-senha">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--primary:#1e40af;--prim2:#3b82f6;--sec:#10b981;--bg:#0f172a;--card:#1f2937;--border:#2b3645;--text:#f8fafc;--mut:#94a3b8;--hero:linear-gradient(135deg,#1e40af 0%,#3b82f6 40%,#10b981 100%)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,var(--bg),#0b1220);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .wrap{max-width:460px;width:100%;padding:28px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:0 10px 26px rgba(0,0,0,.25)}
+    .brand{text-align:center;margin-bottom:24px}
+    .brand h1{font-size:2rem;font-weight:800;background:var(--hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .label{display:block;margin:.4rem 0;color:var(--mut);font-weight:500}
+    input{width:100%;background:#0b1220;border:1px solid var(--border);border-radius:12px;color:#fff;padding:.8rem 1rem;font-size:.95rem}
+    input:focus{outline:0;border-color:var(--prim2);box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:#0f172a;padding:.9rem 1.1rem;border-radius:12px;color:#fff;text-decoration:none;font-weight:700;cursor:pointer;transition:all 0.3s;width:100%}
+    .btn-primary{background:var(--hero);border-color:transparent}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,130,246,.3)}
+    .help{color:var(--mut);font-size:.9rem;text-align:center}
+    .success{background:#065f46;border:1px solid #10b981;color:#d1fae5;padding:12px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+    .back{text-align:center;margin-top:20px}
+    .back a{color:var(--prim2);text-decoration:none}
+    .back a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand">
+        <h1>TeleMed Pro</h1>
+        <p class="help">Recuperar sua senha</p>
+      </div>
+
+      <div id="success" class="success" style="display:none">
+        <strong>E-mail enviado!</strong><br>
+        Verifique sua caixa de entrada e spam para instruções de recuperação.
+      </div>
+
+      <form id="recoverForm">
+        <div style="margin-bottom:16px">
+          <label class="label" for="email">E-mail cadastrado</label>
+          <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+          <div class="help" style="margin-top:8px;text-align:left">
+            Digite o e-mail usado no seu cadastro. Enviaremos instruções para criar uma nova senha.
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Enviar instruções
+        </button>
+      </form>
+
+      <div class="back">
+        <a href="/login">← Voltar para login</a>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px">
+      <a href="/lp" class="help" style="text-decoration:none">← Voltar para início</a>
+    </div>
+  </div>
+
+<script>
+  const $ = sel => document.querySelector(sel);
+  
+  $('#recoverForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = $('#email').value.trim();
+    
+    if (!email) {
+      alert('Digite seu e-mail');
+      return;
+    }
+
+    // Simulate email sending (in real app, would call backend API)
+    setTimeout(() => {
+      $('#recoverForm').style.display = 'none';
+      $('#success').style.display = 'block';
+      
+      // After 5 seconds, redirect to login
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 5000);
+    }, 1000);
+  });
+
+  // Auto-focus email field
+  $('#email').focus();
+</script>
+</body>
+</html>

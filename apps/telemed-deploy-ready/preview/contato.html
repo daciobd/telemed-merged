@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contato | TeleMed Consulta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #A7C7E7;
+            --secondary-color: #F4D9B4;
+            --alert-soft: #E9967A;
+            --background-color: #FAF8F5;
+            --card-color: #FFFFFF;
+            --border-color: #E2E2E2;
+            --text-gray: #888888;
+            --font-family: 'Poppins', 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #92B4D7);
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .contact-card {
+            background: var(--card-color);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .contact-card h3 {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #F8F9FA;
+            border-radius: 12px;
+        }
+
+        .contact-item strong {
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+
+        .hours-card {
+            background: var(--secondary-color);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .hours-card h3 {
+            color: #8B4513;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .hours-list {
+            list-style: none;
+        }
+
+        .hours-list li {
+            padding: 8px 0;
+            font-weight: 500;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 12px;
+            display: inline-block;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: none;
+        }
+
+        .btn:hover {
+            background: #92B4D7;
+            transform: translateY(-2px);
+        }
+
+        .back-section {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 20px 16px;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fale Conosco</h1>
+            <p>Estamos aqui para ajudar você 24 horas por dia, 7 dias por semana</p>
+        </div>
+
+        <div class="contact-grid">
+            <div class="contact-card">
+                <h3>📧 Contato Direto</h3>
+                <div class="contact-item">
+                    <span>📨</span>
+                    <strong>contato@telemed-sistema.replit.dev</strong>
+                </div>
+                <div class="contact-item">
+                    <span>📱</span>
+                    <strong>(11) 98765-4321</strong>
+                </div>
+                <div class="contact-item">
+                    <span>💬</span>
+                    <strong>Chat 24h via WhatsApp</strong>
+                </div>
+            </div>
+
+            <div class="contact-card">
+                <h3>🏥 Suporte Médico</h3>
+                <div class="contact-item">
+                    <span>🩺</span>
+                    <strong>suporte@telemed-sistema.replit.dev</strong>
+                </div>
+                <div class="contact-item">
+                    <span>⚡</span>
+                    <strong>Emergências: (11) 99999-0000</strong>
+                </div>
+                <div class="contact-item">
+                    <span>🤖</span>
+                    <strong>Dr. AI sempre disponível</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="hours-card">
+            <h3>⏰ Horário de Atendimento</h3>
+            <ul class="hours-list">
+                <li><strong>Segunda a Sexta:</strong> 8h às 18h</li>
+                <li><strong>Sábados:</strong> 8h às 14h</li>
+                <li><strong>Emergências:</strong> 24h por dia</li>
+                <li><strong>Dr. AI:</strong> Sempre disponível</li>
+            </ul>
+        </div>
+
+        <div class="back-section">
+            <a href="/" class="btn">← Voltar à Página Inicial</a>
+        </div>
+    </div>
+
+    <script>
+        // Tracking GA4
+        function trackCTA(action, label) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'click', {
+                    'event_category': 'Contact',
+                    'event_label': label,
+                    'value': action === 'conversion' ? 1 : 0
+                });
+            }
+        }
+
+        // Track page view
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'page_view', {
+                'page_title': 'Contato',
+                'page_location': window.location.href
+            });
+        }
+    </script>
+</body>
+</html>

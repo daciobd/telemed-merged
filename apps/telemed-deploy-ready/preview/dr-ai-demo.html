@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr. AI Demo - TeleMed Sistema</title>
+    <style>
+        :root {
+            --primary: #A2D2FF;
+            --primary-600: #8AB8E6;
+            --bg: #F6F8FB;
+            --card: #fff;
+            --muted: #6B7280;
+            --shadow: 0 2px 8px rgba(0,0,0,.05);
+            --radius: 12px;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg);
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 20px;
+        }
+
+        .brain-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .demo-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .test-button {
+            background: var(--primary);
+            color: #0F172A;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .test-button:hover {
+            background: var(--primary-600);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(162,210,255,0.3);
+        }
+
+        .response-area {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        .context-panel {
+            background: #fefefe;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .context-panel h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: inherit;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brain-icon">🧠</div>
+            <h1>Dr. AI - Demo Integração Real</h1>
+            <p>Testando a integração com OpenAI GPT-4o usando seu SimpleOpenAIClient</p>
+        </div>
+
+        <div class="demo-section">
+            <h3>🔬 Status da Integração</h3>
+            <p>✅ Backend Express rodando na porta 5000</p>
+            <p>✅ SimpleOpenAIClient configurado</p>
+            <p>✅ Endpoint /api/ai/ask ativo</p>
+            <p>✅ OpenAI API Key configurada como secret</p>
+        </div>
+
+        <div class="context-panel">
+            <h4>Contexto Clínico (Simulado)</h4>
+            <textarea id="contextArea" placeholder="Digite o contexto clínico ou deixe vazio para usar o padrão">Paciente: João Santos (35 anos, M)
+HDA: Cefaleia há 3 dias, intensidade 7/10, localizada em região frontal
+Hipótese diagnóstica: Cefaleia tensional (R51)
+Sinais de alerta: Nenhum relatado
+Plano/Conduta atual: Orientação inicial realizada</textarea>
+        </div>
+
+        <div class="demo-section">
+            <h3>🤖 Perguntas de Teste</h3>
+            <button class="test-button" onclick="testAI('Sugira conduta baseada no caso.')">
+                Conduta
+            </button>
+            <button class="test-button" onclick="testAI('Proponha hipóteses diferenciais com CID-10.')">
+                Diferenciais
+            </button>
+            <button class="test-button" onclick="testAI('Quais exames são indicados neste quadro?')">
+                Exames
+            </button>
+            <button class="test-button" onclick="testAI('Escreva orientação clara ao paciente.')">
+                Orientação
+            </button>
+
+            <div>
+                <input type="text" id="customQuery" placeholder="Digite sua própria pergunta clínica..." 
+                       onkeypress="if(event.key==='Enter') testAI(this.value)">
+                <button class="test-button" onclick="testAI(document.getElementById('customQuery').value)">
+                    Perguntar
+                </button>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📋 Resposta do Dr. AI</h3>
+            <div id="responseArea" class="response-area">
+                Clique em uma das opções acima para testar a integração com OpenAI...
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>📊 Log de Requisições</h3>
+            <div id="logArea" class="response-area" style="font-size: 12px; color: #6b7280;">
+                Aguardando primeira requisição...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testAI(prompt) {
+            if (!prompt || prompt.trim() === '') {
+                alert('Por favor, digite uma pergunta.');
+                return;
+            }
+
+            const responseArea = document.getElementById('responseArea');
+            const logArea = document.getElementById('logArea');
+            const context = document.getElementById('contextArea').value;
+            
+            responseArea.innerHTML = '<span class="loading">🤔 Dr. AI está analisando...</span>';
+            
+            const startTime = Date.now();
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            
+            logArea.innerHTML = `[${timestamp}] Enviando: "${prompt.substring(0, 50)}..."\n` + logArea.innerHTML;
+
+            try {
+                const response = await fetch('/api/ai/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        context: context,
+                        consultId: 'demo-html'
+                    })
+                });
+
+                const data = await response.json();
+                const duration = Date.now() - startTime;
+
+                if (data.ok) {
+                    responseArea.innerHTML = `<strong>🧠 Dr. AI:</strong>\n\n${data.answer}`;
+                    logArea.innerHTML = `[${timestamp}] ✅ Sucesso (${duration}ms): ${data.answer.length} chars\n` + logArea.innerHTML;
+                } else {
+                    responseArea.innerHTML = `<span class="error">❌ Erro: ${data.message || data.error}</span>`;
+                    logArea.innerHTML = `[${timestamp}] ❌ Erro: ${data.error}\n` + logArea.innerHTML;
+                }
+            } catch (error) {
+                responseArea.innerHTML = `<span class="error">❌ Erro de conexão: ${error.message}</span>`;
+                logArea.innerHTML = `[${timestamp}] ❌ Erro de rede: ${error.message}\n` + logArea.innerHTML;
+            }
+        }
+
+        // Auto-test quando a página carrega
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAI('Olá Dr. AI, você está funcionando?');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Como Funciona – TeleMed Pro</title>
+  <meta name="description" content="Descubra como funciona a plataforma TeleMed Pro: agendamento de consultas, videochamadas médicas, prontuário eletrônico e muito mais.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://telemed.pro/como-funciona">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Como Funciona – TeleMed Pro">
+  <meta property="og:description" content="Descubra como funciona a plataforma TeleMed Pro: agendamento de consultas, videochamadas médicas, prontuário eletrônico e muito mais.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://telemed.pro/como-funciona">
+
+  <!-- Fonte -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --primary:#1e40af; --primary-2:#3b82f6; --secondary:#10b981; --accent:#f59e0b;
+      --bg:#0f172a; --surface:#111827; --card:#1f2937; --text:#f8fafc; --muted:#94a3b8;
+      --border:#2b3645; --hero:linear-gradient(135deg,#1e40af 0%,#3b82f6 40%,#10b981 100%);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(135deg,var(--bg) 0%,#0e1420 50%,#0a0f15 100%);color:var(--text);line-height:1.6}
+    a{color:inherit}
+
+    /* Header / Hero */
+    header{position:sticky;top:0;z-index:50;background:rgba(17,24,39,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+    .nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:14px 20px}
+    .brand{font-weight:800;color:var(--primary-2);text-decoration:none}
+    .spacer{flex:1}
+    .nav a.btn{padding:.6rem 1rem;border-radius:9999px;background:var(--hero);text-decoration:none;font-weight:700}
+
+    .hero{background:var(--hero);padding:64px 20px}
+    .hero .wrap{max-width:1200px;margin:0 auto;display:grid;gap:18px}
+    .title{font-size:2.4rem;font-weight:800}
+    .subtitle{color:#e6f2ff;max-width:70ch}
+
+    /* Container */
+    .container{max-width:1200px;margin:0 auto;padding:28px 20px}
+
+    /* Section titles */
+    .section-title{font-size:1.9rem;font-weight:800;margin:22px 0 10px}
+    .section-sub{color:var(--muted);margin-bottom:18px}
+
+    /* Cards / Grids */
+    .grid{display:grid;gap:20px}
+    .grid.steps{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .grid.features{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;transition:transform .25s ease}
+    .card:hover{transform:translateY(-6px)}
+    .center{text-align:center}
+
+    /* Icons (circle) */
+    .ico{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;
+         background:rgba(148,163,184,.12);border:1px solid var(--border)}
+    .ico svg{width:28px;height:28px;stroke:var(--accent);stroke-width:2;fill:none}
+
+    .step-num{width:40px;height:40px;border-radius:50%;background:var(--primary-2);display:flex;align-items:center;justify-content:center;font-weight:800;margin:0 auto 8px}
+
+    .muted{color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:22px;margin-top:16px}
+    .kpi .card h3{font-size:2rem;color:#93c5fd}
+
+    /* Comparison table */
+    .table{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:10px;overflow:auto}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 10px;border-bottom:1px solid var(--border);text-align:left}
+    th{background:#0f1b2d;color:#dbeafe;font-weight:700;position:sticky;top:0}
+    .yes{color:#34d399;font-weight:700}
+    .no{color:#f87171;font-weight:700}
+
+    /* CTA */
+    .ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:22px 0}
+    .btn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--card);padding:.9rem 1.1rem;border-radius:12px;text-decoration:none;font-weight:700}
+    .btn svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+    .btn.primary{background:var(--secondary);border-color:transparent}
+    .btn.alt{background:var(--primary);border-color:transparent}
+    .btn.ghost{background:#0b1220}
+
+    /* Accessibility / Motion */
+    :focus-visible{outline:2px solid var(--primary-2);outline-offset:2px}
+    @media (prefers-reduced-motion: reduce){
+      *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+    }
+
+    @media (max-width: 768px){
+      .title{font-size:1.9rem}
+      .hero{padding:48px 20px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav" aria-label="Navegação principal">
+      <a class="brand" href="/agenda/">TeleMed&nbsp;Pro</a>
+      <span class="spacer"></span>
+      <a class="btn ghost" href="/lp">← Voltar</a>
+      <a class="btn ghost" href="/dashboard/">Dashboard</a>
+      <a class="btn" href="/consulta/">Iniciar Consulta</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <h1 class="title">Como Funciona</h1>
+      <p class="subtitle">Entenda, passo a passo, como o TeleMed transforma o acesso à saúde — com lances para consultas, IA (Dr. AI), segurança LGPD e experiência profissional.</p>
+      <div class="ctas" role="group" aria-label="Ações principais">
+        <!-- EDITAR AQUI se sua rota de Dr. AI for diferente -->
+        <a class="btn primary" href="/dr-ai/" aria-label="Testar Dr. AI agora">
+          <svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2"/><circle cx="9" cy="13" r="1.5" stroke="none" fill="#fff"/><circle cx="15" cy="13" r="1.5" stroke="none" fill="#fff"/><path d="M12 8V5M8 5h8"/></svg>
+          Testar Dr. AI
+        </a>
+        <a class="btn alt" href="#simular-oferta" aria-label="Fazer meu lance para consulta">
+          <svg viewBox="0 0 24 24"><path d="M2 10h7"/><path d="M5.5 6.5 8 9 5.5 11.5"/><path d="M13 5h6v6h-6z"/><path d="M13 19h8"/><path d="M13 15h8"/></svg>
+          Fazer meu lance
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <main class="container" id="conteudo">
+    <!-- Destaque: Lances -->
+    <section class="card center">
+      <h2 class="section-title">Sistema de Lances para Consultas</h2>
+      <p class="muted">Você define o valor que deseja pagar; médicos verificados fazem ofertas. Transparência, economia e qualidade.</p>
+      <div class="kpi">
+        <div class="card"><h3>40%</h3><p class="muted">economia média em especialidades</p></div>
+        <div class="card"><h3>24h</h3><p class="muted">tempo médio de resposta</p></div>
+        <div class="card"><h3>98%</h3><p class="muted">satisfação de pacientes</p></div>
+      </div>
+    </section>
+
+    <!-- Passos -->
+    <section>
+      <h2 class="section-title center">Como funciona (4 passos)</h2>
+      <div class="grid steps">
+        <article class="card center" aria-label="Passo 1">
+          <div class="step-num">1</div>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>
+          </div>
+          <h3>Descreva sua necessidade</h3>
+          <p class="muted">Escolha a especialidade, relate sintomas e informe o valor que deseja pagar.</p>
+        </article>
+
+        <article class="card center" aria-label="Passo 2">
+          <div class="step-num">2</div>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 3h18v6H3z"/><path d="M7 9v12M17 9v12"/><path d="M12 13h6"/></svg>
+          </div>
+          <h3>Médicos fazem lances</h3>
+          <p class="muted">Receba propostas de médicos verificados com perfis e avaliações.</p>
+        </article>
+
+        <article class="card center" aria-label="Passo 3">
+          <div class="step-num">3</div>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <h3>Escolha o melhor</h3>
+          <p class="muted">Compare preço, experiência e avaliações — escolha com segurança.</p>
+        </article>
+
+        <article class="card center" aria-label="Passo 4">
+          <div class="step-num">4</div>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M12 12h.01"/></svg>
+          </div>
+          <h3>Realize a consulta</h3>
+          <p class="muted">Videochamada segura (HD), prescrição digital e acompanhamento.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Tabela comparativa -->
+    <section>
+      <h2 class="section-title center">TeleMed x Modos tradicionais</h2>
+      <div class="table" role="region" aria-label="Tabela de comparação">
+        <table>
+          <thead>
+            <tr>
+              <th>Aspecto</th>
+              <th>TeleMed</th>
+              <th>Consulta Presencial</th>
+              <th>Outros Apps</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Preço</strong></td><td class="yes">✓ Você define</td><td class="no">✗ Alto e fixo</td><td class="no">✗ Tabelado</td></tr>
+            <tr><td><strong>Tempo</strong></td><td class="yes">✓ Agendamento rápido</td><td class="no">✗ Fila/semanas</td><td class="yes">✓ Rápido</td></tr>
+            <tr><td><strong>Transparência</strong></td><td class="yes">✓ Total</td><td class="no">✗ Preço opaco</td><td class="no">✗ Parcial</td></tr>
+            <tr><td><strong>Escolha do médico</strong></td><td class="yes">✓ Você escolhe</td><td class="no">✗ Limitada</td><td class="no">✗ Aleatória</td></tr>
+            <tr><td><strong>Conveniência</strong></td><td class="yes">✓ De casa</td><td class="no">✗ Deslocamento</td><td class="yes">✓ De casa</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Funcionalidades -->
+    <section>
+      <h2 class="section-title center">Funcionalidades avançadas</h2>
+      <div class="grid features">
+        <div class="card center">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2"/><circle cx="9" cy="13" r="1.5" stroke="none" fill="#f59e0b"/><circle cx="15" cy="13" r="1.5" stroke="none" fill="#f59e0b"/><path d="M12 8V5M8 5h8"/></svg></div>
+          <h3>Dr. AI</h3>
+          <p class="muted">Triagem inteligente que direciona para a especialidade correta.</p>
+        </div>
+        <div class="card center">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="6" y="10" width="3" height="7" rx="1" stroke="none" fill="#f59e0b"/><rect x="11" y="7" width="3" height="10" rx="1" stroke="none" fill="#f59e0b"/><rect x="16" y="13" width="3" height="4" rx="1" stroke="none" fill="#f59e0b"/></svg></div>
+          <h3>Histórico Médico</h3>
+          <p class="muted">Registros organizados, relatórios e NPS em tempo real.</p>
+        </div>
+        <div class="card center">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 11H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2z"/><path d="M13 21h4a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2z"/><path d="M5 21v-7a9 9 0 0 1 9-9"/></svg></div>
+          <h3>Central de Testes</h3>
+          <p class="muted">Testes diversos para auxiliar no diagnóstico.</p>
+        </div>
+        <div class="card center">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9a4 4 0 0 0-4 4v6a4 4 0 0 0 4 4h8"/></svg></div>
+          <h3>Segurança LGPD</h3>
+          <p class="muted">Criptografia e conformidade total com a legislação.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Simulador de Leilão Reverso -->
+    <section class="card" id="simular-oferta" style="margin-top:16px">
+      <h2 class="section-title">Simular oferta (leilão reverso)</h2>
+      <p class="muted">Faça uma oferta, veja se foi aceita, receba contra-proposta, e vá para a sala de espera quando aceitar.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px">
+        <div>
+          <label class="label">Valor da oferta (R$)</label>
+          <input id="bidValue" type="number" min="100" step="5" value="100" class="inp" />
+        </div>
+        <div>
+          <label class="label">Urgência</label>
+          <select id="bidMode" class="select">
+            <option value="immediate">Imediata (agora)</option>
+            <option value="scheduled">Agendar (próximas 24–72h)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn primary" onclick="placeBid()">Fazer oferta</button>
+        <button class="btn" onclick="quickAccept()">Oferta aceita (teste)</button>
+        <button class="btn ghost" onclick="goWaiting()">Ir para sala de espera</button>
+      </div>
+
+      <div id="bidStatus" class="muted" style="margin-top:10px"></div>
+    </section>
+
+    <!-- CTAs finais -->
+    <section class="center">
+      <h2 class="section-title">Pronto para experimentar?</h2>
+      <p class="muted">Teste gratuitamente o Dr. AI ou faça seu primeiro lance.</p>
+      <div class="ctas" role="group" aria-label="Ações finais">
+        <!-- AJUSTE AQUI se precisar usar /ai-console ou /consulta?mode=triage -->
+        <a class="btn primary" href="/dr-ai/">
+          <svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2"/><circle cx="9" cy="13" r="1.5" stroke="none" fill="#fff"/><circle cx="15" cy="13" r="1.5" stroke="none" fill="#fff"/><path d="M12 8V5M8 5h8"/></svg>
+          Testar Dr. AI grátis
+        </a>
+        <a class="btn ghost" href="#simular-oferta">
+          <svg viewBox="0 0 24 24"><path d="M2 10h7"/><path d="M5.5 6.5 8 9 5.5 11.5"/><path d="M13 5h6v6h-6z"/><path d="M13 19h8"/><path d="M13 15h8"/></svg>
+          Fazer meu lance
+        </a>
+        <a class="btn" href="/precos/">
+          <svg viewBox="0 0 24 24"><path d="M20 7h-9l-1-2H4v14h16z"/><path d="M14 13a2 2 0 1 0 2 2 2 2 0 0 0-2-2z"/></svg>
+          Ver preços
+        </a>
+      </div>
+    </section>
+  </main>
+
+<script>
+(() => {
+  const CID  = 'demo'; // id da consulta para testes
+  const role = 'patient';
+  const chA  = new BroadcastChannel('telemed:auction:'+CID);
+  const chC  = new BroadcastChannel('telemed:consult:'+CID);
+
+  const el = {
+    val:   document.getElementById('bidValue'),
+    mode:  document.getElementById('bidMode'),
+    info:  document.getElementById('bidStatus')
+  };
+
+  // Regras simples de aceitação automática (pode ajustar):
+  const THRESH = { immediate: 120, scheduled: 80 };
+
+  function setInfo(msg){ el.info.textContent = msg; }
+  function ensurePatient(){
+    const u = JSON.parse(localStorage.getItem('telemed_user')||'null');
+    if (!u || u.type!=='patient') {
+      localStorage.setItem('telemed_user', JSON.stringify({ name:'Paciente Demo', email:'paciente.demo@telemed.pro', type:'patient' }));
+    }
+  }
+
+  // Envia lance
+  window.placeBid = function(){
+    ensurePatient();
+    const v = Number(el.val.value||0);
+    const m = el.mode.value;
+    setInfo('Enviando oferta…');
+    chA.postMessage({ type:'bid', value:v, mode:m, cid:CID });
+
+    // Auto-avaliação (apenas para facilitar demo sem o médico):
+    if (v >= THRESH[m]) {
+      setInfo('✅ Oferta aceita automaticamente para teste. Indo para sala de espera…');
+      setTimeout(goWaiting, 1500);
+    } else if (m==='scheduled' && v >= (THRESH.scheduled - 20)) {
+      setInfo('⚖️ Aceita para agendamento. Você pode confirmar o agendamento ou tentar aumentar para atendimento imediato.');
+      // aqui poderíamos abrir um modal de agendamento; por enquanto deixamos a mensagem
+    } else {
+      setInfo('❌ Oferta não aceita. Dica: aumente o valor ou mude a urgência.');
+      // o médico pode enviar contra-proposta via painel dele
+    }
+  };
+
+  // Aceita "na marra" (apenas atalho de teste)
+  window.quickAccept = function(){
+    ensurePatient();
+    setInfo('✅ Oferta marcada como aceita (teste). Indo para sala de espera…');
+    setTimeout(goWaiting, 1000);
+  };
+
+  // Vai para sala de espera e sinaliza presença ao médico
+  window.goWaiting = function(){
+    ensurePatient();
+    chC.postMessage({ type:'waiting', cid:CID });
+    location.href = `/consulta?consultationId=${encodeURIComponent(CID)}&from=/como-funciona&waiting=1`;
+  };
+
+  // Respostas do médico (aceite/recusa/contra-proposta)
+  chA.onmessage = (e)=>{
+    const { type, price, note } = e.data||{};
+    if (type==='accepted') {
+      setInfo(`✅ Médico aceitou por R$ ${price}. Indo para sala de espera…`);
+      setTimeout(goWaiting, 1500);
+    }
+    if (type==='rejected') {
+      setInfo('❌ Médico rejeitou sua oferta. Ajuste o valor e tente novamente.');
+    }
+    if (type==='counter') {
+      setInfo(`💬 Contra-proposta: R$ ${price}. ${note||'Se concordar, clique em "Oferta aceita (teste)" ou refaça sua oferta.'}`);
+    }
+  };
+})();
+</script>
+</body>
+</html>

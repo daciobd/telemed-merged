@@ -1,0 +1,102 @@
+:root{
+  --rounded:16px; --shadow:0 6px 18px rgba(0,0,0,.06);
+  --primary:#0ea5e9; --ink:#111827; --muted:#6b7280; --bg:#f8fafc;
+  --surface:#ffffff; --link:#0ea5e9; --danger:#ef4444; --ok:#10b981;
+}
+
+/* Base */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55}
+a{color:var(--link);text-decoration:none} a:hover{text-decoration:underline}
+img{max-width:100%;height:auto;border:0}
+
+/* Containers e layout */
+.container{max-width:1100px;margin:0 auto;padding:24px 16px}
+.grid{display:grid;gap:16px}
+.grid.cards{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.section{padding:40px 0}
+
+/* Cards e painéis */
+.card{background:var(--surface);border-radius:var(--rounded);box-shadow:var(--shadow);overflow:hidden}
+.card-header{padding:16px 20px;font-weight:600;border-bottom:1px solid #eef2f7}
+.card-body{padding:16px 20px}
+.badge{display:inline-block;font-size:.8rem;padding:.15rem .5rem;border-radius:999px;background:#eef2ff;color:#3730a3}
+
+/* Botões */
+.btn{display:inline-block;padding:10px 16px;border-radius:12px;border:1px solid rgba(0,0,0,.08);text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff;border:none}
+.btn-ghost{background:#fff;color:var(--ink)}
+.btn-outline{background:#fff;color:var(--link);border:1px solid var(--link)}
+
+/* Tabelas e listas legíveis */
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #eef2f7}
+thead th{background:#f9fafb;font-weight:600}
+ul,ol{padding-left:1.2rem}
+
+/* Tipografia de texto longo (privacidade, termos, faq, feedback) */
+main, article, .prose{max-width:900px;margin:0 auto}
+.prose h1,h1{font-size:2rem;margin:1rem 0 .5rem}
+.prose h2,h2{font-size:1.5rem;margin:1.25rem 0 .5rem}
+.prose h3,h3{font-size:1.2rem;margin:1rem 0 .5rem}
+.prose p{margin:.5rem 0;color:#1f2937}
+.prose small, .muted{color:var(--muted)}
+.prose blockquote{margin:1rem 0;padding:1rem;border-left:4px solid #e5e7eb;background:#f9fafb;border-radius:12px}
+
+/* FAQ (details/summary) */
+details{background:#f9fafb;border-radius:12px;margin:.5rem 0;border:1px solid #eef2f7}
+summary{cursor:pointer;padding:.8rem 1rem;font-weight:600;list-style:none}
+details > *:not(summary){padding:0 1rem 1rem}
+
+/* "Texto sobre imagem" → vira legenda abaixo */
+.figure,.card-figure{position:relative;margin:0}
+.figure img,.card-figure img{display:block;width:100%;height:auto;object-fit:cover;border-radius:12px}
+.figure .overlay,.card-figure .overlay,.on-image-text{
+  position:static !important;background:none !important;color:inherit !important;
+  padding:0 !important;margin-top:12px;display:block;text-shadow:none !important;
+}
+
+/* Pricing / consulta por valor */
+.pricing{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.price-card{border:1px solid #e5e7eb;border-radius:16px;padding:18px;text-align:left;background:#fff}
+.price{font-size:2rem;font-weight:700}
+.cta{margin-top:12px}
+
+/* Feedback (legibilidade) */
+.feedback-list .item{background:#fff;border:1px solid #eef2f7;border-radius:16px;padding:14px;margin:10px 0}
+.feedback-list .author{font-weight:600}
+.feedback-list .meta{color:var(--muted);font-size:.9rem}
+
+/* Triagem/Forms */
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font:inherit}
+label{font-weight:600;display:block;margin:.3rem 0}
+.form-row{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+/* LP > Especialidades: thumbnails uniformes */
+#especialidades .card { 
+  display: flex; 
+  flex-direction: column; 
+}
+
+#especialidades .card > img {
+  display: block;
+  width: 100%;
+  height: 220px;               /* altura fixa para uniformizar */
+  object-fit: cover;           /* preenche e corta o excesso */
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+#especialidades .card .card-body { 
+  flex: 1; 
+}
+
+/* Ícones SVG padronizados */
+.icon{width:20px;height:20px;vertical-align:-3px;display:inline-block}
+.icon-lg{width:28px;height:28px}
+
+/* Helpers */
+.center{text-align:center}
+.mt-2{margin-top:.5rem} .mt-3{margin-top:.75rem} .mt-4{margin-top:1rem}
+.mb-2{margin-bottom:.5rem} .mb-3{margin-bottom:.75rem} .mb-4{margin-bottom:1rem}

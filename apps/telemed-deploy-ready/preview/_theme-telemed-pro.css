@@ -1,0 +1,126 @@
+/* ===== TeleMed Pro Theme Overlay (escopado) ===== */
+body[data-theme="telemed-pro"]{
+  --primary:#1e40af;      /* azul escuro (dashboard) */
+  --primary-2:#3b82f6;    /* azul claro */
+  --secondary:#10b981;    /* verde/acento */
+  --bg:#0f172a;           /* fundo */
+  --surface:#111827;      /* barras */
+  --card:#1f2937;         /* cartões */
+  --border:#2b3645;
+  --text:#f8fafc;         /* texto principal */
+  --muted:#94a3b8;        /* texto secundário */
+  --grad:linear-gradient(135deg,var(--primary),var(--primary-2) 40%,var(--secondary) 100%);
+  color:var(--text);
+  background:linear-gradient(120deg,#0b1320,var(--bg));
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+
+/* Banner/Título da página (pega nomes comuns) */
+body[data-theme="telemed-pro"] .page-header,
+body[data-theme="telemed-pro"] .header,
+body[data-theme="telemed-pro"] .banner,
+body[data-theme="telemed-pro"] .hero,
+body[data-theme="telemed-pro"] header.section {
+  background:var(--grad) !important;
+  color:#fff !important;
+  border-bottom:1px solid rgba(255,255,255,.15);
+  padding-block:16px;
+}
+body[data-theme="telemed-pro"] .page-header h1,
+body[data-theme="telemed-pro"] .header h1,
+body[data-theme="telemed-pro"] .banner h1,
+body[data-theme="telemed-pro"] h1.page-title {
+  color:#fff !important;
+  text-shadow:0 6px 20px rgba(0,0,0,.3);
+}
+
+/* Cards/KPIs */
+body[data-theme="telemed-pro"] .card,
+body[data-theme="telemed-pro"] .kpi,
+body[data-theme="telemed-pro"] .stat,
+body[data-theme="telemed-pro"] .panel,
+body[data-theme="telemed-pro"] .widget,
+body[data-theme="telemed-pro"] .box {
+  background:var(--card) !important;
+  border:1px solid var(--border) !important;
+  border-radius:14px !important;
+  color:var(--text) !important;
+  box-shadow:0 10px 30px rgba(0,0,0,.25) !important;
+}
+body[data-theme="telemed-pro"] .stat .value,
+body[data-theme="telemed-pro"] .kpi .value,
+body[data-theme="telemed-pro"] .card h3 {
+  color:#fff !important;
+}
+body[data-theme="telemed-pro"] .muted,
+body[data-theme="telemed-pro"] .stat .label,
+body[data-theme="telemed-pro"] .kpi .label {
+  color:var(--muted) !important;
+}
+
+/* Botões (pega classes mais comuns) */
+body[data-theme="telemed-pro"] .btn,
+body[data-theme="telemed-pro"] button,
+body[data-theme="telemed-pro"] .button {
+  border-radius:10px !important;
+  font-weight:700 !important;
+  border:1px solid var(--border);
+  background:#1f2937;
+  color:var(--text);
+  transition:transform .06s ease, filter .15s ease;
+}
+body[data-theme="telemed-pro"] .btn:hover,
+body[data-theme="telemed-pro"] button:hover { transform:translateY(-1px); }
+
+body[data-theme="telemed-pro"] .btn-primary,
+body[data-theme="telemed-pro"] .button-primary,
+body[data-theme="telemed-pro"] .uk-button-primary,
+body[data-theme="telemed-pro"] .is-primary {
+  background:var(--grad) !important;
+  color:#fff !important;
+  border:0 !important;
+  box-shadow:0 6px 28px rgba(30,64,175,.35);
+}
+body[data-theme="telemed-pro"] .btn-ghost,
+body[data-theme="telemed-pro"] .btn-outline,
+body[data-theme="telemed-pro"] .is-ghost {
+  background:transparent !important;
+  border:1px solid var(--border) !important;
+  color:#fff !important;
+}
+
+/* Chips/badges ícones KPI */
+body[data-theme="telemed-pro"] .badge,
+body[data-theme="telemed-pro"] .icon {
+  background:rgba(59,130,246,.15);
+  color:#bfdbfe;
+  border-radius:999px;
+}
+
+/* Inputs (se houver) */
+body[data-theme="telemed-pro"] input, 
+body[data-theme="telemed-pro"] select, 
+body[data-theme="telemed-pro"] textarea {
+  background:#0f172a !important;
+  color:var(--text) !important;
+  border:1px solid var(--border) !important;
+  border-radius:10px !important;
+}
+
+/* Links */
+body[data-theme="telemed-pro"] a { color:#c7d2fe; }
+body[data-theme="telemed-pro"] a:hover { color:#e0e7ff; }
+
+/* Barras/containers largos */
+body[data-theme="telemed-pro"] .toolbar,
+body[data-theme="telemed-pro"] .subheader,
+body[data-theme="telemed-pro"] nav.sub,
+body[data-theme="telemed-pro"] .surface {
+  background:var(--surface) !important;
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+}
+
+/* Espaçamento base para a página clara original */
+body[data-theme="telemed-pro"] .container,
+body[data-theme="telemed-pro"] .content { padding-block:12px; }

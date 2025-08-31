@@ -1,0 +1,1 @@
+export const PRODUCTIVITY_URL = (import.meta as any).env?.VITE_PRODUCTIVITY_URL || 'https://telemed-productivity.onrender.com'; export const authToken=()=>localStorage.getItem('jwt')||'';

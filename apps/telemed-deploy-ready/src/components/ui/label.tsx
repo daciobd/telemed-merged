@@ -1,0 +1,1 @@
+export const Label = (p:any)=><label {...p} className={(p.className||'')+ ' text-sm font-medium'} />;

@@ -1,0 +1,1 @@
+export const AUCTION_URL = (import.meta as any).env?.VITE_AUCTION_URL || 'https://telemed-auction.onrender.com'; export const authToken=()=>localStorage.getItem('jwt')||'';

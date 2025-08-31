@@ -1,0 +1,1 @@
+export const Textarea=(p:any)=><textarea {...p} className={(p.className||'')+' min-h-[120px] w-full rounded-2xl border px-3 py-2'} />;

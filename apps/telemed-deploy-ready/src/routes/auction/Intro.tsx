@@ -1,0 +1,1 @@
+export default ()=> <div className='p-6'><h1>Leilão Reverso</h1><a href='/auction/bid'>Começar</a></div>;

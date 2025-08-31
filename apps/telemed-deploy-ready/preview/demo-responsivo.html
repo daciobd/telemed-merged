@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo Responsivo — TeleMed</title>
+
+  <!-- Favicon (evita 404 no DevTools) -->
+  <link rel="icon" href="/favicon.ico" />
+
+  <!-- CSS do site (caminhos absolutos!) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="/css/theme-telemed.css">
+  
+  <!-- Fallback CDN for FontAwesome if local fails -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+
+  <style>
+    /* Apenas layout de vitrine para simular devices */
+    .device-toolbar{position:fixed;top:12px;left:12px;z-index:5}
+    .chip{background:#0ea5e9;color:#fff;border-radius:999px;padding:6px 12px;font-weight:600;font-size:12px;box-shadow:0 1px 2px rgb(0 0 0 / .15)}
+    .stage{min-height:100svh;background:var(--bg,#0b1220);display:flex;align-items:center;justify-content:center;padding:28px}
+    .frame{width:min(1200px,100%);background:#0f172a;border-radius:18px;padding:28px;box-shadow:0 10px 30px rgb(0 0 0 / .35)}
+    .grid{display:grid;gap:18px}
+    @media (min-width:768px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    @media (min-width:1024px){ .grid{grid-template-columns:repeat(3,1fr)} }
+
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+          border-radius:14px;padding:18px;transition:.2s}
+    .card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16)}
+    .card h3{margin:0 0 6px 0;color:#e2e8f0;font-size:16px}
+    .card p{margin:0;color:#9fb3c8;font-size:13px;line-height:1.4}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .title{font-size:22px;color:#e2e8f0;font-weight:700}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;
+         text-decoration:none;font-weight:600;background:#22c55e;color:#0b1220}
+    .btn.secondary{background:#0ea5e9;color:#071422}
+    .muted{color:#9fb3c8;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="device-toolbar"><span class="chip">Desktop Large</span></div>
+
+  <main class="stage">
+    <section class="frame">
+      <div class="header">
+        <div class="title">Demo Responsivo</div>
+        <div style="display:flex;gap:10px;">
+          <a class="btn" href="/dashboard/">Ir ao Dashboard</a>
+          <a class="btn secondary" href="/consulta/">Abrir Consulta</a>
+        </div>
+      </div>
+
+      <p class="muted" style="margin-bottom:16px">
+        Vitrine rápida dos principais módulos com o tema <strong>TeleMed</strong>.
+        Verifique no DevTools/Network se <code>theme-telemed.css</code> e <code>all.min.css</code> carregaram (status 200).
+      </p>
+
+      <div class="grid">
+        <a class="card" href="/dashboard/">
+          <h3>📊 Dashboard</h3>
+          <p>Cards, atalhos, sidebar e módulos principais.</p>
+        </a>
+
+        <a class="card" href="/consulta/">
+          <h3>🩺 Consulta</h3>
+          <p>Tela de atendimento (Status: waiting, Sala #ABC123).</p>
+        </a>
+
+        <a class="card" href="/centro-de-testes/">
+          <h3>🧠 Centro de Testes</h3>
+          <p>GAD-7, PHQ-9, ASRS, relatórios e triagem assistida.</p>
+        </a>
+
+        <a class="card" href="/meus-pacientes/">
+          <h3>👥 Meus Pacientes</h3>
+          <p>Filtros, dados clínicos, contatos e ações rápidas.</p>
+        </a>
+
+        <a class="card" href="/agenda/">
+          <h3>📅 Agenda</h3>
+          <p>Horários, notificações e gestão de atendimentos.</p>
+        </a>
+
+        <a class="card" href="/medico/">
+          <h3>👨‍⚕️ Perfil do Médico</h3>
+          <p>Dados profissionais, CRM, certificados e métricas.</p>
+        </a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

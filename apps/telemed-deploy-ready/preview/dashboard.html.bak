@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Médico — TeleMed Pro</title>
+<meta name="description" content="Dashboard completo para médicos com métricas, gráficos de performance, gestão de pacientes e ferramentas de análise clínica.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://telemed.pro/dashboard">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Dashboard Médico — TeleMed Pro">
+<meta property="og:description" content="Dashboard completo para médicos com métricas, gráficos de performance, gestão de pacientes e ferramentas de análise clínica.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://telemed.pro/dashboard">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #fafbfc; 
+            display: flex; 
+            height: 100vh; 
+        }
+
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: linear-gradient(180deg, #1a1b23 0%, #2c2d39 100%); 
+            color: #e4e5e9; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 24px 20px; 
+            box-shadow: 2px 0 12px rgba(0,0,0,0.08); 
+        }
+        .brand { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-size: 20px; 
+            font-weight: 700; 
+            margin-bottom: 32px; 
+        }
+        .logo { 
+            width: 40px; 
+            height: 40px; 
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 800; 
+            font-size: 16px; 
+            color: white; 
+        }
+        .section-title { 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            color: #9ca3af; 
+            margin: 24px 0 12px; 
+            font-weight: 600; 
+        }
+        .nav a { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            color: #d1d5db; 
+            transition: all 0.2s; 
+            margin-bottom: 4px; 
+        }
+        .nav a:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav a.active { background: #6366f1; color: white; }
+        .quick-actions { margin-top: 16px; }
+        .btn { 
+            width: 100%; 
+            padding: 10px 16px; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 13px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            margin-bottom: 8px; 
+            transition: all 0.2s; 
+        }
+        .btn.primary { background: #10b981; color: white; }
+        .btn.primary:hover { background: #059669; }
+        .btn.secondary { background: rgba(255,255,255,0.1); color: #d1d5db; }
+        .btn.secondary:hover { background: rgba(255,255,255,0.2); }
+
+        /* Main content */
+        main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 24px; 
+            overflow-y: auto; 
+            gap: 24px; 
+        }
+
+        /* Topbar */
+        .topbar { 
+            display: flex; 
+            align-items: center; 
+            gap: 16px; 
+            padding: 16px 24px; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            margin-bottom: 8px; 
+        }
+        .search { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: #f9fafb; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            padding: 8px 12px; 
+            flex: 1; 
+        }
+        .search input { 
+            border: none; 
+            background: none; 
+            outline: none; 
+            flex: 1; 
+            font-size: 14px; 
+        }
+        .chip { 
+            background: #f3f4f6; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 20px; 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            color: #6b7280; 
+            white-space: nowrap; 
+        }
+
+        /* Cards */
+        .modules { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 16px; 
+            margin-bottom: 8px; 
+        }
+        .module-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            text-decoration: none; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            border: 1px solid #f1f5f9; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 16px; 
+            color: inherit;
+        }
+        .module-card:hover { 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            transform: translateY(-2px); 
+        }
+        .module-icon { 
+            width: 44px; 
+            height: 44px; 
+            background: linear-gradient(135deg, #e0f2fe, #b3e5fc); 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #0277bd; 
+            flex-shrink: 0; 
+        }
+        .module-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: #1f2937; 
+            margin-bottom: 8px; 
+        }
+        .module-list { 
+            list-style: none; 
+            margin: 0; 
+            padding: 0; 
+        }
+        .module-list li { 
+            font-size: 13px; 
+            color: #6b7280; 
+            margin-bottom: 4px; 
+            position: relative; 
+            padding-left: 12px; 
+        }
+        .module-list li::before { 
+            content: '•'; 
+            position: absolute; 
+            left: 0; 
+            color: #9ca3af; 
+        }
+
+        /* KPIs */
+        .kpis { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 16px; 
+            margin-bottom: 8px; 
+        }
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            border: 1px solid #f1f5f9; 
+        }
+        .kpi-title { 
+            font-size: 14px; 
+            color: #6b7280; 
+            margin-bottom: 8px; 
+            font-weight: 500; 
+        }
+        .kpi-value { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #1f2937; 
+            margin-bottom: 12px; 
+            display: flex; 
+            align-items: baseline; 
+            gap: 8px; 
+        }
+        .delta { font-size: 12px; font-weight: 500; }
+        .delta.up { color: #10b981; }
+        .delta.down { color: #ef4444; }
+
+        /* Charts */
+        .charts { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 16px; 
+            margin-bottom: 8px; 
+        }
+        .chart-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            border: 1px solid #f1f5f9; 
+        }
+        .chart-card h4 { 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: #1f2937; 
+            margin-bottom: 16px; 
+        }
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        /* Bottom section */
+        .bottom { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 16px; 
+        }
+
+        /* Heatmap */
+        .heatmap { 
+            display: grid; 
+            grid-template-columns: repeat(24, 1fr); 
+            gap: 2px; 
+            margin-bottom: 12px; 
+        }
+        .hm-cell { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 2px; 
+        }
+        .hm-legend { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 12px; 
+            color: #6b7280; 
+        }
+        .hm-swatch { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 2px; 
+        }
+
+        /* Timeline */
+        .timeline { 
+            list-style: none; 
+            margin: 0; 
+            padding: 0; 
+        }
+        .timeline li { 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 12px; 
+            margin-bottom: 16px; 
+        }
+        .dot { 
+            width: 8px; 
+            height: 8px; 
+            background: #6366f1; 
+            border-radius: 50%; 
+            margin-top: 6px; 
+            flex-shrink: 0; 
+        }
+        .item { flex: 1; }
+        .meta { 
+            font-size: 12px; 
+            color: #9ca3af; 
+        }
+
+        /* Icons */
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; }
+            .modules { grid-template-columns: 1fr; }
+            .kpis { grid-template-columns: 1fr; }
+            .charts { grid-template-columns: 1fr; }
+            .bottom { grid-template-columns: 1fr; }
+        }
+    </style>
+<style>
+    .paginas-orfas-menu {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px 0;
+        font-size: 0.9rem;
+    }
+    .paginas-orfas-menu h3 {
+        margin: 0 0 10px 0;
+        color: #374151;
+        font-size: 1rem;
+    }
+    .categoria-orfas {
+        margin-bottom: 10px;
+    }
+    .categoria-orfas strong {
+        color: #1f2937;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .categoria-orfas a {
+        display: inline-block;
+        margin: 2px 5px 2px 0;
+        padding: 4px 8px;
+        background: #e5e7eb;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    .categoria-orfas a:hover {
+        background: #d1d5db;
+    }
+    </style></head>
+<body>
+<aside class="sidebar">
+<div class="brand">
+<div class="logo">TM</div> 
+            TeleMed
+        </div>
+<div class="section-title">Menu</div>
+<nav class="nav">
+<a class="active" href="#">
+<svg class="icon" viewbox="0 0 24 24"><path d="M3 12l9-9 9 9"></path><path d="M9 21V9h6v12"></path></svg>
+                Dashboard
+            </a>
+<a href="pacientes.html">
+<svg class="icon" viewbox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Pacientes
+            </a>
+<a href="/medico">
+<svg class="icon" viewbox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Área Médica
+            </a>
+<a href="/enhanced">
+<svg class="icon" viewbox="0 0 24 24"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline></svg>
+                Consulta IA
+            </a>
+<a href="/gestao-avancada.html">
+<svg class="icon" viewbox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>
+                Gestão Avançada
+            </a>
+<div class="section-title">Ações Rápidas</div>
+<div class="quick-actions">
+<button class="btn primary" onclick="window.open('/enhanced', '_blank')">Nova Consulta</button>
+<button class="btn secondary" onclick="window.open('/public/demo-ativo/pacientes.html', '_blank')">Novo Paciente</button>
+<button class="btn secondary" onclick="window.open('/enhanced', '_blank')">Teleconsulta</button>
+<button class="btn secondary" onclick="window.open('/patient-management', '_blank')">Prescrição</button>
+</div>
+</nav><div style="margin: 15px 0; padding: 10px; background: #f9fafb; border-radius: 8px; border-left: 3px solid #10b981;"><strong style="color: #374151; display: block; margin-bottom: 8px; font-size: 0.9rem;">📄 Mais Páginas</strong><div style="display: flex; flex-wrap: wrap; gap: 8px;"><a href="/dashboard-clean.html" style="padding: 4px 8px; background: #e5e7eb; color: #374151; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Dashboard Clean</a><a href="/dashboard-minimal.html" style="padding: 4px 8px; background: #e5e7eb; color: #374151; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Dashboard Minim...</a><a href="/dashboard-pastel.html" style="padding: 4px 8px; background: #e5e7eb; color: #374151; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Dashboard Paste...</a><a href="/depressao-phq9.html" style="padding: 4px 8px; background: #e5e7eb; color: #374151; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Depressao Phq9</a><a href="/gad7-ansiedade.html" style="padding: 4px 8px; background: #e5e7eb; color: #374151; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Gad7 Ansiedade</a></div></div><div class="paginas-orfas-menu"><h3>📋 Páginas Adicionais</h3><div class="categoria-orfas"><strong>🧠 Avaliações Psiquiátricas</strong><a href="/ansiedade-gad7.html">Ansiedade Gad7</a><a href="/bipolar-mdq.html">Bipolar Mdq</a><a href="/depressao-phq9.html">Depressao Phq9</a><span style="color: #6b7280; font-style: italic;"> (+6 mais)</span></div><div class="categoria-orfas"><strong>📊 Dashboards Alternativos</strong><a href="/dashboard-aquarela-backup.html">Dashboard Aquarela B...</a><a href="/dashboard-aquarela-simple-backup.html">Dashboard Aquarela S...</a><a href="/dashboard-clean.html">Dashboard Clean</a><span style="color: #6b7280; font-style: italic;"> (+2 mais)</span></div><div class="categoria-orfas"><strong>🩺 Consultas Especializadas</strong><a href="/atendimento-medico.html">Atendimento Medico</a></div><div class="categoria-orfas"><strong>📄 Outras Páginas</strong><a href="/guia-integracao-hostinger.html">Guia Integracao Host...</a><a href="/links-verificacao-telemed.html">Links Verificacao Te...</a><a href="/logout.html">Logout</a><span style="color: #6b7280; font-style: italic;"> (+2 mais)</span></div></div>
+</aside>
+<main>
+<div class="topbar">
+<div class="search">
+<svg class="icon" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="7"></circle>
+<path d="M21 21l-4.35-4.35"></path>
+</svg>
+<input placeholder="Buscar por pacientes, exames, sintomas…"/>
+</div>
+<span class="chip">Período: Este ano</span>
+<span class="chip">Departamento: Todos</span>
+<span class="chip">Convênio: Todos</span>
+</div>
+<!-- Módulos do Sistema -->
+<section class="modules">
+<a class="module-card" href="/agenda" title="Agenda do Dia">
+<div class="module-icon">
+<svg fill="none" height="22" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="22">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+<div>
+<h4 class="module-title">Agenda do Dia</h4>
+<ul class="module-list">
+<li>Timeline interativa</li>
+<li>Agendamento rápido</li>
+<li>Notificações em tempo real</li>
+</ul>
+</div>
+</a>
+<a class="module-card" href="pacientes.html" title="Gestão de Pacientes">
+<div class="module-icon">
+<svg fill="none" height="22" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="22">
+<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+<circle cx="9" cy="7" r="4"></circle>
+<path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+<path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+</svg>
+</div>
+<div>
+<h4 class="module-title">Gestão de Pacientes</h4>
+<ul class="module-list">
+<li>Cadastro completo</li>
+<li>Histórico médico</li>
+<li>Relatórios personalizados</li>
+</ul>
+</div>
+</a>
+<a class="module-card" href="/perfil-medico" title="Perfil do Médico">
+<div class="module-icon">
+<svg fill="none" height="22" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="22">
+<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+<circle cx="12" cy="7" r="4"></circle>
+</svg>
+</div>
+<div>
+<h4 class="module-title">Perfil do Médico</h4>
+<ul class="module-list">
+<li>Dados profissionais</li>
+<li>Certificações</li>
+<li>Horários de trabalho</li>
+</ul>
+</div>
+</a>
+<a class="module-card" href="/configuracoes" title="Configurações">
+<div class="module-icon">
+<svg fill="none" height="22" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="22">
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+</svg>
+</div>
+<div>
+<h4 class="module-title">Configurações</h4>
+<ul class="module-list">
+<li>Integrações</li>
+<li>Backup e segurança</li>
+<li>Logs do sistema</li>
+</ul>
+</div>
+</a>
+<a class="module-card" href="public/demo-ativo/mobile.html" title="Demo Responsivo">
+<div class="module-icon">
+<svg fill="none" height="22" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="22">
+<rect height="16" rx="2" width="20" x="2" y="4"></rect>
+<path d="M10 4v4h4V4"></path>
+</svg>
+</div>
+<div>
+<h4 class="module-title">Demo Responsivo</h4>
+<ul class="module-list">
+<li>Simulador de dispositivos</li>
+<li>Performance otimizada</li>
+<li>Interface adaptativa</li>
+</ul>
+</div>
+</a>
+</section>
+<!-- KPIs -->
+<section class="kpis">
+<div class="card">
+<h4 class="kpi-title">Pacientes Cadastrados</h4>
+<div class="kpi-value">847 <span class="delta up">+3% vs. semana passada</span></div>
+<canvas height="44" id="kpiChart1" width="300"></canvas>
+</div>
+<div class="card">
+<h4 class="kpi-title">Consultas Hoje</h4>
+<div class="kpi-value">12 <span class="delta down">-7% vs. ontem</span></div>
+<canvas height="44" id="kpiChart2" width="300"></canvas>
+</div>
+<div class="card">
+<h4 class="kpi-title">Prescrições Pendentes</h4>
+<div class="kpi-value">5 <span class="delta">meta: ≤ 4</span></div>
+<canvas height="44" id="kpiChart3" width="300"></canvas>
+</div>
+<div class="card">
+<h4 class="kpi-title">Avaliação Média</h4>
+<div class="kpi-value">4.0 <span class="delta up">+0.2 vs. mês anterior</span></div>
+<canvas height="44" id="kpiChart4" width="300"></canvas>
+</div>
+</section>
+<!-- Charts -->
+<section class="charts">
+<div class="chart-card">
+<h4>Pico de Consultas por Horário</h4>
+<div class="chart-container">
+<canvas id="hoursChart"></canvas>
+</div>
+</div>
+<div class="chart-card">
+<h4>NPS – Satisfação do Paciente (Últimas 8 semanas)</h4>
+<div class="chart-container">
+<canvas id="npsChart"></canvas>
+</div>
+</div>
+<div class="chart-card">
+<h4>Prioridade da Fila</h4>
+<div class="chart-container">
+<canvas id="queueChart"></canvas>
+</div>
+</div>
+</section>
+<!-- Bottom section -->
+<section class="bottom">
+<div class="card">
+<h4>Mapa de Calor – Atividade por Hora/Dia</h4>
+<div class="heatmap" id="heatmap"></div>
+<div class="hm-legend">
+<span>Baixa</span>
+<span class="hm-swatch" style="background:rgba(162,210,255,.18)"></span>
+<span class="hm-swatch" style="background:rgba(162,210,255,.35)"></span>
+<span class="hm-swatch" style="background:rgba(162,210,255,.55)"></span>
+<span class="hm-swatch" style="background:rgba(162,210,255,.75)"></span>
+<span>Alta</span>
+</div>
+</div>
+<div class="card">
+<h4>Timeline de Atividades</h4>
+<ul class="timeline">
+<li>
+<span class="dot"></span>
+<div class="item">
+<strong>Consulta concluída</strong> – João Santos<br/>
+<span class="meta">Hoje • 14:20</span>
+</div>
+</li>
+<li>
+<span class="dot"></span>
+<div class="item">
+<strong>Prescrição enviada</strong> – Amoxil 500mg<br/>
+<span class="meta">Hoje • 13:55</span>
+</div>
+</li>
+<li>
+<span class="dot"></span>
+<div class="item">
+<strong>Exame recebido</strong> – Hemograma (PDF)<br/>
+<span class="meta">Ontem • 18:10</span>
+</div>
+</li>
+<li>
+<span class="dot"></span>
+<div class="item">
+<strong>Anotação clínica</strong> – Dor torácica leve<br/>
+<span class="meta">Ontem • 10:42</span>
+</div>
+</li>
+</ul>
+</div>
+</section>
+</main>
+<script>
+        // Cores pastel
+        const pastel = (a = 0.6) => `rgba(162,210,255,${a})`;
+        const lavender = (a = 0.6) => `rgba(205,180,219,${a})`;
+
+        // Dados de exemplo
+        const horas = Array.from({length:24}, (_,i)=>`${String(i).padStart(2,'0')}:00`);
+        const valsHoras = [4,6,8,3,2,1,1,2,4,6,10,12,14,16,18,15,13,12,11,10,8,7,6,5];
+
+        // KPI Charts pequenos
+        function createKpiChart(canvasId, data, color) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map((_,i)=>i+1),
+                    datasets: [{
+                        data: data,
+                        fill: true,
+                        tension: 0.35,
+                        borderColor: color(0.9),
+                        backgroundColor: color(0.28),
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Gráfico de barras horizontais por hora
+        const hoursCtx = document.getElementById('hoursChart').getContext('2d');
+        new Chart(hoursCtx, {
+            type: 'bar',
+            data: {
+                labels: horas,
+                datasets: [{
+                    data: valsHoras,
+                    backgroundColor: pastel(0.7),
+                    borderColor: '#8AB8E6',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    barThickness: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#6B7280' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#6B7280', autoSkip: false, maxTicksLimit: 24 }
+                    }
+                }
+            }
+        });
+
+        // Gráfico NPS
+        const npsCtx = document.getElementById('npsChart').getContext('2d');
+        new Chart(npsCtx, {
+            type: 'line',
+            data: {
+                labels: ['S1','S2','S3','S4','S5','S6','S7','S8'],
+                datasets: [{
+                    label: 'NPS',
+                    data: [72,74,71,75,78,80,79,82],
+                    borderColor: pastel(0.95),
+                    backgroundColor: pastel(0.3),
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        suggestedMin: 60,
+                        suggestedMax: 90
+                    }
+                }
+            }
+        });
+
+        // Gráfico da fila
+        const queueCtx = document.getElementById('queueChart').getContext('2d');
+        new Chart(queueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Crítica','Alta','Média','Baixa'],
+                datasets: [{
+                    data: [8,14,9,5],
+                    backgroundColor: [lavender(0.75), pastel(0.75), pastel(0.55), lavender(0.45)],
+                    borderColor: '#8AB8E6',
+                    borderWidth: 1,
+                    barThickness: 6,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Criar KPI charts
+        createKpiChart('kpiChart1', [10,12,11,13,14,15,14,16,18,17,19,21], pastel);
+        createKpiChart('kpiChart2', [9,8,10,7,8,6,7,6,7,5,6,5], lavender);
+        createKpiChart('kpiChart3', [6,5,6,7,5,6,4,5,5,4,5,5], pastel);
+        createKpiChart('kpiChart4', [3.6,3.7,3.8,3.7,3.9,4.0,3.9,4.1,4.0,4.2,4.1,4.0], lavender);
+
+        // Heatmap
+        function createHeatmap() {
+            const heatmapContainer = document.getElementById('heatmap');
+            const dias = 7, horas = 24;
+            
+            for(let d = 0; d < dias; d++) {
+                for(let h = 0; h < horas; h++) {
+                    const v = Math.random();
+                    const alpha = 0.18 + v * 0.62;
+                    const cell = document.createElement('div');
+                    cell.className = 'hm-cell';
+                    cell.style.background = `rgba(162,210,255,${alpha.toFixed(2)})`;
+                    heatmapContainer.appendChild(cell);
+                }
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            createHeatmap();
+            console.log('📊 Dashboard Teste com Chart.js carregado com sucesso!');
+            console.log('✅ Gráficos: KPIs, Consultas por Hora, NPS, Fila de Prioridade');
+            console.log('🎨 Interface: Sidebar, módulos, heatmap, timeline');
+        });
+    </script>
+</body>
+</html>
