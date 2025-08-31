@@ -1,11 +1,4 @@
 services:
-- type: postgresql
-  name: telemed-db
-  plan: starter
-  databaseName: telemed
-  user: telemed
-  ipAllowList: []
-
 - type: redis
   name: telemed-cache
   plan: starter
@@ -22,57 +15,10 @@ services:
   healthCheckPath: /
   autoDeploy: true
   envVars:
-    - key: DATABASE_URL
-      fromDatabase:
-        name: telemed-db
-        property: connectionString
-    - key: REDIS_URL
-      fromService:
-        name: telemed-cache
-        type: redis
-        property: connectionString
-
-- type: web
-  name: medicaldesk-1
-  env: node
-  branch: main
-  rootDir: apps/medicaldesk-1
-  plan: starter
-  buildCommand: npm ci || npm install && npm run build
-  startCommand: NODE_ENV=production node dist/index.js
-  healthCheckPath: /
-  autoDeploy: true
-  envVars:
-    - key: DATABASE_URL
-      fromDatabase:
-        name: telemed-db
-        property: connectionString
-    - key: REDIS_URL
-      fromService:
-        name: telemed-cache
-        type: redis
-        property: connectionString
-
-- type: web
-  name: receitacerta
-  env: node
-  branch: main
-  rootDir: apps/receitacerta
-  plan: starter
-  buildCommand: npm ci || npm install && npm run build
-  startCommand: NODE_ENV=production node dist/index.js
-  healthCheckPath: /
-  autoDeploy: true
-  envVars:
-    - key: DATABASE_URL
-      fromDatabase:
-        name: telemed-db
-        property: connectionString
-    - key: REDIS_URL
-      fromService:
-        name: telemed-cache
-        type: redis
-        property: connectionString
+    - key: VITE_AUCTION_URL
+      value: https://telemed-auction.onrender.com
+    - key: VITE_PRODUCTIVITY_URL
+      value: https://telemed-productivity.onrender.com
 
 - type: web
   name: telemed-auction
@@ -86,8 +32,9 @@ services:
   autoDeploy: true
   envVars:
     - key: DATABASE_URL
-      fromDatabase:
+      fromService:
         name: telemed-db
+        type: postgresql
         property: connectionString
     - key: REDIS_URL
       fromService:
@@ -125,8 +72,9 @@ services:
   autoDeploy: true
   envVars:
     - key: DATABASE_URL
-      fromDatabase:
+      fromService:
         name: telemed-db
+        type: postgresql
         property: connectionString
     - key: INTERNAL_TOKEN
       value: change-me-internal
@@ -143,8 +91,9 @@ services:
   autoDeploy: true
   envVars:
     - key: DATABASE_URL
-      fromDatabase:
+      fromService:
         name: telemed-db
+        type: postgresql
         property: connectionString
     - key: JWT_SECRET
       value: change-me
@@ -154,3 +103,6 @@ services:
       value: whisper-1
     - key: OPENAI_LLM_MODEL
       value: gpt-4o-mini
+
+# Note: PostgreSQL database needs to be created manually in Render dashboard
+# After creating, reference it in the envVars above using fromService
