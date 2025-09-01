@@ -1,7 +1,62 @@
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
-generator client { provider = "prisma-client-js" }
-enum BidStatus { pending accepted_immediate accepted_scheduled rejected expired cancelled payment_failed paid }
-model Bid { id String @id @default(cuid()) patientId String specialty String isImmediate Boolean @default(true) amountCents Int status BidStatus @default(pending) suggestedNextAmountCents Int? proposedSlot DateTime? acceptedSlot DateTime? expiresAt DateTime @default(now()) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt events BidEvent[] payments Payment[] }
-model BidEvent { id String @id @default(cuid()) bidId String type String payload Json? createdAt DateTime @default(now()) bid Bid @relation(fields:[bidId], references:[id], onDelete: Cascade) @@index([bidId, createdAt]) }
-model PhysicianSettings { id String @id @default(cuid()) physicianId String @unique minPriceImmediateCents Int minPriceScheduledCents Int isAcceptingBids Boolean @default(true) specialties String? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model Payment { id String @id @default(cuid()) bidId String amountCents Int status String provider String providerRef String? createdAt DateTime @default(now()) bid Bid @relation(fields:[bidId], references:[id], onDelete: Cascade) @@index([bidId, status]) }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum BidStatus {
+  pending
+  accepted_immediate
+  accepted_scheduled
+  rejected
+  expired
+  cancelled
+  payment_failed
+  paid
+}
+
+model Bid {
+  id                         String     @id @default(cuid())
+  patientId                  String
+  specialty                  String
+  isImmediate                Boolean    @default(true)
+  amountCents                Int
+  status                     BidStatus  @default(pending)
+  suggestedNextAmountCents   Int?
+  propose                    // (campo incompleto, complete conforme definição real)
+}
+
+model BidEvent {
+  id        String   @id @default(cuid())
+  bidId     String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+  bid       Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  @@index([bidId])
+}
+
+model PhysicianSettings {
+  id                       String   @id @default(cuid())
+  physicianId               String   @unique
+  minPriceImmediateCents    Int
+  minPriceScheduledCents    Int
+  isAcceptingBids           Boolean  @default(true)
+  specialties               String?
+  cre                       // (campo incompleto, complete conforme definição real)
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  bidId        String
+  amountCents  Int
+  status       String
+  provider     String
+  providerRef  String?
+  createdAt    DateTime @default(now())
+  bid          Bid      @relation(fields: [bidId], references: [id])
+}
