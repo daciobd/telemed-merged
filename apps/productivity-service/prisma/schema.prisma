@@ -30,3 +30,16 @@ model AISummary {
 
   @@index([transcriptId])
 }
+
+// Sugestões de códigos (CID-10, TUSS, etc.)
+model CodeSuggestion {
+  id         String   @id @default(cuid())
+  consultId  String
+  system     String   // "CID10", "TUSS"...
+  code       String
+  label      String?
+  confidence Float?
+  createdAt  DateTime @default(now())
+
+  @@index([consultId])
+}
