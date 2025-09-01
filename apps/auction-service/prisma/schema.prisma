@@ -19,20 +19,26 @@ enum BidStatus {
 }
 
 model Bid {
-  id                         String     @id @default(cuid())
-  patientId                  String
-  specialty                  String
-  isImmediate                Boolean    @default(true)
-  amountCents                Int
-  status                     BidStatus  @default(pending)
-  suggestedNextAmountCents   Int?
-  propose                    // (campo incompleto, complete conforme definição real)
+  id               String     @id @default(cuid())
+  patientId        String
+  specialty        String
+  isImmediate      Boolean    @default(true)
+  amountCents      Int
+  status           BidStatus  @default(pending)
+  suggestedCents   Int?
+  scheduledFor     DateTime?
+  acceptedAt       DateTime?
+  createdAt        DateTime   @default(now())
+  events           BidEvent[]
+  payments         Payment[]
+
+  @@index([status, createdAt])
 }
 
 model BidEvent {
   id        String   @id @default(cuid())
   bidId     String
-  type      String
+  type      String               // created | updated | accepted | rejected | paid | ...
   payload   Json?
   createdAt DateTime @default(now())
   bid       Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
@@ -41,22 +47,24 @@ model BidEvent {
 }
 
 model PhysicianSettings {
-  id                       String   @id @default(cuid())
-  physicianId               String   @unique
-  minPriceImmediateCents    Int
-  minPriceScheduledCents    Int
-  isAcceptingBids           Boolean  @default(true)
-  specialties               String?
-  cre                       // (campo incompleto, complete conforme definição real)
+  id                         String   @id @default(cuid())
+  specialty                  String   @unique
+  minPriceImmediateCents     Int      @default(8000)
+  minPriceScheduledCents     Int      @default(6000)
+  isAcceptingBids            Boolean  @default(true)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 }
 
 model Payment {
-  id           String   @id @default(cuid())
-  bidId        String
-  amountCents  Int
-  status       String
-  provider     String
-  providerRef  String?
-  createdAt    DateTime @default(now())
-  bid          Bid      @relation(fields: [bidId], references: [id])
+  id            String   @id @default(cuid())
+  bidId         String
+  amountCents   Int
+  status        String   // ok | failed | pending
+  provider      String?
+  providerRef   String?
+  createdAt     DateTime @default(now())
+  bid           Bid      @relation(fields: [bidId], references: [id], onDelete: SetNull)
+
+  @@index([bidId])
 }
