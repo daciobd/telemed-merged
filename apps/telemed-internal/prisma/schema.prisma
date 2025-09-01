@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -16,14 +16,14 @@ model ExternalEvent {
 }
 
 model Appointment {
-  id         String   @id @default(cuid())
-  patientId  String?
-  physicianId String?
-  startsAt   DateTime?
-  status     String   @default("scheduled")
-  origin     String   @default("auction")
-  bidId      String?
-  createdAt  DateTime @default(now())
+  id           String   @id @default(cuid())
+  patientId    String?
+  physicianId  String?
+  startsAt     DateTime?
+  status       String   @default("scheduled") // scheduled | started | done | cancelled
+  origin       String   @default("auction")
+  bidId        String?
+  createdAt    DateTime @default(now())
 
   @@index([bidId])
 }
