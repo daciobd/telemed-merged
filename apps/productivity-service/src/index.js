@@ -1,186 +1,180 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import jwt from 'jsonwebtoken';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import fs from 'fs';
-import os from 'os';
-import multer from 'multer';
-import { openaiTranscribe, openaiSOAP } from './providers/openai.js';
+// apps/productivity-service/src/index.js
+import express from "express";
+import { PrismaClient } from "@prisma/client";
 
 const app = express();
 const prisma = new PrismaClient();
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
-app.use(morgan('tiny'));
 
-function auth(roles = []) {
-  return (req, res, next) => {
-    const h = req.header('Authorization');
-    if (!h) return res.status(401).json({ error: 'Missing Authorization' });
-    const [t, tk] = h.split(' ');
-    if (t !== 'Bearer') return res.status(401).json({ error: 'Invalid Authorization' });
-    try {
-      const p = jwt.verify(tk, process.env.JWT_SECRET || 'dev-secret');
-      if (roles.length && !roles.includes(p.role)) return res.status(403).json({ error: 'Forbidden' });
-      req.user = { id: p.sub, role: p.role, email: p.email };
-      next();
-    } catch {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-  };
-}
-app.get('/healthz', (_req, res) => res.json({ ok: true }));
+// parse JSON
+app.use(express.json({ limit: "2mb" }));
 
-// Upload + transcribe
-const upload = multer({ dest: os.tmpdir() });
-app.post('/ai/scribe/upload', auth(['physician']), upload.single('audio'), async (req, res) => {
+// --- healthcheck ------------------------------------------------------------
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
+// --- utils ------------------------------------------------------------------
+const isNonEmptyString = (v) => typeof v === "string" && v.trim().length > 0;
+
+/**
+ * Normaliza um item de sugestão de código vindo do cliente
+ * Mantém apenas os campos esperados pelo Prisma (CodeSuggestion).
+ */
+const pickSuggestion = (x = {}) => ({
+  system: isNonEmptyString(x.system) ? String(x.system) : undefined,
+  code: isNonEmptyString(x.code) ? String(x.code) : undefined,
+  label: isNonEmptyString(x.label) ? String(x.label) : undefined,
+  confidence:
+    typeof x.confidence === "number"
+      ? x.confidence
+      : x.confidence !== undefined
+      ? Number(x.confidence)
+      : undefined,
+});
+
+// --- Code Suggestions -------------------------------------------------------
+/**
+ * Cria várias CodeSuggestion para uma consulta.
+ * body: { consultId: string, items: Array<{system, code, label?, confidence?}> }
+ */
+app.post("/code-suggestions", async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'missing file' });
-    const text = process.env.OPENAI_API_KEY
-      ? await openaiTranscribe({ filePath: req.file.path })
-      : '(stub) transcrição';
-    const t = await prisma.transcript.create({
-      data: { consultId: req.body.consultId || 'unknown', text, diarized: false, lang: 'pt-BR' },
-    });
-    res.json({ transcriptId: t.id, text });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  } finally {
-    try {
-      fs.unlinkSync(req.file?.path);
-    } catch {}
-  }
-});
+    const { consultId, items } = req.body || {};
+    if (!isNonEmptyString(consultId)) {
+      return res.status(400).json({ ok: false, error: "consultId obrigatório" });
+    }
+    if (!Array.isArray(items)) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "items deve ser um array" });
+    }
 
-// Summarize (SOAP)
-app.post('/ai/summarize', auth(['physician']), async (req, res) => {
-  const { consultId, transcriptId } = req.body || {};
-  if (!consultId) return res.status(400).json({ error: 'consultId required' });
-  let transcript = '';
-  if (transcriptId) {
-    const t = await prisma.transcript.findUnique({ where: { id: transcriptId } });
-    transcript = t?.text || '';
-  }
-  if (!transcript) {
-    const t = await prisma.transcript.findFirst({
-      where: { consultId },
-      orderBy: { createdAt: 'desc' },
-    });
-    transcript = t?.text || '';
-  }
-  let soap = { S: 'Resumo...', O: '', A: '', P: '' };
-  if (process.env.OPENAI_API_KEY) {
-    soap = await openaiSOAP({ transcript, model: process.env.OPENAI_LLM_MODEL || 'gpt-4o-mini' });
-  }
-  const s = await prisma.aISummary.create({ data: { consultId, soap, confidence: 0.75 } });
-  res.json({ summaryId: s.id, soap: s.soap });
-});
+    const normalized = items
+      .map(pickSuggestion)
+      .filter((s) => isNonEmptyString(s.system) && isNonEmptyString(s.code));
 
-// Codes
-app.post('/ai/codes/suggest', auth(['physician']), async (req, res) => {
-  const { consultId } = req.body || {};
-  if (!consultId) return res.status(400).json({ error: 'consultId required' });
-  const items = [
-    {
-      codeSystem: 'CID10',
-      code: 'R51.9',
-      description: 'Cefaleia, não especificada',
-      score: 0.81,
-      rationale: 'termos: cefaleia, dor de cabeça',
-    },
-    {
-      codeSystem: 'CID10',
-      code: 'J06.9',
-      description: 'Infecção aguda vias aéreas superiores',
-      score: 0.64,
-      rationale: 'termos: febre, dor de garganta',
-    },
-    {
-      codeSystem: 'SIGTAP',
-      code: '03.01.06.001-9',
-      description: 'Consulta médica em atenção básica',
-      score: 0.72,
-      rationale: 'consulta',
-    },
-  ];
-  const created = await Promise.all(
-    items.map((i) =>
+    if (normalized.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Nenhum item válido (precisa de system e code).",
+      });
+    }
+
+    // Prisma: o model CodeSuggestion vira prisma.codeSuggestion
+    const tx = normalized.map((s) =>
       prisma.codeSuggestion.create({
-        data: { consultId, ...i }, // <- JS spread correto
+        data: { consultId, ...s }, // << spread correto em JS
       })
-    )
-  );
-  res.json({ suggestions: created });
+    );
+
+    const created = await prisma.$transaction(tx);
+    return res.status(201).json({ ok: true, count: created.length, data: created });
+  } catch (err) {
+    console.error("[POST /code-suggestions] error:", err);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
 });
 
-app.post('/ai/codes/feedback', auth(['physician']), async (req, res) => {
-  const { suggestionId, accepted } = req.body || {};
-  const upd = await prisma.codeSuggestion.update({
-    where: { id: suggestionId },
-    data: { accepted },
-  });
-  res.json({ ok: true, id: upd.id });
+/**
+ * Lista CodeSuggestion por consultId.
+ */
+app.get("/code-suggestions/:consultId", async (req, res) => {
+  try {
+    const { consultId } = req.params;
+    if (!isNonEmptyString(consultId)) {
+      return res.status(400).json({ ok: false, error: "consultId inválido" });
+    }
+    const rows = await prisma.codeSuggestion.findMany({
+      where: { consultId },
+      orderBy: { createdAt: "desc" },
+    });
+    return res.json({ ok: true, data: rows });
+  } catch (err) {
+    console.error("[GET /code-suggestions/:consultId] error:", err);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
 });
 
-// Notes
-app.get('/notes', auth(['physician']), async (req, res) => {
-  const { patientId } = req.query;
-  const items = await prisma.note.findMany({
-    where: { patientId: String(patientId || '') },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-  });
-  res.json({ items });
-});
-app.post('/notes', auth(['physician']), async (req, res) => {
-  const { patientId, consultId, text, pinned } = req.body || {};
-  if (!patientId || !text)
-    return res.status(400).json({ error: 'patientId and text required' });
-  const n = await prisma.note.create({
-    data: {
-      patientId,
-      consultId: consultId || null,
-      authorId: req.user.id,
-      text,
-      pinned: !!pinned,
-    },
-  });
-  res.json({ id: n.id });
-});
-app.patch('/notes/:id', auth(['physician']), async (req, res) => {
-  const { text, pinned } = req.body || {};
-  const n = await prisma.note.update({
-    where: { id: req.params.id },
-    data: { text, pinned: pinned ?? undefined },
-  });
-  res.json({ ok: true, id: n.id });
-});
-app.delete('/notes/:id', auth(['physician']), async (req, res) => {
-  await prisma.note.delete({ where: { id: req.params.id } });
-  res.json({ ok: true });
+// --- Transcripts & Summaries ------------------------------------------------
+/**
+ * Cria um Transcript e, opcionalmente, summaries associados.
+ * body: { summaries?: Array<{ type?, content?, model?, tokens? }> }
+ * Observação: o schema atual de Transcript só tem id/createdAt.
+ */
+app.post("/transcripts", async (req, res) => {
+  try {
+    const { summaries } = req.body || {};
+
+    const t = await prisma.transcript.create({ data: {} });
+
+    let createdSummaries = [];
+    if (Array.isArray(summaries) && summaries.length > 0) {
+      // prisma.AISummary => client usa camelCase do model:
+      // Model "AISummary" vira "aISummary" no client
+      const toInsert = summaries.map((s) => ({
+        transcriptId: t.id,
+        type: isNonEmptyString(s.type) ? s.type : null,
+        content: isNonEmptyString(s.content) ? s.content : null,
+        model: isNonEmptyString(s.model) ? s.model : null,
+        tokens:
+            typeof s.tokens === "number"
+              ? s.tokens
+              : s.tokens !== undefined
+              ? Number(s.tokens)
+              : null,
+      }));
+
+      const tx = toInsert.map((row) => prisma.aISummary.create({ data: row }));
+      createdSummaries = await prisma.$transaction(tx);
+    }
+
+    return res.status(201).json({
+      ok: true,
+      transcriptId: t.id,
+      summaries: createdSummaries,
+    });
+  } catch (err) {
+    console.error("[POST /transcripts] error:", err);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
 });
 
-// Followups
-app.post('/followups/suggest', auth(['physician']), async (req, res) => {
-  const { consultId, code } = req.body || {};
-  if (!consultId || !code)
-    return res.status(400).json({ error: 'consultId and code required' });
-  const f = await prisma.followup.create({
-    data: { consultId, patientId: 'unknown', suggestedFor: code, accepted: false },
-  });
-  res.json({ followupId: f.id, suggestionDays: 30 });
-});
-app.post('/followups/accept', auth(['physician']), async (req, res) => {
-  const { followupId, slot } = req.body || {};
-  const f = await prisma.followup.update({
-    where: { id: followupId },
-    data: { accepted: true, slot: slot ? new Date(slot) : null },
-  });
-  res.json({ ok: true, followupId: f.id });
+/**
+ * Lista summaries de um Transcript.
+ */
+app.get("/transcripts/:id/summaries", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isNonEmptyString(id)) {
+      return res.status(400).json({ ok: false, error: "id inválido" });
+    }
+    const rows = await prisma.aISummary.findMany({
+      where: { transcriptId: id },
+      orderBy: { createdAt: "desc" },
+    });
+    return res.json({ ok: true, data: rows });
+  } catch (err) {
+    console.error("[GET /transcripts/:id/summaries] error:", err);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log('productivity-service on', PORT));
+// --- 404 fallback -----------------------------------------------------------
+app.use((_req, res) => {
+  res.status(404).json({ ok: false, error: "not_found" });
+});
+
+// --- boot -------------------------------------------------------------------
+const PORT = process.env.PORT ? Number(process.env.PORT) : 10000;
+app.listen(PORT, () => {
+  console.log(`productivity-service on ${PORT}`);
+});
+
+// graceful shutdown
+process.on("SIGTERM", async () => {
+  try {
+    await prisma.$disconnect();
+  } finally {
+    process.exit(0);
+  }
+});
