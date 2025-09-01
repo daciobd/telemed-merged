@@ -1,9 +1,83 @@
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
-generator client { provider = "prisma-client-js" }
-model Transcript { id String @id @default(cuid()) consultId String diarized Boolean @default(false) text String lang String @default("pt-BR") createdAt DateTime @default(now()) summaries AISummary[] }
-model AISummary { id String @id @default(cuid()) consultId String soap Json confidence Float? approvedBy String? createdAt DateTime @default(now()) }
-model AIEntity { id String @id @default(cuid()) consultId String type String value String span String? source String? createdAt DateTime @default(now()) }
-model Note { id String @id @default(cuid()) patientId String consultId String? authorId String text String pinned Boolean @default(false) createdAt DateTime @default(now()) @@index([patientId, createdAt]) }
-model CodeSuggestion { id String @id @default(cuid()) consultId String codeSystem String code String description String score Float rationale String? accepted Boolean? @default(false) createdAt DateTime @default(now()) @@index([consultId, codeSystem, score]) }
-model FollowupRule { id String @id @default(cuid()) codeSystem String code String defaultIntervalDays Int minIntervalDays Int? notes String? createdAt DateTime @default(now()) @@index([codeSystem, code]) }
-model Followup { id String @id @default(cuid()) consultId String patientId String suggestedFor String accepted Boolean @default(false) slot DateTime? createdAt DateTime @default(now()) }
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Transcript {
+  id          String      @id @default(cuid())
+  consultId   String
+  diarized    Boolean     @default(false)
+  text        String
+  lang        String      @default("pt-BR")
+  createdAt   DateTime    @default(now())
+  summaries   AISummary[]
+}
+
+model AISummary {
+  id          String      @id @default(cuid())
+  consultId   String
+  soap        Json
+  confidence  Float?
+  approvedBy  String?
+  createdAt   DateTime    @default(now())
+}
+
+model AIEntity {
+  id          String      @id @default(cuid())
+  consultId   String
+  type        String
+  value       String
+  span        String?
+  source      String?
+  createdAt   DateTime    @default(now())
+}
+
+model Note {
+  id          String      @id @default(cuid())
+  patientId   String
+  consultId   String?
+  authorId    String
+  text        String
+  pinned      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+
+  @@index([patientId, createdAt])
+}
+
+model CodeSuggestion {
+  id          String      @id @default(cuid())
+  consultId   String
+  codeSystem  String
+  code        String
+  description String
+  score       Float
+  rationale   String?
+  accepted    Boolean?    @default(false)
+  createdAt   DateTime    @default(now())
+}
+
+model FollowupRule {
+  id                  String   @id @default(cuid())
+  codeSystem          String
+  code                String
+  defaultIntervalDays Int
+  minIntervalDays     Int?
+  notes               String?
+  createdAt           DateTime @default(now())
+
+  @@index([codeSystem, code])
+}
+
+model Followup {
+  id           String   @id @default(cuid())
+  consultId    String
+  patientId    String
+  suggestedFor String
+  accepted     Boolean  @default(false)
+  slot         DateTime?
+  createdAt    DateTime @default(now())
+}
