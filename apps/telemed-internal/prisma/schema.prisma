@@ -1,3 +1,29 @@
-datasource db { provider="postgresql"; url=env("DATABASE_URL") } generator client { provider="prisma-client-js" }
-model ExternalEvent { id String @id @default(cuid()) type String payload Json status String @default("received") createdAt DateTime @default(now()) }
-model Appointment { id String @id @default(cuid()) patientId String? physicianId String? startsAt DateTime? status String @default("scheduled") origin String @default("auction") bidId String? createdAt DateTime @default(now()) @@index([bidId]) }
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ExternalEvent {
+  id        String   @id @default(cuid())
+  type      String
+  payload   Json
+  status    String   @default("received")
+  createdAt DateTime @default(now())
+}
+
+model Appointment {
+  id         String   @id @default(cuid())
+  patientId  String?
+  physicianId String?
+  startsAt   DateTime?
+  status     String   @default("scheduled")
+  origin     String   @default("auction")
+  bidId      String?
+  createdAt  DateTime @default(now())
+
+  @@index([bidId])
+}
