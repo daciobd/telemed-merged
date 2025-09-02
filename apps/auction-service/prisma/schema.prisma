@@ -58,13 +58,14 @@ model PhysicianSettings {
 
 model Payment {
   id            String   @id @default(cuid())
-  bidId         String
+  bidId         String   // Campo obrigatório (não nullable)
   amountCents   Int
-  status        String   // ok | failed | pending
+  status        String
   provider      String?
   providerRef   String?
   createdAt     DateTime @default(now())
-  bid           Bid      @relation(fields: [bidId], references: [id], onDelete: SetNull)
+  // Altere a relação para usar onDelete: Cascade
+  bid           Bid      @relation(fields: [bidId], references: [id], onDelete: Cascade)
 
   @@index([bidId])
 }
