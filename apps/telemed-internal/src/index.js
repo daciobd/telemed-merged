@@ -1,9 +1,79 @@
-import express from 'express'; import morgan from 'morgan'; import { PrismaClient } from '@prisma/client';
-const app = express(); const prisma = new PrismaClient(); app.use(express.json()); app.use(morgan('tiny')); app.get('/healthz',(_req,res)=>res.json({ok:true}));
-function checkInternal(req,res,next){ const t=req.header('X-Internal-Token'); if(!t || t!==(process.env.INTERNAL_TOKEN||'change-me-internal')) return res.status(401).json({error:'unauthorized'}); next(); }
-app.post('/internal/appointments/from-bid', checkInternal, async (req,res)=>{ const { bidId, acceptedSlot, isImmediate } = req.body||{}; if(!bidId) return res.status(400).json({error:'bidId required'});
-  const evt = await prisma.externalEvent.create({ data:{ type:'AUCTION_PAID', payload:{ bidId, acceptedSlot, isImmediate } } });
-  try{ const appt = await prisma.appointment.create({ data:{ bidId, startsAt: acceptedSlot? new Date(acceptedSlot): new Date(), status: isImmediate?'confirmed':'scheduled', origin:'auction' } }); return res.json({ ok:true, appointmentId: appt.id, eventId: evt.id }); }
-  catch(e){ console.warn('Appointment create skipped:', e.message); return res.json({ ok:true, eventId: evt.id, note:'Appointment model not managed here; event logged.' }); }
+// apps/telemed-internal/src/index.js
+import express from "express";
+import { PrismaClient } from "@prisma/client";
+
+const app = express();
+const prisma = new PrismaClient();
+
+app.use(express.json({ limit: "2mb" }));
+
+// Healthcheck
+app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// Middleware de autenticação interna
+const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || "";
+app.use("/internal", (req, res, next) => {
+  const token = req.header("X-Internal-Token");
+  if (!INTERNAL_TOKEN || token !== INTERNAL_TOKEN) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+  next();
 });
-const PORT=process.env.PORT||8080; app.listen(PORT,()=>console.log('telemed-internal on',PORT));
+
+// Cria consulta a partir de um lance aceito (imediato/agendado)
+app.post("/internal/appointments/from-bid", async (req, res) => {
+  try {
+    const {
+      bidId,
+      patientId,
+      physicianId = null,
+      isImmediate = true,
+      scheduledFor = null,
+    } = req.body || {};
+
+    if (!bidId || !patientId) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "bidId e patientId são obrigatórios" });
+    }
+
+    const appointment = await prisma.appointment.create({
+      data: {
+        bidId,
+        patientId,
+        physicianId,
+        origin: "auction",
+        status: "scheduled",
+        startsAt:
+          isImmediate ? null : scheduledFor ? new Date(scheduledFor) : null,
+      },
+    });
+
+    await prisma.externalEvent.create({
+      data: {
+        type: "appointment.created.fromBid",
+        payload: req.body,
+        status: "received",
+      },
+    });
+
+    return res.status(201).json({ ok: true, data: appointment });
+  } catch (err) {
+    console.error("[from-bid] error:", err);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+const PORT = process.env.PORT ? Number(process.env.PORT) : 10000;
+app.listen(PORT, () => {
+  console.log(`telemed-internal on ${PORT}`);
+});
+
+// Encerramento gracioso
+process.on("SIGTERM", async () => {
+  try {
+    await prisma.$disconnect();
+  } finally {
+    process.exit(0);
+  }
+});
