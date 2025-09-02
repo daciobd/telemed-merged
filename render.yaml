@@ -47,6 +47,8 @@ services:
       value: change-me-internal
     - key: PUBLIC_BASE_URL
       value: https://telemed-deploy-ready.onrender.com
+    - key: FRONTEND_ORIGIN
+      value: https://telemed-deploy-ready.onrender.com
     - key: AUCTION_ENABLED
       value: 'true'
     - key: AUCTION_IMMEDIATE_EXPIRES_MIN
@@ -78,6 +80,8 @@ services:
         property: connectionString
     - key: INTERNAL_TOKEN
       value: change-me-internal
+    - key: FRONTEND_ORIGIN
+      value: https://telemed-deploy-ready.onrender.com
 
 - type: web
   name: telemed-productivity
@@ -97,6 +101,8 @@ services:
         property: connectionString
     - key: JWT_SECRET
       value: change-me
+    - key: FRONTEND_ORIGIN
+      value: https://telemed-deploy-ready.onrender.com
     - key: OPENAI_API_KEY
       value: ''
     - key: OPENAI_WHISPER_MODEL

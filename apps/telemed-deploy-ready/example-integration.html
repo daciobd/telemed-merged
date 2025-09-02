@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplo de Integração - TeleMed Services</title>
+</head>
+<body>
+    <h1>Exemplo de Integração com os Serviços TeleMed</h1>
+    
+    <div id="auction-example">
+        <h2>Leilão de Consultas</h2>
+        <button onclick="testAuctionService()">Testar Serviço de Leilão</button>
+        <div id="auction-result"></div>
+    </div>
+    
+    <div id="productivity-example">
+        <h2>Serviços de Produtividade</h2>
+        <button onclick="testProductivityService()">Testar Scribe/CIDs</button>
+        <div id="productivity-result"></div>
+    </div>
+
+    <!-- Importar config ANTES dos seus scripts -->
+    <script src="/js/config.js"></script>
+    
+    <script>
+        // Exemplo de uso do config
+        async function testAuctionService() {
+            const resultDiv = document.getElementById('auction-result');
+            
+            try {
+                // Usar as URLs do config
+                const response = await fetch(`${window.TELEMED_CFG.AUCTION_URL}/auction/info`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p>✅ Conectado com sucesso!</p>
+                    <p>Leilão habilitado: ${data.enabled ? 'Sim' : 'Não'}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        async function testProductivityService() {
+            const resultDiv = document.getElementById('productivity-result');
+            
+            try {
+                // Usar as URLs do config
+                const response = await fetch(`${window.TELEMED_CFG.PRODUCTIVITY_URL}/healthz`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p>✅ Conectado com sucesso!</p>
+                    <p>Status: ${data.ok ? 'OK' : 'Erro'}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        // Verificar se o config foi carregado
+        if (window.TELEMED_CFG) {
+            console.log('Config carregado:', window.TELEMED_CFG);
+        } else {
+            console.error('Config não foi carregado!');
+        }
+    </script>
+</body>
+</html>
