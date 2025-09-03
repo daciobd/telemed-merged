@@ -16,7 +16,8 @@
     .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
     .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
     .muted{color:var(--muted)}
-    .btn{background:var(--brand);color:#fff;border:0;padding:9px 12px;border-radius:10px;cursor:pointer}
+    .btn{background:var(--brand);color:#fff;border:0;padding:9px 12px;border-radius:10px;cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center}
+    .btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--border)}
     input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
     .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
     .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid var(--border)}
@@ -37,13 +38,14 @@
 
   <section class="card">
     <h2>Serviços (health)</h2>
-    <p class="muted">Edite os endpoints se necessário e clique em “Testar”.</p>
+    <p class="muted">Edite os endpoints se necessário e clique em “Testar”. Use “Abrir” para ver o <code>/healthz</code> em nova aba.</p>
     <div class="grid">
       <div>
         <label>AUCTION_URL</label>
         <div class="row">
           <input id="auUrl" placeholder="https://telemed-auction.onrender.com" />
           <button class="btn" id="checkAuction">Testar</button>
+          <a class="btn ghost" id="openAuction" target="_blank" rel="noopener">Abrir</a>
         </div>
         <div id="outAuction" class="muted" style="margin-top:6px"></div>
       </div>
@@ -52,6 +54,7 @@
         <div class="row">
           <input id="inUrl" placeholder="https://telemed-internal.onrender.com" />
           <button class="btn" id="checkInternal">Testar</button>
+          <a class="btn ghost" id="openInternal" target="_blank" rel="noopener">Abrir</a>
         </div>
         <div id="outInternal" class="muted" style="margin-top:6px"></div>
       </div>
@@ -60,6 +63,7 @@
         <div class="row">
           <input id="prodUrl" placeholder="https://telemed-productivity.onrender.com" />
           <button class="btn" id="checkProd">Testar</button>
+          <a class="btn ghost" id="openProd" target="_blank" rel="noopener">Abrir</a>
         </div>
         <div id="outProd" class="muted" style="margin-top:6px"></div>
       </div>
@@ -93,7 +97,19 @@
   const AU = document.getElementById('auUrl');
   const IN = document.getElementById('inUrl');
   const PR = document.getElementById('prodUrl');
+  const OA = document.getElementById('openAuction');
+  const OI = document.getElementById('openInternal');
+  const OP = document.getElementById('openProd');
+
   AU.value = DEFAULTS.auction; IN.value = DEFAULTS.internal; PR.value = DEFAULTS.prod;
+
+  function syncOpenLinks(){
+    OA.href = AU.value.replace(/\/$/,'') + '/healthz';
+    OI.href = IN.value.replace(/\/$/,'') + '/healthz';
+    OP.href = PR.value.replace(/\/$/,'') + '/healthz';
+  }
+  [AU,IN,PR].forEach(el => el.addEventListener('input', syncOpenLinks));
+  syncOpenLinks();
 
   async function health(url, outId){
     const out = document.getElementById(outId); out.innerHTML='';
@@ -108,9 +124,9 @@
       out.innerHTML = `<span class="badge bad">Falha</span> <small class="muted">${String(e)}</small>`;
     }
   }
-  document.getElementById('checkAuction').onclick = ()=>health(AU.value,'outAuction');
-  document.getElementById('checkInternal').onclick= ()=>health(IN.value,'outInternal');
-  document.getElementById('checkProd').onclick    = ()=>health(PR.value,'outProd');
+  document.getElementById('checkAuction').onclick = ()=>{ health(AU.value,'outAuction'); syncOpenLinks(); };
+  document.getElementById('checkInternal').onclick= ()=>{ health(IN.value,'outInternal'); syncOpenLinks(); };
+  document.getElementById('checkProd').onclick    = ()=>{ health(PR.value,'outProd'); syncOpenLinks(); };
 
   async function buildRoutes(){
     const ul = document.getElementById('routes'); ul.innerHTML = '';
