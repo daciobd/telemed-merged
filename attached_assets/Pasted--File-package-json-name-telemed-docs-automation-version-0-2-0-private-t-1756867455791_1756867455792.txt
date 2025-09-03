@@ -1,0 +1,687 @@
+# File: package.json
+{
+  "name": "telemed-docs-automation",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.609.0",
+    "@aws-sdk/s3-request-presigner": "^3.609.0",
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.11",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-validator": "^7.0.1",
+    "handlebars": "^4.7.8",
+    "pdfkit": "^0.15.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.2",
+    "@types/pdfkit": "^0.13.6",
+    "@types/uuid": "^9.0.7",
+    "eslint": "^9.4.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.4"
+  }
+}
+
+# File: tsconfig.json
+# File: tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
+
+# File: .env.example
+PORT=8080
+# CORS: vírgulas separando múltiplas origens (ou deixe vazio para permitir todas em DEV)
+CORS_ORIGINS=https://telemed.app,https://telemed-staging.onrender.com
+
+# Auth interna simples (frontend/telemed-internal deve enviar este header)
+INTERNAL_TOKEN=defina_um_token_forte_aqui
+
+# Receita Certa (opcional em DEV)
+RECEITA_CERTA_API_URL=https://api.receitacerta.example/v1
+RECEITA_CERTA_API_KEY=changeme
+
+# Notificações (stub em DEV)
+NOTIFY_EMAIL_FROM=no-reply@telemed.app
+NOTIFY_WHATSAPP_PROVIDER=twilio
+NOTIFY_WHATSAPP_FROM=whatsapp:+10000000000
+
+# S3 / R2 para armazenar PDFs
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+S3_BUCKET=telemed-docs
+S3_PREFIX=docs/
+SIGNED_URL_TTL_SECONDS=900
+
+# File: src/index.ts
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import generationRouter from './routes/generation.js';
+
+const app = express();
+app.use(express.json({ limit: '2mb' }));
+
+// CORS configurável por env
+const ORIGINS = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(cors({ origin: ORIGINS.length ? ORIGINS : true }));
+
+// Healthcheck padronizado
+app.get('/healthz', (_req, res) => res.json({ ok: true }));
+
+// Middleware simples de auth interna por token
+function requireInternalToken(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const configured = process.env.INTERNAL_TOKEN;
+  if (!configured) return res.status(500).json({ ok: false, error: 'INTERNAL_TOKEN not set' });
+  const token = req.get('x-internal-token');
+  if (token !== configured) return res.status(401).json({ ok: false, error: 'unauthorized' });
+  next();
+}
+
+// Proteger rotas de geração/notify
+app.use('/generate', requireInternalToken, generationRouter);
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`[telemed-docs-automation] listening on :${PORT}`);
+});
+
+# File: src/domain/types.ts
+# File: src/domain/types.ts
+export type CID = string; // e.g., 'J02.9'
+
+export type ConsultationSummary = {
+  consultationId: string;
+  patient: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string; // E.164
+    birthDate?: string; // ISO
+    allergies?: string[];
+    chronicConditions?: string[];
+    currentMeds?: string[];
+  };
+  clinician: {
+    id: string;
+    name: string;
+    crm: string;
+    specialty?: string;
+  };
+  vitals?: Record<string, string | number>;
+  complaints?: string;
+  findings?: string;
+  assessment?: string; // free text from the doctor/IA
+  suggestedCid?: CID;
+  plan?: string;
+  timestamp: string; // ISO
+};
+
+export type PrescriptionItem = {
+  drug: string; // e.g., Amoxicilina 500mg
+  dose: string; // 1 cápsula
+  route: string; // VO
+  frequency: string; // 8/8h
+  duration: string; // 7 dias
+  notes?: string;
+};
+
+export type PrescriptionPayload = {
+  type: 'prescription';
+  items: PrescriptionItem[];
+  obs?: string;
+};
+
+export type AttestationPayload = {
+  type: 'attestation';
+  reason: string; // Ex.: virose / lombalgia / etc.
+  startDate: string; // ISO
+  daysOff: number;
+  restrictions?: string; // se aplicável
+};
+
+export type GeneratedDoc = {
+  id: string;
+  kind: 'prescription' | 'attestation';
+  pdfPath: string; // local path on server
+  filename: string;
+  metadata: Record<string, string>;
+};
+
+# File: src/services/templateEngine.ts
+import Handlebars from 'handlebars';
+
+export function renderTemplate(templateSource: string, context: Record<string, any>) {
+  const template = Handlebars.compile(templateSource, { noEscape: false });
+  return template(context);
+}
+
+# File: src/services/pdf.ts
+import PDFDocument from 'pdfkit';
+import fs from 'node:fs';
+import path from 'node:path';
+
+export async function htmlToSimplePdf(html: string, outDir: string, filename: string): Promise<string> {
+  // Minimal PDF renderer (no full HTML engine). For MVP we place raw text; can swap for Puppeteer later.
+  fs.mkdirSync(outDir, { recursive: true });
+  const fullPath = path.join(outDir, filename);
+  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const stream = fs.createWriteStream(fullPath);
+  doc.pipe(stream);
+
+  // Very naive text rendering: strip tags and print. Replace with proper HTML renderer in v2.
+  const text = html
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+
+  doc.fontSize(12).text(text, { align: 'left' });
+  doc.end();
+
+  await new Promise((resolve) => stream.on('finish', resolve));
+  return fullPath;
+}
+
+# File: src/services/receitaCerta.ts
+import axios from 'axios';
+
+export type ReceitaCertaResponse = {
+  ok: boolean;
+  url?: string; // link to hosted doc (if their API supports hosting)
+  id?: string;
+};
+
+export async function sendToReceitaCerta(payload: any): Promise<ReceitaCertaResponse> {
+  const baseURL = process.env.RECEITA_CERTA_API_URL;
+  const apiKey = process.env.RECEITA_CERTA_API_KEY;
+  if (!baseURL || !apiKey) {
+    return { ok: false };
+  }
+  try {
+    const res = await axios.post(`${baseURL}/documents`, payload, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    return { ok: true, url: res.data?.url, id: res.data?.id };
+  } catch (err) {
+    console.error('[Receita Certa] error', err);
+    return { ok: false };
+  }
+}
+
+# File: src/services/notifier.ts
+import axios from 'axios';
+
+type NotifyTarget = { email?: string; phone?: string };
+
+export async function notifyPatient(target: NotifyTarget, message: string, attachmentUrl?: string) {
+  // MVP: log only. Replace with email (SES/SendGrid) and WhatsApp (Twilio/WATI) later.
+  console.log('[notify] to=', target, 'message=', message, 'attachment=', attachmentUrl);
+  // Example placeholder for WhatsApp provider
+  if (process.env.NOTIFY_WHATSAPP_PROVIDER === 'twilio' && target.phone) {
+    try {
+      await axios.post('https://api.twilio.example/send', { to: target.phone, body: message, mediaUrl: attachmentUrl });
+    } catch (e) {
+      console.warn('[notify] twilio placeholder failed (expected in dev)');
+    }
+  }
+}
+
+# File: src/routes/generation.ts
+import { Router } from 'express';
+import { body, validationResult } from 'express-validator';
+import { v4 as uuid } from 'uuid';
+import { renderTemplate } from '../services/templateEngine.js';
+import { htmlToSimplePdf } from '../services/pdf.js';
+import { sendToReceitaCerta } from '../services/receitaCerta.js';
+import { ConsultationSummary, PrescriptionPayload, AttestationPayload, GeneratedDoc } from '../domain/types.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { uploadLocalFileAndGetSignedUrl } from '../services/s3.js';
+
+const router = Router();
+const TEMPLATES = {
+  prescription: fs.readFileSync('templates/prescription.hbs', 'utf8'),
+  attestation: fs.readFileSync('templates/attestation.hbs', 'utf8')
+};
+
+async function generateAndStore(
+  kind: 'prescription' | 'attestation',
+  html: string,
+  meta: { consultationId: string; patientId: string }
+) {
+  const id = uuid();
+  const filename = `${kind}_${id}.pdf`;
+  const outDir = 'out';
+  const pdfPath = await htmlToSimplePdf(html, outDir, filename);
+
+  // Upload para S3/R2 e gerar URL assinada
+  let storage: any = { uploaded: false };
+  try {
+    const key = `${process.env.S3_PREFIX || ''}${meta.patientId}/${filename}`;
+    storage = await uploadLocalFileAndGetSignedUrl(pdfPath, key, 'application/pdf');
+    // Opcional: remover local após enviar
+    try { fs.unlinkSync(pdfPath); } catch {}
+  } catch (e) {
+    console.warn('[storage] upload falhou, mantendo local:', (e as Error).message);
+  }
+
+  const generated: GeneratedDoc = {
+    id,
+    kind,
+    pdfPath,
+    filename,
+    metadata: { consultationId: meta.consultationId, patientId: meta.patientId }
+  };
+
+  return { generated, storage };
+}
+
+router.post(
+  '/prescription',
+  body('summary').isObject(),
+  body('payload').isObject(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const summary = req.body.summary as ConsultationSummary;
+    const payload = req.body.payload as PrescriptionPayload;
+
+    const html = renderTemplate(TEMPLATES.prescription, { summary, payload, now: new Date().toISOString() });
+
+    const { generated, storage } = await generateAndStore('prescription', html, {
+      consultationId: summary.consultationId,
+      patientId: summary.patient.id
+    });
+
+    // Enviar opcionalmente à Receita Certa (best-effort)
+    const rc = await sendToReceitaCerta({ summary, payload });
+
+    res.json({ ok: true, doc: generated, storage, receitaCerta: rc });
+  }
+);
+
+router.post(
+  '/attestation',
+  body('summary').isObject(),
+  body('payload').isObject(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const summary = req.body.summary as ConsultationSummary;
+    const payload = req.body.payload as AttestationPayload;
+
+    const html = renderTemplate(TEMPLATES.attestation, { summary, payload, now: new Date().toISOString() });
+
+    const { generated, storage } = await generateAndStore('attestation', html, {
+      consultationId: summary.consultationId,
+      patientId: summary.patient.id
+    });
+
+    res.json({ ok: true, doc: generated, storage });
+  }
+);
+
+router.post(
+  '/notify',
+  body('patient').isObject(),
+  body('message').isString(),
+  body('attachmentUrl').optional().isString(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    const { notifyPatient } = await import('../services/notifier.js');
+    await notifyPatient(req.body.patient, req.body.message, req.body.attachmentUrl);
+    res.json({ ok: true });
+  }
+);
+
+export default router;
+
+# File: templates/prescription.hbs
+# File: templates/prescription.hbs
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Receita</title></head>
+  <body>
+    <h1>Receita Médica</h1>
+    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
+    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+    {{#if summary.patient.birthDate}}
+    <p><strong>Nascimento:</strong> {{summary.patient.birthDate}}</p>
+    {{/if}}
+    {{#if summary.suggestedCid}}
+    <p><strong>CID sugerido:</strong> {{summary.suggestedCid}}</p>
+    {{/if}}
+    <hr>
+    <h3>Prescrições</h3>
+    <ol>
+      {{#each payload.items}}
+        <li>
+          <strong>{{drug}}</strong> — {{dose}} — {{route}} — {{frequency}} — {{duration}}
+          {{#if notes}}<div><em>{{notes}}</em></div>{{/if}}
+        </li>
+      {{/each}}
+    </ol>
+    {{#if payload.obs}}
+      <p><strong>Observações:</strong> {{payload.obs}}</p>
+    {{/if}}
+    <hr>
+    <p>Data/Hora: {{now}}</p>
+  </body>
+</html>
+
+# File: templates/attestation.hbs
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Atestado</title></head>
+  <body>
+    <h1>Atestado Médico</h1>
+    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
+    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+    {{#if summary.suggestedCid}}
+    <p><strong>CID relacionado:</strong> {{summary.suggestedCid}}</p>
+    {{/if}}
+    <p>Motivo: {{payload.reason}}</p>
+    <p>Início do afastamento: {{payload.startDate}} — Dias de afastamento: {{payload.daysOff}}</p>
+    {{#if payload.restrictions}}
+      <p>Restrições/Recomendações: {{payload.restrictions}}</p>
+    {{/if}}
+    <hr>
+    <p>Data/Hora: {{now}}</p>
+  </body>
+</html>
+
+# File: README.md
+# Telemed Docs Automation (MVP v0.2)
+
+Módulo para **gerar receitas e atestados** a partir de **resumo da consulta + CID**. Agora com:
+- ✅ **/healthz** padronizado
+- ✅ **CORS** configurável por env
+- ✅ **Auth interna** via `x-internal-token`
+- ✅ **Upload para S3/R2** e **URL assinada** de download
+
+## Rodando no Replit / local
+1. Crie um Repl Node.js (ou Nix) e cole os arquivos.
+2. `npm i`
+3. Copie `.env.example` para `.env` e ajuste as variáveis (CORS, INTERNAL_TOKEN, S3, etc.).
+4. `npm run dev`
+
+## Endpoints
+- `GET /healthz` → `{ ok: true }`
+- `POST /generate/prescription` *(requer header `x-internal-token`)*
+- `POST /generate/attestation` *(requer header `x-internal-token`)*
+- `POST /generate/notify` *(requer header `x-internal-token`)*
+
+## Exemplo de teste (curl)
+### Receita
+```bash
+curl -X POST http://localhost:8080/generate/prescription \
+  -H 'Content-Type: application/json' \
+  -H 'x-internal-token: defina_um_token_forte_aqui' \
+  -d '{
+    "summary": {
+      "consultationId": "c-123",
+      "patient": { "id":"p-1","name":"Fulano","email":"fulano@mail.com","phone":"+5511999999999" },
+      "clinician": { "id":"m-1", "name":"Dra. Ana", "crm":"12345-SP" },
+      "suggestedCid": "J02.9",
+      "timestamp": "2025-09-02T12:00:00Z"
+    },
+    "payload": {
+      "type": "prescription",
+      "items": [
+        {"drug":"Amoxicilina 500mg","dose":"1 cápsula","route":"VO","frequency":"8/8h","duration":"7 dias","notes":"Tomar após as refeições"}
+      ],
+      "obs": "Beber água, repouso relativo"
+    }
+  }'
+```
+
+### Atestado
+```bash
+curl -X POST http://localhost:8080/generate/attestation \
+  -H 'Content-Type: application/json' \
+  -H 'x-internal-token: defina_um_token_forte_aqui' \
+  -d '{
+    "summary": {
+      "consultationId": "c-123",
+      "patient": { "id":"p-1","name":"Fulano" },
+      "clinician": { "id":"m-1", "name":"Dra. Ana", "crm":"12345-SP" },
+      "suggestedCid": "J06.9",
+      "timestamp": "2025-09-02T12:00:00Z"
+    },
+    "payload": {
+      "type": "attestation",
+      "reason": "IVAS viral",
+      "startDate": "2025-09-02",
+      "daysOff": 3,
+      "restrictions": "Hidratação + analgésico se dor"
+    }
+  }'
+```
+
+A resposta trará algo como:
+```json
+{
+  "ok": true,
+  "doc": { "id": "...", "filename": "prescription_...pdf" },
+  "storage": {
+    "uploaded": true,
+    "bucket": "telemed-docs",
+    "key": "docs/p-1/prescription_...pdf",
+    "url": "https://...signed...",
+    "expiresAt": "2025-09-02T13:00:00.000Z"
+  }
+}
+```
+
+## Integração com o Telemed
+- Chamar este serviço no **encerramento da consulta** com `x-internal-token`.
+- Exibir **modal de revisão** (componente React incluso em `web/PrescriptionReviewModal.tsx`).
+- Após gerar, usar `storage.url` (ou `receitaCerta.url`) para visualização e **/generate/notify** para envio ao paciente.
+
+## Deploy (Render)
+- Defina envs: `INTERNAL_TOKEN`, `CORS_ORIGINS`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PREFIX`, `SIGNED_URL_TTL_SECONDS`.
+- Healthcheck: `/healthz`.
+
+## Próximos incrementos
+- Substituir PDFKit por **Puppeteer** para HTML/CSS fiel + QR/assinatura visual.
+- Persistir metadados (SQLite/Prisma) e trilha de auditoria.
+- Templates por especialidade e customização por médico.
+
+# File: src/services/s3.ts
+import fs from 'node:fs/promises';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+const REGION = process.env.AWS_REGION || 'us-east-1';
+const BUCKET = process.env.S3_BUCKET as string;
+const TTL = parseInt(process.env.SIGNED_URL_TTL_SECONDS || '900', 10);
+
+const s3 = new S3Client({ region: REGION });
+
+export async function uploadLocalFileAndGetSignedUrl(localPath: string, key: string, contentType: string) {
+  if (!BUCKET) throw new Error('S3_BUCKET not configured');
+  const body = await fs.readFile(localPath);
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+      ContentDisposition: `inline; filename="${key.split('/').pop()}"`
+    })
+  );
+
+  const getCmd = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  const url = await getSignedUrl(s3, getCmd, { expiresIn: TTL });
+  const expiresAt = new Date(Date.now() + TTL * 1000).toISOString();
+
+  return { uploaded: true, bucket: BUCKET, key, url, expiresAt };
+}
+
+# File: web/PrescriptionReviewModal.tsx
+import React, { useMemo, useState } from 'react';
+
+type PrescriptionItem = {
+  drug: string;
+  dose: string;
+  route: string;
+  frequency: string;
+  duration: string;
+  notes?: string;
+};
+
+type ConsultationSummary = {
+  consultationId: string;
+  patient: { id: string; name: string; email?: string; phone?: string };
+  clinician: { id: string; name: string; crm: string; specialty?: string };
+  suggestedCid?: string;
+  timestamp: string;
+};
+
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  summary: ConsultationSummary;
+  initialItems: PrescriptionItem[];
+  obs?: string;
+};
+
+export default function PrescriptionReviewModal({ isOpen, onClose, summary, initialItems, obs }: Props) {
+  const [items, setItems] = useState<PrescriptionItem[]>(initialItems);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+
+  const canSubmit = useMemo(() => items.length > 0 && !loading, [items, loading]);
+
+  async function handleGenerate() {
+    setLoading(true); setError(null); setResultUrl(null);
+    try {
+      const token = (window as any)?.TELEMED_INTERNAL_TOKEN || (window as any)?.TELEMED_CFG?.INTERNAL_TOKEN;
+      if (!token) throw new Error('Token interno não configurado');
+
+      const res = await fetch(`${(window as any).TELEMED_CFG.DOCS_AUTOMATION_URL}/generate/prescription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-token': token },
+        body: JSON.stringify({ summary, payload: { type: 'prescription', items, obs } })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Falha ao gerar receita');
+      const url = data.storage?.url || data.receitaCerta?.url;
+      if (!url) {
+        console.warn('Sem URL assinada; usar endpoint interno para servir o PDF local.');
+      }
+      setResultUrl(url || null);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleNotify() {
+    if (!resultUrl) return;
+    try {
+      const token = (window as any)?.TELEMED_INTERNAL_TOKEN || (window as any)?.TELEMED_CFG?.INTERNAL_TOKEN;
+      await fetch(`${(window as any).TELEMED_CFG.DOCS_AUTOMATION_URL}/generate/notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-token': token },
+        body: JSON.stringify({
+          patient: { email: summary.patient.email, phone: summary.patient.phone },
+          message: `Olá, ${summary.patient.name}! Sua receita está disponível.`,
+          attachmentUrl: resultUrl
+        })
+      });
+      alert('Paciente notificado!');
+    } catch (e) {
+      alert('Falha ao notificar paciente');
+    }
+  }
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="text-xl font-semibold">Revisar Receita</h2>
+          <button className="rounded-lg px-2 py-1 text-sm hover:bg-gray-100" onClick={onClose}>Fechar</button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto p-4 space-y-4">
+          {items.map((it, idx) => (
+            <div key={idx} className="grid grid-cols-2 gap-3 rounded-xl border p-3">
+              <input className="rounded-md border p-2" value={it.drug} onChange={(e)=>{
+                const v=[...items]; v[idx].drug=e.target.value; setItems(v);
+              }} placeholder="Medicamento" />
+              <input className="rounded-md border p-2" value={it.dose} onChange={(e)=>{
+                const v=[...items]; v[idx].dose=e.target.value; setItems(v);
+              }} placeholder="Dose" />
+              <input className="rounded-md border p-2" value={it.route} onChange={(e)=>{
+                const v=[...items]; v[idx].route=e.target.value; setItems(v);
+              }} placeholder="Via (VO/IM/SC)" />
+              <input className="rounded-md border p-2" value={it.frequency} onChange={(e)=>{
+                const v=[...items]; v[idx].frequency=e.target.value; setItems(v);
+              }} placeholder="Frequência" />
+              <input className="col-span-2 rounded-md border p-2" value={it.duration} onChange={(e)=>{
+                const v=[...items]; v[idx].duration=e.target.value; setItems(v);
+              }} placeholder="Duração" />
+              <input className="col-span-2 rounded-md border p-2" value={it.notes||''} onChange={(e)=>{
+                const v=[...items]; v[idx].notes=e.target.value; setItems(v);
+              }} placeholder="Observações" />
+            </div>
+          ))}
+          <button
+            onClick={() => setItems([...items, { drug: '', dose: '', route: '', frequency: '', duration: '' }])}
+            className="rounded-xl border px-3 py-2 text-sm hover:bg-gray-50"
+          >+ Adicionar item</button>
+          {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          {resultUrl && (
+            <div className="rounded-md bg-green-50 p-3 text-sm text-green-700">
+              Documento gerado: <a className="underline" href={resultUrl} target="_blank">abrir receita</a>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-3 border-t p-4">
+          <button onClick={onClose} className="rounded-xl px-4 py-2 hover:bg-gray-50">Cancelar</button>
+          <button onClick={handleGenerate} disabled={!canSubmit} className="rounded-xl bg-black px-4 py-2 text-white disabled:opacity-50">
+            {loading ? 'Gerando…' : 'Gerar PDF'}
+          </button>
+          <button onClick={handleNotify} disabled={!resultUrl} className="rounded-xl bg-blue-600 px-4 py-2 text-white disabled:opacity-50">
+            Enviar ao paciente
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

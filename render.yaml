@@ -137,6 +137,14 @@ services:
       value: twilio
     - key: NOTIFY_WHATSAPP_FROM
       value: whatsapp:+10000000000
+    - key: AWS_REGION
+      value: us-east-1
+    - key: S3_BUCKET
+      value: telemed-docs
+    - key: S3_PREFIX
+      value: docs/
+    - key: SIGNED_URL_TTL_SECONDS
+      value: 900
 
 # Note: PostgreSQL database needs to be created manually in Render dashboard
 # After creating, reference it in the envVars above using fromService

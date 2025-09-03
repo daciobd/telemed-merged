@@ -1,0 +1,165 @@
+Feito ✅ — apliquei os três itens no código do canvas:
+
+Patch imediato
+
+Healthcheck padronizado em GET /healthz.
+
+CORS configurável por CORS_ORIGINS.
+
+Auth interna: todas as rotas /generate/* exigem header x-internal-token (= INTERNAL_TOKEN no Render).
+
+Armazenamento & link seguro
+
+Upload automático do PDF para S3/R2 e retorno de URL assinada (storage.url), com TTL configurável (SIGNED_URL_TTL_SECONDS).
+
+Novo serviço: src/services/s3.ts.
+
+.env.example atualizado com variáveis S3.
+
+UI de revisão/assinatura
+
+Componente React web/PrescriptionReviewModal.tsx (Tailwind), que:
+
+Renderiza itens editáveis da receita.
+
+Chama POST /generate/prescription com x-internal-token.
+
+Exibe link assinado para abrir o PDF.
+
+Aciona POST /generate/notify para enviar ao paciente.
+
+O que você precisa fazer aí
+
+No Render, setar as envs:
+
+INTERNAL_TOKEN (igual ao que o frontend vai enviar no header).
+
+CORS_ORIGINS (domínios do seu frontend).
+
+AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_PREFIX (opcional), SIGNED_URL_TTL_SECONDS.
+
+No frontend, defina o token (temporariamente):
+
+<script>
+  window.TELEMED_CFG = {
+    DOCS_AUTOMATION_URL: "https://telemed-docs-automation.onrender.com",
+    INTERNAL_TOKEN: "o_mesmo_do_Render"
+  };
+</script>
+
+
+(Ou injete via build/server-side.)
+
+Importar o componente PrescriptionReviewModal e chamar no fluxo de encerramento da consulta.
+
+Smoke test rápido (prod/staging)
+
+GET /healthz → { ok: true }.
+
+POST /generate/prescription com header x-internal-token → resposta com storage.url.
+
+Abrir storage.url no navegador (URL assinada).
+
+POST /generate/notify → deve logar/emitir (stub).
+
+Se quiser, eu também posso:
+
+trocar o PDFKit por Puppeteer (HTML/CSS fiel + QR/assinatura visual),
+
+adicionar template CFM pronto (receita com carimbo/assinatura/QR),
+
+e criar a versão do modal para Atestado.
+
+É só dizer que eu já coloco no canvas.
+
+Você disse:
+SIM
+O ChatGPT disse:
+Pensou por 11s
+Pensou por 25s
+Telemed-prescriptions-module-skeleton
+· typescript
+# File: package.json
+# File: web/AttestationReviewModal.tsx
+import React, { useState } from 'react';
+
+
+type AttestationPayload = {
+  reason: string;
+  startDate: string;
+  daysOff: number;
+  restrictions?: string;
+};
+
+
+type ConsultationSummary = {
+  consultationId: string;
+  patient: { id: string; name: string; email?: string; phone?: string };
+  clinician: { id: string; name: string; crm: string; specialty?: string };
+  suggestedCid?: string;
+  timestamp: string;
+};
+
+
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  summary: ConsultationSummary;
+};
+
+
+export default function AttestationReviewModal({ isOpen, onClose, summary }: Props) {
+  const [payload, setPayload] = useState<AttestationPayload>({ reason: '', startDate: new Date().toISOString().slice(0,10), daysOff: 1 });
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+
+  async function handleGenerate() {
+    setLoading(true); setError(null);
+    try {
+      const token = (window as any).TELEMED_CFG.INTERNAL_TOKEN;
+      const res = await fetch(`${(window as any).TELEMED_CFG.DOCS_AUTOMATION_URL}/generate/attestation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-token': token },
+        body: JSON.stringify({ summary, payload: { type: 'attestation', ...payload } })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Falha ao gerar atestado');
+      const url = data.storage?.url;
+      setResultUrl(url || null);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  if (!isOpen) return null;
+
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl">
+        <div className="flex justify-between border-b p-4">
+          <h2 className="text-lg font-semibold">Revisar Atestado</h2>
+          <button onClick={onClose}>Fechar</button>
+        </div>
+        <div className="space-y-3 p-4">
+          <input className="w-full rounded-md border p-2" placeholder="Motivo" value={payload.reason} onChange={e=>setPayload({...payload, reason:e.target.value})} />
+          <input type="date" className="w-full rounded-md border p-2" value={payload.startDate} onChange={e=>setPayload({...payload, startDate:e.target.value})} />
+          <input type="number" className="w-full rounded-md border p-2" value={payload.daysOff} onChange={e=>setPayload({...payload, daysOff:Number(e.target.value)})} />
+          <input className="w-full rounded-md border p-2" placeholder="Restrições (opcional)" value={payload.restrictions||''} onChange={e=>setPayload({...payload, restrictions:e.target.value})} />
+          {error && <div className="rounded bg-red-100 p-2 text-red-700">{error}</div>}
+          {resultUrl && <div className="rounded bg-green-100 p-2 text-green-700">Documento: <a href={resultUrl} target="_blank" className="underline">abrir</a></div>}
+        </div>
+        <div className="flex justify-end gap-3 border-t p-4">
+          <button onClick={onClose} className="rounded px-4 py-2 hover:bg-gray-50">Cancelar</button>
+          <button disabled={loading} onClick={handleGenerate} className="rounded bg-black px-4 py-2 text-white">{loading ? 'Gerando…' : 'Gerar PDF'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

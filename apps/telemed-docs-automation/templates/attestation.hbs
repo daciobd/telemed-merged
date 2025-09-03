@@ -1,19 +1,121 @@
 <!doctype html>
 <html>
-  <head><meta charset="utf-8"><title>Atestado</title></head>
-  <body>
+<head>
+  <meta charset="utf-8">
+  <title>Atestado Médico</title>
+  <style>
+    body { 
+      font-family: 'Times New Roman', serif; 
+      margin: 40px; 
+      line-height: 1.6; 
+      color: #333;
+    }
+    .header { 
+      text-align: center; 
+      border-bottom: 2px solid #000; 
+      padding-bottom: 20px; 
+      margin-bottom: 30px; 
+    }
+    .header h1 { 
+      font-size: 24px; 
+      margin: 0; 
+      text-transform: uppercase; 
+      letter-spacing: 2px; 
+    }
+    .doctor-info { 
+      text-align: center; 
+      margin: 20px 0; 
+      font-size: 14px; 
+    }
+    .patient-section { 
+      background: #f8f8f8; 
+      padding: 15px; 
+      border-left: 4px solid #2c5aa0; 
+      margin: 20px 0; 
+    }
+    .attestation-text { 
+      text-align: justify; 
+      margin: 30px 0; 
+      font-size: 16px; 
+      line-height: 1.8;
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 5px;
+    }
+    .highlight { 
+      background: #fff3cd; 
+      padding: 2px 4px; 
+      font-weight: bold; 
+    }
+    .footer { 
+      margin-top: 50px; 
+      text-align: center; 
+      font-size: 12px; 
+      border-top: 1px solid #ccc; 
+      padding-top: 20px; 
+    }
+    .signature-area { 
+      margin-top: 60px; 
+      text-align: center; 
+    }
+    .signature-line { 
+      border-bottom: 1px solid #000; 
+      width: 300px; 
+      margin: 40px auto 10px; 
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
     <h1>Atestado Médico</h1>
-    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
-    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+  </div>
+
+  <div class="doctor-info">
+    <strong>{{summary.clinician.name}}</strong><br>
+    CRM: {{summary.clinician.crm}}
+    {{#if summary.clinician.specialty}}
+    <br>{{summary.clinician.specialty}}
+    {{/if}}
+  </div>
+
+  <div class="patient-section">
+    <strong>Paciente:</strong> {{summary.patient.name}}<br>
+    {{#if summary.patient.birthDate}}
+    <strong>Data de Nascimento:</strong> {{summary.patient.birthDate}}<br>
+    {{/if}}
+    {{#if summary.patient.id}}
+    <strong>ID:</strong> {{summary.patient.id}}<br>
+    {{/if}}
     {{#if summary.suggestedCid}}
-    <p><strong>CID relacionado:</strong> {{summary.suggestedCid}}</p>
+    <strong>CID:</strong> {{summary.suggestedCid}}
     {{/if}}
-    <p>Motivo: {{payload.reason}}</p>
-    <p>Início do afastamento: {{payload.startDate}} — Dias de afastamento: {{payload.daysOff}}</p>
+  </div>
+
+  <div class="attestation-text">
+    <p><strong>ATESTO</strong> para os devidos fins que o(a) paciente <span class="highlight">{{summary.patient.name}}</span> 
+    esteve sob meus cuidados médicos e necessita de afastamento de suas atividades habituais pelo período de 
+    <span class="highlight">{{payload.daysOff}} dia(s)</span>, iniciando em <span class="highlight">{{payload.startDate}}</span>.</p>
+    
+    <p><strong>Motivo:</strong> {{payload.reason}}</p>
+    
     {{#if payload.restrictions}}
-      <p>Restrições/Recomendações: {{payload.restrictions}}</p>
+    <p><strong>Restrições/Recomendações:</strong><br>
+    {{payload.restrictions}}</p>
     {{/if}}
-    <hr>
-    <p>Data/Hora: {{now}}</p>
-  </body>
+  </div>
+
+  <div class="signature-area">
+    <div class="signature-line"></div>
+    <div>{{summary.clinician.name}}</div>
+    <div>CRM {{summary.clinician.crm}}</div>
+  </div>
+
+  <div class="footer">
+    <p>Data de emissão: {{now}}</p>
+    <p><strong>ATESTADO MÉDICO DIGITAL</strong></p>
+    <p style="font-size: 10px; color: #666;">
+      Este documento foi gerado digitalmente e possui validade legal conforme Resolução CFM nº 1.658/2002
+    </p>
+  </div>
+</body>
 </html>

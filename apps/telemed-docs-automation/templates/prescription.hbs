@@ -1,30 +1,139 @@
 <!doctype html>
 <html>
-  <head><meta charset="utf-8"><title>Receita</title></head>
-  <body>
+<head>
+  <meta charset="utf-8">
+  <title>Receita Médica</title>
+  <style>
+    body { 
+      font-family: 'Times New Roman', serif; 
+      margin: 40px; 
+      line-height: 1.4; 
+      color: #333;
+    }
+    .header { 
+      text-align: center; 
+      border-bottom: 2px solid #000; 
+      padding-bottom: 20px; 
+      margin-bottom: 30px; 
+    }
+    .header h1 { 
+      font-size: 24px; 
+      margin: 0; 
+      text-transform: uppercase; 
+      letter-spacing: 2px; 
+    }
+    .doctor-info { 
+      text-align: center; 
+      margin: 20px 0; 
+      font-size: 14px; 
+    }
+    .patient-section { 
+      background: #f8f8f8; 
+      padding: 15px; 
+      border-left: 4px solid #2c5aa0; 
+      margin: 20px 0; 
+    }
+    .prescription-section { 
+      margin: 30px 0; 
+    }
+    .prescription-item { 
+      margin: 15px 0; 
+      padding: 10px; 
+      border-bottom: 1px dotted #ccc; 
+    }
+    .medication { 
+      font-weight: bold; 
+      font-size: 16px; 
+      color: #2c5aa0; 
+    }
+    .dosage { 
+      margin: 5px 0; 
+      font-style: italic; 
+    }
+    .footer { 
+      margin-top: 50px; 
+      text-align: center; 
+      font-size: 12px; 
+      border-top: 1px solid #ccc; 
+      padding-top: 20px; 
+    }
+    .signature-area { 
+      margin-top: 60px; 
+      text-align: center; 
+    }
+    .signature-line { 
+      border-bottom: 1px solid #000; 
+      width: 300px; 
+      margin: 40px auto 10px; 
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
     <h1>Receita Médica</h1>
-    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
-    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+  </div>
+
+  <div class="doctor-info">
+    <strong>{{summary.clinician.name}}</strong><br>
+    CRM: {{summary.clinician.crm}}
+    {{#if summary.clinician.specialty}}
+    <br>{{summary.clinician.specialty}}
+    {{/if}}
+  </div>
+
+  <div class="patient-section">
+    <strong>Paciente:</strong> {{summary.patient.name}}<br>
     {{#if summary.patient.birthDate}}
-    <p><strong>Nascimento:</strong> {{summary.patient.birthDate}}</p>
+    <strong>Data de Nascimento:</strong> {{summary.patient.birthDate}}<br>
+    {{/if}}
+    {{#if summary.patient.id}}
+    <strong>ID:</strong> {{summary.patient.id}}<br>
     {{/if}}
     {{#if summary.suggestedCid}}
-    <p><strong>CID sugerido:</strong> {{summary.suggestedCid}}</p>
+    <strong>CID:</strong> {{summary.suggestedCid}}
     {{/if}}
-    <hr>
-    <h3>Prescrições</h3>
-    <ol>
-      {{#each payload.items}}
-        <li>
-          <strong>{{drug}}</strong> — {{dose}} — {{route}} — {{frequency}} — {{duration}}
-          {{#if notes}}<div><em>{{notes}}</em></div>{{/if}}
-        </li>
-      {{/each}}
-    </ol>
+  </div>
+
+  <div class="prescription-section">
+    <h3 style="text-align: center; text-decoration: underline;">PRESCRIÇÃO</h3>
+    
+    {{#each payload.items}}
+    <div class="prescription-item">
+      <div class="medication">{{this.drug}}</div>
+      <div class="dosage">
+        <strong>Dose:</strong> {{this.dose}} • 
+        <strong>Via:</strong> {{this.route}} • 
+        <strong>Frequência:</strong> {{this.frequency}} • 
+        <strong>Duração:</strong> {{this.duration}}
+      </div>
+      {{#if this.notes}}
+      <div style="margin-top: 8px; color: #666; font-size: 14px;">
+        <em>Observações: {{this.notes}}</em>
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+
     {{#if payload.obs}}
-      <p><strong>Observações:</strong> {{payload.obs}}</p>
+    <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107;">
+      <strong>Observações Gerais:</strong><br>
+      {{payload.obs}}
+    </div>
     {{/if}}
-    <hr>
-    <p>Data/Hora: {{now}}</p>
-  </body>
+  </div>
+
+  <div class="signature-area">
+    <div class="signature-line"></div>
+    <div>{{summary.clinician.name}}</div>
+    <div>CRM {{summary.clinician.crm}}</div>
+  </div>
+
+  <div class="footer">
+    <p>Data de emissão: {{now}}</p>
+    <p><strong>PRESCRIÇÃO MÉDICA DIGITAL</strong></p>
+    <p style="font-size: 10px; color: #666;">
+      Este documento foi gerado digitalmente e possui validade legal conforme Resolução CFM nº 1.643/2002
+    </p>
+  </div>
+</body>
 </html>

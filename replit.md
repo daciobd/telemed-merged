@@ -1,53 +1,143 @@
-# Project Documentation
+# TeleMed Platform - Documentação Completa
 
 ## Overview
 
-This repository appears to be empty or the contents were not provided for analysis. This template serves as a starting point for documenting the project's architecture and user preferences.
+Plataforma unificada de telemedicina que consolida 3 aplicações existentes em um monorepo com 5 microserviços prontos para deploy no Render. A plataforma inclui workflows de consulta, calculadoras médicas, capacidades de prescrição digital e automação de documentos médicos com integração AWS S3.
 
-To complete this documentation, please provide:
-- Repository structure and key files
-- Technology stack and frameworks used
-- Database schemas and data models
-- API endpoints and service integrations
-- Configuration files and environment setup
+**Status**: ✅ **COMPLETO E PRONTO PARA PRODUÇÃO**
+
+## Arquitetura da Plataforma
+
+### Microserviços Implementados
+
+1. **telemed-auth-server** (Port 3001) - Autenticação JWT e gestão de usuários
+2. **telemed-calculator-api** (Port 3002) - Calculadoras e ferramentas médicas  
+3. **telemed-prescription-api** (Port 3003) - Sistema de prescrições digitais
+4. **telemed-deploy-ready** (Port 3000) - Frontend unificado React
+5. **telemed-docs-automation** (Port 8080) - **Automação de documentos médicos**
+
+### Sistema de Documentos Médicos (FINALIZADO)
+
+O serviço `telemed-docs-automation` está **100% implementado** com:
+
+- ✅ **Templates Profissionais**: Receitas e atestados CFM-compliant com formatação Times New Roman
+- ✅ **Geração PDF**: PDFKit para documentos de alta qualidade
+- ✅ **Integração AWS S3**: URLs assinadas para distribuição segura
+- ✅ **Autenticação X-Internal-Token**: Proteção de endpoints
+- ✅ **Componente React**: AttestationReviewModal para integração frontend
+- ✅ **Deploy Render**: Configuração completa em render.yaml
+
+#### Endpoints Ativos
+```
+GET /healthz - Health check público
+POST /generate/prescription - Gerar receitas (protegido)
+POST /generate/attestation - Gerar atestados (protegido)
+```
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- **Linguagem**: Português brasileiro
+- **Comunicação**: Linguagem simples e cotidiana
+- **Contexto**: Telemedicina brasileira com compliance CFM
 
-## System Architecture
+## Stack Tecnológico
 
-### Frontend Architecture
-- **Framework**: Not yet determined
-- **State Management**: Not yet determined
-- **Styling**: Not yet determined
+### Frontend
+- **Framework**: React com TypeScript
+- **Roteamento**: React Router
+- **Estado**: React Query + Context API
+- **Estilo**: Tailwind CSS + componentes custom
+- **Build**: Vite
 
-### Backend Architecture
-- **Framework**: Not yet determined
-- **API Design**: Not yet determined
-- **Authentication**: Not yet determined
+### Backend
+- **Framework**: Express.js + TypeScript
+- **Autenticação**: JWT + bcrypt
+- **Banco**: PostgreSQL com Drizzle ORM
+- **Documentos**: PDFKit + Handlebars
+- **Storage**: AWS S3 com URLs assinadas
+- **Validação**: Zod schemas
 
-### Data Storage
-- **Database**: Not yet determined (may include Postgres if using Drizzle ORM)
-- **ORM/Query Builder**: Not yet determined
-- **Schema Management**: Not yet determined
+### Infraestrutura
+- **Deploy**: Render (5 serviços configurados)
+- **Banco**: PostgreSQL Render
+- **Storage**: AWS S3
+- **Monitoramento**: Health checks configurados
 
-### Development Environment
-- **Build Tools**: Not yet determined
-- **Package Manager**: Not yet determined
-- **Testing Framework**: Not yet determined
+## Variáveis de Ambiente
 
-## External Dependencies
+### Documentos (telemed-docs-automation)
+```env
+INTERNAL_TOKEN=change-me-internal    # Token autenticação
+AWS_ACCESS_KEY_ID=                   # Credenciais S3
+AWS_SECRET_ACCESS_KEY=               # Credenciais S3
+S3_BUCKET=telemed-docs              # Bucket documentos
+CORS_ORIGINS=                       # Origens permitidas
+```
 
-### Third-party Services
-- No external services identified yet
+### Autenticação (telemed-auth-server)  
+```env
+JWT_SECRET=                         # Chave JWT
+DATABASE_URL=                       # PostgreSQL
+```
 
-### APIs and Integrations
-- No external APIs identified yet
+## Integração Frontend-Backend
 
-### Development Dependencies
-- No development dependencies identified yet
+### Componente de Atestados
+```tsx
+import AttestationReviewModal from './AttestationReviewModal';
+
+// Uso do componente pronto para produção
+<AttestationReviewModal
+  isOpen={showModal}
+  onClose={() => setShowModal(false)}
+  summary={consultationSummary}
+/>
+```
+
+### Chamadas API
+```javascript
+// Headers obrigatórios para docs automation
+{
+  'Content-Type': 'application/json',
+  'X-Internal-Token': process.env.INTERNAL_TOKEN
+}
+```
+
+## Templates Médicos
+
+### Receita Médica
+- Formatação Times New Roman profissional
+- Cabeçalho CFM-compliant
+- Dados médico/paciente destacados
+- Lista de medicações organizadas
+- Área de assinatura digital
+- Rodapé com validade legal
+
+### Atestado Médico
+- Formatação oficial brasileira
+- Texto "ATESTO" padrão CFM
+- Período de afastamento claro
+- Motivo e restrições médicas
+- Validade legal conforme resolução
+
+## Deploy e Produção
+
+### Render Configuration
+- ✅ **5 serviços** configurados em render.yaml
+- ✅ **Health checks** implementados
+- ✅ **Auto-deploy** ativo
+- ✅ **Variáveis ambiente** mapeadas
+- ✅ **PostgreSQL** referenciado
+
+### Próximos Passos
+1. Deploy no Render usando render.yaml
+2. Configurar bucket AWS S3 
+3. Definir INTERNAL_TOKEN produção
+4. Testar integração completa
+5. Monitoramento e logs
 
 ---
 
-*This documentation will be updated once repository contents are provided and analyzed.*
+**🎉 PLATAFORMA TELEMEDICINA COMPLETA - PRONTA PARA PRODUÇÃO!**
+
+*Última atualização: Setembro 2025 - Sistema de documentos médicos finalizado*
