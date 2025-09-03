@@ -1,70 +1,215 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exemplo de Integração - TeleMed Services</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exemplo de Integração • TeleMed</title>
+  <link rel="icon" href="/img/telemed.svg">
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#101a2b; --muted:#6b7a90; --txt:#e6edf6; --brand:#5cc8ff; --ok:#1ad598; --bad:#ff6b6b;
+      --border:#1f2a44; --btn:#1f2a44; --btn2:#2b3a59;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:16px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif; color:var(--txt); background:var(--bg)}
+    .wrap{max-width:1000px; margin:32px auto; padding:0 16px}
+    header{display:flex; align-items:center; gap:12px; margin-bottom:20px}
+    header .badge{background:var(--brand); color:#00131e; padding:6px 10px; border-radius:999px; font-weight:700}
+    h1{margin:0; font-size:26px}
+    .grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+    .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px}
+    .card h3{margin:0 0 12px 0}
+    label{display:block; font-size:13px; color:var(--muted); margin:10px 0 6px}
+    input[type=text], input[type=number], select, textarea{
+      width:100%; background:#0c172a; border:1px solid var(--border); border-radius:10px; color:var(--txt);
+      padding:10px 12px; outline:none;
+    }
+    .row{display:flex; gap:10px; align-items:center}
+    .row > *{flex:1}
+    button{
+      appearance:none; border:1px solid var(--border); background:var(--btn); color:var(--txt);
+      padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600;
+    }
+    button.primary{background:var(--btn2)}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border)}
+    .pill.ok{background:color-mix(in oklab, var(--ok) 18%, transparent); color:var(--ok); border-color:color-mix(in oklab,var(--ok) 40%, transparent)}
+    .pill.bad{background:color-mix(in oklab, var(--bad) 18%, transparent); color:var(--bad); border-color:color-mix(in oklab,var(--bad) 40%, transparent)}
+    pre{
+      margin:12px 0 0; background:#0a1426; border:1px solid var(--border); border-radius:12px; padding:12px; overflow:auto;
+    }
+    footer{margin-top:26px; color:var(--muted); font-size:13px}
+  </style>
 </head>
 <body>
-    <h1>Exemplo de Integração com os Serviços TeleMed</h1>
-    
-    <div id="auction-example">
-        <h2>Leilão de Consultas</h2>
-        <button onclick="testAuctionService()">Testar Serviço de Leilão</button>
-        <div id="auction-result"></div>
-    </div>
-    
-    <div id="productivity-example">
-        <h2>Serviços de Produtividade</h2>
-        <button onclick="testProductivityService()">Testar Scribe/CIDs</button>
-        <div id="productivity-result"></div>
+  <div class="wrap">
+    <header>
+      <span class="badge">TeleMed</span>
+      <h1>Exemplo de Integração com os Serviços</h1>
+    </header>
+
+    <!-- URLs (puxamos de /js/config.js se existir; senão, defaults) -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>AUCTION_URL</label>
+          <input id="auctionUrl" type="text" placeholder="https://telemed-auction.onrender.com" />
+        </div>
+        <div>
+          <label>INTERNAL_URL</label>
+          <input id="internalUrl" type="text" placeholder="https://telemed-internal.onrender.com" />
+        </div>
+        <div>
+          <label>PRODUCTIVITY_URL</label>
+          <input id="productivityUrl" type="text" placeholder="https://telemed-productivity.onrender.com" />
+        </div>
+      </div>
+      <div style="margin-top:10px" class="row">
+        <button id="btnPingAll" class="primary">Testar /healthz dos 3 serviços</button>
+        <span id="healthAuction" class="pill muted">AUCTION</span>
+        <span id="healthInternal" class="pill muted">INTERNAL</span>
+        <span id="healthProd" class="pill muted">PRODUCTIVITY</span>
+      </div>
     </div>
 
-    <!-- Importar config ANTES dos seus scripts -->
-    <script src="/js/config.js"></script>
-    
-    <script>
-        // Exemplo de uso do config
-        async function testAuctionService() {
-            const resultDiv = document.getElementById('auction-result');
-            
-            try {
-                // Usar as URLs do config
-                const response = await fetch(`${window.TELEMED_CFG.AUCTION_URL}/auction/info`);
-                const data = await response.json();
-                
-                resultDiv.innerHTML = `
-                    <p>✅ Conectado com sucesso!</p>
-                    <p>Leilão habilitado: ${data.enabled ? 'Sim' : 'Não'}</p>
-                `;
-            } catch (error) {
-                resultDiv.innerHTML = `<p>❌ Erro: ${error.message}</p>`;
-            }
-        }
-        
-        async function testProductivityService() {
-            const resultDiv = document.getElementById('productivity-result');
-            
-            try {
-                // Usar as URLs do config
-                const response = await fetch(`${window.TELEMED_CFG.PRODUCTIVITY_URL}/healthz`);
-                const data = await response.json();
-                
-                resultDiv.innerHTML = `
-                    <p>✅ Conectado com sucesso!</p>
-                    <p>Status: ${data.ok ? 'OK' : 'Erro'}</p>
-                `;
-            } catch (error) {
-                resultDiv.innerHTML = `<p>❌ Erro: ${error.message}</p>`;
-            }
-        }
-        
-        // Verificar se o config foi carregado
-        if (window.TELEMED_CFG) {
-            console.log('Config carregado:', window.TELEMED_CFG);
-        } else {
-            console.error('Config não foi carregado!');
-        }
-    </script>
+    <div class="grid">
+      <!-- Leilão -->
+      <div class="card">
+        <h3>Leilão de Consultas</h3>
+        <p class="muted">Crie um lance de teste e (opcional) aceite em seguida.</p>
+        <label>Paciente</label>
+        <input id="bidPatient" type="text" value="P1" />
+        <div class="row">
+          <div>
+            <label>Valor (centavos)</label>
+            <input id="bidAmount" type="number" value="9000" min="1000" step="100" />
+          </div>
+          <div>
+            <label>Modo</label>
+            <select id="bidMode">
+              <option value="immediate">immediate</option>
+              <option value="scheduled">scheduled</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnCreateBid" class="primary">Criar lance</button>
+          <button id="btnAcceptBid">Aceitar lance</button>
+        </div>
+        <pre id="outAuction" class="muted">Resultado aparecerá aqui…</pre>
+      </div>
+
+      <!-- Produtividade -->
+      <div class="card">
+        <h3>Scribe / CIDs</h3>
+        <p class="muted">Sugestão de códigos a partir de um texto clínico simples.</p>
+        <label>Texto da consulta</label>
+        <textarea id="txtNote" rows="5">Paciente com dor torácica súbita, dispneia há 2h, sudorese fria.</textarea>
+        <div class="row" style="margin-top:10px">
+          <button id="btnSuggest" class="primary">Sugerir CIDs</button>
+          <button id="btnClearProd">Limpar</button>
+        </div>
+        <pre id="outProd" class="muted">Resultado aparecerá aqui…</pre>
+      </div>
+    </div>
+
+    <footer>
+      Dica: garanta CORS liberado nos serviços Node com <code>FRONTEND_ORIGIN</code> apontando para
+      <code>https://telemed-deploy-ready.onrender.com</code>.
+    </footer>
+  </div>
+
+  <!-- Config opcional do projeto -->
+  <script src="/js/config.js"></script>
+  <script>
+    // Defaults caso /js/config.js não exista:
+    const DEFAULTS = {
+      AUCTION_URL: 'https://telemed-auction.onrender.com',
+      INTERNAL_URL: 'https://telemed-internal.onrender.com',
+      PRODUCTIVITY_URL: 'https://telemed-productivity.onrender.com',
+    };
+    const CFG = (window.CONFIG && (window.CONFIG.AUCTION_URL || window.CONFIG.PRODUCTIVITY_URL))
+      ? window.CONFIG
+      : DEFAULTS;
+
+    // Preenche inputs
+    auctionUrl.value      = CFG.AUCTION_URL;
+    internalUrl.value     = CFG.INTERNAL_URL;
+    productivityUrl.value = CFG.PRODUCTIVITY_URL;
+
+    const json = (obj)=>JSON.stringify(obj, null, 2);
+    const setPill = (el, ok, label) => {
+      el.textContent = label;
+      el.className = 'pill ' + (ok ? 'ok' : 'bad');
+    };
+
+    // Ping /healthz dos três
+    btnPingAll.onclick = async () => {
+      const ping = async (base) => {
+        try{
+          const r = await fetch(base.replace(/\/$/,'') + '/healthz',{cache:'no-store'});
+          return r.ok;
+        }catch(e){ return false; }
+      };
+      const okA = await ping(auctionUrl.value);
+      const okI = await ping(internalUrl.value);
+      const okP = await ping(productivityUrl.value);
+      setPill(healthAuction, okA, 'AUCTION ' + (okA?'OK':'FAIL'));
+      setPill(healthInternal, okI, 'INTERNAL ' + (okI?'OK':'FAIL'));
+      setPill(healthProd,    okP, 'PRODUCTIVITY ' + (okP?'OK':'FAIL'));
+    };
+
+    // --- Leilão ---
+    let lastBidId = null;
+    btnCreateBid.onclick = async () => {
+      outAuction.textContent = 'Criando lance...';
+      try{
+        const body = {
+          patientId: bidPatient.value || 'P1',
+          mode: bidMode.value || 'immediate',
+          amountCents: parseInt(bidAmount.value || '9000', 10)
+        };
+        const r = await fetch(auctionUrl.value.replace(/\/$/,'') + '/bids', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        lastBidId = data?.bid?.id || data?.id || data?.bidId || null;
+        outAuction.textContent = json(data);
+      }catch(e){
+        outAuction.textContent = 'Erro: ' + e.message;
+      }
+    };
+
+    btnAcceptBid.onclick = async () => {
+      if(!lastBidId){ outAuction.textContent = 'Crie um lance primeiro.'; return; }
+      outAuction.textContent = 'Aceitando lance ' + lastBidId + '...';
+      try{
+        const r = await fetch(auctionUrl.value.replace(/\/$/,'') + '/bids/' + lastBidId + '/accept', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ mode: bidMode.value || 'immediate', patientId: bidPatient.value || 'P1' })
+        });
+        const data = await r.json();
+        outAuction.textContent = json(data);
+      }catch(e){
+        outAuction.textContent = 'Erro: ' + e.message;
+      }
+    };
+
+    // --- Produtividade ---
+    btnSuggest.onclick = async () => {
+      outProd.textContent = 'Consultando...';
+      try{
+        const r = await fetch(productivityUrl.value.replace(/\/$/,'') + '/codes/suggest', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: txtNote.value })
+        });
+        const data = await r.json();
+        outProd.textContent = json(data);
+      }catch(e){
+        outProd.textContent = 'Erro: ' + e.message + '\n(Cheque CORS e URL.)';
+      }
+    };
+    btnClearProd.onclick = ()=> outProd.textContent = 'Resultado aparecerá aqui…';
+  </script>
 </body>
 </html>
