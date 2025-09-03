@@ -19,6 +19,8 @@ services:
       value: https://telemed-auction.onrender.com
     - key: VITE_PRODUCTIVITY_URL
       value: https://telemed-productivity.onrender.com
+    - key: VITE_DOCS_AUTOMATION_URL
+      value: https://telemed-docs-automation.onrender.com
 
 - type: web
   name: telemed-auction
@@ -109,6 +111,30 @@ services:
       value: whisper-1
     - key: OPENAI_LLM_MODEL
       value: gpt-4o-mini
+
+- type: web
+  name: telemed-docs-automation
+  env: node
+  branch: main
+  rootDir: apps/telemed-docs-automation
+  plan: starter
+  buildCommand: npm ci || npm install && npm run build
+  startCommand: npm run start
+  healthCheckPath: /healthz
+  autoDeploy: true
+  envVars:
+    - key: FRONTEND_ORIGIN
+      value: https://telemed-deploy-ready.onrender.com
+    - key: RECEITA_CERTA_API_URL
+      value: https://api.receitacerta.example/v1
+    - key: RECEITA_CERTA_API_KEY
+      value: changeme
+    - key: NOTIFY_EMAIL_FROM
+      value: no-reply@telemed.app
+    - key: NOTIFY_WHATSAPP_PROVIDER
+      value: twilio
+    - key: NOTIFY_WHATSAPP_FROM
+      value: whatsapp:+10000000000
 
 # Note: PostgreSQL database needs to be created manually in Render dashboard
 # After creating, reference it in the envVars above using fromService

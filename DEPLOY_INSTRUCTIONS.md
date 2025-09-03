@@ -75,6 +75,7 @@ git push origin main
 - **Auction**: `https://telemed-auction.onrender.com`
 - **Internal**: `https://telemed-internal.onrender.com`
 - **Productivity**: `https://telemed-productivity.onrender.com`
+- **Docs Automation**: `https://telemed-docs-automation.onrender.com`
 
 ## 📋 Estrutura Final
 ```
@@ -84,7 +85,8 @@ git push origin main
 │   │   └── js/config.js          # ✅ Config dos serviços
 │   ├── auction-service/          # ✅ CORS configurado
 │   ├── telemed-internal/         # ✅ CORS configurado  
-│   └── productivity-service/     # ✅ CORS configurado
+│   ├── productivity-service/     # ✅ CORS configurado
+│   └── telemed-docs-automation/  # ✅ NOVO: Geração de documentos
 ├── render.yaml                   # ✅ Deploy configurado
 └── README.md
 ```

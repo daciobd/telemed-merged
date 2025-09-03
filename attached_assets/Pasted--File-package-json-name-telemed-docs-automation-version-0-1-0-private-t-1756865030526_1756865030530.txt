@@ -1,0 +1,430 @@
+# File: package.json
+{
+  "name": "telemed-docs-automation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dayjs": "^1.11.11",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-validator": "^7.0.1",
+    "handlebars": "^4.7.8",
+    "pdfkit": "^0.15.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.2",
+    "@types/pdfkit": "^0.13.6",
+    "@types/uuid": "^9.0.7",
+    "eslint": "^9.4.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.4"
+  }
+}
+
+# File: tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
+
+# File: .env.example
+PORT=8080
+RECEITA_CERTA_API_URL=https://api.receitacerta.example/v1
+RECEITA_CERTA_API_KEY=changeme
+NOTIFY_EMAIL_FROM=no-reply@telemed.app
+NOTIFY_WHATSAPP_PROVIDER=twillio
+NOTIFY_WHATSAPP_FROM=whatsapp:+10000000000
+
+# File: src/index.ts
+import 'dotenv/config';
+import express from 'express';
+import generationRouter from './routes/generation.js';
+
+const app = express();
+app.use(express.json({ limit: '2mb' }));
+
+app.get('/health', (_req, res) => res.json({ ok: true }));
+app.use('/generate', generationRouter);
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`[telemed-docs-automation] listening on :${PORT}`);
+});
+
+# File: src/domain/types.ts
+export type CID = string; // e.g., 'J02.9'
+
+export type ConsultationSummary = {
+  consultationId: string;
+  patient: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string; // E.164
+    birthDate?: string; // ISO
+    allergies?: string[];
+    chronicConditions?: string[];
+    currentMeds?: string[];
+  };
+  clinician: {
+    id: string;
+    name: string;
+    crm: string;
+    specialty?: string;
+  };
+  vitals?: Record<string, string | number>;
+  complaints?: string;
+  findings?: string;
+  assessment?: string; // free text from the doctor/IA
+  suggestedCid?: CID;
+  plan?: string;
+  timestamp: string; // ISO
+};
+
+export type PrescriptionItem = {
+  drug: string; // e.g., Amoxicilina 500mg
+  dose: string; // 1 cápsula
+  route: string; // VO
+  frequency: string; // 8/8h
+  duration: string; // 7 dias
+  notes?: string;
+};
+
+export type PrescriptionPayload = {
+  type: 'prescription';
+  items: PrescriptionItem[];
+  obs?: string;
+};
+
+export type AttestationPayload = {
+  type: 'attestation';
+  reason: string; // Ex.: virose / lombalgia / etc.
+  startDate: string; // ISO
+  daysOff: number;
+  restrictions?: string; // se aplicável
+};
+
+export type GeneratedDoc = {
+  id: string;
+  kind: 'prescription' | 'attestation';
+  pdfPath: string; // local path on server
+  filename: string;
+  metadata: Record<string, string>;
+};
+
+# File: src/services/templateEngine.ts
+import Handlebars from 'handlebars';
+
+export function renderTemplate(templateSource: string, context: Record<string, any>) {
+  const template = Handlebars.compile(templateSource, { noEscape: false });
+  return template(context);
+}
+
+# File: src/services/pdf.ts
+import PDFDocument from 'pdfkit';
+import fs from 'node:fs';
+import path from 'node:path';
+
+export async function htmlToSimplePdf(html: string, outDir: string, filename: string): Promise<string> {
+  // Minimal PDF renderer (no full HTML engine). For MVP we place raw text; can swap for Puppeteer later.
+  fs.mkdirSync(outDir, { recursive: true });
+  const fullPath = path.join(outDir, filename);
+  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  const stream = fs.createWriteStream(fullPath);
+  doc.pipe(stream);
+
+  // Very naive text rendering: strip tags and print. Replace with proper HTML renderer in v2.
+  const text = html
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+
+  doc.fontSize(12).text(text, { align: 'left' });
+  doc.end();
+
+  await new Promise((resolve) => stream.on('finish', resolve));
+  return fullPath;
+}
+
+# File: src/services/receitaCerta.ts
+import axios from 'axios';
+
+export type ReceitaCertaResponse = {
+  ok: boolean;
+  url?: string; // link to hosted doc (if their API supports hosting)
+  id?: string;
+};
+
+export async function sendToReceitaCerta(payload: any): Promise<ReceitaCertaResponse> {
+  const baseURL = process.env.RECEITA_CERTA_API_URL;
+  const apiKey = process.env.RECEITA_CERTA_API_KEY;
+  if (!baseURL || !apiKey) {
+    return { ok: false };
+  }
+  try {
+    const res = await axios.post(`${baseURL}/documents`, payload, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    return { ok: true, url: res.data?.url, id: res.data?.id };
+  } catch (err) {
+    console.error('[Receita Certa] error', err);
+    return { ok: false };
+  }
+}
+
+# File: src/services/notifier.ts
+import axios from 'axios';
+
+type NotifyTarget = { email?: string; phone?: string };
+
+export async function notifyPatient(target: NotifyTarget, message: string, attachmentUrl?: string) {
+  // MVP: log only. Replace with email (SES/SendGrid) and WhatsApp (Twilio/WATI) later.
+  console.log('[notify] to=', target, 'message=', message, 'attachment=', attachmentUrl);
+  // Example placeholder for WhatsApp provider
+  if (process.env.NOTIFY_WHATSAPP_PROVIDER === 'twilio' && target.phone) {
+    try {
+      await axios.post('https://api.twilio.example/send', { to: target.phone, body: message, mediaUrl: attachmentUrl });
+    } catch (e) {
+      console.warn('[notify] twilio placeholder failed (expected in dev)');
+    }
+  }
+}
+
+# File: src/routes/generation.ts
+import { Router } from 'express';
+import { body, validationResult } from 'express-validator';
+import { v4 as uuid } from 'uuid';
+import { renderTemplate } from '../services/templateEngine.js';
+import { htmlToSimplePdf } from '../services/pdf.js';
+import { sendToReceitaCerta } from '../services/receitaCerta.js';
+import { ConsultationSummary, PrescriptionPayload, AttestationPayload, GeneratedDoc } from '../domain/types.js';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const router = Router();
+const TEMPLATES = {
+  prescription: fs.readFileSync('templates/prescription.hbs', 'utf8'),
+  attestation: fs.readFileSync('templates/attestation.hbs', 'utf8')
+};
+
+router.post(
+  '/prescription',
+  body('summary').isObject(),
+  body('payload').isObject(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const summary = req.body.summary as ConsultationSummary;
+    const payload = req.body.payload as PrescriptionPayload;
+
+    const html = renderTemplate(TEMPLATES.prescription, { summary, payload, now: new Date().toISOString() });
+    const id = uuid();
+    const filename = `prescription_${id}.pdf`;
+    const pdfPath = await htmlToSimplePdf(html, 'out', filename);
+
+    const generated: GeneratedDoc = {
+      id,
+      kind: 'prescription',
+      pdfPath,
+      filename,
+      metadata: { consultationId: summary.consultationId, patientId: summary.patient.id }
+    };
+
+    // Send to Receita Certa (MVP: best-effort)
+    const rc = await sendToReceitaCerta({ summary, payload });
+
+    res.json({ ok: true, doc: generated, receitaCerta: rc });
+  }
+);
+
+router.post(
+  '/attestation',
+  body('summary').isObject(),
+  body('payload').isObject(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const summary = req.body.summary as ConsultationSummary;
+    const payload = req.body.payload as AttestationPayload;
+
+    const html = renderTemplate(TEMPLATES.attestation, { summary, payload, now: new Date().toISOString() });
+    const id = uuid();
+    const filename = `attestation_${id}.pdf`;
+    const pdfPath = await htmlToSimplePdf(html, 'out', filename);
+
+    const generated: GeneratedDoc = {
+      id,
+      kind: 'attestation',
+      pdfPath,
+      filename,
+      metadata: { consultationId: summary.consultationId, patientId: summary.patient.id }
+    };
+
+    res.json({ ok: true, doc: generated });
+  }
+);
+
+// Generic endpoint to notify patient with the generated link (to be hosted by Telemed CDN or S3)
+router.post(
+  '/notify',
+  body('patient').isObject(),
+  body('message').isString(),
+  body('attachmentUrl').optional().isString(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    // Import on demand to avoid circular
+    const { notifyPatient } = await import('../services/notifier.js');
+    await notifyPatient(req.body.patient, req.body.message, req.body.attachmentUrl);
+    res.json({ ok: true });
+  }
+);
+
+export default router;
+
+# File: templates/prescription.hbs
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Receita</title></head>
+  <body>
+    <h1>Receita Médica</h1>
+    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
+    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+    {{#if summary.patient.birthDate}}
+    <p><strong>Nascimento:</strong> {{summary.patient.birthDate}}</p>
+    {{/if}}
+    {{#if summary.suggestedCid}}
+    <p><strong>CID sugerido:</strong> {{summary.suggestedCid}}</p>
+    {{/if}}
+    <hr>
+    <h3>Prescrições</h3>
+    <ol>
+      {{#each payload.items}}
+        <li>
+          <strong>{{drug}}</strong> — {{dose}} — {{route}} — {{frequency}} — {{duration}}
+          {{#if notes}}<div><em>{{notes}}</em></div>{{/if}}
+        </li>
+      {{/each}}
+    </ol>
+    {{#if payload.obs}}
+      <p><strong>Observações:</strong> {{payload.obs}}</p>
+    {{/if}}
+    <hr>
+    <p>Data/Hora: {{now}}</p>
+  </body>
+</html>
+
+# File: templates/attestation.hbs
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Atestado</title></head>
+  <body>
+    <h1>Atestado Médico</h1>
+    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
+    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+    {{#if summary.suggestedCid}}
+    <p><strong>CID relacionado:</strong> {{summary.suggestedCid}}</p>
+    {{/if}}
+    <p>Motivo: {{payload.reason}}</p>
+    <p>Início do afastamento: {{payload.startDate}} — Dias de afastamento: {{payload.daysOff}}</p>
+    {{#if payload.restrictions}}
+      <p>Restrições/Recomendações: {{payload.restrictions}}</p>
+    {{/if}}
+    <hr>
+    <p>Data/Hora: {{now}}</p>
+  </body>
+</html>
+
+# File: README.md
+# Telemed Docs Automation (MVP)
+
+Módulo mínimo para **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
+
+## Rodando no Replit / local
+1. Crie um Repl Node.js (ou Nix) e cole os arquivos.
+2. `npm i`
+3. Copie `.env.example` para `.env` e ajuste as variáveis.
+4. `npm run dev`
+5. Teste com curl/Postman:
+
+### Receita
+```bash
+curl -X POST http://localhost:8080/generate/prescription \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "summary": {
+      "consultationId": "c-123",
+      "patient": { "id":"p-1","name":"Fulano","email":"fulano@mail.com","phone":"+5511999999999" },
+      "clinician": { "id":"m-1", "name":"Dra. Ana", "crm":"12345-SP" },
+      "suggestedCid": "J02.9",
+      "timestamp": "2025-09-02T12:00:00Z"
+    },
+    "payload": {
+      "type": "prescription",
+      "items": [
+        {"drug":"Amoxicilina 500mg","dose":"1 cápsula","route":"VO","frequency":"8/8h","duration":"7 dias","notes":"Tomar após as refeições"}
+      ],
+      "obs": "Beber água, repouso relativo"
+    }
+  }'
+```
+
+### Atestado
+```bash
+curl -X POST http://localhost:8080/generate/attestation \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "summary": {
+      "consultationId": "c-123",
+      "patient": { "id":"p-1","name":"Fulano" },
+      "clinician": { "id":"m-1", "name":"Dra. Ana", "crm":"12345-SP" },
+      "suggestedCid": "J06.9",
+      "timestamp": "2025-09-02T12:00:00Z"
+    },
+    "payload": {
+      "type": "attestation",
+      "reason": "IVAS viral",
+      "startDate": "2025-09-02",
+      "daysOff": 3,
+      "restrictions": "Hidratação + analgésico se dor"
+    }
+  }'
+```
+
+Os PDFs são gerados em `out/`. Para assinatura digital e hosting, plugaremos no pipeline em versões seguintes.
+
+## Integração com o Telemed
+- Expor esse serviço internamente (Render) e chamar em **fim de consulta**.
+- UI do Telemed recebe o JSON, exibe o rascunho, permite editar e assinar via **Receita Certa**.
+- Envio ao paciente por e-mail/WhatsApp usando o endpoint `/generate/notify`.
+
+## Próximos incrementos
+- ✅ v0: geração PDF simples (texto), integração best-effort com Receita Certa.
+- ⏩ v1: substituir `htmlToSimplePdf` por **Puppeteer** (render HTML/CSS fiel + QR/assinatura).
+- ⏩ v1: importar **templates por especialidade** (pastas) e permitir override por médico.
+- ⏩ v1: salvar metadados em banco (SQLite/Prisma) para rastreabilidade.
+- ⏩ v2: assinatura digital integrada + webhook de status (emitido / assinado / enviado).
+- ⏩ v2: comandos de voz para “Gerar receita de …”.

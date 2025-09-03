@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Atestado</title></head>
+  <body>
+    <h1>Atestado Médico</h1>
+    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
+    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+    {{#if summary.suggestedCid}}
+    <p><strong>CID relacionado:</strong> {{summary.suggestedCid}}</p>
+    {{/if}}
+    <p>Motivo: {{payload.reason}}</p>
+    <p>Início do afastamento: {{payload.startDate}} — Dias de afastamento: {{payload.daysOff}}</p>
+    {{#if payload.restrictions}}
+      <p>Restrições/Recomendações: {{payload.restrictions}}</p>
+    {{/if}}
+    <hr>
+    <p>Data/Hora: {{now}}</p>
+  </body>
+</html>

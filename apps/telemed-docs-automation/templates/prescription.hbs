@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Receita</title></head>
+  <body>
+    <h1>Receita Médica</h1>
+    <p><strong>Médico(a):</strong> {{summary.clinician.name}} — CRM {{summary.clinician.crm}}</p>
+    <p><strong>Paciente:</strong> {{summary.patient.name}} (ID: {{summary.patient.id}})</p>
+    {{#if summary.patient.birthDate}}
+    <p><strong>Nascimento:</strong> {{summary.patient.birthDate}}</p>
+    {{/if}}
+    {{#if summary.suggestedCid}}
+    <p><strong>CID sugerido:</strong> {{summary.suggestedCid}}</p>
+    {{/if}}
+    <hr>
+    <h3>Prescrições</h3>
+    <ol>
+      {{#each payload.items}}
+        <li>
+          <strong>{{drug}}</strong> — {{dose}} — {{route}} — {{frequency}} — {{duration}}
+          {{#if notes}}<div><em>{{notes}}</em></div>{{/if}}
+        </li>
+      {{/each}}
+    </ol>
+    {{#if payload.obs}}
+      <p><strong>Observações:</strong> {{payload.obs}}</p>
+    {{/if}}
+    <hr>
+    <p>Data/Hora: {{now}}</p>
+  </body>
+</html>
