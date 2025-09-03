@@ -6,7 +6,7 @@ import generationRouter from './routes/generation.js';
 
 const app = express();
 
-const ORIGINS = (process.env.FRONTEND_ORIGIN || "")
+const ORIGINS = (process.env.CORS_ORIGINS || process.env.FRONTEND_ORIGIN || "")
   .split(",")
   .map(s => s.trim())
   .filter(Boolean);
@@ -14,7 +14,8 @@ const ORIGINS = (process.env.FRONTEND_ORIGIN || "")
 app.use(cors({
   origin: ORIGINS.length ? ORIGINS : true,
   methods: ["GET","POST","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","X-Internal-Token"]
+  allowedHeaders: ["Content-Type","Authorization","X-Internal-Token"],
+  credentials: false
 }));
 
 app.use(express.json({ limit: '2mb' }));

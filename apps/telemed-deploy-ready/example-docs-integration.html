@@ -113,7 +113,10 @@
                 
                 const response = await fetch(`${DOCS_URL}/generate/prescription`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
                     body: JSON.stringify(payload)
                 });
                 
@@ -156,7 +159,10 @@
                 
                 const response = await fetch(`${DOCS_URL}/generate/attestation`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
                     body: JSON.stringify(payload)
                 });
                 
@@ -196,7 +202,10 @@
                 
                 const response = await fetch(`${DOCS_URL}/generate/notify`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
                     body: JSON.stringify(payload)
                 });
                 
@@ -237,7 +246,10 @@
                 
                 const response = await fetch(`${DOCS_URL}/generate/${type}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
                     body: JSON.stringify(payload)
                 });
                 

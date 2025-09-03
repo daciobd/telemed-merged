@@ -5,6 +5,7 @@ import { renderTemplate } from '../services/templateEngine.js';
 import { htmlToSimplePdf } from '../services/pdf.js';
 import { sendToReceitaCerta } from '../services/receitaCerta.js';
 import { ConsultationSummary, PrescriptionPayload, AttestationPayload, GeneratedDoc } from '../domain/types.js';
+import { authMiddleware } from '../middleware/auth.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -16,6 +17,7 @@ const TEMPLATES = {
 
 router.post(
   '/prescription',
+  authMiddleware,
   body('summary').isObject(),
   body('payload').isObject(),
   async (req, res) => {
@@ -47,6 +49,7 @@ router.post(
 
 router.post(
   '/attestation',
+  authMiddleware,
   body('summary').isObject(),
   body('payload').isObject(),
   async (req, res) => {
@@ -76,6 +79,7 @@ router.post(
 // Generic endpoint to notify patient with the generated link (to be hosted by Telemed CDN or S3)
 router.post(
   '/notify',
+  authMiddleware,
   body('patient').isObject(),
   body('message').isString(),
   body('attachmentUrl').optional().isString(),

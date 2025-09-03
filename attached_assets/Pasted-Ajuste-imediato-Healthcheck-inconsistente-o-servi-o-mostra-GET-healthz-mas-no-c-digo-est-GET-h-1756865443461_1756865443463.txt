@@ -1,0 +1,89 @@
+Ajuste imediato
+
+Healthcheck inconsistente: o serviço mostra GET /healthz, mas no código está GET /health.
+➜ Corrija para /healthz (ou ajuste o Render para /health). Proponho padronizar para /healthz.
+
+// src/index.ts
+app.get('/healthz', (_req, res) => res.json({ ok: true }));
+
+✅ Próximos passos (em ordem)
+1) Smoke tests (manual, 15–20 min)
+
+Testar localmente e no Render:
+
+GET /healthz → { ok: true }
+
+POST /generate/prescription com o payload de exemplo do README → retorna doc.filename, doc.pdfPath, receitaCerta.ok
+
+POST /generate/attestation idem
+
+POST /generate/notify com phone e/ou email fictícios → loga sucesso
+
+Validar o example-docs-integration.html chamando o serviço real.
+
+2) CORS + Auth (antes de médicos usarem de verdade)
+
+CORS: no código da boilerplate não ativamos CORS. Como seu Replit disse “CORS configurado”, garanta que isso existe no serviço:
+
+// src/index.ts
+import cors from 'cors';
+const ORIGINS = (process.env.CORS_ORIGINS || '').split(',').filter(Boolean);
+app.use(cors({ origin: ORIGINS.length ? ORIGINS : true, credentials: false }));
+
+
+Auth: proteja os endpoints com API key ou JWT interno emitido pelo telemed-internal.
+Estratégia rápida: header x-internal-token validado por segredo compartilhado (Render env var).
+
+3) Armazenamento/entrega dos PDFs
+
+Hoje pdfPath é local — o frontend não consegue baixar direto. Decida:
+
+Opção A (rápida): telemed-internal lê o arquivo local e serve via endpoint protegido.
+
+Opção B (melhor): enviar para S3/Cloudflare R2 na geração e retornar URL assinada (expira em 10–15 min).
+
+Opção C (Receita Certa): se a API hospedar o documento, use o receitaCerta.url como fonte de verdade.
+
+4) UI de revisão/assinatura no frontend
+
+Abrir um modal de revisão pós-consulta:
+
+Mostrar lista de itens da receita/atestado (editáveis).
+
+Botão Assinar & Enviar → chama Receita Certa (ou fluxo de assinatura) → ao sucesso, chama /generate/notify.
+
+Se quiser, eu já crio esse componente React no canvas (com Tailwind), é plug and play.
+
+5) Logs, métricas e observabilidade
+
+Logging estruturado (req id, consultationId, patientId “hash”).
+
+Contadores por endpoint (sucesso/erro), latência p95.
+
+Alertas no Render (healthcheck falhou/latência alta).
+
+(Opcional) Sentry para exceções.
+
+6) Segurança & LGPD (essencial)
+
+Dados sensíveis apenas em trânsito (HTTPS) e, se em repouso, criptografados (S3 com SSE).
+
+Purge/retention: definir prazo (ex.: 30 dias) e rotina de limpeza de PDFs e metadados.
+
+Trilha de auditoria: quem gerou, quando, versão do template, IP/agent.
+
+Consentimento: armazenar flag/registro quando for enviar por WhatsApp/e-mail.
+
+7) Robustez de integração (Receita Certa)
+
+Timeouts/retries com backoff.
+
+Fila para reenvio quando a API estiver instável.
+
+Webhook de status (emitido/assinado/entregue) e atualização do prontuário.
+
+8) Templates e conformidade
+
+Padronizar modelo CFM da receita (posso subir um .hbs com layout pronto e QR/assinatura visual).
+
+Variantes por especialidade e customização por médico (placeholders: CRM, especialidade, endereço, carimbo).

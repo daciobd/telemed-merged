@@ -123,8 +123,10 @@ services:
   healthCheckPath: /healthz
   autoDeploy: true
   envVars:
-    - key: FRONTEND_ORIGIN
+    - key: CORS_ORIGINS
       value: https://telemed-deploy-ready.onrender.com
+    - key: INTERNAL_TOKEN
+      value: change-me-internal
     - key: RECEITA_CERTA_API_URL
       value: https://api.receitacerta.example/v1
     - key: RECEITA_CERTA_API_KEY
