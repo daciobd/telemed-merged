@@ -1,3 +1,5 @@
+Perfeito — segue um render.yaml de blueprint para o seu monorepo com os 5 serviços. Ele já coloca healthcheck em /healthz, build/start padronizados, autoDeploy ligado, região Ohio (boa latência p/ Brasil) e envs essenciais (incluindo o INTERNAL_TOKEN, CORS e S3 no serviço de documentos). Ajuste os paths caso o seu monorepo use nomes diferentes.
+
 # render.yaml — Telemed (monorepo com 5 serviços)
 
 services:
@@ -145,3 +147,7 @@ services:
         sync: false
       - key: RECEITA_CERTA_API_KEY
         sync: false
+
+Como usar
+
+Na raiz do monorepo, salve como render.yaml.
