@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TeleMed — Roteiro 1 Página</title>
+<style>
+:root{--brand:#0ea5e9;--ink:#0b1324;--muted:#475569;--border:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:#0f172a;background:#fff}
+.wrap{max-width:900px;margin:18px auto;padding:0 14px}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.badge{background:var(--brand);color:#fff;border-radius:999px;padding:6px 10px;font-weight:700}
+h1{margin:0;font-size:1.35rem}
+h2{margin:8px 0 6px;font-size:1rem}
+small{color:var(--muted)}
+hr{border:0;border-top:1px solid var(--border);margin:8px 0}
+.grid{column-count:2;column-gap:18px}
+.section{break-inside:avoid;border:1px solid var(--border);border-radius:10px;padding:8px;margin:0 0 10px;background:#f8fafc}
+ul{margin:6px 0 0 1rem}
+li{margin:.25rem 0}
+.time{font-weight:600;border:1px solid var(--border);border-radius:6px;padding:0 6px}
+.kv{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;color:#0f172a}
+.btn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+.btn:hover{background:#f1f5f9}
+.footer{margin-top:6px;color:#64748b;font-size:.9rem}
+
+/* impressão */
+@page{size:A4;margin:10mm}
+@media print{
+  .noprint{display:none!important}
+  .wrap{max-width:none;margin:0;padding:0}
+  body{background:#fff}
+}
+</style>
+<script>function printNow(){window.print()}</script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <span class="badge">TeleMed</span>
+      <h1>Roteiro de Demonstração — 1 Página</h1>
+      <small>15–20 min • foco em produtividade médica • apoio à decisão (não substitui o julgamento clínico)</small>
+    </div>
+    <button class="btn noprint" onclick="printNow()">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+
+  <div class="grid">
+    <div class="section">
+      <h2>1) Abertura <span class="time">~1 min</span></h2>
+      <ul>
+        <li>Mensagem-chave: <b>apoio à decisão</b>, médico no controle.</li>
+        <li>Benefícios: <b>produtividade</b>, <b>qualidade de registro</b>, <b>receita</b>.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>2) Visão geral & Login <span class="time">~2 min</span></h2>
+      <ul>
+        <li>Abrir GUI do médico (<span class="kv">/demo.html</span>).</li>
+        <li>Papéis: admin / médico / paciente (JWT + roles).</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>3) Captação – Leilão Reverso <span class="time">~3–4 min</span></h2>
+      <ul>
+        <li>Lance <i>imediato</i> x <i>agendado</i>; thresholds configuráveis.</li>
+        <li>Aceitação cria <b>Appointment</b> via <span class="kv">/internal/appointments/from-bid</span>.</li>
+        <li>Pagamento (mock) + notificações médico/paciente.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>4) Produtividade (Scribe, CID-10, Notas) <span class="time">~5–6 min</span></h2>
+      <ul>
+        <li><b>Scribe</b> → resumo SOAP para revisar/editar.</li>
+        <li><b>Sugestões CID-10 / procedimentos</b> com confirmação do médico.</li>
+        <li><b>Bloco de notas</b> persistente no prontuário.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>5) Prescrição Digital <span class="time">~2–3 min</span></h2>
+      <ul>
+        <li>Geração de PDF e QR; roadmap ICP-Brasil.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>6) Agenda Inteligente & Follow-up <span class="time">~2–3 min</span></h2>
+      <ul>
+        <li>Sugestão de retorno (ex.: 30 dias) com 1 clique.</li>
+        <li>Lembretes ao paciente + badge de retorno.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>7) Calculadoras & Prontuário <span class="time">~2–3 min</span></h2>
+      <ul>
+        <li>Framingham, CHA2DS2-VASc, SOFA, APACHE II, NEWS2.</li>
+        <li>Sinais vitais e notas estruturadas.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Segurança & Arquitetura <span class="time">~1 min</span></h2>
+      <ul>
+        <li>Serviços isolados (auction/internal/productivity) + tokens internos.</li>
+        <li>Healthchecks <span class="kv">/healthz</span>; APIs REST; roadmap HL7/FHIR.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Fechamento <span class="time">~1 min</span></h2>
+      <ul>
+        <li><b>ROI</b>: menos tarefas administrativas, melhor codificação, continuidade do cuidado.</li>
+        <li>Próximos passos: piloto com 3–5 médicos (feedback em 2 semanas).</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr/>
+  <div class="footer">
+    URLs úteis: GUI médico <span class="kv">/demo.html</span> • Hub <span class="kv">/</span> ou <span class="kv">/enhanced/</span> • Integração <span class="kv">/example-integration.html</span>
+  </div>
+</div>
+</body>
+</html>
