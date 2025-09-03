@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TeleMed — Demo Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/css/style.css" rel="stylesheet" />
+    <style>
+      .presenter {
+        position: fixed; right: 16px; bottom: 16px; z-index: 50;
+        background: #111827; color: #e5e7eb; border-radius: 12px;
+        padding: 12px 14px; box-shadow: 0 10px 25px rgba(0,0,0,.25);
+        width: 320px; max-height: 60vh; overflow: auto; display:none;
+      }
+      .presenter h3 { margin: 8px 0 6px; font-size: 14px; }
+      .presenter p, .presenter li { font-size: 12px; color:#cbd5e1; }
+      .presenter .close { position:absolute; top:6px; right:10px; cursor:pointer; }
+      .presenter-toggle { position: fixed; right: 16px; bottom: 16px; z-index: 51; }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <img src="/img/logo.svg" alt="TeleMed" height="28" />
+      <h1>TeleMed — Demo Dashboard</h1>
+      <p class="muted">GUI de demonstração para médicos — leilão, consulta e produtividade.</p>
+    </header>
+
+    <section class="card">
+      <h2>0) Pre-flight / Healthchecks</h2>
+      <div class="grid">
+        <div>
+          <div class="row">
+            <input id="auUrl" placeholder="AUCTION_URL" />
+            <button class="btn" id="checkAuction">Testar Auction</button>
+          </div>
+          <div id="outAuction"></div>
+        </div>
+        <div>
+          <div class="row">
+            <input id="inUrl" placeholder="INTERNAL_URL" />
+            <button class="btn" id="checkInternal">Testar Internal</button>
+          </div>
+          <div id="outInternal"></div>
+        </div>
+        <div>
+          <div class="row">
+            <input id="prodUrl" placeholder="PRODUCTIVITY_URL" />
+            <button class="btn" id="checkProd">Testar Productivity</button>
+          </div>
+          <div id="outProd"></div>
+        </div>
+      </div>
+      <p class="muted">Dica: configure <code>FRONTEND_ORIGIN</code> nos serviços Node e confira <code>/healthz</code>.</p>
+    </section>
+
+    <section class="card">
+      <h2>1) Leilão Reverso — criar BID e aceitar</h2>
+      <div class="grid">
+        <div>
+          <label>patientId</label>
+          <input id="patientId" value="paciente-demo" />
+          <label>specialty</label>
+          <input id="specialty" value="clinica_geral" />
+          <label>isImmediate</label>
+          <select id="isImmediate">
+            <option value="true" selected>true</option>
+            <option value="false">false</option>
+          </select>
+          <label>amountCents</label>
+          <input id="amountCents" type="number" value="9000" />
+          <button class="btn" id="btnCreateBid">Criar BID (seed)</button>
+          <div id="outCreateBid"></div>
+        </div>
+        <div>
+          <label>Bid ID (preenchido após criar)</label>
+          <input id="bidId" />
+          <label>Modo</label>
+          <select id="mode">
+            <option value="immediate" selected>immediate</option>
+            <option value="scheduled">scheduled</option>
+          </select>
+          <label>scheduledFor (ISO)</label>
+          <input id="scheduledFor" placeholder="2025-09-04T14:00:00Z" />
+          <button class="btn" id="btnAcceptBid">Aceitar BID → criar consulta</button>
+          <div id="outAcceptBid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2) Produtividade — Transcripts & Resumos + CID/TUSS</h2>
+      <div class="grid">
+        <div>
+          <button class="btn" id="btnCreateTranscript">Criar Transcript (com summaries)</button>
+          <div id="outTranscript"></div>
+        </div>
+        <div>
+          <label>consultId</label>
+          <input id="consultId" placeholder="ex.: appointment.id" />
+          <label>Code suggestions (JSON)</label>
+          <textarea id="codesJson" rows="6" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:8px;">[
+  {"system":"CID10","code":"I10","label":"Hipertensão essencial","confidence":0.92},
+  {"system":"TUSS","code":"10101012","label":"Consulta médica","confidence":0.88}
+]</textarea>
+          <button class="btn" id="btnPostCodes">Enviar sugestões</button>
+          <div id="outCodes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3) Atalhos</h2>
+      <div class="grid">
+        <a class="btn" href="/lp.html">Landing</a>
+        <a class="btn" href="/index.html">Home</a>
+        <a class="btn" target="_blank" id="openAuction">Abrir Auction</a>
+        <a class="btn" target="_blank" id="openProd">Abrir Productivity</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Logs</h2>
+      <pre id="log"></pre>
+    </section>
+
+    <div class="presenter" id="presenter">
+      <span class="close" onclick="document.getElementById('presenter').style.display='none'">✖</span>
+      <h3>Roteiro Rápido</h3>
+      <ol>
+        <li>Health: Auction + Internal + Productivity → OK</li>
+        <li>Criar BID (seed) → copiar <em>Bid ID</em></li>
+        <li>Aceitar BID (immediate) → mostrar <code>appointment</code></li>
+        <li>Transcript + summaries (SOAP + CID10)</li>
+        <li>Enviar 2 códigos (CID10 + TUSS)</li>
+      </ol>
+      <h3>Mensagens‑chave</h3>
+      <ul>
+        <li>Suporte à decisão; médico no comando</li>
+        <li>Padronização e agilidade</li>
+        <li>Integração ponta‑a‑ponta</li>
+      </ul>
+    </div>
+    <button class="btn presenter-toggle" onclick="(function(x){x.style.display=(x.style.display==='none'||!x.style.display)?'block':'none'})(document.getElementById('presenter'))">Roteiro</button>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/demo.js"></script>
+  </body>
+</html>

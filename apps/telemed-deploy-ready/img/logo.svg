@@ -1,0 +1,5 @@
+<svg width="160" height="28" viewBox="0 0 160 28" xmlns="http://www.w3.org/2000/svg">
+  <rect rx="6" ry="6" width="28" height="28" fill="#111827"/>
+  <path d="M8 14h6M11 11v6M20 8v12" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <text x="36" y="20" font-size="16" font-family="Arial, Helvetica, sans-serif" fill="#111827">TeleMed</text>
+</svg>

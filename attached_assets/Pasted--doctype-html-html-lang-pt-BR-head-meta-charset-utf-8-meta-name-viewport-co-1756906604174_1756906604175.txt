@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TeleMed — Demo para Médicos</title>
+  <style>
+    :root{
+      --brand:#0ea5e9; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
+      --text:#111827; --muted:#6b7280; --card:#fff; --border:#e5e7eb; --bg:#f8fafc;
+    }
+    *{box-sizing:border-box} body{margin:0;padding:24px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
+    .hero{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .hero h1{margin:0}
+    .hero .tag{background:var(--brand);color:#fff;padding:6px 10px;border-radius:999px;font-size:.85rem}
+    .links a{margin-right:8px;color:var(--brand);text-decoration:none;border-bottom:1px dashed var(--brand)}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .muted{color:var(--muted)}
+    .btn{background:var(--brand);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+    label{display:block;font-size:.9rem;margin:6px 0 4px}
+    pre{background:#0b1020;color:#e5e7eb;padding:12px;border-radius:10px;overflow:auto;font-size:12px}
+    .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+    .ok{color:var(--ok)} .bad{color:var(--bad)}
+    .presenter{position:fixed;right:16px;bottom:16px;z-index:50;background:var(--ink);color:#e5e7eb;border-radius:12px;padding:12px 14px;box-shadow:0 10px 25px rgba(0,0,0,.25);width:320px;max-height:60vh;overflow:auto;display:none}
+    .presenter h3{margin:8px 0 6px;font-size:14px}.presenter p,.presenter li{font-size:12px;color:#cbd5e1}.presenter .close{position:absolute;top:6px;right:10px;cursor:pointer}
+    .presenter-toggle{position:fixed;right:16px;bottom:16px;z-index:51}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <span class="tag">TeleMed</span>
+    <h1>Demo para Médicos</h1>
+    <div class="links">
+      <a href="/index.html">Home</a>
+      <a href="/example-integration.html">Exemplo simples</a>
+    </div>
+    <button class="btn presenter-toggle" onclick="togglePresenter()">Roteiro</button>
+  </header>
+
+  <section class="card">
+    <h2>0) Pre-Flight / Healthchecks</h2>
+    <p class="muted">Configure os endpoints e verifique <code>/healthz</code>.</p>
+    <div class="grid">
+      <div>
+        <label>AUCTION_URL</label>
+        <input id="auUrl" placeholder="https://telemed-auction.onrender.com" />
+        <button class="btn" id="checkAuction">Testar Auction</button>
+        <div id="outAuction"></div>
+      </div>
+      <div>
+        <label>INTERNAL_URL</label>
+        <input id="inUrl" placeholder="https://telemed-internal.onrender.com" />
+        <button class="btn" id="checkInternal">Testar Internal</button>
+        <div id="outInternal"></div>
+      </div>
+      <div>
+        <label>PRODUCTIVITY_URL</label>
+        <input id="prodUrl" placeholder="https://telemed-productivity.onrender.com" />
+        <button class="btn" id="checkProd">Testar Productivity</button>
+        <div id="outProd"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>1) Leilão Reverso — Criar BID</h2>
+    <div class="grid">
+      <div>
+        <label>patientId</label>
+        <input id="patientId" value="paciente-demo" />
+        <label>specialty</label>
+        <input id="specialty" value="clinica_geral" />
+        <label>isImmediate</label>
+        <select id="isImmediate">
+          <option value="true" selected>true</option>
+          <option value="false">false</option>
+        </select>
+        <label>amountCents</label>
+        <input id="amountCents" type="number" value="9000" />
+        <button class="btn" id="btnCreateBid">Criar BID (seed)</button>
+        <div id="outCreateBid" class="muted"></div>
+      </div>
+      <div>
+        <label>Bid ID (preenchido após criar)</label>
+        <input id="bidId" />
+        <label>Modo</label>
+        <select id="mode">
+          <option value="immediate" selected>immediate</option>
+          <option value="scheduled">scheduled</option>
+        </select>
+        <label>scheduledFor (ISO)</label>
+        <input id="scheduledFor" placeholder="2025-09-04T14:00:00Z" />
+        <button class="btn" id="btnAcceptBid">Aceitar BID → criar consulta</button>
+        <div id="outAcceptBid" class="muted"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2) Atalhos</h2>
+    <div class="grid">
+      <a class="btn" target="_blank" id="openAuction">Abrir Auction</a>
+      <a class="btn" target="_blank" id="openProd">Abrir Productivity</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Logs</h2>
+    <pre id="log"></pre>
+  </section>
+
+  <div class="presenter" id="presenter">
+    <span class="close" onclick="togglePresenter()">✖</span>
+    <h3>Roteiro Rápido (15–20 min)</h3>
+    <ol>
+      <li>Health: Auction + Internal + Productivity → OK</li>
+      <li>Criar BID (seed) → copiar <em>Bid ID</em></li>
+      <li>Aceitar BID (immediate) → mostrar <code>appointment</code></li>
+      <li>Explicar prontuário/IA (Productivity) na demo verbal (link “Abrir Productivity”).</li>
+    </ol>
+    <h3>Mensagens-chave</h3>
+    <ul>
+      <li>Suporte à decisão; médico no comando.</li>
+      <li>Padronização e agilidade.</li>
+      <li>Integração ponta-a-ponta (lance → consulta).</li>
+    </ul>
+  </div>
+
+  <script>
+    function togglePresenter(){
+      const x=document.getElementById('presenter');
+      x.style.display = (x.style.display==='none'||!x.style.display)?'block':'none';
+    }
+
+    const logEl = document.getElementById('log');
+    function log(msg, obj){
+      const line = '['+new Date().toISOString()+'] '+msg+'\\n';
+      logEl.textContent += line + (obj? JSON.stringify(obj,null,2)+'\\n' : '');
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    const AU = document.getElementById('auUrl');
+    const IN = document.getElementById('inUrl');
+    const PR = document.getElementById('prodUrl');
+
+    // Sugestão: preencher automaticamente se já sabe as URLs
+    AU.value = 'https://telemed-auction.onrender.com';
+    IN.value = 'https://telemed-internal.onrender.com';
+    PR.value = 'https://telemed-productivity.onrender.com';
+    document.getElementById('openAuction').href = AU.value;
+    document.getElementById('openProd').href    = PR.value;
+
+    async function health(url, outId){
+      const out = document.getElementById(outId);
+      out.innerHTML = '';
+      if(!url){ out.innerHTML='<span class="bad">URL vazia</span>';return; }
+      try{
+        const r = await fetch(url.replace(/\\/$/,'') + '/healthz');
+        const j = await r.json();
+        out.innerHTML = (r.ok && j.ok) ? '<span class="ok">OK</span>' : '<span class="bad">'+r.status+'</span>';
+        log('health '+url, j);
+      }catch(e){
+        out.innerHTML = '<span class="bad">erro</span>';
+        log('health '+url+' erro', {error:String(e)});
+      }
+    }
+    document.getElementById('checkAuction').onclick = ()=>health(AU.value,'outAuction');
+    document.getElementById('checkInternal').onclick= ()=>health(IN.value,'outInternal');
+    document.getElementById('checkProd').onclick    = ()=>health(PR.value,'outProd');
+
+    document.getElementById('btnCreateBid').onclick = async ()=>{
+      const url = (AU.value||'').replace(/\\/$/,'');
+      const body = {
+        patientId:  document.getElementById('patientId').value || 'paciente-demo',
+        specialty:  document.getElementById('specialty').value || 'clinica_geral',
+        isImmediate:(document.getElementById('isImmediate').value||'true')==='true',
+        amountCents:Number(document.getElementById('amountCents').value||9000),
+      };
+      const out = document.getElementById('outCreateBid'); out.textContent='Enviando…';
+      try{
+        const r = await fetch(url + '/__dev/create-bid', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const j = await r.json();
+        if(r.ok && j?.bid?.id){
+          document.getElementById('bidId').value = j.bid.id;
+          out.innerHTML = '<span class="ok">Criado</span>';
+        }else{
+          out.innerHTML = '<span class="bad">Falha</span>';
+        }
+        log('create-bid', j);
+      }catch(e){
+        out.innerHTML = '<span class="bad">Erro</span>'; log('create-bid erro', {error:String(e)});
+      }
+    };
+
+    document.getElementById('btnAcceptBid').onclick = async ()=>{
+      const url = (AU.value||'').replace(/\\/$/,'');
+      const id  = document.getElementById('bidId').value;
+      const out = document.getElementById('outAcceptBid');
+      if(!id){ out.innerHTML='<span class="bad">Informe o Bid ID</span>'; return; }
+      const body = {
+        mode: document.getElementById('mode').value,
+        patientId: document.getElementById('patientId').value || 'paciente-demo',
+        scheduledFor: document.getElementById('scheduledFor').value || null,
+      };
+      out.textContent='Enviando…';
+      try{
+        const r = await fetch(url + '/bids/'+encodeURIComponent(id)+'/accept', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const j = await r.json();
+        out.innerHTML = (r.ok && j?.ok) ? '<span class="ok">Consulta criada</span>' : '<span class="bad">'+(j?.error||'Falha')+'</span>';
+        log('accept-bid', j);
+      }catch(e){
+        out.innerHTML = '<span class="bad">Erro</span>'; log('accept-bid erro', {error:String(e)});
+      }
+    };
+  </script>
+</body>
+</html>

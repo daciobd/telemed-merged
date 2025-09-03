@@ -1,0 +1,149 @@
+erfeito — segue um render.yaml de blueprint para o seu monorepo com os 5 serviços. Ele já coloca healthcheck em /healthz, build/start padronizados, autoDeploy ligado, região Ohio (boa latência p/ Brasil) e envs essenciais (incluindo o INTERNAL_TOKEN, CORS e S3 no serviço de documentos). Ajuste os paths caso o seu monorepo use nomes diferentes.
+
+# render.yaml — Telemed (monorepo com 5 serviços)
+
+services:
+  # 1) Frontend principal
+  - type: web
+    name: telemed-deploy-ready
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: apps/telemed-deploy-ready
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: TELEMED_ENV
+        value: production
+      - key: TELEMED_API_BASE
+        fromService:
+          type: web
+          name: telemed-internal
+          property: host
+      - key: DOCS_AUTOMATION_URL
+        fromService:
+          type: web
+          name: telemed-docs-automation
+          property: host
+      - key: INTERNAL_TOKEN
+        sync: false  # defina no dashboard (mesmo valor do docs-automation)
+      - key: CORS_ORIGINS
+        value: https://telemed.app
+
+  # 2) Auction service (leilão reverso)
+  - type: web
+    name: auction-service
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: apps/auction-service
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      npm run start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: INTERNAL_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://telemed.app,https://staging.telemed.app
+
+  # 3) Backend interno (BFF/integrações)
+  - type: web
+    name: telemed-internal
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: apps/telemed-internal
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      npm run start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: INTERNAL_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://telemed.app,https://staging.telemed.app
+      # Exemplos de terceiros:
+      - key: RECEITA_CERTA_API_URL
+        sync: false
+      - key: RECEITA_CERTA_API_KEY
+        sync: false
+
+  # 4) Serviço de produtividade (scribe, CIDs, follow-up)
+  - type: web
+    name: productivity-service
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: apps/productivity-service
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      npm run start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: INTERNAL_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://telemed.app,https://staging.telemed.app
+
+  # 5) **Docs Automation** (receitas/atestados + S3 + URLs assinadas)
+  - type: web
+    name: telemed-docs-automation
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: apps/telemed-docs-automation
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      node dist/index.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: INTERNAL_TOKEN
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://telemed.app,https://staging.telemed.app
+      # AWS / S3 (produção)
+      - key: AWS_REGION
+        value: us-east-1
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET
+        value: telemed-docs
+      - key: S3_PREFIX
+        value: docs/
+      - key: SIGNED_URL_TTL_SECONDS
+        value: "900"
+      # Integração Receita Certa (opcional aqui, pode ficar no telemed-internal)
+      - key: RECEITA_CERTA_API_URL
+        sync: false
+      - key: RECEITA_CERTA_API_KEY
+        sync: false
