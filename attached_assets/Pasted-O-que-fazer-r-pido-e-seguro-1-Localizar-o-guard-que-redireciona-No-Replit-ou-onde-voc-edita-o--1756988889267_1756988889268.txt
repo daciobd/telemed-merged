@@ -1,0 +1,94 @@
+O que fazer (rápido e seguro)
+1) Localizar o guard que redireciona
+
+No Replit (ou onde você edita o repo), rode:
+
+git grep -nE 'location\.(replace|href)|window\.location' apps/telemed-deploy-ready/js | grep consulta
+git grep -nE 'JWT|localStorage|token|redirect' apps/telemed-deploy-ready/js
+
+
+Você deve ver algo em um desses arquivos comuns (ex.: apps/telemed-deploy-ready/js/app.js, auth.js, telemed-guard.js, etc.) parecendo com:
+
+const hasJWT = !!localStorage.getItem('jwt'); // ou similar
+if (hasJWT && location.pathname !== '/consulta/') {
+  location.replace('/consulta/');
+}
+
+2) Patch do guard (whitelist + flag)
+
+Abra o arquivo do guard e substitua o bloco de redireciono por algo assim:
+
+(function () {
+  // 1) Flag para desligar guard em páginas específicas
+  const noGuard =
+    window.NO_AUTH_GUARD === true ||
+    document.querySelector('meta[name="telemed-no-guard"][content="1"]');
+
+  if (noGuard) return;
+
+  // 2) Whitelist: páginas que NUNCA devem ser redirecionadas para /consulta/
+  const WHITELIST = [
+    '/demo.html',
+    '/example-integration.html',
+    '/cadastro.html',
+    '/gestao-avancada/',
+    '/sala-de-espera/',
+    '/medico/',
+    '/meus-pacientes/',
+    '/como-funciona/',
+    '/centro-de-testes/',
+    '/consulta/',          // deixa a própria “home” passar
+    '/',                   // raiz do site
+  ];
+
+  const p = location.pathname;
+  const isWhitelisted = WHITELIST.some(w => p === w || p.startsWith(w));
+
+  // 3) Regra antiga, agora respeitando whitelist
+  const hasJWT =
+    !!localStorage.getItem('jwt') ||
+    !!sessionStorage.getItem('jwt') ||
+    document.cookie.includes('jwt=');
+
+  if (hasJWT && !isWhitelisted) {
+    location.replace('/consulta/');
+  }
+})();
+
+
+Com isso, mesmo logado, cadastro, sala-de-espera, gestão-avançada, demo e example-integration deixam de ser chutadas para /consulta/.
+
+3) Ligar o “no-guard” nas páginas de demo (extra, opcional)
+
+Em páginas como /demo.html e /example-integration.html, logo no <head> adicione uma das opções abaixo:
+
+Opção A (meta):
+
+<meta name="telemed-no-guard" content="1" />
+
+
+Opção B (flag JS antes do guard):
+
+<script>window.NO_AUTH_GUARD = true;</script>
+
+
+Se essas páginas importam um “layout comum” que inclui o guard, esse meta/flag garante que nunca redirecionem.
+
+4) Consertar o fluxo do leilão → sala de espera
+
+Hoje, depois que o lance é aceito, você cai em /consulta/ porque o guard te puxa pra lá. Com o patch acima já deve corrigir; mas vale garantir que o redirect da própria página vá para a sala de espera:
+
+Procure no JS que trata a aceitação (algo como apps/telemed-deploy-ready/js/auction-*.js ou dentro do example-integration.html) por location.href = '/consulta/' e troque por:
+
+// depois de criar o appointment
+window.location.href = '/sala-de-espera/?appointment=' + encodeURIComponent(appointment.id);
+
+5) Commit & Deploy
+git add -A
+git commit -m "fix(auth-guard): whitelist demo/cadastro/sala-de-espera e flag NO_AUTH_GUARD; redirect auction -> waiting room"
+git pull --rebase origin main
+git push origin main
+
+
+No Render (telemed-deploy-ready): Manual Deploy → Clear cache & deploy.
+Depois abra em aba anônima para eliminar cache do browser.

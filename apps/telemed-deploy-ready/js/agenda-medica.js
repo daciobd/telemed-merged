@@ -219,7 +219,7 @@ function startVideoCall(appointmentId) {
     const patientId = patientMap[appointmentId] || 1;
     
     console.log(`🎥 Iniciando consulta de vídeo. Agendamento: ${appointmentId}, Paciente: ${patientId}`);
-    window.location.href = `/consulta?patient=${patientId}&appointment=${appointmentId}`;
+    window.location.href = `/sala-de-espera/?appointment=${encodeURIComponent(appointmentId)}&patient=${encodeURIComponent(patientId)}`;
 }
 
 function editAppointment(id) {
