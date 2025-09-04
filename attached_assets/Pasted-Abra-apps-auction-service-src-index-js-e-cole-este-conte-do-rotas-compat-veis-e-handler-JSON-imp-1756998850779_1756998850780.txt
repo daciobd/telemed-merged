@@ -1,0 +1,55 @@
+Abra apps/auction-service/src/index.js e cole este conteúdo (rotas compatíveis e handler JSON):
+
+import express from 'express';
+import cors from 'cors';
+
+const app = express();
+
+// JSON body
+app.use(express.json());
+
+// CORS: libere seu frontend (Render → ENVs: FRONTEND_ORIGIN com https://telemed-deploy-ready.onrender.com)
+const ORIGINS = (process.env.FRONTEND_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({ origin: ORIGINS.length ? ORIGINS : true, credentials: true }));
+
+// Handlers
+const createBid = async (req, res, next) => {
+  try {
+    const { patientId, amountCents, mode } = req.body || {};
+    if (!patientId || !amountCents || !mode) {
+      return res.status(400).json({ ok:false, error:'Campos obrigatórios: patientId, amountCents, mode' });
+    }
+    // TODO: persistir com Prisma se desejar
+    const bid = { id: 'BID_' + Date.now(), patientId, amountCents, mode, status: 'pending' };
+    return res.json({ ok:true, bid });
+  } catch (err) { next(err); }
+};
+
+const acceptBid = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { mode, patientId } = req.body || {};
+    if (!id || !mode || !patientId) {
+      return res.status(400).json({ ok:false, error:'Campos obrigatórios: id, mode, patientId' });
+    }
+    // TODO: criar/agendar consulta + chamar telemed-internal se aplicável
+    const appointment = { id: 'APT_' + Date.now(), bidId: id, mode, status: 'scheduled' };
+    return res.json({ ok:true, appointment });
+  } catch (err) { next(err); }
+};
+
+// Aliases sem e com /api
+app.post(['/bids', '/api/bids'], createBid);
+app.post(['/bids/:id/accept', '/api/bids/:id/accept'], acceptBid);
+
+// Health
+app.get('/healthz', (req,res)=>res.json({ ok:true }));
+
+// Erros sempre em JSON (evita HTML “Unexpected token ‘<’” no frontend)
+app.use((err, req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ ok:false, error: err?.message || 'internal_error' });
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log('auction-service on', PORT));
