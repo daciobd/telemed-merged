@@ -1,0 +1,63 @@
+Abra apps/auction-service/src/index.js e garanta:
+
+Body parser + CORS antes das rotas.
+
+Aliases de rota para atender /bids e /api/bids.
+
+Handler de erro que devolve JSON (evita HTML do Express).
+
+Cole/ajuste este trecho (mantendo o que você já tem, se existir):
+
+import express from 'express';
+import cors from 'cors';
+
+const app = express();
+
+// 1) JSON body
+app.use(express.json());
+
+// 2) CORS: libere o seu frontend
+const ORIGINS = (process.env.FRONTEND_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({ origin: ORIGINS.length ? ORIGINS : true, credentials: true }));
+
+// 3) Rotas (atenda /bids e /api/bids)
+const createBid = async (req, res, next) => {
+  try {
+    const { patientId, amountCents, mode } = req.body || {};
+    if (!patientId || !amountCents || !mode) {
+      return res.status(400).json({ ok:false, error:'Campos obrigatórios: patientId, amountCents, mode' });
+    }
+    // TODO: salve no banco (Prisma). Exemplo de stub:
+    const bid = { id: 'BID_' + Date.now(), patientId, amountCents, mode, status: 'pending' };
+    return res.json({ ok:true, bid });
+  } catch (err) { next(err); }
+};
+
+const acceptBid = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { mode, patientId } = req.body || {};
+    if (!id || !mode || !patientId) {
+      return res.status(400).json({ ok:false, error:'Campos obrigatórios: id, mode, patientId' });
+    }
+    // TODO: crie/agende a consulta (e chame o telemed-internal se aplicável)
+    const appointment = { id: 'APT_' + Date.now(), bidId: id, mode, status: 'scheduled' };
+    return res.json({ ok:true, appointment });
+  } catch (err) { next(err); }
+};
+
+// aliases sem e com /api
+app.post(['/bids', '/api/bids'], createBid);
+app.post(['/bids/:id/accept', '/api/bids/:id/accept'], acceptBid);
+
+// health
+app.get('/healthz', (req,res)=>res.json({ ok:true }));
+
+// 4) handler de erro só em JSON (nada de HTML)
+app.use((err, req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ ok:false, error: err?.message || 'internal_error' });
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log('auction-service on', PORT));
