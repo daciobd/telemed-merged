@@ -173,42 +173,55 @@
     document.getElementById('checkProd').onclick    = ()=>health(PR.value,'outProd');
 
     document.getElementById('btnCreateBid').onclick = async ()=>{
-      const url = (AU.value||'').replace(/\/$/,'');
-      const body = {
-        patientId:  document.getElementById('patientId').value || 'paciente-demo',
-        specialty:  document.getElementById('specialty').value || 'clinica_geral',
-        isImmediate:(document.getElementById('isImmediate').value||'true')==='true',
-        amountCents:Number(document.getElementById('amountCents').value||9000),
-      };
+      const auctionUrl = document.querySelector('#auUrl').value.trim();
+      const patientId = document.querySelector('#patientId').value.trim();
+      const amountCents = Number(document.querySelector('#amountCents').value || 0);
+      const mode = document.querySelector('#mode').value;   // "immediate" | "scheduled"
+      const scheduledFor = document.querySelector('#scheduledFor').value; // ISO
+
+      const body = { patientId, amountCents, mode };
+      if (mode === 'scheduled' && scheduledFor) body.scheduledFor = new Date(scheduledFor).toISOString();
+
       const out = document.getElementById('outCreateBid'); out.textContent='Enviando…';
       try{
-        const r = await fetch(url + '/__dev/create-bid', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-        const j = await r.json();
-        if(r.ok && j?.bid?.id){
-          document.getElementById('bidId').value = j.bid.id;
+        const res = await fetch(`${auctionUrl}/bids`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();   // se res.ok, data.bid.id terá o ID
+        if(res.ok && data?.bid?.id){
+          document.getElementById('bidId').value = data.bid.id;
           out.innerHTML = '<span class="ok">Criado</span>';
         }else{
           out.innerHTML = '<span class="bad">Falha</span>';
         }
-        log('create-bid', j);
+        log('create-bid', data);
       }catch(e){
         out.innerHTML = '<span class="bad">Erro</span>'; log('create-bid erro', {error:String(e)});
       }
     };
 
     document.getElementById('btnAcceptBid').onclick = async ()=>{
-      const url = (AU.value||'').replace(/\/$/,'');
-      const id  = document.getElementById('bidId').value;
+      const auctionUrl = document.querySelector('#auUrl').value.trim();
+      const bidId = document.getElementById('bidId').value;
+      const mode = document.getElementById('mode').value;
+      const patientId = document.getElementById('patientId').value.trim();
       const out = document.getElementById('outAcceptBid');
-      if(!id){ out.innerHTML='<span class="bad">Informe o Bid ID</span>'; return; }
-      const body = {
-        mode: document.getElementById('mode').value,
-        patientId: document.getElementById('patientId').value || 'paciente-demo',
-        scheduledFor: document.getElementById('scheduledFor').value || null,
-      };
+      if(!bidId){ out.innerHTML='<span class="bad">Informe o Bid ID</span>'; return; }
+      
       out.textContent='Enviando…';
       try{
-        const r = await fetch(url + '/bids/'+encodeURIComponent(id)+'/accept', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const r = await fetch(`${auctionUrl}/bids/${bidId}/accept`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode,                  // "immediate" ou "scheduled"
+            patientId              // obrigatório
+          })
+        });
+        
         const j = await r.json();
         out.innerHTML = (r.ok && j?.ok) ? '<span class="ok">Consulta criada</span>' : '<span class="bad">'+(j?.error||'Falha')+'</span>';
         log('accept-bid', j);
