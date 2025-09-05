@@ -200,7 +200,7 @@
     btnSuggest.onclick = async () => {
       outProd.textContent = 'Consultando...';
       try{
-        const r = await fetch(productivityUrl.value.replace(/\/$/,'') + '/codes/suggest', {
+        const r = await fetch(productivityUrl.value.replace(/\/$/,'') + '/suggest/cids', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ text: txtNote.value })
         });
