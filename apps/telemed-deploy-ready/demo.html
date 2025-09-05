@@ -230,5 +230,26 @@
       }
     };
   </script>
+
+<script>
+  (function () {
+    const params = new URLSearchParams(location.search);
+    const pid = params.get('patientId') || params.get('cpf'); // fallback, caso venha como cpf
+    if (!pid) return;
+
+    // tente achar o input de patientId nos dois layouts mais comuns
+    const candidates = [
+      document.querySelector('input[name="patientId"]'),
+      document.querySelector('#patientId'),
+    ].filter(Boolean);
+
+    if (candidates.length) {
+      candidates[0].value = pid;
+      // opcional: rolar até a seção do leilão
+      const section = document.querySelector('h1, h2, h3');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  })();
+</script>
 </body>
 </html>
