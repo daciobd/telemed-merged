@@ -193,7 +193,16 @@
       <form id="form" class="row">
         <div>
           <label for="cpf">CPF (11 dígitos)</label>
-          <input id="cpf" inputmode="numeric" placeholder="Somente números" maxlength="14" />
+          <input
+            id="cpf"
+            name="cpf"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="11"
+            placeholder="Somente números"
+          />
+          <small id="cpf-hint" class="hint" style="color:#f87171;display:none"></small>
         </div>
         <div>
           <label for="name">Nome completo</label>
@@ -236,5 +245,93 @@
     </script>
   </div>
   <script src="/js/config.js"></script>
+
+<script>
+(() => {
+  const cpfEl   = document.querySelector('#cpf');
+  const hintEl  = document.querySelector('#cpf-hint');
+
+  // evite limpar o CPF quando atingir 11 dígitos
+  let lastLoadedCpf = null;
+
+  function setHint(msg) {
+    if (!hintEl) return;
+    hintEl.textContent = msg || '';
+    hintEl.style.display = msg ? 'block' : 'none';
+  }
+
+  function fillForm(saved) {
+    // preencha aqui os outros campos se existirem no seu form
+    if (saved) {
+      document.querySelector('#name').value = saved.name || '';
+      document.querySelector('#birth').value = saved.birthDate || '';
+      document.querySelector('#phone').value = saved.phone || '';
+      document.querySelector('#email').value = saved.email || '';
+      document.querySelector('#notes').value = saved.notes || '';
+    }
+  }
+
+  cpfEl.addEventListener('input', () => {
+    // mantém somente números e limita a 11
+    let digits = cpfEl.value.replace(/\D/g, '');
+    if (digits.length > 11) digits = digits.slice(0, 11);
+    cpfEl.value = digits;
+
+    if (digits.length < 11) {
+      setHint('CPF deve conter 11 dígitos.');
+      return;
+    }
+
+    // Para DEMO: aceita qualquer 11 dígitos (não limpa o campo!)
+    setHint('');
+
+    // Auto-load de dados locais se existir, SEM apagar o CPF quando não existir
+    if (digits !== lastLoadedCpf) {
+      lastLoadedCpf = digits;
+      const saved = JSON.parse(localStorage.getItem(`patient:${digits}`) || 'null');
+      if (saved) fillForm(saved);
+    }
+  });
+
+  // Exemplo de persistência no submit (ajuste ao seu form)
+  const form = document.querySelector('form') || document.getElementById('cadastro-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cpf = cpfEl.value.replace(/\D/g, '');
+      if (cpf.length !== 11) { setHint('CPF deve conter 11 dígitos.'); return; }
+
+      // colete os dados do formulário (ajuste os seletores)
+      const payload = {
+        id: cpf,                   // usamos CPF como patientId na demo
+        name: document.querySelector('#name')?.value || '',
+        birthDate: document.querySelector('#birth')?.value || '',
+        phone: document.querySelector('#phone')?.value || '',
+        email: document.querySelector('#email')?.value || '',
+        notes: document.querySelector('#notes')?.value || ''
+      };
+
+      // salva localmente (demo)
+      localStorage.setItem(`patient:${cpf}`, JSON.stringify(payload));
+
+      // tenta enviar para o backend (ignora erro na demo)
+      try {
+        const INTERNAL_URL = window.__INTERNAL_URL__ || document.querySelector('#url-internal')?.textContent?.trim();
+        if (INTERNAL_URL) {
+          await fetch(`${INTERNAL_URL.replace(/\/$/, '')}/patients`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+      } catch(_) {}
+
+      setHint('Cadastro salvo com sucesso!');
+      // redireciona para Demo Médico com patientId preenchido
+      location.href = `/demo.html?patientId=${cpf}`;
+    });
+  }
+})();
+</script>
 </body>
 </html>
