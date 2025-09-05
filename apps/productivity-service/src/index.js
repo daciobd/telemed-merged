@@ -1,27 +1,68 @@
-import express from 'express';
-import cors from 'cors';
+// apps/productivity-service/src/index.js
+import express from "express";
+import cors from "cors";
+
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "*";
 
 const app = express();
 app.use(express.json());
+app.use(
+  cors({
+    origin:
+      FRONTEND_ORIGIN === "*"
+        ? true
+        : [FRONTEND_ORIGIN, "https://telemed-deploy-ready.onrender.com"],
+  })
+);
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN; // https://telemed-deploy-ready.onrender.com
-app.use(cors({ origin: FRONTEND_ORIGIN ? [FRONTEND_ORIGIN] : true, credentials: true }));
+app.get("/healthz", (req, res) => res.json({ ok: true }));
 
-app.get('/healthz', (req, res) => res.json({ ok: true }));
-
-// MVP: heurística simples só para a demo
-app.post('/suggest/cids', async (req, res) => {
-  const { text } = req.body || {};
-  if (!text || !text.trim()) return res.status(400).json({ ok: false, error: 'bad_request' });
-
+// ---- SUGESTÃO DE CIDs (stub heurístico) -------------------------------
+app.post("/suggest/cids", (req, res) => {
+  const { text = "" } = req.body || {};
   const t = text.toLowerCase();
-  const suggestions = [];
-  if (t.includes('dor torác') || t.includes('dor no peito')) suggestions.push({ system: 'CID10', code: 'I20', label: 'Angina pectoris' });
-  if (t.includes('dispneia')) suggestions.push({ system: 'CID10', code: 'R06.0', label: 'Dispneia' });
-  if (t.includes('sudorese')) suggestions.push({ system: 'CID10', code: 'R61', label: 'Hiperidrose' });
+  const items = [];
 
-  return res.json({ ok: true, suggestions });
+  if (t.includes("dor torácica") || /dor.*tor(a|á)x/i.test(t)) {
+    items.push({
+      system: "CID10",
+      code: "R07.4",
+      label: "Dor torácica",
+      confidence: 0.78,
+    });
+  }
+  if (t.includes("dispneia")) {
+    items.push({
+      system: "CID10",
+      code: "R06.0",
+      label: "Dispneia",
+      confidence: 0.72,
+    });
+  }
+  if (t.includes("sudorese")) {
+    items.push({
+      system: "CID10",
+      code: "R61",
+      label: "Hiperidrose (sudorese)",
+      confidence: 0.55,
+    });
+  }
+  if (!items.length) {
+    items.push({
+      system: "CID10",
+      code: "Z00.0",
+      label: "Exame médico geral",
+      confidence: 0.30,
+    });
+  }
+
+  res.json({ ok: true, items });
 });
 
+// fallback 404 em JSON (ajuda a depurar no front)
+app.all("*", (req, res) =>
+  res.status(404).json({ ok: false, error: "not_found", path: `${req.method} ${req.path}` })
+);
+
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log('productivity-service on', PORT));
+app.listen(PORT, () => console.log("productivity-service on", PORT));
