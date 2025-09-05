@@ -17,49 +17,33 @@ app.use(
 
 app.get("/healthz", (req, res) => res.json({ ok: true }));
 
-// ---- SUGESTÃO DE CIDs (stub heurístico) -------------------------------
-app.post("/suggest/cids", (req, res) => {
+// ---------- Handler único para sugestão de CIDs ----------
+function suggestCidsHandler(req, res) {
   const { text = "" } = req.body || {};
   const t = text.toLowerCase();
   const items = [];
 
   if (t.includes("dor torácica") || /dor.*tor(a|á)x/i.test(t)) {
-    items.push({
-      system: "CID10",
-      code: "R07.4",
-      label: "Dor torácica",
-      confidence: 0.78,
-    });
+    items.push({ system: "CID10", code: "R07.4", label: "Dor torácica", confidence: 0.78 });
   }
   if (t.includes("dispneia")) {
-    items.push({
-      system: "CID10",
-      code: "R06.0",
-      label: "Dispneia",
-      confidence: 0.72,
-    });
+    items.push({ system: "CID10", code: "R06.0", label: "Dispneia", confidence: 0.72 });
   }
   if (t.includes("sudorese")) {
-    items.push({
-      system: "CID10",
-      code: "R61",
-      label: "Hiperidrose (sudorese)",
-      confidence: 0.55,
-    });
+    items.push({ system: "CID10", code: "R61", label: "Hiperidrose (sudorese)", confidence: 0.55 });
   }
   if (!items.length) {
-    items.push({
-      system: "CID10",
-      code: "Z00.0",
-      label: "Exame médico geral",
-      confidence: 0.30,
-    });
+    items.push({ system: "CID10", code: "Z00.0", label: "Exame médico geral", confidence: 0.30 });
   }
 
   res.json({ ok: true, items });
-});
+}
 
-// fallback 404 em JSON (ajuda a depurar no front)
+// Rotas aceitas (antiga e nova)
+app.post("/suggest/cids", suggestCidsHandler);
+app.post("/codes/suggest", suggestCidsHandler);  // <— alias solicitado
+
+// fallback 404 em JSON
 app.all("*", (req, res) =>
   res.status(404).json({ ok: false, error: "not_found", path: `${req.method} ${req.path}` })
 );
