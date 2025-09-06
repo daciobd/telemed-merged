@@ -192,12 +192,25 @@
       const out = document.getElementById(outId);
       out.innerHTML = 'Testando...';
       if(!url){ out.innerHTML='<span class="bad">URL vazia</span>';return; }
+      
+      // Detectar qual serviço e usar proxy para evitar CORS
+      let service = '';
+      if(url.includes('auction')) service = 'auction';
+      else if(url.includes('productivity')) service = 'productivity';  
+      else if(url.includes('internal')) service = 'internal';
+      
       try{
-        const r = await fetch(url.replace(/\/$/,'') + '/healthz', { 
-          mode: 'cors',
-          cache: 'no-cache'
-        });
-        const j = await r.json();
+        let r, j;
+        if(service) {
+          // Usar proxy local para evitar CORS
+          r = await fetch(`/proxy/health/${service}`);
+          j = await r.json();
+        } else {
+          // Fallback direto
+          r = await fetch(url.replace(/\/$/,'') + '/healthz');
+          j = await r.json();
+        }
+        
         out.innerHTML = (r.ok && j.ok) ? '<span class="ok">OK</span>' : '<span class="bad">Falha: '+r.status+'</span>';
         log('health '+url, j);
       }catch(e){

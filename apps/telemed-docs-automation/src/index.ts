@@ -59,6 +59,29 @@ app.get('/api', (req: express.Request, res: express.Response) => {
 // Healthcheck padronizado
 app.get('/healthz', (_req: express.Request, res: express.Response) => res.json({ ok: true }));
 
+// Proxy para contornar CORS dos serviços externos
+app.get('/proxy/health/:service', async (req: express.Request, res: express.Response) => {
+  const { service } = req.params;
+  const urls: Record<string, string> = {
+    'auction': 'https://telemed-auction.onrender.com/healthz',
+    'productivity': 'https://telemed-productivity.onrender.com/healthz',
+    'internal': 'https://telemed-internal.onrender.com/healthz'
+  };
+
+  const url = urls[service];
+  if (!url) {
+    return res.status(400).json({ ok: false, error: 'Service not found' });
+  }
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json({ ok: response.ok && data.ok, status: response.status, data });
+  } catch (error) {
+    res.json({ ok: false, error: String(error) });
+  }
+});
+
 // Middleware simples de auth interna por token
 function requireInternalToken(req: express.Request, res: express.Response, next: express.NextFunction) {
   const configured = process.env.INTERNAL_TOKEN;
