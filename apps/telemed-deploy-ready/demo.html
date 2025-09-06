@@ -200,19 +200,18 @@
       else if(url.includes('internal')) service = 'internal';
       
       try{
-        let r, j;
+        let r;
         if(service) {
           // Usar proxy local para evitar CORS
-          r = await fetch(`/proxy/health/${service}`);
-          j = await r.json();
+          r = await fetch(`/proxy/health/${service}`, { mode: 'cors' });
         } else {
           // Fallback direto
-          r = await fetch(url.replace(/\/$/,'') + '/healthz');
-          j = await r.json();
+          r = await fetch(url.replace(/\/$/,'') + '/healthz', { mode: 'cors' });
         }
         
-        out.innerHTML = (r.ok && j.ok) ? '<span class="ok">OK</span>' : '<span class="bad">Falha: '+r.status+'</span>';
-        log('health '+url, j);
+        const txt = await r.text().catch(() => '');
+        out.innerHTML = r.ok ? '<span class="ok">OK</span>' : `<span class="bad">Falha ${r.status}</span>`;
+        log('health '+url, { status: r.status, response: txt });
       }catch(e){
         out.innerHTML = '<span class="bad">erro: '+String(e).substring(0,50)+'</span>';
         log('health '+url+' erro', {error:String(e)});
