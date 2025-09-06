@@ -118,7 +118,11 @@
     
     @media (max-width:980px){.page{grid-template-columns:1fr}}
   </style>
-</head>
+  <script src="https://meet.jit.si/external_api.js"></script>
+  <style>
+    /* container para o Jitsi ocupar toda a área de vídeo */
+    #jitsi { position:absolute; inset:0; border-radius:12px; overflow:hidden }
+  </style></head>
 <body>
 <div class="page">
   <!-- topo full width -->
@@ -148,6 +152,9 @@
   <!-- ======== COLUNA VÍDEO ========= -->
   <section class="videoWrap">
     <div class="uptime" id="uptime">00:00</div>
+
+    <div id="jitsi"></div>
+
 
     <div class="room">
       <div class="cam">📹</div>
@@ -821,9 +828,67 @@ updateRxCount();
     <h4 id="tourTitle" style="margin:0 0 6px;font-size:1rem;color:#111827"></h4>
     <p id="tourText" style="margin:0 0 12px;font-size:.9rem;color:#374151"></p>
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button id="tourSkip" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:transparent;color:#0ea5e9;font-weight:600;cursor:pointer">Pular</button>
+      <button id="tourSkip" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:transparent;color<script>
+(function(){
+  const p    = new URLSearchParams(location.search);
+  const room = (p.get('appointmentId') || p.get('room') || 'telemed-demo').trim();
+  const role = (p.get('role') || 'doctor').toLowerCase();
+
+  // Ajusta textos auxiliares
+  const state = document.getElementById('state');
+  if (state) state.innerHTML = '<span class="dot"></span> Conectando…';
+
+  // Copiar link do paciente pelo botão "Convite"
+  const inviteBtn = document.getElementById('btn-invite');
+  if (inviteBtn) inviteBtn.onclick = async () => {
+    const url = `${location.origin}/consulta.html?appointmentId=${encodeURIComponent(room)}&role=patient`;
+    try { await navigator.clipboard.writeText(url); alert('Link do paciente copiado!'); }
+    catch { prompt('Copie o link do paciente:', url); }
+  };
+
+  // Botão "Enviar para sala de espera" abre a sala (útil na demo)
+  const waitBtn = document.getElementById('btn-wait');
+  if (waitBtn) waitBtn.onclick = () => {
+    window.open(`/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`, '_blank');
+  };
+
+  // Inicia o vídeo automaticamente (o "Iniciar Consulta" segue funcionando p/ seu backend)
+  const mount = document.getElementById('jitsi');
+  try{
+    const api = new JitsiMeetExternalAPI('meet.jit.si', {
+      roomName: room,
+      parentNode: mount,
+      userInfo: { displayName: role === 'doctor' ? 'Dr(a). Demo' : 'Paciente Demo' },
+      configOverwrite: {
+        startWithAudioMuted: role === 'patient',
+        prejoinConfig: { enabled: role !== 'doctor' }
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: ['microphone','camera','desktop','chat','tileview','raisehand','hangup']
+      }
+    });
+
+    // Esconde o “placeholder” de câmera quando conectar
+    const placeholder = document.querySelector('.videoWrap .room');
+    api.addListener('videoConferenceJoined', () => {
+      if (placeholder) placeholder.style.display = 'none';
+      if (state) state.innerHTML = '<span class="dot"></span> Em atendimento';
+      state?.classList.remove('wait'); state?.classList.add('live');
+    });
+    api.addListener('readyToClose', () => {
+      if (state) state.innerHTML = '<span class="dot"></span> Encerrado';
+    });
+
+  } catch(e){
+    console.error(e);
+    if (state) state.innerHTML = '<span class="dot"></span> Falha no vídeo';
+    alert('Não foi possível iniciar o vídeo. Verifique sua conexão/permissões.');
+  }
+})();
+</script>:#0ea5e9;font-weight:600;cursor:pointer">Pular</button>
       <button id="tourNext" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:#0ea5e9;color:#fff;font-weight:600;cursor:pointer">Próximo</button>
     </div>
   </div>
 </body>
 </html>
+
