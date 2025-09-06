@@ -3,335 +3,217 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeleMed - Cadastro de Paciente</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  <title>TeleMed — Cadastro</title>
   <style>
     :root{
-      --bg:#0b1220; --card:#121a2b; --muted:#9fb0d7; --text:#e7eefc;
-      --primary:#0ea5e9; --primary-600:#0284c7; --ok:#10b981; --err:#ef4444; --warn:#f59e0b;
-      --input:#0f172a; --border:#1f2a44;
+      --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e2e8f0;
+      --primary:#0ea5e9; --primary-2:#0284c7; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+      --input:#0b1220; --border:#1e293b;
+      --radius:14px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial;
-      background: linear-gradient(180deg, #0a1020, #0b1220 30%, #0b1220);
-      color:var(--text);
+      margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      display:flex; align-items:flex-start; justify-content:center; padding:32px;
     }
-    .wrap{max-width:920px;margin:48px auto;padding:0 16px}
-    .brand{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-    .logo{
-      width:36px;height:36px;border-radius:10px;
-      background: radial-gradient(circle at 30% 30%, #4ade80 0 35%, #22c55e 36% 60%, #16a34a 61% 100%);
-      box-shadow: 0 0 0 1px #1f2937, 0 6px 20px rgba(16,185,129,.25);
-    }
-    h1{margin:0;font-size:28px;letter-spacing:.3px}
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.02), transparent), var(--card);
-      border:1px solid var(--border);
-      border-radius:16px;padding:22px 20px;box-shadow:0 8px 30px rgba(0,0,0,.35);
+      width:min(980px,100%); background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); padding:28px 26px 22px; box-shadow:0 10px 30px rgba(0,0,0,.25);
     }
-    .muted{color:var(--muted);font-size:14px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
-    .row-1{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
-    @media (max-width:800px){.row{grid-template-columns:1fr}}
-    label{display:block;font-size:13px;color:var(--muted);margin:6px 2px}
-    input,textarea,select{
-      width:100%;border-radius:12px;border:1px solid var(--border);
-      background: var(--input); color:var(--text); padding:12px 14px; outline:none;
-      transition:border-color .2s, box-shadow .2s;
+    h1{margin:0 0 18px; font-size:28px; display:flex; align-items:center; gap:12px}
+    .logo{width:24px;height:24px;display:inline-grid;place-items:center;background:#10b981;color:white;border-radius:8px;font-weight:700}
+    p.muted{color:var(--muted); margin:0 0 16px}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#0b1530; border:1px solid var(--border); color:#cbd5e1; font-size:12.5px
     }
-    input:focus,textarea:focus,select:focus{border-color:var(--primary); box-shadow:0 0 0 3px rgba(14,165,233,.18)}
-    textarea{min-height:96px;resize:vertical}
-    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+    .grid{display:grid; gap:14px}
+    @media(min-width:860px){ .grid-2{grid-template-columns:1fr 1fr} }
+    label{display:block; margin:8px 2px 6px; color:#cbd5e1; font-size:13px}
+    input, textarea, select{
+      width:100%; background:var(--input); color:var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+      outline:none; transition:.15s border, .15s box-shadow; font-size:15px;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color:var(--primary); box-shadow:0 0 0 4px rgb(14 165 233 / .15);
+    }
+    textarea{min-height:120px; resize:vertical}
+    .row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+    .row .spacer{flex:1}
     .btn{
-      padding:10px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer;
-      background:var(--primary);color:#fff;font-weight:600
+      padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+      color:var(--text); background:#0b1530; cursor:pointer; font-weight:600;
     }
-    .btn:hover{background:var(--primary-600)}
-    .btn.ghost{background:transparent;border-color:var(--border);color:var(--text)}
-    .btn.ghost:hover{border-color:var(--primary)}
-    .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;
-      border:1px solid var(--border);background:#0d1526;margin:8px 6px 0 0}
-    .pill small{color:var(--muted)}
-    .alert{margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid var(--border)}
-    .alert.ok{border-color:#115e59;background:rgba(16,185,129,.08)}
-    .alert.err{border-color:#7f1d1d;background:rgba(239,68,68,.08)}
-    .grid-top{display:grid;grid-template-columns:2fr 1fr;gap:12px}
-    @media (max-width:800px){.grid-top{grid-template-columns:1fr}}
-    .nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    code{background:#0f172a;border:1px solid var(--border);padding:2px 6px;border-radius:8px}
+    .btn:hover{filter:brightness(1.08)}
+    .btn.primary{background:linear-gradient(180deg, var(--primary), var(--primary-2)); border-color:#065f92}
+    .btn.ghost{background:transparent}
+    .btn.ok{background:linear-gradient(180deg, #22c55e, #16a34a); border-color:#15803d}
+    .hint{margin-top:10px; padding:10px 12px; border-radius:12px; background:#2a0e12; border:1px solid #7f1d1d; color:#fecaca}
+    .links{display:flex; gap:10px; flex-wrap:wrap}
+    .links a{color:#93c5fd; text-decoration:none; font-weight:600}
+    .links a:hover{text-decoration:underline}
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px}
   </style>
-  <script>
-    // Carrega possível configuração global
-    let INTERNAL_URL =
-      (window.telemedConfig && window.telemedConfig.INTERNAL_URL) ||
-      localStorage.getItem('INTERNAL_URL') ||
-      'https://telemed-internal.onrender.com';
-
-    function onlyDigits(s){ return (s||'').replace(/\D+/g,''); }
-
-    function loadFromLocal(cpf){
-      try{
-        const raw = localStorage.getItem('cadastro-'+cpf);
-        return raw ? JSON.parse(raw) : null;
-      }catch{ return null; }
-    }
-    function saveToLocal(cpf, data){
-      localStorage.setItem('cadastro-'+cpf, JSON.stringify(data));
-      localStorage.setItem('lastCPF', cpf);
-    }
-
-    async function trySendToBackend(payload){
-      try{
-        const res = await fetch(INTERNAL_URL.replace(/\/+$/,'')+'/patients',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok){
-          const t = await res.text();
-          return { ok:false, message:`Backend respondeu ${res.status}: ${t.slice(0,200)}` };
-        }
-        const j = await res.json().catch(()=>({}));
-        return { ok:true, data:j };
-      }catch(e){
-        return { ok:false, message:e.message };
-      }
-    }
-
-    function el(id){ return document.getElementById(id); }
-
-    function fillForm(d){
-      if(!d) return;
-      el('cpf').value = d.cpf || '';
-      el('name').value = d.name || '';
-      el('birth').value = d.birth || '';
-      el('phone').value = d.phone || '';
-      el('email').value = d.email || '';
-      el('notes').value = d.notes || '';
-    }
-
-    function setAlert(type,msg){
-      const box = el('alert'); box.className='alert '+type; box.innerText=msg; box.hidden=false;
-    }
-
-    function clearAlert(){ el('alert').hidden=true; }
-
-    function toPayload(){
-      const cpf = onlyDigits(el('cpf').value);
-      const name = el('name').value.trim();
-      const birth = el('birth').value;
-      const phone = el('phone').value.trim();
-      const email = el('email').value.trim();
-      const notes = el('notes').value.trim();
-      return { patientId: cpf, cpf, name, birth, phone, email, notes };
-    }
-
-    function validate(p){
-      if(!p.patientId || p.patientId.length!==11) return 'CPF deve conter 11 dígitos.';
-      if(!p.name || p.name.length<3) return 'Informe o nome completo.';
-      if(!p.birth) return 'Informe a data de nascimento.';
-      return null;
-    }
-
-    async function onSave(ev){
-      ev.preventDefault(); clearAlert();
-      const payload = toPayload();
-      const err = validate(payload);
-      if(err){ setAlert('err', err); return; }
-
-      // Persistência local p/ demo
-      saveToLocal(payload.patientId, payload);
-
-      // Tentativa de enviar ao backend (opcional)
-      const sent = await trySendToBackend(payload);
-      if(sent.ok){
-        setAlert('ok', 'Cadastro salvo localmente e enviado ao backend.');
-      }else{
-        setAlert('warn', 'Cadastro salvo localmente. (Backend opcional) Detalhe: '+sent.message);
-      }
-    }
-
-    function goDemo(){
-      const cpf = onlyDigits(el('cpf').value);
-      if(!cpf || cpf.length!==11){ setAlert('err','Informe um CPF válido (11 dígitos).'); return; }
-      location.href = '/demo.html?patientId='+encodeURIComponent(cpf);
-    }
-
-    function clearAll(){
-      el('form').reset(); clearAlert();
-    }
-
-    function onCpfInput(){
-      const cpf = onlyDigits(el('cpf').value);
-      if(cpf.length===11){
-        const data = loadFromLocal(cpf);
-        fillForm(data||{});
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', ()=>{
-      const last = localStorage.getItem('lastCPF');
-      if(last){ el('cpf').value = last; const d=loadFromLocal(last); fillForm(d); }
-      el('cpf').addEventListener('input', onCpfInput);
-      el('form').addEventListener('submit', onSave);
-      el('btn-demo').addEventListener('click', goDemo);
-      el('btn-clear').addEventListener('click', clearAll);
-    });
-  </script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="brand"><div class="logo"></div><h1>TeleMed – Cadastro</h1></div>
-    <div class="card">
-      <div class="grid-top">
-        <p class="muted">Preencha os dados do paciente. Para demo, os dados ficam no seu navegador (localStorage) e tentamos enviar também ao <code>INTERNAL_URL</code> se estiver disponível.</p>
-        <div class="pill"><small>INTERNAL_URL</small><span id="url-internal"></span></div>
-      </div>
-
-      <form id="form" class="row">
-        <div>
-          <label for="cpf">CPF (11 dígitos)</label>
-          <input
-            id="cpf"
-            name="cpf"
-            type="text"
-            inputmode="numeric"
-            autocomplete="off"
-            maxlength="11"
-            placeholder="Somente números"
-          />
-          <small id="cpf-hint" class="hint" style="color:#f87171;display:none"></small>
-        </div>
-        <div>
-          <label for="name">Nome completo</label>
-          <input id="name" placeholder="Ex.: Maria da Silva" />
-        </div>
-
-        <div>
-          <label for="birth">Data de nascimento</label>
-          <input id="birth" type="date" />
-        </div>
-        <div>
-          <label for="phone">Telefone</label>
-          <input id="phone" placeholder="(11) 9 9999-9999" />
-        </div>
-
-        <div>
-          <label for="email">E-mail</label>
-          <input id="email" type="email" placeholder="exemplo@dominio.com" />
-        </div>
-        <div>
-          <label for="notes">Observações</label>
-          <textarea id="notes" placeholder="Alergias, comorbidades, etc. (opcional)"></textarea>
-        </div>
-      </form>
-
-      <div id="alert" class="alert" hidden></div>
-
-      <div class="actions">
-        <button class="btn" form="form" type="submit">Salvar cadastro</button>
-        <button class="btn ghost" id="btn-clear" type="button">Limpar</button>
-        <button class="btn" id="btn-demo" type="button">Ir para Demo Médico</button>
-        <a class="btn ghost" href="/index.html">Voltar ao Hub</a>
-        <a class="btn ghost" href="/example-integration.html">Exemplo de Integração</a>
-      </div>
+  <main class="card">
+    <div class="topbar">
+      <h1><span class="logo">🩺</span> TeleMed — Cadastro</h1>
+      <span class="badge">INTERNAL_URL <span id="internal-badge" style="color:#a0e9ff"></span></span>
     </div>
 
-    <script>
-      // mostra a URL resolvida no topo
-      document.getElementById('url-internal').textContent = (INTERNAL_URL||'').replace(/\/+$/,'');
-    </script>
-  </div>
-  <script src="/js/config.js"></script>
+    <p class="muted">
+      Preencha os dados do paciente.<br/>
+      Para a <strong>demo</strong>, os dados ficam no seu navegador (<code>localStorage</code>)
+      e tentamos enviar para o <code>INTERNAL_URL</code> se estiver configurado.
+    </p>
 
-<script>
-(() => {
-  const cpfEl   = document.querySelector('#cpf');
-  const hintEl  = document.querySelector('#cpf-hint');
+    <form id="cadastro-form" class="grid grid-2" autocomplete="off">
+      <div>
+        <label for="cpf">CPF (11 dígitos)</label>
+        <input id="cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off" maxlength="11" placeholder="Somente números" />
+        <div id="cpf-hint" class="hint" style="display:none"></div>
+      </div>
 
-  // evite limpar o CPF quando atingir 11 dígitos
-  let lastLoadedCpf = null;
+      <div>
+        <label for="nome">Nome completo</label>
+        <input id="nome" name="nome" type="text" placeholder="Ex.: Maria da Silva" />
+      </div>
 
-  function setHint(msg) {
-    if (!hintEl) return;
-    hintEl.textContent = msg || '';
-    hintEl.style.display = msg ? 'block' : 'none';
-  }
+      <div>
+        <label for="nascimento">Data de nascimento</label>
+        <input id="nascimento" name="nascimento" type="date" />
+      </div>
 
-  function fillForm(saved) {
-    // preencha aqui os outros campos se existirem no seu form
-    if (saved) {
-      document.querySelector('#name').value = saved.name || '';
-      document.querySelector('#birth').value = saved.birthDate || '';
-      document.querySelector('#phone').value = saved.phone || '';
-      document.querySelector('#email').value = saved.email || '';
-      document.querySelector('#notes').value = saved.notes || '';
+      <div>
+        <label for="telefone">Telefone</label>
+        <input id="telefone" name="telefone" type="tel" placeholder="(11) 9 9999-9999" />
+      </div>
+
+      <div>
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" placeholder="exemplo@dominio.com" />
+      </div>
+
+      <div>
+        <label for="observacoes">Observações</label>
+        <textarea id="observacoes" name="observacoes" placeholder="Alergias, comorbidades, etc. (opcional)"></textarea>
+      </div>
+
+      <div class="row" style="grid-column:1/-1">
+        <button type="button" class="btn primary" id="btn-save">Salvar cadastro</button>
+        <button type="button" class="btn ghost" id="btn-clear">Limpar</button>
+        <button type="button" class="btn ok" id="btn-demo">Ir para Demo Médico</button>
+        <span class="spacer"></span>
+        <div class="links">
+          <a href="/example-integration.html">← Voltar ao Hub</a>
+          <a href="/demo.html">Demo Médico</a>
+          <a href="/example-integration.html">Exemplo de Integração</a>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <script>
+  (function(){
+    const $ = s => document.querySelector(s);
+
+    const cpfEl  = $('#cpf');
+    const nomeEl = $('#nome');
+    const nascEl = $('#nascimento');
+    const telEl  = $('#telefone');
+    const emailEl= $('#email');
+    const obsEl  = $('#observacoes');
+    const hintEl = $('#cpf-hint');
+
+    // mostra qual INTERNAL_URL está ativo (se o Hub salvou no localStorage)
+    const INTERNAL_URL = (localStorage.getItem('INTERNAL_URL') || '').replace(/\/$/, '');
+    const internalBadge = document.getElementById('internal-badge');
+    if (internalBadge) internalBadge.textContent = INTERNAL_URL || 'não definido';
+
+    const digits = s => (s||'').replace(/\D/g, '');
+
+    function setHint(msg){
+      hintEl.textContent = msg || '';
+      hintEl.style.display = msg ? 'block' : 'none';
     }
-  }
 
-  cpfEl.addEventListener('input', () => {
-    // mantém somente números e limita a 11
-    let digits = cpfEl.value.replace(/\D/g, '');
-    if (digits.length > 11) digits = digits.slice(0, 11);
-    cpfEl.value = digits;
-
-    if (digits.length < 11) {
-      setHint('CPF deve conter 11 dígitos.');
-      return;
+    function fillForm(saved){
+      if (!saved) return;
+      nomeEl.value = saved.name || '';
+      nascEl.value = saved.birthDate || '';
+      telEl.value  = saved.phone || '';
+      emailEl.value= saved.email || '';
+      obsEl.value  = saved.notes || '';
     }
 
-    // Para DEMO: aceita qualquer 11 dígitos (não limpa o campo!)
-    setHint('');
+    let lastLoadedCpf = null;
 
-    // Auto-load de dados locais se existir, SEM apagar o CPF quando não existir
-    if (digits !== lastLoadedCpf) {
-      lastLoadedCpf = digits;
-      const saved = JSON.parse(localStorage.getItem(`patient:${digits}`) || 'null');
-      if (saved) fillForm(saved);
-    }
-  });
+    // CPF: mantém apenas números, NÃO apaga ao chegar em 11 dígitos
+    cpfEl.addEventListener('input', () => {
+      let d = digits(cpfEl.value);
+      if (d.length > 11) d = d.slice(0, 11);
+      cpfEl.value = d;
 
-  // Exemplo de persistência no submit (ajuste ao seu form)
-  const form = document.querySelector('form') || document.getElementById('cadastro-form');
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const cpf = cpfEl.value.replace(/\D/g, '');
+      if (d.length < 11) {
+        setHint('CPF deve conter 11 dígitos.');
+        return;
+      }
+      setHint('');
+
+      // auto-carrega dados locais se existirem (sem limpar o campo)
+      if (d !== lastLoadedCpf) {
+        lastLoadedCpf = d;
+        const saved = JSON.parse(localStorage.getItem(`patient:${d}`) || 'null');
+        if (saved) fillForm(saved);
+      }
+    });
+
+    // Botões
+    $('#btn-clear').addEventListener('click', () => {
+      [nomeEl, nascEl, telEl, emailEl, obsEl].forEach(el => el.value = '');
+      setHint('');
+    });
+
+    $('#btn-save').addEventListener('click', async () => {
+      const cpf = digits(cpfEl.value);
       if (cpf.length !== 11) { setHint('CPF deve conter 11 dígitos.'); return; }
+      if (!nomeEl.value.trim()) { setHint('Informe o nome.'); return; }
 
-      // colete os dados do formulário (ajuste os seletores)
       const payload = {
-        id: cpf,                   // usamos CPF como patientId na demo
-        name: document.querySelector('#name')?.value || '',
-        birthDate: document.querySelector('#birth')?.value || '',
-        phone: document.querySelector('#phone')?.value || '',
-        email: document.querySelector('#email')?.value || '',
-        notes: document.querySelector('#notes')?.value || ''
+        id: cpf,
+        name: nomeEl.value.trim(),
+        birthDate: nascEl.value.trim(),
+        phone: telEl.value.trim(),
+        email: emailEl.value.trim(),
+        notes: obsEl.value.trim()
       };
 
-      // salva localmente (demo)
+      // Persiste localmente para a demo
       localStorage.setItem(`patient:${cpf}`, JSON.stringify(payload));
 
-      // tenta enviar para o backend (ignora erro na demo)
-      try {
-        const INTERNAL_URL = window.__INTERNAL_URL__ || document.querySelector('#url-internal')?.textContent?.trim();
-        if (INTERNAL_URL) {
-          await fetch(`${INTERNAL_URL.replace(/\/$/, '')}/patients`, {
+      // Tenta enviar para o backend; se falhar, apenas segue (é demo)
+      if (INTERNAL_URL) {
+        try {
+          await fetch(`${INTERNAL_URL}/patients`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
           });
-        }
-      } catch(_) {}
+        } catch (_) { /* ignora na demo */ }
+      }
 
-      setHint('Cadastro salvo com sucesso!');
-      // redireciona para Demo Médico com patientId preenchido
-      location.href = `/demo.html?patientId=${cpf}`;
+      setHint('');
+      // Vai para a Demo com o patientId preenchido
+      window.location.href = `/demo.html?patientId=${cpf}`;
     });
-  }
-})();
-</script>
+
+    $('#btn-demo').addEventListener('click', () => {
+      const cpf = digits(cpfEl.value);
+      window.location.href = `/demo.html${cpf ? `?patientId=${cpf}` : ''}`;
+    });
+  })();
+  </script>
 </body>
 </html>
