@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sala de Espera – TeleMed</title>
+  <style>
+    :root {
+      --bg:#0b1220; --card:#111a2b; --muted:#a5b4c3; --fg:#e6edf3;
+      --ok:#17c964; --warn:#f5a524; --err:#f31260; --btn:#0072f5;
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:920px;margin:0 auto;padding:24px}
+    .card{background:var(--card);border:1px solid #21304b;border-radius:16px;padding:24px;box-shadow:0 6px 24px #0006}
+    h1{margin:0 0 8px;font-size:28px}
+    .muted{color:var(--muted)}
+    .row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+    .btn{appearance:none;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn-primary{background:var(--btn);color:#fff}
+    .btn-ghost{background:transparent;border:1px solid #2a3a59;color:#d9e3f0}
+    code{background:#071223;border:1px solid #1f2b44;border-radius:8px;padding:2px 6px}
+    .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .badge{font-size:12px;padding:6px 8px;border-radius:20px;border:1px solid #26344f}
+    .ok{background:#0e2720;border-color:#1a3e33;color:#79f2a6}
+    .err{background:#2a0e15;border-color:#51202a;color:#ffb3c0}
+    .warn{background:#2a2410;border-color:#53461a;color:#ffd27b}
+    .foot{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap}
+    .sep{border-top:1px dashed #22314d;margin:18px 0}
+    .copy{font-size:12px}
+    @media (max-width:640px){ .row{flex-direction:column} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Sala de Espera</h1>
+      <p class="muted">Aguarde aqui até o(a) médico(a) iniciar a chamada. Quando ele(a) entrar, você poderá seguir para a sala de vídeo.</p>
+
+      <div style="margin-top:12px">
+        <div class="muted">ID da consulta</div>
+        <div id="appt" style="font-size:20px;margin-top:4px"><code>-</code></div>
+        <div class="row">
+          <button id="join" class="btn btn-primary">Entrar na Sala de Vídeo</button>
+          <button id="copy" class="btn btn-ghost">Copiar link desta sala</button>
+        </div>
+        <div class="copy muted" id="copied" style="display:none;margin-top:6px">Link copiado ✔</div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div>
+        <div class="muted">Verificações rápidas (saúde dos serviços)</div>
+        <div class="badges" id="checks">
+          <span class="badge warn">Testando…</span>
+        </div>
+      </div>
+
+      <div class="foot">
+        <a class="btn btn-ghost" href="/example-integration.html">Voltar ao Hub</a>
+        <a class="btn btn-ghost" href="/scribe-demo.html" target="_blank">Abrir Scribe/CIDs</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1) Resgata appointmentId -> vira a "room" do Jitsi
+    const p = new URLSearchParams(location.search);
+    const room = (p.get('appointmentId') || 'telemed-demo').trim();
+    document.getElementById('appt').innerHTML = `<code>${room}</code>`;
+
+    // 2) Link para a sala de vídeo (paciente)
+    const joinUrl = `/video.html?room=${encodeURIComponent(room)}&role=patient`;
+    document.getElementById('join').onclick = () => { location.href = joinUrl };
+
+    // 3) Copiar link desta sala para o paciente
+    document.getElementById('copy').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        const el = document.getElementById('copied');
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 1800);
+      } catch(e) { alert('Não foi possível copiar o link.'); }
+    };
+
+    // 4) Healthchecks usando localStorage (ou defaults)
+    const AUCTION_URL = localStorage.getItem('AUCTION_URL') || 'https://telemed-auction.onrender.com';
+    const INTERNAL_URL = localStorage.getItem('INTERNAL_URL') || 'https://telemed-internal.onrender.com';
+    const PRODUCTIVITY_URL = localStorage.getItem('PRODUCTIVITY_URL') || 'https://telemed-productivity.onrender.com';
+
+    async function ping(url) {
+      try {
+        const r = await fetch(url + '/healthz', { mode:'cors' });
+        const isOk = r.ok;
+        return { url, ok:isOk };
+      } catch { return { url, ok:false }; }
+    }
+
+    (async () => {
+      const checks = await Promise.all([
+        ping(AUCTION_URL), ping(INTERNAL_URL), ping(PRODUCTIVITY_URL)
+      ]);
+      const $ = document.getElementById('checks');
+      $.innerHTML = '';
+      const label = u => (u.match(/^https?:\/\/([^/]+)/)||[])[1] || u;
+
+      checks.forEach(c => {
+        const span = document.createElement('span');
+        span.className = 'badge ' + (c.ok ? 'ok' : 'err');
+        span.textContent = (c.ok ? 'OK ' : 'FALHA ') + '– ' + label(c.url);
+        $.appendChild(span);
+      });
+    })();
+  </script>
+</body>
+</html>

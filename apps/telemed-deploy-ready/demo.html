@@ -204,19 +204,26 @@
 
     function showNextSteps({ bidId, appointmentId }) {
       const room = appointmentId || 'telemed-demo';
+      const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
+      const jitsiUrl = `/video.html?room=${encodeURIComponent(room)}`;
+
       $next.innerHTML = `
         <div class="card success" style="margin-top:16px">
           <h4>Próximos passos</h4>
           <ol>
-            ${bidId ? `<li>Com o Bid ID <code>${bidId}</code>, você já pode aceitar o lance (lado direito).</li>` : ''}
+            ${bidId ? `<li>Bid criado: <code>${bidId}</code>.</li>` : ''}
             ${appointmentId ? `
-              <li>Consulta criada. Abra a 
-                  <a target="_blank" href="/video.html?room=${encodeURIComponent(room)}">
-                  Sala de Vídeo</a> (entre com 2 navegadores para simular médico e paciente).
-              </li>` : ''}
-            <li>Opcional: 
-                <a target="_blank" href="/scribe-demo.html">Abrir Scribe/CIDs</a>
-            </li>
+              <li>Consulta criada: <code>${appointmentId}</code></li>
+              <li>
+                Paciente: compartilhe a <a target="_blank" href="${waitUrl}">Sala de Espera</a>
+                (link para o paciente aguardar o médico).
+              </li>
+              <li>
+                Médico: entre na <a target="_blank" href="${jitsiUrl}">Sala de Vídeo</a>
+                (abra duas janelas para simular médico e paciente).
+              </li>
+            ` : ''}
+            <li>Opcional: <a target="_blank" href="/scribe-demo.html">Abrir Scribe/CIDs</a></li>
             <li><a href="/example-integration.html">Voltar ao Hub</a></li>
           </ol>
         </div>`;
