@@ -2,10 +2,19 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import generationRouter from './routes/generation.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
+
+// Servir arquivos estáticos da pasta telemed-deploy-ready
+const staticPath = path.join(__dirname, '../../telemed-deploy-ready');
+app.use(express.static(staticPath));
 
 // CORS configurável por env
 const ORIGINS = (process.env.CORS_ORIGINS || '')
@@ -21,8 +30,13 @@ app.use(cors({
 
 app.use(morgan('combined'));
 
-// Homepage
-app.get('/', (req, res) => {
+// Homepage - redireciona para o Hub
+app.get('/', (req: express.Request, res: express.Response) => {
+  res.sendFile(path.join(staticPath, 'example-integration.html'));
+});
+
+// API info endpoint
+app.get('/api', (req: express.Request, res: express.Response) => {
   res.json({
     service: 'TeleMed Docs Automation',
     version: '1.0.0',
@@ -43,7 +57,7 @@ app.get('/', (req, res) => {
 });
 
 // Healthcheck padronizado
-app.get('/healthz', (_req, res) => res.json({ ok: true }));
+app.get('/healthz', (_req: express.Request, res: express.Response) => res.json({ ok: true }));
 
 // Middleware simples de auth interna por token
 function requireInternalToken(req: express.Request, res: express.Response, next: express.NextFunction) {
