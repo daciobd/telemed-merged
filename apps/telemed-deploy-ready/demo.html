@@ -225,9 +225,9 @@
     const $next = document.getElementById('next-steps');
 
     function showNextSteps({ bidId, appointmentId }) {
-      const room = String(appointmentId || bidId || 'telemed-demo');
-      const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
-      const consultaUrlDoctor = `/consulta/?appointmentId=${encodeURIComponent(room)}&role=doctor`;
+      const room = appointmentId || bidId || 'telemed-demo';
+      const waitUrl   = `/sala-de-espera/?appointmentId=${encodeURIComponent(room)}`;   // paciente
+      const consultaDoctorUrl = `/consulta/?appointmentId=${encodeURIComponent(room)}&role=doctor`; // médico
 
       $next.innerHTML = `
         <h4 style="margin:0 0 8px">Próximos passos</h4>
@@ -240,7 +240,7 @@
               : `<li>Crie um BID para habilitar os links.</li>`
           }
           <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
-          <li>Médico: entrar na <a target="_blank" href="${consultaUrlDoctor}">Sala de Vídeo</a>.</li>
+          <li>Médico: entrar na <a target="_blank" href="${consultaDoctorUrl}">Sala de Vídeo</a>.</li>
           <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
           <li><a href="/index.html">Voltar ao Hub</a></li>
         </ol>`;
@@ -399,9 +399,9 @@
 
       // função que escreve os links no card
       function showNextSteps({ bidId, appointmentId }) {
-        const room     = String(appointmentId || bidId || 'telemed-demo');
-        const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
-        const consultaUrlDoctor = `/consulta/?appointmentId=${encodeURIComponent(room)}&role=doctor`;
+        const room     = appointmentId || bidId || 'telemed-demo';
+        const waitUrl  = `/sala-de-espera/?appointmentId=${encodeURIComponent(room)}`;   // paciente
+        const consultaDoctorUrl = `/consulta/?appointmentId=${encodeURIComponent(room)}&role=doctor`; // médico
         $next.innerHTML = `
           <h4 style="margin:0 0 8px">Próximos passos</h4>
           <ol style="margin:0;padding-left:18px">
@@ -409,7 +409,7 @@
             ${appointmentId ? `
               <li>Consulta criada: <code>${appointmentId}</code></li>
               <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
-              <li>Médico: entrar na <a target="_blank" href="${consultaUrlDoctor}">Sala de Vídeo</a>.</li>
+              <li>Médico: entrar na <a target="_blank" href="${consultaDoctorUrl}">Sala de Vídeo</a>.</li>
             ` : `
               <li>Com o Bid ID, aceite o lance (lado direito) para criar a consulta.</li>
             `}
@@ -468,9 +468,9 @@
       const VIDEO_PAGE = "/consulta/";
 
       function renderNextSteps({ bidId, appointmentId }) {
-        const room = String(appointmentId || bidId || "telemed-demo");
-        const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
-        const videoUrl = `${VIDEO_PAGE}?appointmentId=${encodeURIComponent(room)}&role=doctor`;
+        const room = appointmentId || bidId || "telemed-demo";
+        const waitUrl  = `/sala-de-espera/?appointmentId=${encodeURIComponent(room)}`;   // paciente
+        const videoUrl = `${VIDEO_PAGE}?appointmentId=${encodeURIComponent(room)}&role=doctor`; // médico
 
         // botões
         const byId = (id) => document.getElementById(id);
