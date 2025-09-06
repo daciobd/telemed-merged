@@ -44,11 +44,13 @@
     .btn{
       padding:10px 14px; border-radius:12px; border:1px solid var(--border);
       color:var(--text); background:#0b1530; cursor:pointer; font-weight:600;
+      text-decoration:none; display:inline-block; text-align:center;
     }
     .btn:hover{filter:brightness(1.08)}
-    .btn.primary{background:linear-gradient(180deg, var(--primary), var(--primary-2)); border-color:#065f92}
+    .btn.primary, .btn.btn-primary{background:linear-gradient(180deg, var(--primary), var(--primary-2)); border-color:#065f92; color:#fff}
     .btn.ghost{background:transparent}
     .btn.ok{background:linear-gradient(180deg, #22c55e, #16a34a); border-color:#15803d}
+    .btn.btn-outline{background:transparent; color:var(--primary); border-color:var(--primary)}
     .hint{margin-top:10px; padding:10px 12px; border-radius:12px; background:#2a0e12; border:1px solid #7f1d1d; color:#fecaca}
     .links{display:flex; gap:10px; flex-wrap:wrap}
     .links a{color:#93c5fd; text-decoration:none; font-weight:600}
@@ -104,12 +106,11 @@
       <div class="row" style="grid-column:1/-1">
         <button type="button" class="btn primary" id="btn-save">Salvar cadastro</button>
         <button type="button" class="btn ghost" id="btn-clear">Limpar</button>
-        <button type="button" class="btn ok" id="btn-demo">Ir para Demo Médico</button>
+        <a class="btn btn-outline" href="/cadastro-medico.html">Cadastrar Médico</a>
+        <a class="btn btn-primary" id="goToDemo">Ir para Leilão (Demo do Médico)</a>
         <span class="spacer"></span>
         <div class="links">
           <a href="/example-integration.html">← Voltar ao Hub</a>
-          <a href="/demo.html">Demo Médico</a>
-          <a href="/example-integration.html">Exemplo de Integração</a>
         </div>
       </div>
     </form>
@@ -212,6 +213,18 @@
     $('#btn-demo').addEventListener('click', () => {
       const cpf = digits(cpfEl.value);
       window.location.href = `/demo.html${cpf ? `?patientId=${cpf}` : ''}`;
+    });
+
+    // Novo botão "Ir para Leilão"
+    const getCPF = () => document.querySelector('#cpf').value.replace(/\D/g, '');
+    document.getElementById('goToDemo').addEventListener('click', () => {
+      const cpf = getCPF();
+      if (!cpf || cpf.length !== 11) {
+        alert('Informe um CPF válido (11 dígitos).');
+        return;
+      }
+      localStorage.setItem('LAST_PATIENT_ID', cpf);
+      location.href = '/demo.html?patientId=' + cpf;
     });
   })();
   </script>
