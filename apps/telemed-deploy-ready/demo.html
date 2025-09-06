@@ -226,38 +226,61 @@
     const $next = document.getElementById('next-steps');
 
     function showNextSteps({ bidId, appointmentId }) {
-      const room    = appointmentId || 'telemed-demo';
-      const waitUrl = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
-      const jitsiUrl= `/video.html?room=${encodeURIComponent(room)}`;
+      const room = String(appointmentId || bidId || 'telemed-demo');
+      const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
+      const jitsiUrl = `/video.html?room=${encodeURIComponent(room)}`;
 
       $next.innerHTML = `
         <h4 style="margin:0 0 8px">Próximos passos</h4>
         <ol style="margin:0;padding-left:18px">
           ${bidId ? `<li>Bid criado: <code>${bidId}</code>.</li>` : ''}
-          ${appointmentId ? `
-            <li>Consulta criada: <code>${appointmentId}</code></li>
-            <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
-            <li>Médico: entrar na <a target="_blank" href="${jitsiUrl}">Sala de Vídeo</a>.</li>
-          ` : `
-            <li>Com o Bid ID, aceite o lance (lado direito) para criar a consulta.</li>
-          `}
+          ${appointmentId
+            ? `<li>Consulta criada: <code>${appointmentId}</code></li>`
+            : bidId
+              ? `<li><em>Usando o Bid ID como sala provisória.</em></li>`
+              : `<li>Crie um BID para habilitar os links.</li>`
+          }
+          <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
+          <li>Médico: entrar na <a target="_blank" href="${jitsiUrl}">Sala de Vídeo</a>.</li>
           <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
           <li><a href="/index.html">Voltar ao Hub</a></li>
         </ol>`;
     }
 
-    // --- INTEGRAÇÃO SIMPLES (cola sem pensar) ---
-    // chame quando o BID for criado:
-    window.onBidCreated = (res) => {
-      // res precisa ter { bidId }
-      showNextSteps({ bidId: res?.bidId });
-    };
+    // já atualiza quando o BID é criado
+    window.onBidCreated = (res) => showNextSteps({ bidId: res?.bidId });
 
-    // chame quando o BID for ACEITO (consulta criada):
-    window.onBidAccepted = (res) => {
-      // res precisa ter { bidId, appointmentId }
-      showNextSteps({ bidId: res?.bidId, appointmentId: res?.appointmentId });
-    };
+    // atualiza quando a consulta é criada (aceitar BID)
+    window.onBidAccepted = (res) => showNextSteps({ bidId: res?.bidId, appointmentId: res?.appointmentId });
+
+    // watchdog: se alguma chamada de rede retornar {appointmentId}, atualiza sozinho
+    (function hookNetwork() {
+      const bump = (data) => {
+        if (!data || typeof data !== 'object') return;
+        const appointmentId = data.appointmentId || data.consultaId || data.appointment?.id || data.consulta?.id;
+        const bidId = data.bidId || data.bid_id || data.bid?.id;
+        if (appointmentId) showNextSteps({ bidId, appointmentId });
+      };
+
+      // fetch
+      const _fetch = window.fetch;
+      window.fetch = async (...args) => {
+        const res = await _fetch(...args);
+        try { bump(await res.clone().json().catch(() => null)); } catch {}
+        return res;
+      };
+
+      // XHR
+      const _open = XMLHttpRequest.prototype.open;
+      const _send = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function(...a){ this._url=a[1]; return _open.apply(this,a); };
+      XMLHttpRequest.prototype.send = function(...a){
+        this.addEventListener('load', () => {
+          try { bump(JSON.parse(this.responseText)); } catch {}
+        });
+        return _send.apply(this,a);
+      };
+    })();
 
     // opcional: se já existir um Bid ID na página, mostrar logo de cara
     // (troque "CURRENT_BID_ID" se você tiver essa info disponível)
