@@ -251,12 +251,13 @@
       const auctionUrl = document.querySelector('#auUrl').value.trim();
       const patientId = document.querySelector('#patientId').value.trim();
       const amountCents = Number(document.querySelector('#amountCents').value || 0);
-      const mode = document.querySelector('#mode').value;   // "immediate" | "scheduled"
+      const isImmediate = document.querySelector('#isImmediate').value === 'true';
       const specialty = document.querySelector('#specialty')?.value || '';
       const scheduledFor = document.querySelector('#scheduledFor').value; // ISO
 
-      const body = { patientId, amountCents, mode, specialty };
-      if (mode === 'scheduled' && scheduledFor) body.scheduledFor = new Date(scheduledFor).toISOString();
+      const body = { patientId, amountCents, mode: isImmediate ? 'immediate' : 'scheduled' };
+      if (specialty) body.specialty = specialty;
+      if (!isImmediate && scheduledFor) body.scheduledFor = new Date(scheduledFor).toISOString();
 
       const out = document.getElementById('outCreateBid'); out.textContent='Enviando…';
       try{
@@ -272,7 +273,7 @@
           out.innerHTML = '<span class="ok">Criado</span>';
           if(window.onBidCreated) window.onBidCreated({bidId: data.bid.id});  // Chama função dos próximos passos
         }else{
-          out.innerHTML = '<span class="bad">Falha</span>';
+          out.innerHTML = `<span class="bad">Falha: ${data?.error || res.status}</span>`;
         }
         log('create-bid', data);
       }catch(e){
