@@ -72,8 +72,26 @@
       <div>
         <label>patientId</label>
         <input id="patientId" value="paciente-demo" />
-        <label>specialty</label>
-        <input id="specialty" value="clinica_geral" />
+        <label for="specialty">Especialidade desejada</label>
+        <select id="specialty" name="specialty">
+          <option value="">Selecione…</option>
+          <option>Clínica Geral</option>
+          <option>Cardiologia</option>
+          <option>Dermatologia</option>
+          <option>Endocrinologia</option>
+          <option>Gastroenterologia</option>
+          <option>Geriatria</option>
+          <option>Ginecologia</option>
+          <option>Infectologia</option>
+          <option>Neurologia</option>
+          <option>Oftalmologia</option>
+          <option>Ortopedia</option>
+          <option>Otorrinolaringologia</option>
+          <option>Pediatria</option>
+          <option>Psiquiatria</option>
+          <option>Reumatologia</option>
+          <option>Urologia</option>
+        </select>
         <label>isImmediate</label>
         <select id="isImmediate">
           <option value="true" selected>true</option>
@@ -177,9 +195,10 @@
       const patientId = document.querySelector('#patientId').value.trim();
       const amountCents = Number(document.querySelector('#amountCents').value || 0);
       const mode = document.querySelector('#mode').value;   // "immediate" | "scheduled"
+      const specialty = document.querySelector('#specialty')?.value || '';
       const scheduledFor = document.querySelector('#scheduledFor').value; // ISO
 
-      const body = { patientId, amountCents, mode };
+      const body = { patientId, amountCents, mode, specialty };
       if (mode === 'scheduled' && scheduledFor) body.scheduledFor = new Date(scheduledFor).toISOString();
 
       const out = document.getElementById('outCreateBid'); out.textContent='Enviando…';

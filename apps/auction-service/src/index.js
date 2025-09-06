@@ -1,80 +1,125 @@
-// apps/auction-service/src/index.js
-import express from "express";
-import cors from "cors";
-
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "*";
-const INTERNAL_URL_TELEMED = process.env.INTERNAL_URL_TELEMED || "";
-const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || "";
+import express from 'express';
+import cors from 'cors';
+import fetch from 'node-fetch';
+import { PrismaClient } from '@prisma/client';
 
 const app = express();
-app.use(express.json());
-app.use(
-  cors({
-    origin:
-      FRONTEND_ORIGIN === "*" ? true : [FRONTEND_ORIGIN, "https://telemed-deploy-ready.onrender.com"],
-    credentials: false,
-  })
-);
-
-// in-memory store só para demo
-const bids = new Map();
-
-app.get("/healthz", (req, res) => res.json({ ok: true }));
-
-// cria lance
-app.post("/bids", (req, res) => {
-  const { patientId, amountCents, mode = "immediate" } = req.body || {};
-  if (!patientId || !amountCents) {
-    return res.status(400).json({ ok: false, error: "bad_request" });
-  }
-  const id = `B${Date.now().toString(36)}`;
-  const bid = {
-    id,
-    patientId,
-    amountCents: Number(amountCents),
-    mode,
-    status: "pending",
-    createdAt: new Date().toISOString(),
-  };
-  bids.set(id, bid);
-  return res.json({ ok: true, bid });
-});
-
-// aceita lance
-app.post("/bids/:id/accept", async (req, res) => {
-  const id = req.params.id;
-  const bid = bids.get(id);
-  if (!bid) return res.status(404).json({ ok: false, error: "bid_not_found" });
-
-  bid.status = "accepted";
-
-  // chama o serviço interno (opcional)
-  if (INTERNAL_URL_TELEMED && INTERNAL_TOKEN) {
-    try {
-      const r = await fetch(
-        `${INTERNAL_URL_TELEMED.replace(/\/$/, "")}/internal/appointments/from-bid`,
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-internal-token": INTERNAL_TOKEN,
-          },
-          body: JSON.stringify({
-            bidId: bid.id,
-            mode: bid.mode,
-            patientId: bid.patientId,
-          }),
-        }
-      );
-      const data = await r.json().catch(() => ({}));
-      return res.json({ ok: true, bid, appointment: data.appointment ?? null });
-    } catch (e) {
-      return res.status(502).json({ ok: false, error: "internal_call_failed", detail: String(e) });
-    }
-  }
-
-  return res.json({ ok: true, bid });
-});
+const prisma = new PrismaClient();
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("auction-service on", PORT));
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
+const INTERNAL_URL_TELEMED = (process.env.INTERNAL_URL_TELEMED || '').replace(/\/$/, '');
+const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
+
+app.use(express.json());
+app.use(cors({
+  origin: FRONTEND_ORIGIN === '*' ? true : FRONTEND_ORIGIN.split(',').map(s => s.trim()),
+  credentials: false,
+}));
+
+app.get('/healthz', (_req,res)=>res.json({ok:true}));
+
+// Criar BID (agora aceita specialty)
+app.post('/bids', async (req,res) => {
+  try {
+    const { patientId, amountCents, mode, specialty } = req.body || {};
+    if (!patientId || !amountCents || !mode) {
+      return res.status(400).json({ ok:false, error:'patientId, amountCents e mode são obrigatórios' });
+    }
+    const bid = await prisma.bid.create({
+      data: {
+        patientId,
+        amountCents: Number(amountCents),
+        mode: String(mode),
+        specialty: specialty ? String(specialty) : null,
+        status: 'open',
+        // opcional: expiresAt com base no mode
+      }
+    });
+    res.json({ ok:true, bid });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:'failed_to_create_bid' });
+  }
+});
+
+// Aceitar BID → busca médico por especialidade no internal e cria Appointment
+app.post('/bids/:id/accept', async (req,res) => {
+  try {
+    const { id } = req.params;
+    const { patientId: bodyPatientId, physicianId: forcedPhysicianId } = req.body || {};
+
+    const bid = await prisma.bid.findUnique({ where: { id } });
+    if (!bid) return res.status(404).json({ ok:false, error:'bid_not_found' });
+    if (bid.status !== 'open') return res.status(400).json({ ok:false, error:'bid_not_open' });
+
+    const patientId = bodyPatientId || bid.patientId;
+
+    let physicianId = forcedPhysicianId || null;
+
+    // Se não veio physicianId mas o BID tem specialty, tenta buscar no internal
+    if (!physicianId && bid.specialty && INTERNAL_URL_TELEMED) {
+      try {
+        const url = `${INTERNAL_URL_TELEMED}/internal/physicians/search?specialty=${encodeURIComponent(bid.specialty)}&availableNow=true`;
+        const r = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${INTERNAL_TOKEN}` }
+        });
+        if (r.ok) {
+          const data = await r.json(); // { ok:true, physicians:[{id,...}] }
+          const list = Array.isArray(data?.physicians) ? data.physicians : [];
+          if (list.length) {
+            // seleção simples: primeiro da lista
+            physicianId = list[0].id;
+          }
+        }
+      } catch (e) {
+        console.warn('internal physician search failed', e?.message);
+      }
+    }
+
+    // Cria appointment via internal
+    if (!INTERNAL_URL_TELEMED) {
+      return res.status(500).json({ ok:false, error:'INTERNAL_URL_TELEMED_missing' });
+    }
+
+    const payload = {
+      bidId: bid.id,
+      patientId,
+      mode: bid.mode,
+      physicianId: physicianId || undefined, // opcional
+      origin: 'auction'
+    };
+
+    const r2 = await fetch(`${INTERNAL_URL_TELEMED}/internal/appointments/from-bid`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${INTERNAL_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!r2.ok) {
+      const txt = await r2.text().catch(()=> '');
+      return res.status(502).json({ ok:false, error:'internal_failed', details: txt });
+    }
+    const out = await r2.json();
+
+    // marca o BID como aceito
+    await prisma.bid.update({
+      where: { id: bid.id },
+      data: {
+        status: 'accepted',
+        acceptedAt: new Date(),
+        physicianId: physicianId || null
+      }
+    });
+
+    res.json({ ok:true, appointment: out?.appointment || null });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:'accept_failed' });
+  }
+});
+
+app.listen(PORT, ()=>console.log('auction-service on', PORT));

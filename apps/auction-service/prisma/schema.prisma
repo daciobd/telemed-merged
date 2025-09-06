@@ -21,18 +21,21 @@ enum BidStatus {
 model Bid {
   id               String     @id @default(cuid())
   patientId        String
-  specialty        String
-  isImmediate      Boolean    @default(true)
+  specialty        String?     // agora opcional
+  mode             String      // 'immediate' | 'scheduled'
+  isImmediate      Boolean     @default(true)
   amountCents      Int
-  status           BidStatus  @default(pending)
+  status           BidStatus   @default(pending)
   suggestedCents   Int?
   scheduledFor     DateTime?
   acceptedAt       DateTime?
-  createdAt        DateTime   @default(now())
+  physicianId      String?     // opcional: se já atrelado
+  createdAt        DateTime    @default(now())
   events           BidEvent[]
   payments         Payment[]
 
   @@index([status, createdAt])
+  @@index([specialty])
 }
 
 model BidEvent {
