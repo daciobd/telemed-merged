@@ -433,6 +433,88 @@
       // expõe global caso queira chamar manualmente
       window.showNextSteps = showNextSteps;
     });
+    <!-- ========= [TELEMED] Card ultra-simples de Próximos Passos ========= -->
+    <style>
+      .ns-wrap{margin-top:16px;border:1px solid #0ea5e9;background:#eef7ff;border-radius:12px;padding:16px}
+      .ns-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+      .ns-btn{appearance:none;border:0;border-radius:10px;padding:14px 16px;font-weight:700;cursor:pointer}
+      .ns-patient{background:#22c55e;color:#08310f}
+      .ns-doctor{background:#3b82f6;color:#061a3a}
+      .ns-ghost{background:transparent;border:1px solid #94a3b8;color:#0f172a}
+      .ns-muted{color:#475569;font-size:13px}
+      @media (max-width:700px){ .ns-row{grid-template-columns:1fr} }
+    </style>
+
+    <div id="next-steps" class="ns-wrap">
+      <h4 style="margin:0 0 6px">Próximos passos</h4>
+      <div class="ns-muted">Crie o BID e use os botões abaixo.</div>
+      <div class="ns-row" style="margin-top:10px">
+        <button class="ns-btn ns-patient" id="nsBtnPatient">🙋 Sou Paciente — Sala de Espera</button>
+        <button class="ns-btn ns-doctor"  id="nsBtnDoctor">🩺 Sou Médico — Sala de Vídeo</button>
+      </div>
+      <div class="ns-row" style="margin-top:10px">
+        <button class="ns-btn ns-ghost" id="nsBtnCopy">📋 Copiar link do Paciente</button>
+        <button class="ns-btn ns-ghost" id="nsBtnBoth">🪟 Abrir 2 janelas (simular)</button>
+      </div>
+      <div id="nsInfo" class="ns-muted" style="margin-top:6px"></div>
+      <ol style="margin:10px 0 0 18px">
+        <li>Paciente: clique em <b>“Sou Paciente — Sala de Espera”</b>.</li>
+        <li>Médico: clique em <b>“Sou Médico — Sala de Vídeo”</b> em outra aba.</li>
+        <li>Ao <b>aceitar o BID</b>, a sala troca automaticamente para o ID da consulta.</li>
+      </ol>
+    </div>
+
+    <script>
+      // Página de vídeo (use "/video.html" se você tiver um redirecionador; senão fica no Jitsi)
+      const VIDEO_PAGE = "/jitsi.html";
+
+      function renderNextSteps({ bidId, appointmentId }) {
+        const room = String(appointmentId || bidId || "telemed-demo");
+        const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
+        const videoUrl = `${VIDEO_PAGE}?room=${encodeURIComponent(room)}`;
+
+        // botões
+        const byId = (id) => document.getElementById(id);
+        byId("nsBtnPatient").onclick = () => window.open(waitUrl, "_blank");
+        byId("nsBtnDoctor").onclick  = () => window.open(videoUrl, "_blank");
+        byId("nsBtnCopy").onclick    = async () => {
+          try { await navigator.clipboard.writeText(location.origin + waitUrl);
+            info("Link da Sala de Espera copiado ✔");
+          } catch { info("Não consegui copiar. Clique com o botão direito e copie o link do botão 'Sou Paciente'."); }
+        };
+        byId("nsBtnBoth").onclick    = () => { window.open(waitUrl, "_blank"); window.open(videoUrl, "_blank"); };
+
+        // texto auxiliar super claro
+        const usingProvisional = !appointmentId && !!bidId;
+        const infoText = [
+          bidId ? `Bid: ${bidId}` : "Crie o BID para habilitar os botões.",
+          appointmentId
+            ? `Consulta: ${appointmentId}`
+            : usingProvisional
+              ? "Usando o Bid ID como sala provisória até aceitar o BID."
+              : "Aguarde criar o BID.",
+          `Sala atual: ${room}`
+        ].join(" • ");
+        info(infoText);
+
+        function info(t){ document.getElementById("nsInfo").textContent = t; }
+      }
+
+      // Integra com os handlers já existentes
+      const hook = (name) => {
+        const prev = window[name];
+        window[name] = (res) => { try { if (typeof prev === "function") prev(res); } catch {}
+          renderNextSteps(res || {});
+        };
+      };
+      hook("onBidCreated");   // espera { bidId }
+      hook("onBidAccepted");  // espera { bidId, appointmentId }
+
+      // primeiro estado (sem nada): ainda assim deixa os botões prontos para demo
+      renderNextSteps({});
+    </script>
+    <!-- ========= [TELEMED] Fim do Card ========= -->
+
   </script>
 </body>
 </html>
