@@ -69,7 +69,7 @@
     const room = (p.get('appointmentId') || 'telemed-demo').trim();
     document.getElementById('appt').innerHTML = `<code>${room}</code>`;
 
-    // 2) Link para a sala de vídeo (paciente)
+    // 2) Link para a sala de vídeo (paciente)  
     const joinUrl = `/video.html?room=${encodeURIComponent(room)}&role=patient`;
     document.getElementById('join').onclick = () => { location.href = joinUrl };
 

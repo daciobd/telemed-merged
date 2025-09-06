@@ -333,5 +333,66 @@
     }
   })();
 </script>
+
+  <!-- [TELEMED waitroom patch] Next Steps auto-card -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // garante a existência do container "Próximos passos"
+      let $next = document.getElementById('next-steps');
+      if (!$next) {
+        $next = document.createElement('div');
+        $next.id = 'next-steps';
+        $next.className = 'card';
+        $next.style.marginTop = '16px';
+        $next.style.padding = '16px';
+        $next.style.border = '1px solid #0ea5e9';
+        $next.style.background = '#eef7ff';
+        $next.innerHTML = `
+          <h4 style="margin:0 0 8px">Próximos passos</h4>
+          <ol style="margin:0;padding-left:18px">
+            <li>Aguarde criar/aceitar o BID…</li>
+            <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
+            <li><a href="/index.html">Voltar ao Hub</a></li>
+          </ol>`;
+        // coloca no final do conteúdo principal
+        (document.querySelector('#content, main, .container') || document.body).appendChild($next);
+      }
+
+      // função que escreve os links no card
+      function showNextSteps({ bidId, appointmentId }) {
+        const room     = appointmentId || 'telemed-demo';
+        const waitUrl  = `/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`;
+        const jitsiUrl = `/video.html?room=${encodeURIComponent(room)}`;
+        $next.innerHTML = `
+          <h4 style="margin:0 0 8px">Próximos passos</h4>
+          <ol style="margin:0;padding-left:18px">
+            ${bidId ? `<li>Bid criado: <code>${bidId}</code>.</li>` : ''}
+            ${appointmentId ? `
+              <li>Consulta criada: <code>${appointmentId}</code></li>
+              <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
+              <li>Médico: entrar na <a target="_blank" href="${jitsiUrl}">Sala de Vídeo</a>.</li>
+            ` : `
+              <li>Com o Bid ID, aceite o lance (lado direito) para criar a consulta.</li>
+            `}
+            <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
+            <li><a href="/index.html">Voltar ao Hub</a></li>
+          </ol>`;
+      }
+
+      // encaixa sem quebrar handlers existentes
+      const attach = (name) => {
+        const prev = window[name];
+        window[name] = (res) => {
+          try { if (typeof prev === 'function') prev(res); } catch(e){}
+          showNextSteps(res || {});
+        };
+      };
+      attach('onBidCreated');   // espera { bidId }
+      attach('onBidAccepted');  // espera { bidId, appointmentId }
+
+      // expõe global caso queira chamar manualmente
+      window.showNextSteps = showNextSteps;
+    });
+  </script>
 </body>
 </html>
