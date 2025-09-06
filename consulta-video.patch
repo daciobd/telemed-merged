@@ -1,0 +1,78 @@
+*** Begin Patch
+*** Update File: apps/telemed-deploy-ready/consulta.html
+@@
+   </style>
+-</head>
++  <script src="https://meet.jit.si/external_api.js"></script>
++  <style>
++    /* container para o Jitsi ocupar toda a área de vídeo */
++    #jitsi { position:absolute; inset:0; border-radius:12px; overflow:hidden }
++  </style>
++</head>
+@@
+   <section class="videoWrap">
+     <div class="uptime" id="uptime">00:00</div>
++    <!-- placeholder do Jitsi (ocupa toda a área de vídeo) -->
++    <div id="jitsi"></div>
+@@
+-</body>
++  <!-- Vídeo integrado (Jitsi) + atalhos de convite/espera -->
++  <script>
++  (function(){
++    const p    = new URLSearchParams(location.search);
++    const room = (p.get('appointmentId') || p.get('room') || 'telemed-demo').trim();
++    const role = (p.get('role') || 'doctor').toLowerCase();
++
++    // Ajusta textos auxiliares
++    const state = document.getElementById('state');
++    if (state) state.innerHTML = '<span class="dot"></span> Conectando…';
++
++    // Botão "Convite" copia o link do paciente
++    const inviteBtn = document.getElementById('btn-invite');
++    if (inviteBtn) inviteBtn.onclick = async () => {
++      const url = `${location.origin}/consulta.html?appointmentId=${encodeURIComponent(room)}&role=patient`;
++      try { await navigator.clipboard.writeText(url); alert('Link do paciente copiado!'); }
++      catch { prompt('Copie o link do paciente:', url); }
++    };
++
++    // Botão "Enviar para sala de espera"
++    const waitBtn = document.getElementById('btn-wait');
++    if (waitBtn) waitBtn.onclick = () => {
++      window.open(`/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`, '_blank');
++    };
++
++    // Inicia o vídeo (Jitsi) dentro do placeholder
++    const mount = document.getElementById('jitsi');
++    try{
++      const api = new JitsiMeetExternalAPI('meet.jit.si', {
++        roomName: room,
++        parentNode: mount,
++        userInfo: { displayName: role === 'doctor' ? 'Dr(a). Demo' : 'Paciente Demo' },
++        configOverwrite: {
++          startWithAudioMuted: role === 'patient',
++          prejoinConfig: { enabled: role !== 'doctor' }
++        },
++        interfaceConfigOverwrite: {
++          TOOLBAR_BUTTONS: ['microphone','camera','desktop','chat','tileview','raisehand','hangup']
++        }
++      });
++
++      // Atualiza estado visual
++      const placeholder = document.querySelector('.videoWrap .room');
++      api.addListener('videoConferenceJoined', () => {
++        if (placeholder) placeholder.style.display = 'none';
++        if (state) state.innerHTML = '<span class="dot"></span> Em atendimento';
++        state?.classList.remove('wait'); state?.classList.add('live');
++      });
++      api.addListener('readyToClose', () => {
++        if (state) state.innerHTML = '<span class="dot"></span> Encerrado';
++      });
++    } catch(e){
++      console.error(e);
++      if (state) state.innerHTML = '<span class="dot"></span> Falha no vídeo';
++      alert('Não foi possível iniciar o vídeo. Verifique conexão/permissões.');
++    }
++  })();
++  </script>
++</body>
+*** End Patch
