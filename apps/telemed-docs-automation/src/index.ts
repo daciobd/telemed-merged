@@ -9,6 +9,9 @@ import generationRouter from './routes/generation.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ✅ DEFINA AS VARIÁVEIS PRIMEIRO
+const PORT = process.env.PORT || 8080;
+
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
@@ -93,8 +96,14 @@ function requireInternalToken(req: express.Request, res: express.Response, next:
 
 // Proteger rotas de geração/notify
 app.use('/generate', requireInternalToken, generationRouter);
+// ... (código existente das rotas de appointments)
 
-const PORT = process.env.PORT || 8080;
+// ✅ HEALTHCHECK DO DR. AI (cole aqui)
+app.get('/api/dr-ai/health', (_req: express.Request, res: express.Response) => {
+  res.json({ status: 'ok', ts: new Date().toISOString() });
+});
+
+// ✅ FINALMENTE O app.listen() NO FINAL
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[telemed-docs-automation] listening on :${PORT}`);
   console.log('Environment:', {
