@@ -98,7 +98,104 @@
         <a href="/demo.html">Demo Médico (BIDs / Accept)</a>
         <a href="/video.html">Sala de Vídeo (Jitsi)</a>
         <a href="/sala-de-espera.html">Sala de Espera (Paciente)</a>
-        <a href="/scribe-demo.html">Scribe Demo (CID-10)</a>
+        <!-- ===== Dr. AI – Configuração & Teste ===== -->
+        <section class="card" style="margin-top:16px">
+          <h3 style="margin:0 0 8px">Dr. AI (LLM)</h3>
+          <p class="muted" style="margin:4px 0 12px">
+            Use o token interno e teste uma chamada protegida no <code>telemed-internal</code>.
+          </p>
+
+          <div class="row" style="align-items:flex-end;gap:12px;flex-wrap:wrap">
+            <div>
+              <label class="muted" for="drai-url">INTERNAL_URL</label><br/>
+              <input id="drai-url" name="INTERNAL_URL" style="min-width:360px;padding:8px;border-radius:8px;border:1px solid #2a3a59"/>
+            </div>
+            <div>
+              <label class="muted" for="drai-token">INTERNAL_TOKEN</label><br/>
+              <input id="drai-token" type="password" placeholder="••••••••" style="min-width:300px;padding:8px;border-radius:8px;border:1px solid #2a3a59"/>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button id="drai-save" class="btn btn-ghost">Salvar</button>
+              <button id="drai-test" class="btn btn-primary">Testar Dr. AI</button>
+            </div>
+          </div>
+
+          <div id="drai-out" class="muted" style="margin-top:10px"></div>
+        </section>
+
+        <script>
+        (function(){
+          const $ = (s)=>document.querySelector(s);
+          const urlInp   = $('#drai-url');
+          const tokenInp = $('#drai-token');
+          const out      = $('#drai-out');
+
+          // preencher com o que já existe no localStorage
+          urlInp.value   = localStorage.getItem('INTERNAL_URL')   || 'https://telemed-internal.onrender.com';
+          tokenInp.value = localStorage.getItem('INTERNAL_TOKEN') || '';
+
+          $('#drai-save').onclick = () => {
+            localStorage.setItem('INTERNAL_URL', urlInp.value.trim());
+            localStorage.setItem('INTERNAL_TOKEN', tokenInp.value.trim());
+            out.style.color = '#a5b4c3';
+            out.textContent = 'Salvo no navegador.';
+          };
+
+          // teste robusto (aceita /healthz em texto e tenta vários endpoints de AI)
+          async function testDrAI(){
+            const base = (urlInp.value || '').replace(/\/$/,'').trim();
+            const tok  = (tokenInp.value || '').trim();
+            if (!base) { out.style.color='#ef4444'; out.textContent='Configure INTERNAL_URL.'; return; }
+            out.style.color='#a5b4c3'; out.textContent='Testando…';
+
+            // 1) health
+            try {
+              const r = await fetch(base + '/healthz', {mode:'cors'});
+              const t = await r.text().catch(()=> '');
+              if (!r.ok) throw new Error('healthz ' + r.status);
+            } catch(e) {
+              out.style.color='#ef4444'; out.textContent='Falha no /healthz: ' + (e.message||e);
+              return;
+            }
+
+            // 2) endpoints candidatos de AI (o backend pode expor nomes diferentes)
+            const candidates = [
+              ['/ai/ping',          {text:'ping'}],
+              ['/ai/echo',          {text:'ping'}],
+              ['/ai/complete',      {messages:[{role:'user',content:'Diga "ok" se estiver funcionando.'}], stream:false}],
+              ['/enhanced/chat',    {messages:[{role:'user',content:'Diga "ok".'}], stream:false}],
+              ['/chat',             {messages:[{role:'user',content:'ok?'}]}],
+              ['/chat/completions', {model:'gpt-4o-mini', messages:[{role:'user',content:'ok?'}], stream:false}],
+            ];
+
+            for (const [path, body] of candidates) {
+              try {
+                const r = await fetch(base + path, {
+                  method:'POST',
+                  mode:'cors',
+                  headers:{
+                    'Content-Type':'application/json',
+                    'X-Internal-Token': tok
+                  },
+                  body: JSON.stringify(body)
+                });
+                const text = await r.text(); // pode ser JSON ou texto
+                if (r.ok) {
+                  out.style.color='#16a34a';
+                  out.textContent = `OK em ${path} — resposta: ` + (text.slice(0,160) || '(vazia)');
+                  return;
+                }
+              } catch(e) { /* tenta o próximo */ }
+            }
+            out.style.color='#ef4444';
+            out.textContent = 'Falhou nas rotas de AI (token inválido, rota diferente ou CORS).';
+          }
+
+          $('#drai-test').onclick = testDrAI;
+        })();
+        </script>
+
+        
         <div class="muted" style="margin-top:8px;font-size:12px">
           Sala de Espera com ID: <code>/sala-de-espera.html?appointmentId=&lt;ID&gt;</code>
         </div>
