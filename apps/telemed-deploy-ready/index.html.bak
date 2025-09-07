@@ -156,6 +156,5 @@
   }
   buildRoutes();
 </script>
-  <script src="./js/dr-ai-badge.js"></script>
 </body>
 </html>
