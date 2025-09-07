@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import generationRouter from './routes/generation.js';
 // @ts-ignore
 import registerDrAIProxy from '../../../dr-ai-proxy.js';
+import { setupMDAIntegration } from './mda-integration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ const PORT = process.env.PORT || 8080;
 
 const app = express();
 registerDrAIProxy(app);
+setupMDAIntegration(app);
 app.use(express.json({ limit: '2mb' }));
 
 // Servir arquivos estáticos da pasta telemed-deploy-ready
