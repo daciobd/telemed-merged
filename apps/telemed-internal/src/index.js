@@ -1,30 +1,47 @@
 import express from 'express';
 import cors from 'cors';
+import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
 
 const app = express();
-const prisma = new PrismaClient();
-
-const PORT = process.env.PORT || 10000;
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
-const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
-
+app.use(cors({ origin: '*', exposedHeaders: ['*'] }));
 app.use(express.json());
-app.use(cors({
-  origin: FRONTEND_ORIGIN === '*' ? true : FRONTEND_ORIGIN.split(',').map(s => s.trim())
-}));
+
+const prisma = new PrismaClient();
+const PORT = process.env.PORT || 10000;
 
 app.get('/healthz', (_req,res)=>res.json({ok:true}));
 
-// Middleware simples de auth interna (Bearer INTERNAL_TOKEN)
-function internalAuth(req,res,next){
-  const ah = req.headers.authorization || '';
-  if (!INTERNAL_TOKEN) return res.status(500).json({ok:false, error:'INTERNAL_TOKEN_missing'});
-  if (!ah.startsWith('Bearer ')) return res.status(401).json({ok:false, error:'no_bearer'});
-  const token = ah.slice(7);
-  if (token !== INTERNAL_TOKEN) return res.status(401).json({ok:false, error:'bad_token'});
+const requireToken = (req, res, next) => {
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  if (req.path === '/healthz') return next();    // não exige token no health
+  const tok = req.header('X-Internal-Token');
+  if (!tok || tok !== (process.env.INTERNAL_TOKEN || '')) {
+    return res.status(401).json({ error: 'invalid token' });
+  }
   next();
-}
+};
+
+// protege tudo a seguir (exceto /healthz)
+app.use(requireToken);
+
+// 1) ping simples (não usa OpenAI) — valida token/CORS
+app.post('/ai/echo', (req, res) => {
+  res.json({ ok: true, echo: req.body || null, ts: Date.now() });
+});
+
+// 2) completion real com OpenAI
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+app.post('/ai/complete', async (req, res) => {
+  try {
+    const { messages = [{ role: 'user', content: 'Diga "ok".' }], model = 'gpt-4o-mini' } = req.body || {};
+    const out = await openai.chat.completions.create({ model, messages, stream: false });
+    res.json({ ok: true, id: out.id, content: out.choices?.[0]?.message?.content || '' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
 
 // ===== Physicians =====
 
@@ -46,7 +63,7 @@ app.post('/physicians', async (req,res)=>{
 });
 
 // Busca de médicos por especialidade (chamada pelo auction)
-app.get('/internal/physicians/search', internalAuth, async (req,res)=>{
+app.get('/internal/physicians/search', async (req,res)=>{
   try {
     const { specialty, availableNow } = req.query;
     const where = {};
@@ -68,7 +85,7 @@ app.get('/internal/physicians/search', internalAuth, async (req,res)=>{
 // ===== Appointments =====
 
 // Cria consulta a partir de um BID (leia specialty via physicianId já resolvido no auction)
-app.post('/internal/appointments/from-bid', internalAuth, async (req,res)=>{
+app.post('/internal/appointments/from-bid', async (req,res)=>{
   try {
     const { bidId, patientId, physicianId, mode } = req.body || {};
     if (!bidId || !patientId) {
@@ -91,41 +108,5 @@ app.post('/internal/appointments/from-bid', internalAuth, async (req,res)=>{
     res.status(500).json({ ok:false, error:'create_from_bid_failed' });
   }
 });
-// --- CORS básico + JSON
-import express from 'express';
-import cors from 'cors';
-const app = global.app || express();
-app.use(cors({ origin: '*', exposedHeaders: ['*'] }));
-app.use(express.json());
-
-// --- Auth por token
-const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  const tok = req.header('X-Internal-Token');
-  if (!tok || tok !== INTERNAL_TOKEN) return res.status(401).json({ error: 'invalid token' });
-  next();
-});
-
-// --- ROTA 1: /ai/echo  (não usa OpenAI; serve para testar token/CORS)
-app.post('/ai/echo', (req, res) => {
-  res.json({ ok: true, echo: req.body || null, ts: Date.now() });
-});
-
-// --- ROTA 2: /ai/complete (usa OpenAI de verdade)
-import OpenAI from 'openai';
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-app.post('/ai/complete', async (req, res) => {
-  try {
-    const { messages = [{ role: 'user', content: 'Diga "ok".' }], model = 'gpt-4o-mini' } = req.body || {};
-    const out = await openai.chat.completions.create({ model, messages, stream: false });
-    res.json({ ok: true, id: out.id, content: out.choices?.[0]?.message?.content || '' });
-  } catch (e:any) {
-    res.status(500).json({ ok:false, error: e?.message || String(e) });
-  }
-});
-
-// (mantenha suas rotas existentes e o app.listen(...) como já está)
 
 app.listen(PORT, ()=>console.log('telemed-internal on', PORT));
