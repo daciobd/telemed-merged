@@ -1,0 +1,444 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Medical Desk Advanced API",
+    "description": "Microserviço de IA clínica e telemedicina avançada para plataforma TeleMed",
+    "version": "1.0.0",
+    "contact": {
+      "name": "TeleMed Team",
+      "email": "dev@telemed.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://mda.telemed.com",
+      "description": "Production server"
+    },
+    {
+      "url": "https://mda-staging.telemed.com", 
+      "description": "Staging server"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/mda/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Verifica o status do serviço MDA",
+        "operationId": "getHealth",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Serviço funcionando",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean", "example": true },
+                    "service": { "type": "string", "example": "medical-desk-advanced" },
+                    "version": { "type": "string", "example": "1.0.0" },
+                    "ts": { "type": "string", "format": "date-time" }
+                  },
+                  "required": ["ok", "service", "ts"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mda/config": {
+      "get": {
+        "summary": "Configuração de features",
+        "description": "Retorna quais features MDA estão habilitadas",
+        "operationId": "getConfig",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Configuração atual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mda/ai/analyze-symptoms": {
+      "post": {
+        "summary": "Análise de sintomas por IA",
+        "description": "Analisa sintomas e retorna triagem e recomendações",
+        "operationId": "analyzeSymptoms",
+        "tags": ["AI Clinical"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SymptomsAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Análise realizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SymptomsAnalysisResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "503": {
+            "$ref": "#/components/responses/FeatureDisabled"
+          }
+        }
+      }
+    },
+    "/api/mda/ai/intelligent-prescription": {
+      "post": {
+        "summary": "Prescrição inteligente",
+        "description": "Gera prescrição baseada em IA",
+        "operationId": "intelligentPrescription",
+        "tags": ["AI Clinical"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrescriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prescrição gerada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrescriptionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "503": {
+            "$ref": "#/components/responses/FeatureDisabled"
+          }
+        }
+      }
+    },
+    "/api/mda/telemedicine/sessions": {
+      "post": {
+        "summary": "Criar sessão de telemedicina",
+        "description": "Cria nova sessão de telemedicina avançada",
+        "operationId": "createTelemedicineSession",
+        "tags": ["Telemedicine"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sessão criada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/mda/consultations": {
+      "get": {
+        "summary": "Listar consultas",
+        "description": "Lista consultas do médico logado",
+        "operationId": "getConsultations",
+        "tags": ["Consultations"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["active", "completed", "cancelled"] }
+          },
+          {
+            "name": "limit",
+            "in": "query", 
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de consultas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsultationsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token emitido pelo serviço de autenticação TELEMED"
+      }
+    },
+    "schemas": {
+      "FeatureConfig": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "features": {
+            "type": "object",
+            "properties": {
+              "aiAnalysis": { "type": "boolean" },
+              "advancedTelemedicine": { "type": "boolean" },
+              "intelligentPrescription": { "type": "boolean" },
+              "realTimeMonitoring": { "type": "boolean" }
+            }
+          },
+          "endpoints": {
+            "type": "object",
+            "nullable": true
+          },
+          "fallbacks": {
+            "type": "object",
+            "properties": {
+              "consultation": { "type": "string" },
+              "prescription": { "type": "string" }
+            }
+          },
+          "ts": { "type": "string", "format": "date-time" }
+        },
+        "required": ["enabled", "features", "fallbacks", "ts"]
+      },
+      "SymptomsAnalysisRequest": {
+        "type": "object",
+        "properties": {
+          "symptoms": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": ["febre", "dor de cabeça", "náusea"]
+          },
+          "patientAge": { "type": "integer", "minimum": 0, "maximum": 120 },
+          "patientGender": { "type": "string", "enum": ["M", "F", "O"] },
+          "urgency": { "type": "boolean", "default": false }
+        },
+        "required": ["symptoms"]
+      },
+      "SymptomsAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "triage": { "type": "string", "enum": ["baixa", "media", "alta"] },
+              "recommendations": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "confidence": { "type": "integer", "minimum": 0, "maximum": 100 },
+              "specialtyRecommended": { "type": "string" },
+              "estimatedDuration": { "type": "integer" }
+            }
+          },
+          "ts": { "type": "string", "format": "date-time" }
+        },
+        "required": ["success", "ts"]
+      },
+      "PrescriptionRequest": {
+        "type": "object",
+        "properties": {
+          "symptoms": { "type": "array", "items": { "type": "string" } },
+          "diagnosis": { "type": "string" },
+          "patientProfile": {
+            "type": "object",
+            "properties": {
+              "age": { "type": "integer" },
+              "weight": { "type": "number" },
+              "allergies": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "required": ["symptoms", "diagnosis"]
+      },
+      "PrescriptionResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "prescription": {
+            "type": "object",
+            "properties": {
+              "medications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "dosage": { "type": "string" },
+                    "frequency": { "type": "string" },
+                    "duration": { "type": "string" },
+                    "instructions": { "type": "string" }
+                  }
+                }
+              },
+              "warnings": { "type": "array", "items": { "type": "string" } },
+              "followUp": { "type": "string" },
+              "confidence": { "type": "integer" }
+            }
+          },
+          "ts": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateSessionRequest": {
+        "type": "object",
+        "properties": {
+          "consultationId": { "type": "integer" },
+          "patientId": { "type": "string" }
+        },
+        "required": ["patientId"]
+      },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "session": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "roomId": { "type": "string" },
+              "joinUrl": { "type": "string", "format": "uri" },
+              "status": { "type": "string" },
+              "startedAt": { "type": "string", "format": "date-time" }
+            }
+          },
+          "ts": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ConsultationsResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "consultations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "patientId": { "type": "string" },
+                "doctorId": { "type": "string" },
+                "status": { "type": "string" },
+                "symptoms": { "type": "array", "items": { "type": "string" } },
+                "createdAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "count": { "type": "integer" },
+          "ts": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" },
+          "ts": { "type": "string", "format": "date-time" }
+        },
+        "required": ["error", "message", "ts"]
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Token JWT inválido ou ausente",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "invalid_token",
+              "message": "Token inválido ou expirado",
+              "ts": "2025-09-07T22:00:00.000Z"
+            }
+          }
+        }
+      },
+      "FeatureDisabled": {
+        "description": "Feature MDA desabilitada",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "feature_disabled",
+              "message": "Medical Desk Advanced está desabilitado",
+              "ts": "2025-09-07T22:00:00.000Z"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System",
+      "description": "Endpoints de sistema e configuração"
+    },
+    {
+      "name": "AI Clinical",
+      "description": "Endpoints de IA clínica"
+    },
+    {
+      "name": "Telemedicine", 
+      "description": "Endpoints de telemedicina avançada"
+    },
+    {
+      "name": "Consultations",
+      "description": "Gestão de consultas"
+    }
+  ]
+}
