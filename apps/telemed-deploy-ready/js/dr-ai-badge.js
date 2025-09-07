@@ -6,8 +6,12 @@
   const KEY_HDR = 'DR_AI_HEADER';
   const KEY_TKN = 'DR_AI_TOKEN';
 
-  const DEF_URL = '/api/dr-ai/health';
+  // URL padrão do health (seu serviço no Render)
+  const DEF_URL = 'https://telemed-internal.onrender.com/api/dr-ai/health';
+
+  // Nome do header de autenticação usado na sua API
   const DEF_HDR = 'X-Internal-Token';
+
 
   const get = (k, d) => (window[k] || localStorage.getItem(k) || d);
   const set = (k, v) => (v!=null && (window[k]=v, localStorage.setItem(k, v)));

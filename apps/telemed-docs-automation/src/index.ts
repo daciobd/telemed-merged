@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import generationRouter from './routes/generation.js';
+// @ts-ignore
+import registerDrAIProxy from '../../../dr-ai-proxy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +15,7 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 8080;
 
 const app = express();
+registerDrAIProxy(app);
 app.use(express.json({ limit: '2mb' }));
 
 // Servir arquivos estáticos da pasta telemed-deploy-ready
@@ -98,10 +101,7 @@ function requireInternalToken(req: express.Request, res: express.Response, next:
 app.use('/generate', requireInternalToken, generationRouter);
 // ... (código existente das rotas de appointments)
 
-// ✅ HEALTHCHECK DO DR. AI (cole aqui)
-app.get('/api/dr-ai/health', (_req: express.Request, res: express.Response) => {
-  res.json({ status: 'ok', ts: new Date().toISOString() });
-});
+// Dr. AI health check agora é servido pelo proxy registerDrAIProxy
 
 // ✅ FINALMENTE O app.listen() NO FINAL
 app.listen(PORT, '0.0.0.0', () => {
