@@ -91,5 +91,41 @@ app.post('/internal/appointments/from-bid', internalAuth, async (req,res)=>{
     res.status(500).json({ ok:false, error:'create_from_bid_failed' });
   }
 });
+// --- CORS básico + JSON
+import express from 'express';
+import cors from 'cors';
+const app = global.app || express();
+app.use(cors({ origin: '*', exposedHeaders: ['*'] }));
+app.use(express.json());
+
+// --- Auth por token
+const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  const tok = req.header('X-Internal-Token');
+  if (!tok || tok !== INTERNAL_TOKEN) return res.status(401).json({ error: 'invalid token' });
+  next();
+});
+
+// --- ROTA 1: /ai/echo  (não usa OpenAI; serve para testar token/CORS)
+app.post('/ai/echo', (req, res) => {
+  res.json({ ok: true, echo: req.body || null, ts: Date.now() });
+});
+
+// --- ROTA 2: /ai/complete (usa OpenAI de verdade)
+import OpenAI from 'openai';
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+app.post('/ai/complete', async (req, res) => {
+  try {
+    const { messages = [{ role: 'user', content: 'Diga "ok".' }], model = 'gpt-4o-mini' } = req.body || {};
+    const out = await openai.chat.completions.create({ model, messages, stream: false });
+    res.json({ ok: true, id: out.id, content: out.choices?.[0]?.message?.content || '' });
+  } catch (e:any) {
+    res.status(500).json({ ok:false, error: e?.message || String(e) });
+  }
+});
+
+// (mantenha suas rotas existentes e o app.listen(...) como já está)
 
 app.listen(PORT, ()=>console.log('telemed-internal on', PORT));
