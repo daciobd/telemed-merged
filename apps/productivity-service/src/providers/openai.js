@@ -1,5 +1,4 @@
 import fs from 'fs';
-import fetch from 'node-fetch';
 
 export async function openaiTranscribe({ filePath, model='whisper-1', language='pt' }){
   const apiKey = process.env.OPENAI_API_KEY;

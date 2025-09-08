@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 // index.js (raiz)
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+=======
+// TeleMed Monorepo - Proxy to Docs Automation Service  
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+>>>>>>> 2a2829c (Improve proxy for AI diagnostics to handle responses correctly)
 
 const app = express();
 app.use(cors());
