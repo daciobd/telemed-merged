@@ -52,6 +52,20 @@
           <input id="PRODUCTIVITY_URL" placeholder="https://telemed-productivity.onrender.com">
         </div>
       </div>
+
+      <!-- ==== MDA SERVICE ==== -->
+      <div class="card" style="margin-top:16px">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+          <label for="mdaUrl" style="min-width:160px;font-weight:600">MDA_SERVICE_URL</label>
+          <input id="mdaUrl" type="url" placeholder="https://medical-desk-advanced.onrender.com"
+                 style="min-width:360px;flex:1;padding:8px;border:1px solid #ddd;border-radius:6px" />
+          <button onclick="saveMdaUrl()" style="padding:8px 12px;border-radius:6px">Salvar</button>
+          <button onclick="openMda()"  style="padding:8px 12px;border-radius:6px">Abrir</button>
+          <!-- (opcional) teste simples de health -->
+          <button onclick="testMda()"  style="padding:8px 12px;border-radius:6px">Testar</button>
+          <span id="mdaBadge" style="margin-left:8px;font-size:12px;color:#666;"></span>
+        </div>
+      </div>
       <div class="row" style="margin-top:12px">
         <button id="save" class="btn">Salvar</button>
         <button id="clear" class="btn ghost">Limpar (localStorage)</button>
@@ -280,6 +294,59 @@ curl -X POST ${a}/bids/<BID_ID>/accept \\
 
     load();
   })();
+
+  // ==== MDA Functions ====
+  // carrega o valor salvo na abertura
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('MDA_SERVICE_URL') || '';
+    const el = document.getElementById('mdaUrl');
+    if (el) el.value = saved;
+  });
+
+  function normalizeUrl(u) {
+    if (!u) return '';
+    const t = u.trim().replace(/\s+/g, '');
+    if (!/^https?:\/\//i.test(t)) return 'https://' + t; // força protocolo
+    return t.replace(/\/+$/, ''); // sem barra final
+  }
+
+  function saveMdaUrl() {
+    const url = normalizeUrl(document.getElementById('mdaUrl').value);
+    if (!url) { alert('Informe a URL do MDA.'); return; }
+    localStorage.setItem('MDA_SERVICE_URL', url);
+    setMdaBadge('Salvo ✓');
+  }
+
+  function openMda() {
+    const url = normalizeUrl(localStorage.getItem('MDA_SERVICE_URL') || document.getElementById('mdaUrl').value);
+    if (!url) { alert('Configure o MDA_SERVICE_URL primeiro.'); return; }
+    window.open(url, '_blank', 'noopener');
+  }
+
+  // (opcional) testa /api/mda/health e mostra status ao lado
+  async function testMda() {
+    const base = normalizeUrl(document.getElementById('mdaUrl').value);
+    if (!base) { alert('Informe a URL do MDA para testar.'); return; }
+    const health = base + '/api/mda/health';
+    setMdaBadge('Testando…');
+    try {
+      const r = await fetch(health, { method: 'GET' });
+      if (r.ok) {
+        setMdaBadge('OK ✓');
+      } else {
+        setMdaBadge('Falhou (' + r.status + ')');
+      }
+    } catch (e) {
+      // se der CORS e você só quer saber se responde, abra em nova aba:
+      // window.open(health, '_blank', 'noopener');
+      setMdaBadge('Erro/CORS');
+    }
+  }
+
+  function setMdaBadge(text) {
+    const el = document.getElementById('mdaBadge');
+    if (el) el.textContent = text;
+  }
   </script>
 </body>
 </html>
