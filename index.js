@@ -1,38 +1,29 @@
-// index.js (raiz)
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
+// TeleMed Monorepo - Proxy to Docs Automation Service  
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const app = express();
-app.use(cors());
-app.use(morgan('dev'));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const PORT = process.env.PORT || 5000;
-const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN;          // defina no Render
-const HEADER_NAME = process.env.INTERNAL_HEADER || 'X-Internal-Token';
+console.log('🚀 Starting TeleMed Docs Automation Service (TypeScript)...');
 
-app.get('/healthz', (_req, res) => {
-  res.json({ status: 'ok', service: 'telemed-internal', ts: new Date().toISOString() });
+// Change to docs automation directory and start it
+const docsPath = join(__dirname, 'apps', 'telemed-docs-automation');
+process.chdir(docsPath);
+
+// Start the docs automation service
+const child = spawn('npm', ['run', 'dev'], { 
+  stdio: 'inherit',
+  shell: true 
 });
 
-function auth(req, res, next) {
-  if (!INTERNAL_TOKEN) return res.status(500).json({ error: 'missing INTERNAL_TOKEN' });
-
-  const bearer = req.get('Authorization');
-  const header = req.get(HEADER_NAME);
-
-  let token = null;
-  if (bearer?.startsWith('Bearer ')) token = bearer.slice(7);
-  if (!token && header) token = header;
-
-  if (token !== INTERNAL_TOKEN) return res.status(401).json({ error: 'invalid token' });
-  next();
-}
-
-app.get('/api/dr-ai/health', auth, (_req, res) => {
-  res.json({ status: 'ok', ts: new Date().toISOString() });
+child.on('error', (error) => {
+  console.error('Failed to start docs automation service:', error);
+  process.exit(1);
 });
 
-app.listen(PORT, () => {
-  console.log(`[telemed-internal] listening on :${PORT}`);
+child.on('close', (code) => {
+  console.log(`Docs automation service exited with code ${code}`);
+  process.exit(code);
 });
