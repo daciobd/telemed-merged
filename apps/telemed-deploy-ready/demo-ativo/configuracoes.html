@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Configurações da Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,-apple-system,Arial,sans-serif;max-width:900px;margin:32px auto;padding:0 16px;line-height:1.5}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+    input{padding:8px;border:1px solid #ddd;border-radius:6px;min-width:360px;flex:1}
+    button{padding:8px 12px;border-radius:6px;border:1px solid #ddd;background:#f8f8f8;cursor:pointer}
+    .muted{color:#666;font-size:13px}
+    .badge{font-size:12px;margin-left:8px;color:#555}
+  </style>
+</head>
+<body>
+  <h1>Configurações da Demo</h1>
+
+  <p>Use esta página para verificar/ajustar rapidamente a URL do MDA e testar o <code>/api/mda/health</code>.</p>
+
+  <div class="row">
+    <label for="mdaUrl" style="min-width:160px;font-weight:600">MDA_SERVICE_URL</label>
+    <input id="mdaUrl" type="url" placeholder="https://medical-desk-advanced.onrender.com" />
+    <button onclick="saveMdaUrl()">Salvar</button>
+    <button onclick="openMda()">Abrir</button>
+    <button onclick="testMda()">Testar</button>
+    <span id="mdaBadge" class="badge"></span>
+  </div>
+
+  <p class="muted">Dica: a URL também pode ser configurada via <a href="/example-integration.html">Exemplo de Integração</a>.</p>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('MDA_SERVICE_URL') || '';
+      const el = document.getElementById('mdaUrl');
+      if (el) el.value = saved;
+    });
+
+    function normalizeUrl(u){
+      if(!u) return '';
+      const t = u.trim().replace(/\s+/g,'');
+      if(!/^https?:\/\//i.test(t)) return 'https://' + t;
+      return t.replace(/\/+$/,'');
+    }
+    function setBadge(t){ const el=document.getElementById('mdaBadge'); if(el) el.textContent=t; }
+
+    function saveMdaUrl(){
+      const url = normalizeUrl(document.getElementById('mdaUrl').value);
+      if(!url){ alert('Informe a URL do MDA.'); return; }
+      localStorage.setItem('MDA_SERVICE_URL', url);
+      setBadge('Salvo ✓');
+    }
+    function openMda(){
+      const url = normalizeUrl(localStorage.getItem('MDA_SERVICE_URL') || document.getElementById('mdaUrl').value);
+      if(!url){ alert('Configure o MDA_SERVICE_URL primeiro.'); return; }
+      window.open(url, '_blank', 'noopener');
+    }
+    async function testMda(){
+      const base = normalizeUrl(document.getElementById('mdaUrl').value);
+      if(!base){ alert('Informe a URL do MDA para testar.'); return; }
+      const health = base + '/api/mda/health';
+      setBadge('Testando…');
+      try{
+        const r = await fetch(health, { method: 'GET' });
+        setBadge(r.ok ? 'OK ✓' : 'Falhou ('+r.status+')');
+      }catch(e){
+        setBadge('Erro/CORS');
+      }
+    }
+  </script>
+</body>
+</html>
