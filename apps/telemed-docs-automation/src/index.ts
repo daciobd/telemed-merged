@@ -95,6 +95,32 @@ app.get('/rc/health', async (_req: express.Request, res: express.Response) => {
   }
 });
 
+// PROXY de criação de receita (injeta o token com segurança)
+app.post('/api/rc/prescriptions', async (req: express.Request, res: express.Response) => {
+  const RC_BASE = (process.env.VITE_RC_BASE_URL || process.env.RC_BASE_URL || 'https://receita-certa-daciobd.replit.app').replace(/\/$/, '');
+  const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN;
+  
+  if (!INTERNAL_TOKEN) {
+    return res.status(500).json({ error: 'INTERNAL_TOKEN not configured' });
+  }
+  
+  try {
+    const r = await fetch(`${RC_BASE}/api/prescriptions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Token': INTERNAL_TOKEN
+      },
+      body: JSON.stringify(req.body),
+    });
+    const data = await r.json().catch(() => ({}));
+    res.status(r.status).json(data);
+  } catch (e: any) {
+    console.error('Error proxying to ReceitaCerta:', e);
+    res.status(502).json({ error: 'Bad Gateway to Receita Certa' });
+  }
+});
+
 // Middleware simples de auth interna por token
 function requireInternalToken(req: express.Request, res: express.Response, next: express.NextFunction) {
   const configured = process.env.INTERNAL_TOKEN;
