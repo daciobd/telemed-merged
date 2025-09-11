@@ -100,6 +100,11 @@ app.post('/api/rc/prescriptions', async (req: express.Request, res: express.Resp
   const RC_BASE = (process.env.VITE_RC_BASE_URL || process.env.RC_BASE_URL || 'https://receita-certa-daciobd.replit.app').replace(/\/$/, '');
   const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN;
   
+  console.log('[TeleMed] Proxy request to RC');
+  console.log('[TeleMed] RC_BASE:', RC_BASE);
+  console.log('[TeleMed] Token present:', !!INTERNAL_TOKEN, 'length:', INTERNAL_TOKEN?.length || 0);
+  console.log('[TeleMed] Request body:', JSON.stringify(req.body));
+  
   if (!INTERNAL_TOKEN) {
     return res.status(500).json({ error: 'INTERNAL_TOKEN not configured' });
   }
@@ -113,7 +118,13 @@ app.post('/api/rc/prescriptions', async (req: express.Request, res: express.Resp
       },
       body: JSON.stringify(req.body),
     });
+    
+    console.log('[TeleMed] RC response status:', r.status);
+    console.log('[TeleMed] RC response headers:', Object.fromEntries(r.headers.entries()));
+    
     const data = await r.json().catch(() => ({}));
+    console.log('[TeleMed] RC response data:', data);
+    
     res.status(r.status).json(data);
   } catch (e: any) {
     console.error('Error proxying to ReceitaCerta:', e);
