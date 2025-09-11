@@ -12,9 +12,8 @@ export default function ConsultaSala() {
     ? `${env.MDA_BASE}/?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`
     : '';
 
-  const rcUrl = env.RC_BASE
-    ? `${env.RC_BASE}/?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}&doctorId=${encodeURIComponent(doctorId)}`
-    : '';
+  const rcBase = import.meta.env.VITE_RC_BASE_URL;
+  const urlRC = `${rcBase}?appointmentId=${encodeURIComponent(appointmentId)}&patientId=${encodeURIComponent(patientId)}&doctorId=${encodeURIComponent(doctorId)}`;
 
   return (
     <div className="min-h-screen bg-slate-900 p-6">
@@ -42,10 +41,10 @@ export default function ConsultaSala() {
                 🖥️ Abrir Medical Desk
               </button>
             )}
-            {env.RC_BASE && (
+            {rcBase && (
               <button 
                 className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-                onClick={() => window.open(rcUrl, '_blank', 'noopener')}
+                onClick={() => window.open(urlRC, "_blank", "noopener")}
                 data-testid="button-open-receita-certa"
               >
                 📋 Abrir ReceitaCerta
