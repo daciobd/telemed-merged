@@ -82,6 +82,19 @@ app.get('/proxy/health/:service', async (req: express.Request, res: express.Resp
   }
 });
 
+// Rota específica para health check do ReceitaCerta
+app.get('/rc/health', async (_req: express.Request, res: express.Response) => {
+  const base = (process.env.VITE_RC_BASE_URL || process.env.RC_BASE_URL || 'https://receita-certa-daciobd.replit.app').replace(/\/$/, '');
+  
+  try {
+    const r = await fetch(`${base}/api/health`);
+    const data = await r.json().catch(() => ({}));
+    res.status(r.ok ? 200 : 500).json(data);
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e?.message || 'rc_unreachable' });
+  }
+});
+
 // Middleware simples de auth interna por token
 function requireInternalToken(req: express.Request, res: express.Response, next: express.NextFunction) {
   const configured = process.env.INTERNAL_TOKEN;
