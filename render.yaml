@@ -10,7 +10,7 @@ services:
     autoDeploy: true
     rootDir: apps/telemed-deploy-ready
     buildCommand: |
-      npm ci
+      if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
       npm run build
     startCommand: |
       npm run start
@@ -44,7 +44,7 @@ services:
     autoDeploy: true
     rootDir: apps/auction-service
     buildCommand: |
-      npm ci
+      if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
       npm run build
     startCommand: |
       npm run start
@@ -66,7 +66,7 @@ services:
     autoDeploy: true
     rootDir: apps/telemed-internal
     buildCommand: |
-      npm ci
+      if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
       npm run build
     startCommand: |
       npm run start
@@ -93,7 +93,7 @@ services:
     autoDeploy: true
     rootDir: apps/productivity-service
     buildCommand: |
-      npm ci
+      if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
       npm run build
     startCommand: |
       npm run start
@@ -115,7 +115,7 @@ services:
     autoDeploy: true
     rootDir: apps/telemed-docs-automation
     buildCommand: |
-      npm ci
+      if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
       npm run build
     startCommand: |
       node dist/index.js
