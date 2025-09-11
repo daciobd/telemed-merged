@@ -163,7 +163,7 @@
     if (mdaBtn) mdaBtn.onclick = () => {
       // Obter URL do MDA do localStorage (configurado no Hub)
       const mdaBase = localStorage.getItem('MDA_SERVICE_URL') || 
-                     'https://medical-desk-advanced.onrender.com';
+                     'https://medical-desk-advanced-daciobd.replit.app';
       
       // Obter patientId e appointmentId dos parâmetros da URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -177,6 +177,29 @@
       const url = `${mdaBase}?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`;
       
       console.log('🖥️ Abrindo Medical Desk Advanced:', url);
+      window.open(url, "_blank", "noopener");
+    };
+
+    // --- Patch ReceitaCerta: Botão "Abrir ReceitaCerta" na consulta (médico)
+    const rcBtn = document.getElementById('btn-rc');
+    if (rcBtn) rcBtn.onclick = () => {
+      // Obter URL do ReceitaCerta do localStorage ou env
+      const rcBase = localStorage.getItem('RC_SERVICE_URL') || 
+                     'https://receita-certa-daciobd.replit.app';
+      
+      // Obter IDs dos parâmetros da URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const appointmentId = urlParams.get('appointmentId') || room || 'demo-appointment';
+      const patientId = urlParams.get('patientId') || 
+                       localStorage.getItem('patientId') || 
+                       localStorage.getItem('LAST_PATIENT_ID') || 
+                       'demo-patient';
+      const doctorId = localStorage.getItem('doctorId') || 'demo-doctor';
+      
+      // Montar URL conforme especificado
+      const url = `${rcBase}?appointmentId=${encodeURIComponent(appointmentId)}&patientId=${encodeURIComponent(patientId)}&doctorId=${encodeURIComponent(doctorId)}`;
+      
+      console.log('📋 Abrindo ReceitaCerta:', url);
       window.open(url, "_blank", "noopener");
     };
 
@@ -241,6 +264,7 @@
         <span class="pill" id="elapsed">18m 19s</span>
         <button class="btn primary" id="btn-start">Iniciar Consulta</button>
         <button class="btn ghost" id="btn-mda" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
+        <button class="btn ghost" id="btn-rc" data-testid="button-open-receita-certa">📋 Abrir ReceitaCerta</button>
         <button class="btn ghost" id="btn-back">Voltar</button>
         <button class="btn ghost" id="btn-form">Formulário</button>
         <button class="btn ghost" id="btn-narrow">Faixa ↓/↑</button>
