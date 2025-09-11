@@ -158,6 +158,28 @@
       window.open(`/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`, '_blank');
     };
 
+    // --- Patch 5: Botão "Abrir Medical Desk" na consulta (médico)
+    const mdaBtn = document.getElementById('btn-mda');
+    if (mdaBtn) mdaBtn.onclick = () => {
+      // Obter URL do MDA do localStorage (configurado no Hub)
+      const mdaBase = localStorage.getItem('MDA_SERVICE_URL') || 
+                     'https://medical-desk-advanced.onrender.com';
+      
+      // Obter patientId e appointmentId dos parâmetros da URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const appointmentId = urlParams.get('appointmentId') || room || 'demo-appointment';
+      const patientId = urlParams.get('patientId') || 
+                       localStorage.getItem('patientId') || 
+                       localStorage.getItem('LAST_PATIENT_ID') || 
+                       'demo-patient';
+      
+      // Montar URL conforme especificado no patch
+      const url = `${mdaBase}?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`;
+      
+      console.log('🖥️ Abrindo Medical Desk Advanced:', url);
+      window.open(url, "_blank", "noopener");
+    };
+
     // --- carrega o SDK do Jitsi dinamicamente
     function loadScript(src){
       return new Promise((resolve,reject)=>{
@@ -218,6 +240,7 @@
         <span class="state wait" id="state"><span class="dot"></span> Aguardando</span>
         <span class="pill" id="elapsed">18m 19s</span>
         <button class="btn primary" id="btn-start">Iniciar Consulta</button>
+        <button class="btn ghost" id="btn-mda" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
         <button class="btn ghost" id="btn-back">Voltar</button>
         <button class="btn ghost" id="btn-form">Formulário</button>
         <button class="btn ghost" id="btn-narrow">Faixa ↓/↑</button>

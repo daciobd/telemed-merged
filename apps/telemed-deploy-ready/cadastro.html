@@ -205,15 +205,22 @@
         } catch (_) { /* ignora na demo */ }
       }
 
-      setHint('');
-      // Vai para a Demo com o patientId preenchido
-      window.location.href = `/demo.html?patientId=${cpf}`;
+      // Implementar função onSignupSuccess dos patches
+      onSignupSuccess({ patientId: cpf });
     });
 
     $('#btn-demo').addEventListener('click', () => {
       const cpf = digits(cpfEl.value);
       window.location.href = `/demo.html${cpf ? `?patientId=${cpf}` : ''}`;
     });
+
+    // Função após cadastro bem-sucedido (dos patches)
+    function onSignupSuccess(result) {
+      const id = result.patientId;
+      localStorage.setItem("patientId", id);
+      // redireciona para página de sucesso
+      window.location.href = `/paciente/cadastro/sucesso?patientId=${encodeURIComponent(id)}`;
+    }
 
     // Novo botão "Ir para Leilão"
     const getCPF = () => document.querySelector('#cpf').value.replace(/\D/g, '');

@@ -11,9 +11,12 @@ const INTERNAL_URL_TELEMED = (process.env.INTERNAL_URL_TELEMED || '').replace(/\
 const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
 
 app.use(express.json());
+// Patch 6: CORS configurado para BID funcionar
 app.use(cors({
-  origin: FRONTEND_ORIGIN === '*' ? true : FRONTEND_ORIGIN.split(',').map(s => s.trim()),
-  credentials: false,
+  origin: true, // Permite qualquer origem
+  credentials: true, // Permite credenciais
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Internal-Token"]
 }));
 
 app.get('/healthz', (_req,res)=>res.json({ok:true}));
