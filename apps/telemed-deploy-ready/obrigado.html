@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Obrigado — TeleMed</title>
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .card { 
+      background: #fff; 
+      padding: 48px 40px; 
+      border-radius: 24px; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 24px;
+      animation: bounce 1s ease-in-out infinite alternate;
+    }
+    
+    @keyframes bounce {
+      from { transform: translateY(0px); }
+      to { transform: translateY(-10px); }
+    }
+    
+    h1 { 
+      margin: 0 0 16px; 
+      font-size: 2rem; 
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+    
+    .message {
+      color: #6b7280; 
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+    
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+    
+    .btn-secondary:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 24px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .stats {
+        flex-direction: column;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🙏</div>
+    
+    <h1>Obrigado pela sua avaliação!</h1>
+    
+    <p class="message">
+      Seus comentários são muito valiosos e ajudam a melhorar constantemente o TeleMed. 
+      <strong>Sua opinião faz a diferença!</strong>
+    </p>
+    
+    <div class="actions">
+      <a href="/" class="btn btn-primary" data-testid="button-home">Voltar ao TeleMed</a>
+      <a href="/consulta/" class="btn btn-secondary" data-testid="button-consultation">Nova Consulta</a>
+    </div>
+    
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-number" id="totalEvaluations">---</div>
+        <div class="stat-label">Avaliações</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="averageRating">---</div>
+        <div class="stat-label">Nota Média</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="npsScore">---</div>
+        <div class="stat-label">NPS</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simula estatísticas básicas (em produção, viriam da API)
+    function displayStats() {
+      // Dados de exemplo - em produção viriam do Google Sheets ou API
+      const stats = {
+        totalEvaluations: Math.floor(Math.random() * 500) + 150,
+        averageRating: (4.2 + Math.random() * 0.6).toFixed(1),
+        npsScore: Math.floor(Math.random() * 30) + 65
+      };
+      
+      // Animação dos números
+      setTimeout(() => {
+        document.getElementById('totalEvaluations').textContent = stats.totalEvaluations;
+        document.getElementById('averageRating').textContent = stats.averageRating + '/5';
+        document.getElementById('npsScore').textContent = stats.npsScore;
+      }, 800);
+    }
+    
+    // Redirect automático opcional após 10 segundos
+    function setupAutoRedirect() {
+      let countdown = 10;
+      const redirectTimer = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          clearInterval(redirectTimer);
+          window.location.href = '/';
+        }
+      }, 1000);
+      
+      // Cancela redirect se user interagir
+      document.addEventListener('click', () => {
+        clearInterval(redirectTimer);
+      });
+    }
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      displayStats();
+      // setupAutoRedirect(); // Descomente se quiser redirect automático
+    });
+    
+    // Track analytics event se disponível
+    if (window.TelemedAnalytics && typeof window.TelemedAnalytics.track === 'function') {
+      window.TelemedAnalytics.track('evaluation_completed', {
+        timestamp: new Date().toISOString(),
+        referrer: document.referrer
+      });
+    }
+  </script>
+</body>
+</html>

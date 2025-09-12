@@ -268,6 +268,7 @@
         <button class="btn ghost" id="btn-back">Voltar</button>
         <button class="btn ghost" id="btn-form">Formulário</button>
         <button class="btn ghost" id="btn-narrow">Faixa ↓/↑</button>
+        <button class="btn ghost" id="btn-evaluate-quick" data-testid="button-evaluate-quick">📝 Avaliação</button>
         <button class="btn ghost" id="btn-exit">Sair</button>
         <div class="control blue notif" title="Notificações" id="btn-bell">🔔<span class="dot" id="bellDot" style="display:none">1</span></div>
       </div>
@@ -408,6 +409,7 @@
         <button class="btn ghost" id="btn-save">💾 Salvar</button>
         <button class="btn fail" id="btn-no-finish">Não Foi Possível Finalizar Consulta</button>
         <button class="btn primary" id="btn-finish">✅ Finalizar</button>
+        <button class="btn ghost" id="btn-evaluate" data-testid="button-evaluate" style="background:#f3f4f6;border:1px solid #e5e7eb">📝 Avaliar Experiência</button>
       </div>
     </div>
 
@@ -1015,6 +1017,20 @@ updateRxCount();
     alert('Não foi possível iniciar o vídeo. Verifique sua conexão/permissões.');
   }
 })();
+
+// ===== BOTÕES DE AVALIAÇÃO =====
+document.getElementById('btn-evaluate')?.addEventListener('click', () => {
+  const appointmentId = new URLSearchParams(location.search).get('appointmentId') || 'demo';
+  const role = new URLSearchParams(location.search).get('role') || 'medico';
+  window.open(`/avaliacao.html?role=${role}&appointmentId=${appointmentId}`, '_blank');
+});
+
+document.getElementById('btn-evaluate-quick')?.addEventListener('click', () => {
+  const appointmentId = new URLSearchParams(location.search).get('appointmentId') || 'demo';
+  const role = new URLSearchParams(location.search).get('role') || 'medico';
+  window.open(`/avaliacao.html?role=${role}&appointmentId=${appointmentId}`, '_blank');
+});
+
 </script>
   
   <!-- Scripts para funcionalidade de receitas -->
