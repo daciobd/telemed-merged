@@ -174,7 +174,7 @@ class PrescriptionGenerator {
       console.log(`✅ Prescription generated: rxId=${data.id || 'N/A'}, appointmentId=${appointmentId}, patientHash=${hashedPatientId}, timestamp=${new Date().toISOString()}`);
       
       // Opcional: enviar evento de analytics se configurado (sem PHI)
-      if (window.TelemedAnalytics && typeof window.TelemedAnalytics.track === 'function' && process.env.ENABLE_ANALYTICS === '1') {
+      if (window.TelemedAnalytics && typeof window.TelemedAnalytics.track === 'function' && window.TELEMED_ENABLE_ANALYTICS === '1') {
         window.TelemedAnalytics.track('prescription_generated', {
           rxId: data.id,
           appointmentId,
