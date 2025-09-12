@@ -8,16 +8,12 @@ packages = ["jq", "unzipNLS"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+build = ["sh", "-c", "bash -lc ' set -e # instala deps no root (com fallback se não houver lockfile) if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then   npm ci --include=dev else   npm install --include=dev fi  # build do TeleMedMerge (root) npm run build || (vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist) '"]
+run = ["sh", "-c", "bash -lc 'node production.js'"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 35459
-externalPort = 3000
 
 [[ports]]
 localPort = 44015
