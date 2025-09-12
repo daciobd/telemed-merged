@@ -59,6 +59,70 @@ app.get('/api', (req: express.Request, res: express.Response) => {
 // Healthcheck padronizado
 app.get('/healthz', (_req: express.Request, res: express.Response) => res.json({ ok: true }));
 
+// ===== Proxy de Avaliação (público, sem token) =====
+app.use('/api/avaliacao-proxy', express.urlencoded({ extended: true }));
+app.post('/api/avaliacao-proxy', async (req: express.Request, res: express.Response) => {
+  const GOOGLE_APPS_SCRIPT_URL = process.env.EVALUATION_ENDPOINT;
+  
+  if (!GOOGLE_APPS_SCRIPT_URL) {
+    console.error('❌ EVALUATION_ENDPOINT não configurado');
+    return res.status(503).json({ ok: false, error: 'Serviço de avaliação não configurado' });
+  }
+  
+  try {
+    console.log('📝 Proxy avaliação recebida - campos:', Object.keys(req.body || {}).length);
+    
+    // Validar campos obrigatórios
+    const required = ['role', 'facilidade_uso', 'clareza_fluxo', 'recurso_mais_util', 'nps', 'bugs_ou_erros'];
+    const missing = required.filter(field => !req.body[field]);
+    if (missing.length > 0) {
+      return res.status(400).json({ ok: false, error: `Campos obrigatórios ausentes: ${missing.join(', ')}` });
+    }
+    
+    // Converter dados para URLSearchParams
+    const formParams = new URLSearchParams();
+    Object.entries(req.body || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formParams.append(key, String(value));
+      }
+    });
+    
+    // Fazer requisição para Google Apps Script com timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: formParams,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    console.log('📡 Resposta upstream - Status:', response.status);
+    
+    // Tratar qualquer resposta 2xx como sucesso
+    if (response.ok) {
+      console.log('✅ Avaliação enviada com sucesso');
+      res.json({ ok: true, message: 'Avaliação enviada com sucesso' });
+    } else if (response.status === 401) {
+      console.log('❌ Erro de autorização upstream - verificar configuração EVALUATION_ENDPOINT');
+      res.status(502).json({ ok: false, error: 'Serviço de avaliação não autorizado - verificar configuração' });
+    } else {
+      console.log('❌ Erro upstream - Status:', response.status);
+      res.status(502).json({ ok: false, error: 'Erro no serviço de avaliação' });
+    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.error('⏰ Timeout no proxy de avaliação');
+      res.status(504).json({ ok: false, error: 'Timeout ao enviar avaliação' });
+    } else {
+      console.error('❌ Erro no proxy de avaliação:', error?.message || error);
+      res.status(500).json({ ok: false, error: 'Falha ao enviar avaliação' });
+    }
+  }
+});
+
 // Proxy para contornar CORS dos serviços externos
 app.get('/proxy/health/:service', async (req: express.Request, res: express.Response) => {
   const { service } = req.params;

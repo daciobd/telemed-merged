@@ -351,8 +351,8 @@
   </div>
 
   <script>
-    // ⚠️ CONFIGURE AQUI: URL do Google Apps Script Web App
-    const WEBAPP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+    // Usar proxy interno para evitar CORS
+    const WEBAPP_URL = '/api/avaliacao-proxy';
     
     // Versão atual do app TeleMed
     const APP_VERSION = 'telemed-1.0.0';
@@ -442,10 +442,15 @@
       data.timestamp = new Date().toISOString();
       
       try {
+        // Usar form-encoded para evitar preflight CORS
+        const formParams = new URLSearchParams();
+        Object.entries(data).forEach(([key, value]) => {
+          formParams.append(key, value);
+        });
+
         const response = await fetch(WEBAPP_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: formParams
         });
         
         const result = await response.json();

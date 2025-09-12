@@ -79,13 +79,19 @@ function doPost(e) {
    - Quem tem acesso: **Qualquer pessoa com o link**
    - **Copie a URL gerada**
 
-### 3) **Conectar Frontend**
+### 3) **Configurar Variável de Ambiente**
 
-Edite `/avaliacao.html` linha 149:
+Defina a variável de ambiente `EVALUATION_ENDPOINT`:
 
-```javascript
-const WEBAPP_URL = 'COLE_AQUI_A_URL_DO_SEU_WEBAPP_GOOGLE_APPS_SCRIPT';
+```bash
+# Para desenvolvimento
+export EVALUATION_ENDPOINT=https://script.google.com/macros/s/SEU_SCRIPT_ID/exec
+
+# Para produção (no Render/Vercel)
+EVALUATION_ENDPOINT=https://script.google.com/macros/s/SEU_SCRIPT_ID/exec
 ```
+
+**⚠️ OBRIGATÓRIO**: Esta variável deve ser definida para o sistema funcionar. Sem ela, o endpoint retornará erro 503.
 
 ## 🔗 **Como Usar**
 

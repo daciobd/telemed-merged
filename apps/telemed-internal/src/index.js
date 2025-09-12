@@ -45,6 +45,7 @@ app.get('/api/health', async (_req, res) => {
   res.status(health.ok ? 200 : 503).json(health);
 });
 
+
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   if (req.path === '/healthz' || req.path === '/api/health') return next(); // não exige token no health

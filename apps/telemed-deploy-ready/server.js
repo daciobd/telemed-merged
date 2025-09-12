@@ -1,6 +1,8 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { URLSearchParams } = require('url');
 
 const server = http.createServer((req, res) => {
   // Health check endpoint for Render observability
@@ -14,6 +16,7 @@ const server = http.createServer((req, res) => {
     }));
     return;
   }
+
 
   // Sanitize the URL and prevent directory traversal
   let requestPath = req.url === '/' ? '/index.html' : req.url;
