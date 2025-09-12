@@ -953,7 +953,12 @@ updateRxCount();
     <h4 id="tourTitle" style="margin:0 0 6px;font-size:1rem;color:#111827"></h4>
     <p id="tourText" style="margin:0 0 12px;font-size:.9rem;color:#374151"></p>
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button id="tourSkip" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:transparent;color<script>
+      <button id="tourSkip" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:transparent;color:#0ea5e9;font-weight:600;cursor:pointer">Pular</button>
+      <button id="tourNext" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:#0ea5e9;color:#fff;font-weight:600;cursor:pointer">Próximo</button>
+    </div>
+  </div>
+
+  <script>
 (function(){
   const p    = new URLSearchParams(location.search);
   const room = (p.get('appointmentId') || p.get('room') || 'telemed-demo').trim();
@@ -1010,10 +1015,7 @@ updateRxCount();
     alert('Não foi possível iniciar o vídeo. Verifique sua conexão/permissões.');
   }
 })();
-</script>:#0ea5e9;font-weight:600;cursor:pointer">Pular</button>
-      <button id="tourNext" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:#0ea5e9;color:#fff;font-weight:600;cursor:pointer">Próximo</button>
-    </div>
-  </div>
+</script>
   
   <!-- Scripts para funcionalidade de receitas -->
   <script src="../js/config.js"></script>

@@ -169,8 +169,19 @@ class PrescriptionGenerator {
       // Atualizar lista de receitas na página
       this.updatePrescriptionsList(data);
 
-      // Log para debug
-      console.log('✅ Receita gerada:', data);
+      // Log de sucesso com appointmentId/rxId para observabilidade (hash patientId para privacidade)
+      const hashedPatientId = await this.hashForPrivacy(patientId);
+      console.log(`✅ Prescription generated: rxId=${data.id || 'N/A'}, appointmentId=${appointmentId}, patientHash=${hashedPatientId}, timestamp=${new Date().toISOString()}`);
+      
+      // Opcional: enviar evento de analytics se configurado (sem PHI)
+      if (window.TelemedAnalytics && typeof window.TelemedAnalytics.track === 'function' && process.env.ENABLE_ANALYTICS === '1') {
+        window.TelemedAnalytics.track('prescription_generated', {
+          rxId: data.id,
+          appointmentId,
+          patientHash: hashedPatientId, // Use hash em vez de patientId raw
+          timestamp: new Date().toISOString()
+        });
+      }
 
     } catch (error) {
       console.error('❌ Erro ao gerar receita:', error);
@@ -208,6 +219,20 @@ class PrescriptionGenerator {
       `;
       
       rxList.appendChild(prescriptionItem);
+    }
+  }
+
+  async hashForPrivacy(data) {
+    if (!data) return 'empty';
+    try {
+      const encoder = new TextEncoder();
+      const dataBuffer = encoder.encode(data);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+      const hashArray = new Uint8Array(hashBuffer);
+      const hashHex = Array.from(hashArray).map(byte => byte.toString(16).padStart(2, '0')).join('');
+      return hashHex.substring(0, 8); // Primeiros 8 caracteres do hash
+    } catch (e) {
+      return 'hash-error';
     }
   }
 

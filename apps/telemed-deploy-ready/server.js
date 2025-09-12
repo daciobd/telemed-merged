@@ -3,6 +3,18 @@ const fs = require('fs');
 const path = require('path');
 
 const server = http.createServer((req, res) => {
+  // Health check endpoint for Render observability
+  if (req.url === '/api/health' || req.url === '/healthz') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      ok: true, 
+      service: 'telemed-frontend',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    }));
+    return;
+  }
+
   // Sanitize the URL and prevent directory traversal
   let requestPath = req.url === '/' ? '/index.html' : req.url;
   
