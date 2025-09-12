@@ -14,6 +14,7 @@
     '/demo.html',
     '/example-integration.html',
     '/cadastro.html',
+    '/cadastro-medico.html',
     '/gestao-avancada/',
     '/sala-de-espera/',
     '/medico/',
@@ -21,6 +22,12 @@
     '/como-funciona/',
     '/centro-de-testes/',
     '/consulta/',          // deixa a própria "home" passar
+    '/dr-ai/',
+    '/agenda/',
+    '/dashboard/',
+    '/precos/',
+    '/paciente/pedido.html',
+    '/video.html',
     '/',                   // raiz do site
     '/index.html',
     '/demo-ativo/',
