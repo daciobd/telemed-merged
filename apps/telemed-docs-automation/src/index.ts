@@ -16,16 +16,12 @@ app.use(express.json({ limit: '2mb' }));
 const staticPath = path.join(__dirname, '../../telemed-deploy-ready');
 app.use(express.static(staticPath));
 
-// CORS configurável por env
-const ORIGINS = (process.env.CORS_ORIGINS || '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+// CORS: liberar apenas o frontend
 app.use(cors({ 
-  origin: ORIGINS.length ? ORIGINS : true,
+  origin: ['https://telemed-deploy-ready.onrender.com'], 
+  credentials: true,
   methods: ["GET","POST","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization","X-Internal-Token"],
-  credentials: false
+  allowedHeaders: ["Content-Type","Authorization","X-Internal-Token"]
 }));
 
 app.use(morgan('combined'));
@@ -56,7 +52,16 @@ app.get('/api', (req: express.Request, res: express.Response) => {
   });
 });
 
-// Healthcheck padronizado
+// Health Check: responder 200 OK em GET /api/health
+app.get('/api/health', (_req: express.Request, res: express.Response) => {
+  res.status(200).json({
+    status: 'ok', 
+    service: process.env.SERVICE_NAME || 'telemed-docs-automation', 
+    time: new Date().toISOString()
+  });
+});
+
+// Manter /healthz para compatibilidade
 app.get('/healthz', (_req: express.Request, res: express.Response) => res.json({ ok: true }));
 
 // ===== Proxy de Avaliação (público, sem token) =====
@@ -208,13 +213,15 @@ function requireInternalToken(req: express.Request, res: express.Response, next:
 // Proteger rotas de geração/notify
 app.use('/generate', requireInternalToken, generationRouter);
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[telemed-docs-automation] listening on :${PORT}`);
+  // Logs: logar ao subir: serviço, porta e env essencial presente
+  console.log(`🚀 Starting TeleMed Docs Automation Service (TypeScript)...`);
+  console.log(`[${process.env.SERVICE_NAME || 'telemed-docs-automation'}] listening on :${PORT}`);
   console.log('Environment:', {
     NODE_ENV: process.env.NODE_ENV || 'development',
-    PORT,
-    CORS_ORIGINS: ORIGINS.join(',') || 'all',
+    PORT: PORT,
+    CORS_ORIGINS: 'telemed-deploy-ready.onrender.com',
     INTERNAL_TOKEN: process.env.INTERNAL_TOKEN ? 'configured' : 'NOT SET',
     S3_BUCKET: process.env.S3_BUCKET || 'not configured'
   });
