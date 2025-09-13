@@ -245,23 +245,26 @@
         // Atualizar estado do botão
         const btnSimular = document.querySelector('#btnSimularPaciente');
         btnSimular.disabled = true;
-        btnSimular.textContent = '⏳ Simulando...';
+        btnSimular.textContent = '⏳ Criando BID...';
 
         // 1) Criar BID seed (modo local para garantir funcionamento)
         await criarBidLocal();
         
-        // 2) Aceitar BID automaticamente
-        await aceitarBidLocal();
-        
-        log('✅ Simulação concluída! Prossiga para Sala de Espera ou Consulta.');
+        // NÃO aceitar automaticamente - deixar usuário clicar em "Aceitar BID"
+        log('✅ BID criado com sucesso! Agora clique em "Aceitar BID → criar consulta"');
         
         // Restaurar botão
         btnSimular.disabled = false;
-        btnSimular.textContent = '✅ Simular Novamente';
+        btnSimular.textContent = '🎭 Simular Novamente';
         
       } catch (error) {
         log('❌ Erro na simulação: ' + error.message);
         fallbackLocal();
+        
+        // Restaurar botão
+        const btnSimular = document.querySelector('#btnSimularPaciente');
+        btnSimular.disabled = false;
+        btnSimular.textContent = '🎭 Simular Novamente';
       }
     }
 
