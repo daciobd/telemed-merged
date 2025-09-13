@@ -110,7 +110,19 @@
   </section>
 
   <section class="card">
-    <h2>1) Leilão Reverso — Criar BID</h2>
+    <h2>1) Leilão Reverso — Criar/Simular BID</h2>
+    
+    <!-- Banner de simulação -->
+    <div class="card" style="background:#fff3cd;border-color:#ffc107;margin-bottom:16px;padding:16px">
+      <h4 style="margin:0 0 8px;color:#856404">🎯 Sem pedidos no momento?</h4>
+      <p style="margin:0 0 12px;color:#856404">
+        Use o modo de simulação para gerar um BID de teste e continuar o roteiro completo.
+      </p>
+      <button class="btn" id="btnSimularPaciente" style="background:#ffc107;color:#212529">
+        🎭 Simular paciente (gerar BID de teste)
+      </button>
+    </div>
+
     <div class="grid">
       <div>
         <label>patientId</label>
@@ -147,7 +159,7 @@
       </div>
       <div>
         <label>Bid ID (preenchido após criar)</label>
-        <input id="bidId" />
+        <input id="bidId" readonly />
         <label>Modo</label>
         <select id="mode">
           <option value="immediate" selected>immediate</option>
@@ -155,17 +167,30 @@
         </select>
         <label>scheduledFor (ISO)</label>
         <input id="scheduledFor" placeholder="2025-09-04T14:00:00Z" />
-        <button class="btn" id="btnAcceptBid">Aceitar BID → criar consulta</button>
+        <button class="btn" id="btnAcceptBid" disabled>Aceitar BID → criar consulta</button>
         <div id="outAcceptBid" class="muted"></div>
       </div>
     </div>
   </section>
 
+  <!-- Ações pós-aceite (oculto inicialmente) -->
+  <div id="posAceite" class="card" style="display:none;margin-top:16px;padding:16px;border:1px solid #059669;background:#f0fdf4">
+    <h4 style="margin:0 0 12px;color:#059669">✅ BID Aceito! Continuar o fluxo:</h4>
+    <div class="grid">
+      <a id="linkSala" class="btn" style="background:#059669">🏥 Ir para Sala de Espera</a>
+      <a id="linkConsulta" class="btn" style="background:#0ea5e9">👨‍⚕️ Ir para Consulta (Médico)</a>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:#e6fffa;border-radius:8px">
+      <strong>Appointment ID:</strong> <code id="displayAppointmentId">-</code>
+      <button class="btn" style="font-size:12px;padding:4px 8px;margin-left:8px" onclick="copyAppointmentId()">Copiar</button>
+    </div>
+  </div>
+
   <!-- Próximos passos -->
   <div id="next-steps" class="card" style="margin-top:16px;padding:16px;border:1px solid #0ea5e9;background:#eef7ff">
     <h4 style="margin:0 0 8px">Próximos passos</h4>
     <ol style="margin:0;padding-left:18px">
-      <li>Aguarde criar/aceitar o BID…</li>
+      <li>Clique em "Simular paciente" para gerar BID de teste</li>
       <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
       <li><a href="/index.html">Voltar ao Hub</a></li>
     </ol>
@@ -206,6 +231,172 @@
       const x=document.getElementById('presenter');
       x.style.display = (x.style.display==='none'||!x.style.display)?'block':'none';
     }
+
+    // ===== SISTEMA DE SIMULAÇÃO =====
+    let bidId = "";
+    let patientId = "paciente-demo";
+    let appointmentId = "";
+
+    // Função principal de simulação
+    async function simularPaciente() {
+      try {
+        log('🎭 Iniciando simulação de paciente...');
+        
+        // Atualizar estado do botão
+        const btnSimular = document.querySelector('#btnSimularPaciente');
+        btnSimular.disabled = true;
+        btnSimular.textContent = '⏳ Simulando...';
+
+        // 1) Criar BID seed (modo local para garantir funcionamento)
+        await criarBidLocal();
+        
+        // 2) Aceitar BID automaticamente
+        await aceitarBidLocal();
+        
+        log('✅ Simulação concluída! Prossiga para Sala de Espera ou Consulta.');
+        
+        // Restaurar botão
+        btnSimular.disabled = false;
+        btnSimular.textContent = '✅ Simular Novamente';
+        
+      } catch (error) {
+        log('❌ Erro na simulação: ' + error.message);
+        fallbackLocal();
+      }
+    }
+
+    async function criarBidLocal() {
+      // Modo DEMO: Cria BID localmente para garantir funcionamento
+      bidId = 'bid_demo_' + Date.now();
+      const specialty = document.querySelector('#specialty').value || 'Cardiologia';
+      const amountCents = parseInt(document.querySelector('#amountCents').value) || 9000;
+      
+      // Simular criação bem-sucedida
+      const bidData = {
+        id: bidId,
+        patientId: patientId,
+        specialty: specialty,
+        amountCents: amountCents,
+        mode: 'immediate',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      // Salvar no localStorage para manter estado
+      localStorage.setItem(`bid:${bidId}`, JSON.stringify(bidData));
+      
+      // Preencher campo na tela
+      const bidIdEl = document.querySelector('#bidId');
+      if (bidIdEl) bidIdEl.value = bidId;
+      
+      log(`📝 BID criado: ${bidId} (${specialty}, R$ ${(amountCents/100).toFixed(2)})`);
+      
+      // Habilitar botão de aceitar
+      const btnAccept = document.querySelector('#btnAcceptBid');
+      if (btnAccept) btnAccept.disabled = false;
+      
+      // Chamar callback se existir
+      if (window.onBidCreated) {
+        window.onBidCreated({ bidId: bidId });
+      }
+    }
+
+    async function aceitarBidLocal() {
+      // Modo DEMO: Aceita BID e cria appointment
+      appointmentId = 'appt_demo_' + Date.now();
+      
+      // Simular aceite bem-sucedido
+      const appointmentData = {
+        id: appointmentId,
+        bidId: bidId,
+        patientId: patientId,
+        doctorId: 'doctor_demo',
+        status: 'confirmed',
+        scheduledAt: new Date().toISOString()
+      };
+      
+      // Salvar no localStorage
+      localStorage.setItem(`appointment:${appointmentId}`, JSON.stringify(appointmentData));
+      
+      log(`✅ BID aceito! Appointment criado: ${appointmentId}`);
+      
+      // Mostrar próximos passos
+      mostrarAcoesPosAceite(appointmentId);
+      
+      // Chamar callback se existir
+      if (window.onBidAccepted) {
+        window.onBidAccepted({ bidId: bidId, appointmentId: appointmentId });
+      }
+    }
+
+    function mostrarAcoesPosAceite(appointmentId) {
+      // Atualizar links com parâmetros corretos
+      const sala = document.querySelector('#linkSala');
+      const consulta = document.querySelector('#linkConsulta');
+      
+      if (sala) {
+        sala.href = `/sala-de-espera.html?appointmentId=${encodeURIComponent(appointmentId)}&patientId=${encodeURIComponent(patientId)}`;
+      }
+      
+      if (consulta) {
+        consulta.href = `/consulta/index.html?appointmentId=${encodeURIComponent(appointmentId)}&role=doctor&patientId=${encodeURIComponent(patientId)}`;
+      }
+      
+      // Mostrar appointment ID
+      const displayEl = document.querySelector('#displayAppointmentId');
+      if (displayEl) displayEl.textContent = appointmentId;
+      
+      // Exibir seção de ações
+      const posAceiteEl = document.querySelector('#posAceite');
+      if (posAceiteEl) posAceiteEl.style.display = 'block';
+      
+      // Ocultar próximos passos iniciais
+      const nextStepsEl = document.querySelector('#next-steps');
+      if (nextStepsEl) nextStepsEl.style.display = 'none';
+    }
+
+    function copyAppointmentId() {
+      const appointmentId = document.querySelector('#displayAppointmentId').textContent;
+      navigator.clipboard.writeText(appointmentId).then(() => {
+        log('📋 Appointment ID copiado: ' + appointmentId);
+      });
+    }
+
+    function fallbackLocal() {
+      // Em caso de erro, simula localmente
+      const fakeAppointment = 'demo_fallback_' + Math.random().toString(36).slice(2,8);
+      const bidIdEl = document.querySelector('#bidId');
+      if (bidIdEl) bidIdEl.value = 'BID-DEMO-OFFLINE';
+      mostrarAcoesPosAceite(fakeAppointment);
+      log('🔄 Usando modo offline - simulação local ativada');
+    }
+
+    // Event listeners para simulação
+    document.addEventListener('DOMContentLoaded', () => {
+      // Botão de simulação
+      const btnSimular = document.querySelector('#btnSimularPaciente');
+      if (btnSimular) {
+        btnSimular.addEventListener('click', simularPaciente);
+      }
+      
+      // Interceptar o botão de aceitar BID para usar modo local
+      const btnAccept = document.querySelector('#btnAcceptBid');
+      if (btnAccept) {
+        // Salvar o handler original
+        const originalOnClick = btnAccept.onclick;
+        
+        // Substituir por versão local  
+        btnAccept.onclick = async (e) => {
+          e.preventDefault();
+          if (bidId) {
+            await aceitarBidLocal();
+          } else {
+            log('❌ Crie um BID primeiro usando "Simular paciente"');
+          }
+        };
+      }
+    });
+    // ===== FIM DO SISTEMA DE SIMULAÇÃO =====
 
     const logEl = document.getElementById('log');
     function log(msg, obj){
