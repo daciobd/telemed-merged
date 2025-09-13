@@ -1,0 +1,12 @@
+route,status
+/,200
+/cadastro.html,200
+/cadastro-medico.html,200
+/paciente/cadastro/sucesso.html?patientId=12345678901,200
+/paciente/pedido.html?patientId=12345678901,200
+/sala-de-espera.html?appointmentId=test123&patientId=12345678901,200
+/consulta/index.html?appointmentId=test123&role=doctor&patientId=12345678901,200
+/paciente/como-funciona.html,200
+/medico/como-funciona.html,200
+/healthz,404
+/rc/health,200
