@@ -88,10 +88,10 @@
     const waitingLink = document.getElementById('waiting-room-link');
     
     if (patientId) {
-      bidLink.href = `/paciente/pedido?patientId=${encodeURIComponent(patientId)}`;
+      bidLink.href = `/paciente/pedido.html?patientId=${encodeURIComponent(patientId)}`;
       waitingLink.href = `/sala-de-espera.html?appointmentId=&patientId=${encodeURIComponent(patientId)}`;
     } else {
-      bidLink.href = `/paciente/pedido`;
+      bidLink.href = `/paciente/pedido.html`;
       waitingLink.href = `/sala-de-espera.html`;
     }
     
