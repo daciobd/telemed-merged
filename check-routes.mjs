@@ -30,10 +30,10 @@ async function check(url) {
 }
 
 (async () => {
-  console.log(`Base: ${base}`);
+  console.log("route,status");
   for (const r of routes) {
     const full = base + r;
     const status = await check(full);
-    console.log(`${r.padEnd(70, " ")} -> ${status}`);
+    console.log(`${r},${status}`);
   }
 })();
