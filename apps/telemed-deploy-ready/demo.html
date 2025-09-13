@@ -379,22 +379,7 @@
         btnSimular.addEventListener('click', simularPaciente);
       }
       
-      // Interceptar o botão de aceitar BID para usar modo local
-      const btnAccept = document.querySelector('#btnAcceptBid');
-      if (btnAccept) {
-        // Salvar o handler original
-        const originalOnClick = btnAccept.onclick;
-        
-        // Substituir por versão local  
-        btnAccept.onclick = async (e) => {
-          e.preventDefault();
-          if (bidId) {
-            await aceitarBidLocal();
-          } else {
-            log('❌ Crie um BID primeiro usando "Simular paciente"');
-          }
-        };
-      }
+      // REMOVIDO: Handler antigo que causava conflito com novo handler do botão aceitar BID
     });
     // ===== FIM DO SISTEMA DE SIMULAÇÃO =====
 
