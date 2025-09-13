@@ -149,30 +149,37 @@
       }
 
       try {
-        // Simula envio para API de BID (usar URL real em produção)
-        const AUCTION_URL = localStorage.getItem('AUCTION_URL') || 'https://telemed-auction.onrender.com';
+        // Modo DEMO: Simula criação de BID bem-sucedida localmente
+        const bidId = 'bid_' + Date.now();
+        const appointmentId = 'appt_' + Date.now();
         
-        const response = await fetch(`${AUCTION_URL}/bids`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Internal-Token': localStorage.getItem('INTERNAL_TOKEN') || ''
+        // Simula resultado bem-sucedido
+        const result = {
+          ok: true,
+          bid: {
+            id: bidId,
+            patientId: data.patientId,
+            specialty: data.specialty,
+            amountCents: data.amountCents,
+            status: 'pending',
+            createdAt: new Date().toISOString()
           },
-          body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
+          appointmentId: appointmentId
+        };
         
-        if (result.ok) {
-          // Salvar resultado e redirecionar
-          localStorage.setItem('lastBid', JSON.stringify(result));
-          window.location.href = `/paciente/resultado-bid?bidId=${result.bid?.id || ''}`;
-        } else {
-          alert('Erro ao enviar pedido: ' + (result.error || 'Erro desconhecido'));
-        }
+        // Salvar resultado localmente para demo
+        localStorage.setItem('lastBid', JSON.stringify(result));
+        localStorage.setItem(`bid:${bidId}`, JSON.stringify(result.bid));
+        
+        console.log('✅ BID criado com sucesso (modo demo):', result);
+        
+        // Redirecionar para sala de espera com os IDs gerados
+        alert('✅ Pedido enviado com sucesso! Redirecionando para sala de espera...');
+        window.location.href = `/sala-de-espera.html?appointmentId=${appointmentId}&patientId=${data.patientId}`;
+        
       } catch (error) {
-        console.error('Erro ao enviar BID:', error);
-        alert('Erro de conexão. Verifique sua internet e tente novamente.');
+        console.error('Erro ao processar BID:', error);
+        alert('Erro interno. Tente novamente em alguns segundos.');
       }
     });
   </script>
