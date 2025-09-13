@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 const app = express();
 const prisma = new PrismaClient();
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
 const INTERNAL_URL_TELEMED = (process.env.INTERNAL_URL_TELEMED || '').replace(/\/$/, '');
 const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
@@ -13,13 +13,22 @@ const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN || '';
 app.use(express.json());
 // Patch 6: CORS configurado para BID funcionar
 app.use(cors({
-  origin: true, // Permite qualquer origem
-  credentials: true, // Permite credenciais
+  origin: ['https://telemed-deploy-ready.onrender.com'],
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Internal-Token"]
 }));
 
 app.get('/healthz', (_req,res)=>res.json({ok:true}));
+
+// Padronizado: /api/health
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: process.env.SERVICE_NAME || 'telemed-auction',
+    time: new Date().toISOString()
+  });
+});
 
 // Criar BID (agora aceita specialty)
 app.post('/bids', async (req,res) => {
@@ -124,4 +133,14 @@ app.post('/bids/:id/accept', async (req,res) => {
   }
 });
 
-app.listen(PORT, ()=>console.log('auction-service on', PORT));
+app.listen(PORT, () => {
+  console.log(`🚀 Starting TeleMed Auction Service...`);
+  console.log(`[${process.env.SERVICE_NAME || 'telemed-auction'}] listening on :${PORT}`);
+  console.log('Environment:', {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: PORT,
+    CORS_ORIGINS: 'all origins allowed',
+    INTERNAL_TOKEN: process.env.INTERNAL_TOKEN ? 'configured' : 'NOT SET',
+    INTERNAL_URL_TELEMED: process.env.INTERNAL_URL_TELEMED ? 'configured' : 'NOT SET'
+  });
+});

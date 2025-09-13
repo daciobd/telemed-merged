@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
 const app = express();
-app.use(cors({ origin: '*', exposedHeaders: ['*'] }));
+app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
 app.use(express.json());
 
 // RequestId middleware para rastreabilidade
@@ -17,32 +17,18 @@ app.use((req, res, next) => {
 });
 
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
 // Health check endpoints para observabilidade
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
-app.get('/api/health', async (_req, res) => {
-  const health = { 
-    ok: true, 
-    service: 'telemed-internal',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    dependencies: {}
-  };
-  
-  // Verificar conectividade do banco
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    health.dependencies.database = 'up';
-  } catch (e) {
-    health.dependencies.database = 'down';
-    health.ok = false;
-  }
-  
-  // Verificar presença da chave OpenAI (sem expor o valor)
-  health.dependencies.openai = process.env.OPENAI_API_KEY ? 'configured' : 'missing';
-  
-  res.status(health.ok ? 200 : 503).json(health);
+
+// Padronizado: /api/health
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: process.env.SERVICE_NAME || 'telemed-internal',
+    time: new Date().toISOString()
+  });
 });
 
 
@@ -164,4 +150,14 @@ app.post('/internal/appointments/from-bid', async (req,res)=>{
   }
 });
 
-app.listen(PORT, ()=>console.log('telemed-internal on', PORT));
+app.listen(PORT, () => {
+  console.log(`🚀 Starting TeleMed Internal Service...`);
+  console.log(`[${process.env.SERVICE_NAME || 'telemed-internal'}] listening on :${PORT}`);
+  console.log('Environment:', {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: PORT,
+    CORS_ORIGINS: 'all origins allowed',
+    INTERNAL_TOKEN: process.env.INTERNAL_TOKEN ? 'configured' : 'NOT SET',
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'NOT SET'
+  });
+});

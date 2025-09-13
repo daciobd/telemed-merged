@@ -8,14 +8,21 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin:
-      FRONTEND_ORIGIN === "*"
-        ? true
-        : [FRONTEND_ORIGIN, "https://telemed-deploy-ready.onrender.com"],
+    origin: ['https://telemed-deploy-ready.onrender.com'],
+    credentials: true
   })
 );
 
 app.get("/healthz", (req, res) => res.json({ ok: true }));
+
+// Padronizado: /api/health
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: process.env.SERVICE_NAME || 'telemed-productivity',
+    time: new Date().toISOString()
+  });
+});
 
 // ---------- Handler único para sugestão de CIDs ----------
 function suggestCidsHandler(req, res) {
@@ -48,5 +55,14 @@ app.all("*", (req, res) =>
   res.status(404).json({ ok: false, error: "not_found", path: `${req.method} ${req.path}` })
 );
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("productivity-service on", PORT));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Starting TeleMed Productivity Service...`);
+  console.log(`[${process.env.SERVICE_NAME || 'telemed-productivity'}] listening on :${PORT}`);
+  console.log('Environment:', {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    PORT: PORT,
+    CORS_ORIGINS: 'telemed-deploy-ready.onrender.com',
+    FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN || 'NOT SET'
+  });
+});
