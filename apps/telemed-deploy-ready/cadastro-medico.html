@@ -48,6 +48,8 @@
     .links a{color:#93c5fd; text-decoration:none; font-weight:600}
     .links a:hover{text-decoration:underline}
     .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px}
+    .btn.active{background:linear-gradient(180deg,var(--primary),var(--primary-2)); border-color:#065f92}
+    .btn.outline{background:transparent; color:var(--muted)}
   </style>
 </head>
 <body>
@@ -61,6 +63,29 @@
       Preencha os dados do profissional. Para <strong>demo</strong>, os dados ficam no seu navegador (<code>localStorage</code>)
       e tentamos enviar para o <code>INTERNAL_URL</code> se estiver configurado.
     </p>
+
+    <!-- Abas de modo -->
+    <div id="doctor-mode-tabs" style="display:flex;gap:10px;margin-bottom:12px;">
+      <button id="tab-new" class="btn active">🆕 Novo cadastro</button>
+      <button id="tab-login" class="btn outline">🔐 Já tenho cadastro</button>
+    </div>
+
+    <!-- Mini-login (CRM + Senha) -->
+    <form id="doctor-login" style="display:none;gap:12px;flex-direction:column;max-width:560px;">
+      <div class="row">
+        <label for="loginCRM">CRM</label>
+        <input id="loginCRM" type="text" inputmode="numeric" placeholder="Ex.: 123456" required />
+      </div>
+      <div class="row">
+        <label for="loginPassword">Senha</label>
+        <input id="loginPassword" type="password" placeholder="Sua senha" required />
+      </div>
+      <div class="row" style="display:flex;gap:10px;align-items:center;">
+        <button type="submit" class="btn primary">Entrar</button>
+        <button type="button" id="btnForgot" class="btn ghost">Esqueci minha senha (reset local)</button>
+      </div>
+      <p id="loginMsg" class="muted"></p>
+    </form>
 
     <form id="form" class="grid grid-2" autocomplete="off">
       <div>
@@ -104,10 +129,24 @@
         <textarea id="obs" placeholder="Áreas de atuação, horários, etc. (opcional)"></textarea>
       </div>
 
+      <div id="passwordBlock" class="row" style="display:flex;gap:12px;grid-column:1/-1">
+        <div style="flex:1">
+          <label for="doctorPassword">Senha</label>
+          <input id="doctorPassword" type="password" placeholder="Crie uma senha" />
+        </div>
+        <div style="flex:1">
+          <label for="doctorPassword2">Confirmar senha</label>
+          <input id="doctorPassword2" type="password" placeholder="Repita a senha" />
+        </div>
+      </div>
+      <p class="muted" style="grid-column:1/-1;margin:0">
+        <strong>Demo:</strong> a senha é armazenada no seu navegador com hash SHA-256 (sem servidor). Para produção, use autenticação segura via backend/IDP.
+      </p>
+
       <div class="hint" id="hint" style="display:none"></div>
 
       <div class="row" style="grid-column:1/-1">
-        <button type="button" class="btn primary" id="btn-save">Salvar cadastro</button>
+        <button type="button" class="btn primary" id="salvarCadastro">Salvar cadastro</button>
         <button type="button" class="btn ghost" id="btn-clear">Limpar</button>
         <button type="button" class="btn ok" id="btn-demo">Ir para Demo Médico</button>
         <span class="spacer"></span>
@@ -121,6 +160,128 @@
   </main>
 
   <script>
+/* ===== SISTEMA DE LOGIN E ABAS ===== */
+const STORAGE_KEY = "telemed:doctorsByCRM"; // mapa { [crm]: { ...dados, passHash } }
+const DEMO_REDIRECT = "/demo.html"; // página de demo médico
+
+async function sha256(str) {
+  const enc = new TextEncoder().encode(str);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function loadDoctors() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch { return {}; }
+}
+function saveDoctors(map) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+}
+function goToDemo(doctor) {
+  // Leve o médico para a Demo; anexe parâmetros úteis se quiser
+  const params = new URLSearchParams({
+    doctorId: doctor.crm,
+    specialty: doctor.specialty || ""
+  });
+  window.location.href = `${DEMO_REDIRECT}?${params.toString()}`;
+}
+
+/* ===== Abas (Novo cadastro / Login) ===== */
+const tabNew = document.querySelector("#tab-new");
+const tabLogin = document.querySelector("#tab-login");
+const formLogin = document.querySelector("#doctor-login");
+const passwordBlock = document.querySelector("#passwordBlock");
+
+function setMode(mode) {
+  const newForm = document.querySelector("form#form");
+  const active = (btn, on) => {
+    if (!btn) return;
+    btn.classList.toggle("active", !!on);
+    btn.classList.toggle("outline", !on);
+  };
+  if (mode === "new") {
+    formLogin.style.display = "none";
+    if (newForm) newForm.style.display = "grid";
+    if (passwordBlock) passwordBlock.style.display = "flex";
+    active(tabNew, true); active(tabLogin, false);
+  } else {
+    formLogin.style.display = "flex";
+    if (newForm) newForm.style.display = "none";
+    if (passwordBlock) passwordBlock.style.display = "none";
+    active(tabNew, false); active(tabLogin, true);
+  }
+}
+tabNew?.addEventListener("click", () => setMode("new"));
+tabLogin?.addEventListener("click", () => setMode("login"));
+
+// modo inicial: se já existe CRM salvo, começa em "login"
+(function initMode() {
+  const doctors = loadDoctors();
+  const hasAny = Object.keys(doctors).length > 0;
+  setMode(hasAny ? "login" : "new");
+})();
+
+/* ===== Salvar cadastro (com hash de senha) ===== */
+const $ = sel => document.querySelector(sel);
+async function handleSaveCadastro(ev) {
+  if (ev) ev.preventDefault();
+
+  const crm = $("#crm")?.value?.trim() || "";
+  const uf = $("#uf")?.value || "";
+  const name = $("#nome")?.value?.trim() || "";
+  const phone = $("#telefone")?.value?.trim() || "";
+  const email = $("#email")?.value?.trim() || "";
+  const specialty = $("#especialidade")?.value || "";
+  const notes = $("#obs")?.value?.trim() || "";
+
+  const pass1 = $("#doctorPassword")?.value || "";
+  const pass2 = $("#doctorPassword2")?.value || "";
+  if (!crm || !name) { alert("Preencha pelo menos CRM e Nome."); return; }
+  if (!pass1 || pass1 !== pass2) { alert("Senha inválida ou diferente da confirmação."); return; }
+
+  const passHash = await sha256(pass1);
+
+  const map = loadDoctors();
+  map[crm] = { crm, uf, name, phone, email, specialty, notes, passHash, updatedAt: Date.now() };
+  saveDoctors(map);
+
+  alert("Cadastro salvo com sucesso! Você já pode entrar com CRM + Senha.");
+  // Opcional: já entrar direto
+  goToDemo(map[crm]);
+}
+// Conecte no seu botão "Salvar cadastro"
+document.querySelector("#salvarCadastro")?.addEventListener("click", handleSaveCadastro);
+
+/* ===== Login (CRM + senha) ===== */
+document.querySelector("#doctor-login")?.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const crm = document.querySelector("#loginCRM")?.value?.trim() || "";
+  const pwd = document.querySelector("#loginPassword")?.value || "";
+  const msg = document.querySelector("#loginMsg");
+  const map = loadDoctors();
+  const doc = map[crm];
+  if (!doc) { msg.textContent = "CRM não encontrado neste navegador."; return; }
+  const hash = await sha256(pwd);
+  if (hash !== doc.passHash) { msg.textContent = "Senha incorreta."; return; }
+  msg.textContent = "Ok! Redirecionando…";
+  goToDemo(doc);
+});
+
+/* ===== Esqueci minha senha (reset local) ===== */
+document.querySelector("#btnForgot")?.addEventListener("click", () => {
+  const crm = prompt("Informe seu CRM para reset local:");
+  if (!crm) return;
+  const map = loadDoctors();
+  if (!map[crm]) { alert("CRM não encontrado."); return; }
+  if (!confirm("Reset local apagará a senha e dados salvos no seu navegador. Continuar?")) return;
+  delete map[crm];
+  saveDoctors(map);
+  alert("Dados locais removidos. Faça um novo cadastro ou use outro CRM salvo.");
+  setMode("new");
+});
+
+/* ===== FIM DO SISTEMA DE LOGIN ===== */
+
   (function(){
     const $ = s => document.querySelector(s);
 
@@ -195,7 +356,7 @@
       setHint('');
     });
 
-    $('#btn-save').addEventListener('click', async ()=>{
+    $('#btn-save-legacy').addEventListener('click', async ()=>{ // handler antigo desabilitado
       const crm = crmEl.value.trim();
       const uf  = ufEl.value.trim();
       if (!uf){ setHint('Selecione a UF.'); return; }
