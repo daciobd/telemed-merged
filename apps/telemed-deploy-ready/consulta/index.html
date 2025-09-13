@@ -474,6 +474,36 @@ const API = {
   cid10  : (q)=> `/api/cid10/search?q=${encodeURIComponent(q)}`,
   aiAsk  : '/api/ai/ask'
 };
+
+// ===== PATCH PARA MODO DEMO LOCAL =====
+function finalizeConsultationLocal(appointmentId) {
+  try {
+    // Atualizar agenda local
+    const queueKey = "telemed:agendaQueue";
+    const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+    const index = queue.findIndex(item => item.appointmentId === appointmentId);
+    
+    if (index >= 0) {
+      queue[index].status = "done";
+      queue[index].finishedAt = Date.now();
+      localStorage.setItem(queueKey, JSON.stringify(queue));
+      console.log("✅ Consulta finalizada localmente:", appointmentId);
+    }
+    
+    // Notificar sucesso
+    alert("✅ Consulta finalizada com sucesso!");
+    
+    // Redirecionar para agenda
+    setTimeout(() => {
+      window.location.href = "/agenda.html";
+    }, 1000);
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao finalizar consulta:", error);
+    return false;
+  }
+}
 const CONSULT_ID = new URLSearchParams(location.search).get('consultId') || 'demo-123';
 
 /** ========= util ========= */
@@ -663,8 +693,15 @@ if ($('#btn-save')) $('#btn-save').onclick = async ()=>{
   catch(e){ alert('Falha ao salvar: '+e.message); }
 };
 if ($('#btn-finish')) $('#btn-finish').onclick = async ()=>{
-  try{ await post(API.finish(CONSULT_ID)); alert('Consulta finalizada.'); }
-  catch(e){ alert('Falha ao finalizar: '+e.message); }
+  // Usar modo local em vez do backend
+  const appointmentId = new URLSearchParams(location.search).get('appointmentId') || CONSULT_ID;
+  const success = finalizeConsultationLocal(appointmentId);
+  
+  if (!success) {
+    // Fallback para o método antigo se der erro
+    try{ await post(API.finish(CONSULT_ID)); alert('Consulta finalizada via backend.'); }
+    catch(e){ alert('Falha ao finalizar: '+e.message); }
+  }
 };
 if ($('#btn-no-finish')) $('#btn-no-finish').onclick = ()=> alert('Consulta não pode ser finalizada (motivo: campos obrigatórios incompletos).');
 

@@ -547,36 +547,93 @@
       }
     };
 
-    document.getElementById('btnAcceptBid').onclick = async ()=>{
-      const auctionUrl = document.querySelector('#auUrl').value.trim();
-      const bidId = document.getElementById('bidId').value;
-      const mode = document.getElementById('mode').value;
-      const patientId = document.getElementById('patientId').value.trim();
+    // ===== HANDLER ROBUSTO ACEITAR BID COM AGENDA =====
+    const AUCTION_URL = localStorage.getItem("AUCTION_URL") || "https://telemed-auction.onrender.com";
+    const AGENDA_URL = "/agenda.html";
+
+    async function acceptBidAndGo(bidId) {
+      const btn = document.getElementById("btnAcceptBid");
+      const patientId = document.querySelector("#patientId")?.value || "paciente-demo";
       const out = document.getElementById('outAcceptBid');
-      if(!bidId){ out.innerHTML='<span class="bad">Informe o Bid ID</span>'; return; }
       
-      out.textContent='Enviando…';
-      try{
-        const r = await fetch(`${auctionUrl}/bids/${bidId}/accept`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mode,                  // "immediate" ou "scheduled"
-            patientId              // obrigatório
-          })
+      try {
+        btn.disabled = true; 
+        btn.textContent = "Aceitando…";
+        out.textContent = 'Processando...';
+
+        // 1) Aceitar BID no backend (ou simulado)
+        const res = await fetch(`${AUCTION_URL}/bids/${encodeURIComponent(bidId)}/accept`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ patientId })
         });
-        
-        const j = await r.json();
-        if(r.ok && j?.ok) {
-          out.innerHTML = '<span class="ok">Consulta criada</span>';
-          if(window.onBidAccepted) window.onBidAccepted({bidId: bidId, appointmentId: j?.appointment?.id});  // Chama função dos próximos passos
+
+        let appointmentId = `appt_demo_${Date.now()}`;
+        if (res.ok) {
+          const data = await res.json().catch(()=> ({}));
+          appointmentId = data.appointmentId || data?.appointment?.id || appointmentId;
         } else {
-          out.innerHTML = '<span class="bad">'+(j?.error||'Falha')+'</span>';
+          console.warn("Falha ao aceitar no backend; usando fallback local", res.status);
         }
-        log('accept-bid', j);
-      }catch(e){
-        out.innerHTML = '<span class="bad">Erro</span>'; log('accept-bid erro', {error:String(e)});
+
+        // 2) Guardar no localStorage para a Agenda "enxergar"
+        const queueKey = "telemed:agendaQueue";
+        const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+        queue.push({
+          appointmentId,
+          patientId,
+          bidId,
+          name: "Paciente Demo",
+          specialty: document.querySelector("#specialty")?.value || "Clínica Geral",
+          status: "waiting",
+          createdAt: Date.now()
+        });
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+
+        out.innerHTML = `<span style="color:#22c55e">✅ BID aceito! Redirecionando para Agenda...</span><br><code>Appointment ID: ${appointmentId}</code>`;
+        
+        // 3) Callback para próximos passos
+        if(window.onBidAccepted) window.onBidAccepted({bidId: bidId, appointmentId: appointmentId});
+
+        // 4) Redirecionar para a Agenda
+        setTimeout(() => {
+          const p = new URLSearchParams({ appointmentId, patientId });
+          window.location.href = `${AGENDA_URL}?${p.toString()}`;
+        }, 1500);
+
+      } catch (e) {
+        console.error('Erro ao aceitar BID:', e);
+        
+        // fallback local
+        const appointmentId = `appt_demo_${Date.now()}`;
+        const queueKey = "telemed:agendaQueue";
+        const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+        queue.push({ 
+          appointmentId, 
+          patientId, 
+          bidId, 
+          name:"Paciente Demo", 
+          specialty:"Clínica Geral", 
+          status:"waiting", 
+          createdAt:Date.now() 
+        });
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+        
+        out.innerHTML = `<span style="color:#22c55e">✅ BID aceito! (modo offline) Redirecionando...</span><br><code>Appointment ID: ${appointmentId}</code>`;
+        
+        setTimeout(() => {
+          window.location.href = `${AGENDA_URL}?appointmentId=${appointmentId}&patientId=${patientId}`;
+        }, 1000);
+      } finally {
+        btn.disabled = false; 
+        btn.textContent = "Aceitar BID → criar consulta";
       }
+    }
+
+    document.getElementById("btnAcceptBid").onclick = () => {
+      const bidId = document.querySelector("#bidId")?.value?.trim();
+      if (!bidId) return alert("Crie/Selecione um BID primeiro.");
+      acceptBidAndGo(bidId);
     };
   </script>
 
