@@ -1,5 +1,5 @@
 // check-routes.mjs
-const base = "https://telemed-merge-1-daciobd.replit.app";
+const base = "https://60caaae2-b759-4421-bea0-41165f6b95a2-00-3gqmyfv0qhnan.worf.replit.dev";
 const routes = [
   "/",
   "/cadastro.html",
