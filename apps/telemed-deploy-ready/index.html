@@ -162,34 +162,6 @@
     </footer>
   </div>
 
-  <script>
-    // === PRÉ-AQUECER BACKENDS (acordar serviços dormentes do Render) ===
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('🔥 Aquecendo backends...');
-      
-      // Lista de serviços a aquecer
-      const endpoints = [
-        'https://telemed-internal.onrender.com/api/health',
-        'https://telemed-auction.onrender.com/api/health', 
-        'https://telemed-productivity.onrender.com/api/health',
-        'https://receita-certa.onrender.com/api/health',
-        'https://mda.onrender.com/api/health'
-      ];
-      
-      endpoints.forEach(url => {
-        fetch(url, { method: 'GET' })
-          .then(response => {
-            if (response.ok) {
-              console.log(`✅ Backend aquecido: ${url.split('//')[1].split('.')[0]}`);
-            } else {
-              console.log(`⚠️ Backend indisponível: ${url.split('//')[1].split('.')[0]}`);
-            }
-          })
-          .catch(error => {
-            console.log(`🔄 Aquecendo backend: ${url.split('//')[1].split('.')[0]} (pode estar iniciando)`);
-          });
-      });
-    });
-  </script>
+  <!-- Script de prewarming movido para /js/prewarm.js para CSP compliance -->
 </body>
 </html>

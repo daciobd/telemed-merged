@@ -134,17 +134,23 @@ class AuditLogger {
    * Determina URL do servidor de logs
    */
   getLogServerUrl() {
-    // SEMPRE usar gateway (que adiciona token server-side)
-    if (window.location.hostname.includes('onrender.com')) {
-      return 'https://telemed-gateway.onrender.com/api/logs';
+    // Environment-agnostic: sempre tentar gateway primeiro
+    
+    // Produção: qualquer domínio 
+    if (window.location.protocol === 'https:' || window.location.hostname.includes('onrender.com')) {
+      // Tentar gateway relativo primeiro (se frontpage gateway), senão absoluto
+      return window.location.hostname.includes('telemed-gateway') 
+        ? '/api/logs' 
+        : 'https://telemed-gateway.onrender.com/api/logs';
     }
     
-    // Em desenvolvimento, usar localhost se disponível
+    // Desenvolvimento: localhost/replit
     if (window.location.hostname === 'localhost' || window.location.hostname.includes('replit')) {
       return null; // Usar localStorage em desenvolvimento
     }
     
-    return null;
+    // Fallback: tentar gateway mesmo em domínios customizados
+    return 'https://telemed-gateway.onrender.com/api/logs';
   }
   
   /**
