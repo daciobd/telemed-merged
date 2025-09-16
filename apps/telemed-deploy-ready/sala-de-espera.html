@@ -158,5 +158,41 @@
       });
     })();
   </script>
+
+  <!-- Banner de Feedback (aparece após 120s ou em erro) -->
+  <div id="feedback-banner" style="display:none; position:fixed; left:16px; right:16px; bottom:16px; background:#121935; color:#eaf0ff; border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px 16px; box-shadow:0 10px 24px rgba(0,0,0,.25); z-index:9999">
+    <strong>Teve dificuldade para entrar?</strong> Conte para a gente (leva 1 min).
+    <a id="feedback-link" href="#" style="margin-left:12px; font-weight:700; color:#4da3ff; text-decoration:none" data-testid="link-feedback">Responder feedback →</a>
+    <button id="banner-close" aria-label="Fechar" style="float:right; background:transparent; border:none; color:#9fb1da; cursor:pointer" data-testid="button-close-banner">✕</button>
+  </div>
+
+  <!-- JS de exibição após 120s de espera ou em erro -->
+  <script>
+    (function(){
+      const params = new URLSearchParams(location.search);
+      const appointmentId = params.get('appointmentId') || room;
+      const role = 'paciente'; // na sala de espera, assume paciente
+      const link = `/feedback.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=waiting`;
+      const banner = document.getElementById('feedback-banner');
+      const a = document.getElementById('feedback-link'); a.href = link;
+      document.getElementById('banner-close').onclick = ()=> banner.style.display = 'none';
+
+      // Exibe após 120s aguardando
+      let showed = false;
+      setTimeout(()=>{ if(!showed){ banner.style.display='block'; showed = true; } }, 120000);
+
+      // Opcional: se detectar erro na call, mostra imediatamente
+      window.addEventListener('telemed:call_error', ()=>{ if(!showed){ banner.style.display='block'; showed=true; } });
+    })();
+  </script>
+
+  <!-- Função para encerrar consulta -->
+  <script>
+    function encerrarConsulta(role, appointmentId){
+      const url = `/obrigado.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=end`;
+      window.location.href = url;
+    }
+    // Exemplo de uso no botão: <button onclick="encerrarConsulta('medico','APT-TESTE-001')">Encerrar consulta</button>
+  </script>
 </body>
 </html>
