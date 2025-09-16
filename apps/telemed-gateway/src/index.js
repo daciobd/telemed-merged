@@ -194,6 +194,8 @@ app.get('/', (_req, res) => {
 
 // ===== PROXY ENDPOINTS =====
 
+// ===== PROXY ENDPOINTS COM AUTENTICAÇÃO =====
+
 // Proxy de logs para telemed-internal  
 app.post('/api/logs', async (req, res) => {
   try {
@@ -212,6 +214,76 @@ app.post('/api/logs', async (req, res) => {
     res.status(502).json({
       ok: false,
       error: 'Gateway proxy error',
+      details: error.message
+    });
+  }
+});
+
+// Proxy de eventos para telemed-internal
+app.post('/api/events', async (req, res) => {
+  try {
+    const response = await fetch('https://telemed-internal.onrender.com/api/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+      },
+      body: JSON.stringify(req.body)
+    });
+    
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(502).json({
+      ok: false,
+      error: 'Gateway events proxy error',
+      details: error.message
+    });
+  }
+});
+
+// Proxy de métricas WebRTC para telemed-internal
+app.post('/api/webrtc-metrics', async (req, res) => {
+  try {
+    const response = await fetch('https://telemed-internal.onrender.com/api/webrtc-metrics', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+      },
+      body: JSON.stringify(req.body)
+    });
+    
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(502).json({
+      ok: false,
+      error: 'Gateway WebRTC metrics proxy error',
+      details: error.message
+    });
+  }
+});
+
+// Proxy de métricas do sistema (público)
+app.get('/api/metrics', async (req, res) => {
+  try {
+    const queryString = new URLSearchParams(req.query).toString();
+    const url = `https://telemed-internal.onrender.com/api/metrics${queryString ? '?' + queryString : ''}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+      }
+    });
+    
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(502).json({
+      ok: false,
+      error: 'Gateway metrics proxy error',
       details: error.message
     });
   }
