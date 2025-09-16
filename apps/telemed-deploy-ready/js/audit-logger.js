@@ -134,9 +134,9 @@ class AuditLogger {
    * Determina URL do servidor de logs
    */
   getLogServerUrl() {
-    // Em produção usar telemed-internal
+    // SEMPRE usar gateway (que adiciona token server-side)
     if (window.location.hostname.includes('onrender.com')) {
-      return 'https://telemed-internal.onrender.com/api/logs';
+      return 'https://telemed-gateway.onrender.com/api/logs';
     }
     
     // Em desenvolvimento, usar localhost se disponível
@@ -155,8 +155,8 @@ class AuditLogger {
       const response = await fetch(serverUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Token': 'change-me-internal' // TODO: configurar token apropriado
+          'Content-Type': 'application/json'
+          // Token adicionado pelo gateway, não pelo cliente
         },
         body: JSON.stringify({
           logs: [{
