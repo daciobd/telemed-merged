@@ -382,6 +382,181 @@ app.post('/api/logs', async (req, res) => {
 });
 
 // POST /api/logs/cleanup - Job de limpeza manual (para testes)
+
+// POST /api/events - Endpoint padronizado para eventos do funil
+app.post('/api/events', async (req, res) => {
+  try {
+    const { events } = req.body;
+    
+    if (!Array.isArray(events)) {
+      return res.status(400).json({ ok: false, error: 'events deve ser um array' });
+    }
+    
+    const results = [];
+    
+    for (const event of events) {
+      const eventEntry = {
+        traceId: event.trace_id || req.id,
+        eventType: event.event_type,
+        category: event.category || 'user_journey',
+        level: event.level || 'INFO',
+        payload: event.payload || {},
+        userAgent: req.get('User-Agent') || 'unknown',
+        ipHash: hashIP(getClientIP(req))
+      };
+      
+      const savedEvent = await prisma.auditLog.create({ data: eventEntry });
+      results.push({ id: savedEvent.id, event_type: event.event_type });
+    }
+    
+    res.json({ ok: true, processed: results.length, events: results });
+    
+  } catch (error) {
+    console.error('Events endpoint error:', error.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+// POST /api/webrtc-metrics - Métricas de WebRTC
+app.post('/api/webrtc-metrics', async (req, res) => {
+  try {
+    const { metrics, user_agent, timestamp } = req.body;
+    
+    if (!Array.isArray(metrics)) {
+      return res.status(400).json({ ok: false, error: 'metrics deve ser um array' });
+    }
+    
+    // Agregar métricas por sessão
+    const sessionMetrics = {};
+    
+    metrics.forEach(metric => {
+      const sessionId = metric.session_id;
+      if (!sessionMetrics[sessionId]) {
+        sessionMetrics[sessionId] = {
+          session_id: sessionId,
+          samples: [],
+          quality_issues: []
+        };
+      }
+      
+      sessionMetrics[sessionId].samples.push(metric);
+      
+      // Detectar problemas de qualidade
+      if (metric.audio && metric.audio.packets_lost > 5) {
+        sessionMetrics[sessionId].quality_issues.push('audio_packet_loss');
+      }
+      if (metric.video && metric.video.frames_dropped > 10) {
+        sessionMetrics[sessionId].quality_issues.push('video_frame_drops');
+      }
+      if (metric.connection && metric.connection.rtt > 0.5) {
+        sessionMetrics[sessionId].quality_issues.push('high_latency');
+      }
+    });
+    
+    // Salvar métricas agregadas
+    const results = [];
+    
+    for (const [sessionId, data] of Object.entries(sessionMetrics)) {
+      const aggregated = {
+        session_id: sessionId,
+        total_samples: data.samples.length,
+        quality_issues: [...new Set(data.quality_issues)],
+        avg_rtt: data.samples
+          .filter(s => s.connection && s.connection.rtt > 0)
+          .reduce((sum, s, _, arr) => sum + s.connection.rtt / arr.length, 0),
+        timestamp: timestamp || Date.now()
+      };
+      
+      const logEntry = await prisma.auditLog.create({
+        data: {
+          traceId: sessionId,
+          eventType: 'webrtc_session_metrics',
+          category: 'performance',
+          level: aggregated.quality_issues.length > 0 ? 'WARN' : 'INFO',
+          payload: aggregated,
+          userAgent: user_agent || 'unknown',
+          ipHash: hashIP(getClientIP(req))
+        }
+      });
+      
+      results.push({ session_id: sessionId, log_id: logEntry.id });
+    }
+    
+    res.json({ ok: true, processed: results.length, sessions: results });
+    
+  } catch (error) {
+    console.error('WebRTC metrics error:', error.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
+
+// GET /api/metrics - Métricas do sistema
+app.get('/api/metrics', async (req, res) => {
+  try {
+    const since = req.query.since ? new Date(req.query.since) : new Date(Date.now() - 24 * 60 * 60 * 1000); // 24h padrão
+    
+    // Métricas básicas
+    const totalLogs = await prisma.auditLog.count({
+      where: { createdAt: { gte: since } }
+    });
+    
+    const errorLogs = await prisma.auditLog.count({
+      where: {
+        createdAt: { gte: since },
+        level: { in: ['ERROR', 'FATAL'] }
+      }
+    });
+    
+    const webrtcSessions = await prisma.auditLog.count({
+      where: {
+        createdAt: { gte: since },
+        eventType: 'webrtc_session_metrics'
+      }
+    });
+    
+    // Métricas de eventos do funil
+    const funnelEvents = await prisma.auditLog.findMany({
+      where: {
+        createdAt: { gte: since },
+        eventType: { contains: 'signup' }
+      },
+      select: { eventType: true }
+    });
+    
+    const signupEvents = funnelEvents.length;
+    
+    // Response time mock (seria calculado com timestamps reais)
+    const avgResponseTime = Math.random() * 500 + 200; // Mock para demo
+    
+    const metrics = {
+      timestamp: new Date().toISOString(),
+      period: { since: since.toISOString(), until: new Date().toISOString() },
+      logs: {
+        total: totalLogs,
+        errors: errorLogs,
+        error_rate: totalLogs > 0 ? (errorLogs / totalLogs * 100).toFixed(2) : 0
+      },
+      performance: {
+        avg_response_time_ms: Math.round(avgResponseTime),
+        p95_response_time_ms: Math.round(avgResponseTime * 1.5) // Mock
+      },
+      webrtc: {
+        total_sessions: webrtcSessions,
+        // Adicionar métricas de qualidade aqui
+      },
+      funnel: {
+        signup_events: signupEvents
+        // Adicionar outras métricas do funil
+      }
+    };
+    
+    res.json(metrics);
+    
+  } catch (error) {
+    console.error('Metrics endpoint error:', error.message);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
+  }
+});
 app.post('/api/logs/cleanup', async (req, res) => {
   try {
     const { dryRun = false } = req.body;
