@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Feature Flags</title>
+  <style>
+    body { font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial; background: #0b1020; color: #eaf0ff; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { margin: 0 0 24px; color: #1c7bff; }
+    .flag-group { background: #121935; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .flag-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .flag-item:last-child { border-bottom: none; }
+    .flag-name { font-weight: 600; }
+    .flag-desc { font-size: 14px; color: #b9c2e2; }
+    .flag-toggle { position: relative; display: inline-block; width: 50px; height: 24px; }
+    .flag-toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #374151; border-radius: 24px; transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .3s; }
+    input:checked + .slider { background: #1c7bff; }
+    input:checked + .slider:before { transform: translateX(26px); }
+    .actions { margin: 24px 0; display: flex; gap: 12px; }
+    .btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: #1c7bff; color: white; }
+    .btn-secondary { background: transparent; border: 1px solid #374151; color: #b9c2e2; }
+    .status { padding: 12px; border-radius: 8px; margin: 12px 0; }
+    .status.success { background: #0e2720; border: 1px solid #1a3e33; color: #79f2a6; }
+    .status.warning { background: #2a2410; border: 1px solid #53461a; color: #ffd27b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏁 Feature Flags - Admin</h1>
+    
+    <div class="status warning" id="pilot-notice">
+      <strong>Modo Piloto Ativo</strong> - Algumas flags podem afetar a experiência dos usuários de teste.
+    </div>
+
+    <div class="flag-group">
+      <h3>Dr. AI Features</h3>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">dr-ai-enabled</div>
+          <div class="flag-desc">Habilita todo o sistema Dr. AI</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="dr-ai-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">dr-ai-specialty-suggestions</div>
+          <div class="flag-desc">Sugestões de especialidade baseadas em sintomas</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="dr-ai-specialty-suggestions">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">dr-ai-safety-flags</div>
+          <div class="flag-desc">Alertas de segurança para sintomas graves</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="dr-ai-safety-flags">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flag-group">
+      <h3>Controle de Acesso</h3>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">pilot-mode</div>
+          <div class="flag-desc">Modo piloto com banner de aviso</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="pilot-mode">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">restricted-signup</div>
+          <div class="flag-desc">Restringir cadastro apenas para whitelist</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="restricted-signup">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flag-group">
+      <h3>UI/UX Features</h3>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">feedback-banner</div>
+          <div class="flag-desc">Banner de feedback na sala de espera</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="feedback-banner">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="flag-item">
+        <div>
+          <div class="flag-name">status-page</div>
+          <div class="flag-desc">Página pública de status</div>
+        </div>
+        <label class="flag-toggle">
+          <input type="checkbox" data-flag="status-page">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="saveFlags()">Salvar Alterações</button>
+      <button class="btn btn-secondary" onclick="resetFlags()">Resetar Padrões</button>
+      <button class="btn btn-secondary" onclick="exportFlags()">Exportar Config</button>
+    </div>
+
+    <div id="save-status"></div>
+  </div>
+
+  <script src="/js/feature-flags.js"></script>
+  <script src="/js/audit-logger.js"></script>
+  <script>
+    // Carregar estados atuais
+    function loadCurrentFlags() {
+      const flags = window.FeatureFlags.getAll();
+      Object.entries(flags).forEach(([flagName, enabled]) => {
+        const checkbox = document.querySelector(`input[data-flag="${flagName}"]`);
+        if (checkbox) {
+          checkbox.checked = enabled;
+        }
+      });
+    }
+
+    // Salvar alterações
+    function saveFlags() {
+      const checkboxes = document.querySelectorAll('input[data-flag]');
+      const changes = [];
+      
+      checkboxes.forEach(checkbox => {
+        const flagName = checkbox.getAttribute('data-flag');
+        const newValue = checkbox.checked;
+        window.FeatureFlags.set(flagName, newValue);
+        changes.push(`${flagName}: ${newValue ? 'ON' : 'OFF'}`);
+      });
+      
+      // Salvar no storage
+      window.FeatureFlags.save();
+
+      showStatus(`Flags atualizadas: ${changes.join(', ')}`, 'success');
+      
+      // Log da ação
+      if (window.audit) {
+        window.audit.logSystem('feature_flags_updated', {
+          changes_count: changes.length,
+          changes: changes
+        });
+      }
+      
+      // Recarregar página para aplicar mudanças
+      setTimeout(() => window.location.reload(), 1000);
+    }
+
+    // Resetar para padrões
+    function resetFlags() {
+      if (confirm('Resetar todas as flags para os valores padrão?')) {
+        window.location.reload();
+      }
+    }
+
+    // Exportar configuração
+    function exportFlags() {
+      const flags = window.FeatureFlags.getAll();
+      const json = JSON.stringify(flags, null, 2);
+      navigator.clipboard.writeText(json);
+      showStatus('Configuração copiada para área de transferência', 'success');
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById('save-status');
+      status.textContent = message;
+      status.className = `status ${type}`;
+      setTimeout(() => status.textContent = '', 3000);
+    }
+
+    // Auto-save on change
+    document.addEventListener('change', function(e) {
+      if (e.target.matches('input[data-flag]')) {
+        const flagName = e.target.getAttribute('data-flag');
+        const newValue = e.target.checked;
+        window.FeatureFlags.set(flagName, newValue);
+        showStatus(`${flagName} ${newValue ? 'ativada' : 'desativada'}`, 'success');
+      }
+    });
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', loadCurrentFlags);
+  </script>
+</body>
+</html>
