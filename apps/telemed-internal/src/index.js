@@ -9,6 +9,25 @@ const app = express();
 app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
 app.use(express.json());
 
+// Security headers middleware
+app.use((req, res, next) => {
+  // CSP para API
+  res.setHeader('Content-Security-Policy', "default-src 'none'");
+  // HSTS
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  // Prevent MIME sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Referrer policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Remove server signature
+  res.removeHeader('X-Powered-By');
+  // No cache for API responses
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
+
 // RequestId middleware para rastreabilidade
 app.use((req, res, next) => { 
   // Aceita incoming x-request-id ou gera novo UUID
@@ -30,6 +49,122 @@ app.get('/api/health', (req, res) => {
     service: process.env.SERVICE_NAME || 'telemed-internal',
     time: new Date().toISOString()
   });
+});
+
+// Status JSON para monitores externos (UptimeRobot/Pingdom)
+app.get('/status.json', async (req, res) => {
+  try {
+    const startTime = Date.now();
+    
+    // Testar conectividade do banco
+    let dbStatus = 'unknown';
+    let dbResponseTime = 0;
+    
+    try {
+      const dbStart = Date.now();
+      await prisma.$queryRaw`SELECT 1`;
+      dbResponseTime = Date.now() - dbStart;
+      dbStatus = dbResponseTime < 1000 ? 'healthy' : 'slow';
+    } catch (dbError) {
+      dbStatus = 'unhealthy';
+      console.error('Database health check failed:', dbError.message);
+    }
+    
+    // Testar OpenAI (se configurado)
+    let aiStatus = 'unknown';
+    let aiResponseTime = 0;
+    
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const aiStart = Date.now();
+        await openai.models.list();
+        aiResponseTime = Date.now() - aiStart;
+        aiStatus = aiResponseTime < 3000 ? 'healthy' : 'slow';
+      } catch (aiError) {
+        aiStatus = 'unhealthy';
+        console.warn('OpenAI health check failed:', aiError.message);
+      }
+    } else {
+      aiStatus = 'not_configured';
+    }
+    
+    // Determinar status geral
+    const totalResponseTime = Date.now() - startTime;
+    let overallStatus = 'healthy';
+    
+    if (dbStatus === 'unhealthy') {
+      overallStatus = 'unhealthy';
+    } else if (dbStatus === 'slow' || aiStatus === 'slow' || totalResponseTime > 5000) {
+      overallStatus = 'degraded';
+    }
+    
+    const statusResponse = {
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      service: {
+        name: 'telemed-internal',
+        version: '1.0.0',
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development'
+      },
+      components: {
+        database: {
+          status: dbStatus,
+          response_time_ms: dbResponseTime
+        },
+        openai: {
+          status: aiStatus,
+          response_time_ms: aiResponseTime
+        },
+        server: {
+          status: 'healthy',
+          memory_usage_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          cpu_usage: process.cpuUsage()
+        }
+      },
+      metrics: {
+        total_response_time_ms: totalResponseTime,
+        requests_handled: 'N/A', // Seria implementado com contador
+        errors_last_hour: 'N/A'  // Seria implementado com métricas
+      }
+    };
+    
+    // Log para auditoria
+    await prisma.auditLog.create({
+      data: {
+        traceId: req.id,
+        eventType: 'health_check_external',
+        category: 'system',
+        level: overallStatus === 'healthy' ? 'INFO' : 'WARN',
+        payload: {
+          overall_status: overallStatus,
+          db_status: dbStatus,
+          ai_status: aiStatus,
+          response_time_ms: totalResponseTime
+        },
+        userAgent: req.get('User-Agent') || 'unknown',
+        ipHash: 'monitor'
+      }
+    }).catch(err => {
+      console.warn('Failed to log health check:', err.message);
+    });
+    
+    // Retornar status HTTP apropriado
+    const httpStatus = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 206 : 503;
+    res.status(httpStatus).json(statusResponse);
+    
+  } catch (error) {
+    console.error('Status endpoint failed:', error.message);
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: 'Internal server error',
+      service: {
+        name: 'telemed-internal',
+        version: '1.0.0'
+      }
+    });
+  }
 });
 
 
