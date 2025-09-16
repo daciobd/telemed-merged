@@ -38,3 +38,24 @@ model Physician {
 
   @@index([specialty])
 }
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  traceId   String   // Para correlacionar eventos
+  eventType String   // signup_attempt, consult_request_created, etc.
+  category  String   // auth, consultation, ai, system, feedback
+  level     String   @default("INFO")  // INFO, WARN, ERROR
+  userId    String?  // ID do usuário (opcional)
+  sessionId String?  // ID da sessão (opcional)
+  payload   Json     // Dados do evento (sanitizados)
+  userAgent String?  // Browser/dispositivo
+  ipHash    String?  // Hash do IP (não o IP real)
+  createdAt DateTime @default(now())
+  expiresAt DateTime @default(dbgenerated("NOW() + INTERVAL '30 days'"))  // Auto-expiração
+
+  @@index([traceId])
+  @@index([eventType])
+  @@index([category])
+  @@index([createdAt])
+  @@index([expiresAt])
+}

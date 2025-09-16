@@ -107,12 +107,113 @@ class AuditLogger {
   }
 
   /**
-   * Envia logs para o servidor
+   * Envia logs para o servidor (com fallback para localStorage)
    */
   async sendToServer(logEntry) {
     try {
-      // Em produção, enviaria para endpoint de logs centralizado
-      // Por enquanto, apenas armazena localmente
+      // Tentar enviar para servidor centralizado primeiro
+      const serverUrl = this.getLogServerUrl();
+      
+      if (serverUrl) {
+        const success = await this.sendToLogServer(logEntry, serverUrl);
+        if (success) {
+          return; // Sucesso no servidor, não precisar armazenar localmente
+        }
+      }
+      
+      // Fallback: armazenar localmente
+      this.storeLocalLog(logEntry);
+      
+    } catch (error) {
+      console.warn('Falha ao enviar log para servidor:', error.message);
+      this.storeLocalLog(logEntry);
+    }
+  }
+  
+  /**
+   * Determina URL do servidor de logs
+   */
+  getLogServerUrl() {
+    // Em produção usar telemed-internal
+    if (window.location.hostname.includes('onrender.com')) {
+      return 'https://telemed-internal.onrender.com/api/logs';
+    }
+    
+    // Em desenvolvimento, usar localhost se disponível
+    if (window.location.hostname === 'localhost' || window.location.hostname.includes('replit')) {
+      return null; // Usar localStorage em desenvolvimento
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Envia logs para servidor via POST
+   */
+  async sendToLogServer(logEntry, serverUrl) {
+    try {
+      const response = await fetch(serverUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Token': 'change-me-internal' // TODO: configurar token apropriado
+        },
+        body: JSON.stringify({
+          logs: [{
+            traceId: logEntry.trace_id,
+            eventType: logEntry.event,
+            category: this.getCategoryFromEvent(logEntry.event),
+            level: logEntry.level,
+            userId: logEntry.user_id,
+            sessionId: logEntry.session_id,
+            payload: logEntry.data,
+            timestamp: logEntry.timestamp
+          }]
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.ok) {
+          console.log(`📋 Log enviado para servidor: ${logEntry.event}`);
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('Erro ao enviar log para servidor:', error.message);
+      return false;
+    }
+  }
+  
+  /**
+   * Determina categoria do evento
+   */
+  getCategoryFromEvent(eventType) {
+    if (eventType.startsWith('signup_') || eventType.includes('auth') || eventType.includes('login')) {
+      return 'auth';
+    }
+    if (eventType.startsWith('consult_') || eventType.includes('consultation')) {
+      return 'consultation';
+    }
+    if (eventType.startsWith('ai_') || eventType.includes('ai_specialty')) {
+      return 'ai';
+    }
+    if (eventType.includes('feedback_') || eventType.includes('rating')) {
+      return 'feedback';
+    }
+    if (eventType.includes('system_') || eventType.includes('health')) {
+      return 'system';
+    }
+    return 'general';
+  }
+  
+  /**
+   * Armazena log localmente como fallback
+   */
+  storeLocalLog(logEntry) {
+    try {
       const logs = JSON.parse(localStorage.getItem('telemed_audit_logs') || '[]');
       logs.push(logEntry);
       
@@ -190,6 +291,111 @@ class AuditLogger {
       role: data.role || this.userRole,
       appointment_id: data.appointmentId || null,
       has_comments: Boolean(data.comments && data.comments.trim()),
+      ...data
+    });
+  }
+  
+  // ===== EVENTOS PADRONIZADOS =====
+  
+  /**
+   * Eventos de cadastro padronizados
+   */
+  logSignupAttempt(role, data = {}) {
+    return this.log('signup_attempt', {
+      role: role,
+      step: data.step || 'initial',
+      method: data.method || 'form',
+      has_validation_errors: Boolean(data.errors),
+      ...data
+    });
+  }
+  
+  logSignupSuccess(role, userId, data = {}) {
+    return this.log('signup_success', {
+      role: role,
+      user_id: userId,
+      verification_required: Boolean(data.verificationRequired),
+      onboarding_flow: data.onboardingFlow || 'default',
+      ...data
+    });
+  }
+  
+  logSignupFailure(role, errorType, data = {}) {
+    return this.log('signup_failure', {
+      role: role,
+      error_type: errorType,
+      step: data.step || 'unknown',
+      ...data
+    });
+  }
+  
+  /**
+   * Eventos de consulta padronizados
+   */
+  logConsultRequestCreated(appointmentId, data = {}) {
+    return this.log('consult_request_created', {
+      appointment_id: appointmentId,
+      specialty: data.specialty || null,
+      urgency: data.urgency || 'normal',
+      bid_amount: data.bidAmount || null,
+      patient_age_range: data.patientAgeRange || null,
+      symptoms_count: data.symptoms ? data.symptoms.length : 0,
+      ...data
+    });
+  }
+  
+  logConsultStarted(appointmentId, physicianId, data = {}) {
+    return this.log('consult_started', {
+      appointment_id: appointmentId,
+      physician_id: physicianId,
+      start_time: new Date().toISOString(),
+      connection_quality: data.connectionQuality || 'unknown',
+      platform: data.platform || 'web',
+      ...data
+    });
+  }
+  
+  logConsultEnded(appointmentId, data = {}) {
+    return this.log('consult_ended', {
+      appointment_id: appointmentId,
+      duration_minutes: data.durationMinutes || null,
+      end_reason: data.endReason || 'completed',
+      prescription_generated: Boolean(data.prescriptionGenerated),
+      followup_scheduled: Boolean(data.followupScheduled),
+      technical_issues: Boolean(data.technicalIssues),
+      ...data
+    });
+  }
+  
+  /**
+   * Eventos do Dr. AI padronizados
+   */
+  logAISpecialtySuggestionShown(suggestions, data = {}) {
+    return this.log('ai_specialty_suggestion_shown', {
+      suggestions_count: suggestions.length,
+      top_suggestion: suggestions[0] || null,
+      confidence_scores: suggestions.map(s => s.confidence || 0),
+      symptoms_analyzed: data.symptoms || [],
+      response_time_ms: data.responseTime || null,
+      ...data
+    });
+  }
+  
+  logAISpecialtySuggestionAccepted(selectedSuggestion, data = {}) {
+    return this.log('ai_specialty_suggestion_accepted', {
+      selected_specialty: selectedSuggestion.specialty || null,
+      confidence_score: selectedSuggestion.confidence || null,
+      user_confirmed: Boolean(data.userConfirmed),
+      alternative_suggestions: data.alternatives || [],
+      ...data
+    });
+  }
+  
+  logAISpecialtySuggestionRejected(rejectedSuggestion, data = {}) {
+    return this.log('ai_specialty_suggestion_rejected', {
+      rejected_specialty: rejectedSuggestion.specialty || null,
+      rejection_reason: data.rejectionReason || 'user_choice',
+      user_selected_alternative: data.userSelectedAlternative || null,
       ...data
     });
   }

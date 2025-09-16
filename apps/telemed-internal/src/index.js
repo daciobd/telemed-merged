@@ -3,6 +3,7 @@ import cors from 'cors';
 import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import crypto from 'crypto';
 
 const app = express();
 app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
@@ -150,6 +151,264 @@ app.post('/internal/appointments/from-bid', async (req,res)=>{
   }
 });
 
+// ===== AUDIT LOGS =====
+
+// Utilitário para hash de IP
+function hashIP(ip) {
+  if (!ip || ip === '127.0.0.1' || ip === '::1') return 'local';
+  return crypto.createHash('sha256').update(ip + (process.env.IP_SALT || 'telemed-salt')).digest('hex').substring(0, 12);
+}
+
+// Utilitário para sanitizar payload
+function sanitizePayload(payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  
+  const sanitized = { ...payload };
+  
+  // Remover ou mascarar campos sensíveis
+  const sensitiveFields = ['password', 'cpf', 'rg', 'card', 'cvv', 'ssn', 'token'];
+  sensitiveFields.forEach(field => {
+    if (sanitized[field]) {
+      sanitized[field] = '***';
+    }
+  });
+  
+  // Mascarar e-mails
+  Object.keys(sanitized).forEach(key => {
+    if (key.includes('email') && typeof sanitized[key] === 'string') {
+      const email = sanitized[key];
+      const [user, domain] = email.split('@');
+      if (user && domain) {
+        sanitized[key] = `${user.substring(0, 2)}***@${domain}`;
+      }
+    }
+  });
+  
+  return sanitized;
+}
+
+// POST /api/logs - Receber logs do frontend
+app.post('/api/logs', async (req, res) => {
+  try {
+    const { logs = [] } = req.body;
+    
+    if (!Array.isArray(logs) || logs.length === 0) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'logs_array_required', 
+        requestId: req.id 
+      });
+    }
+    
+    // Processar logs em batch
+    const processedLogs = logs.map(log => {
+      // Validar campos obrigatórios
+      if (!log.eventType || !log.category) {
+        throw new Error(`Invalid log entry: missing eventType or category`);
+      }
+      
+      return {
+        traceId: log.traceId || req.id,
+        eventType: log.eventType,
+        category: log.category,
+        level: log.level || 'INFO',
+        userId: log.userId || null,
+        sessionId: log.sessionId || null,
+        payload: sanitizePayload(log.payload || {}),
+        userAgent: (req.get('User-Agent') || '').substring(0, 500), // Limitar tamanho
+        ipHash: hashIP(req.ip || req.connection?.remoteAddress),
+        createdAt: log.timestamp ? new Date(log.timestamp) : new Date()
+      };
+    });
+    
+    // Salvar no banco
+    const result = await prisma.auditLog.createMany({
+      data: processedLogs,
+      skipDuplicates: true
+    });
+    
+    console.log(`[${req.id}] 📋 Saved ${result.count} audit logs`);
+    
+    res.json({ 
+      ok: true, 
+      saved: result.count, 
+      requestId: req.id 
+    });
+    
+  } catch (e) {
+    console.error(`[${req.id}] ❌ Failed to save audit logs:`, e.message);
+    res.status(500).json({ 
+      ok: false, 
+      error: 'save_logs_failed', 
+      details: e.message,
+      requestId: req.id 
+    });
+  }
+});
+
+// POST /api/logs/cleanup - Job de limpeza manual (para testes)
+app.post('/api/logs/cleanup', async (req, res) => {
+  try {
+    const { dryRun = false } = req.body;
+    
+    // Encontrar logs expirados
+    const expiredLogs = await prisma.auditLog.findMany({
+      where: {
+        OR: [
+          { expiresAt: { lte: new Date() } },
+          { createdAt: { lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } // 30 dias
+        ]
+      },
+      select: { id: true, createdAt: true }
+    });
+    
+    if (dryRun) {
+      console.log(`[${req.id}] 🗑️ DRY RUN: Would delete ${expiredLogs.length} expired logs`);
+      return res.json({
+        ok: true,
+        dryRun: true,
+        toDelete: expiredLogs.length,
+        requestId: req.id
+      });
+    }
+    
+    // Deletar em batches
+    const batchSize = 1000;
+    let totalDeleted = 0;
+    
+    for (let i = 0; i < expiredLogs.length; i += batchSize) {
+      const batch = expiredLogs.slice(i, i + batchSize);
+      const result = await prisma.auditLog.deleteMany({
+        where: {
+          id: { in: batch.map(log => log.id) }
+        }
+      });
+      totalDeleted += result.count;
+    }
+    
+    console.log(`[${req.id}] 🗑️ Cleanup completed: deleted ${totalDeleted} expired logs`);
+    
+    res.json({
+      ok: true,
+      deleted: totalDeleted,
+      requestId: req.id
+    });
+    
+  } catch (e) {
+    console.error(`[${req.id}] ❌ Cleanup failed:`, e.message);
+    res.status(500).json({ 
+      ok: false, 
+      error: 'cleanup_failed', 
+      requestId: req.id 
+    });
+  }
+});
+
+// ===== JOBS AUTOMÁTICOS =====
+
+// Job de limpeza automática que roda a cada 6 horas
+let cleanupJobCount = 0;
+
+async function runCleanupJob() {
+  try {
+    cleanupJobCount++;
+    const jobId = `cleanup_${Date.now()}`;
+    console.log(`🗑️ [${jobId}] Iniciando job de limpeza automática #${cleanupJobCount}`);
+    
+    // Encontrar logs expirados (mais de 30 dias)
+    const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const expiredLogs = await prisma.auditLog.findMany({
+      where: {
+        OR: [
+          { expiresAt: { lte: new Date() } },
+          { createdAt: { lte: cutoffDate } }
+        ]
+      },
+      select: { id: true, createdAt: true, traceId: true }
+    });
+    
+    if (expiredLogs.length === 0) {
+      console.log(`🗑️ [${jobId}] Nenhum log expirado encontrado`);
+      return { deleted: 0, jobId };
+    }
+    
+    // Deletar em batches de 1000
+    let totalDeleted = 0;
+    const batchSize = 1000;
+    
+    for (let i = 0; i < expiredLogs.length; i += batchSize) {
+      const batch = expiredLogs.slice(i, i + batchSize);
+      const result = await prisma.auditLog.deleteMany({
+        where: {
+          id: { in: batch.map(log => log.id) }
+        }
+      });
+      totalDeleted += result.count;
+      
+      // Log do progresso
+      console.log(`🗑️ [${jobId}] Batch ${Math.floor(i/batchSize) + 1}: ${result.count} logs deletados`);
+    }
+    
+    // Log de auditoria do próprio job
+    await prisma.auditLog.create({
+      data: {
+        traceId: jobId,
+        eventType: 'logs_cleanup_completed',
+        category: 'system',
+        level: 'INFO',
+        payload: {
+          deleted_count: totalDeleted,
+          job_number: cleanupJobCount,
+          cutoff_date: cutoffDate.toISOString()
+        },
+        userAgent: 'system-job',
+        ipHash: 'internal'
+      }
+    });
+    
+    console.log(`✅ [${jobId}] Job de limpeza concluído: ${totalDeleted} logs deletados`);
+    return { deleted: totalDeleted, jobId };
+    
+  } catch (error) {
+    console.error(`❌ Job de limpeza falhou:`, error.message);
+    
+    // Log do erro
+    try {
+      await prisma.auditLog.create({
+        data: {
+          traceId: `cleanup_error_${Date.now()}`,
+          eventType: 'logs_cleanup_failed',
+          category: 'system',
+          level: 'ERROR',
+          payload: {
+            error: error.message,
+            job_number: cleanupJobCount
+          },
+          userAgent: 'system-job',
+          ipHash: 'internal'
+        }
+      });
+    } catch (logError) {
+      console.error('Falha ao registrar erro do job:', logError.message);
+    }
+    
+    return { error: error.message };
+  }
+}
+
+// Configurar job para rodar a cada 6 horas (21600000 ms)
+function startCleanupJob() {
+  const interval = 6 * 60 * 60 * 1000; // 6 horas
+  
+  // Primeira execução após 1 minuto de startup
+  setTimeout(runCleanupJob, 60 * 1000);
+  
+  // Execuções periódicas
+  setInterval(runCleanupJob, interval);
+  
+  console.log(`🚀 Job de limpeza automática configurado para rodar a cada 6 horas`);
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 Starting TeleMed Internal Service...`);
   console.log(`[${process.env.SERVICE_NAME || 'telemed-internal'}] listening on :${PORT}`);
@@ -160,4 +419,7 @@ app.listen(PORT, () => {
     INTERNAL_TOKEN: process.env.INTERNAL_TOKEN ? 'configured' : 'NOT SET',
     OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'NOT SET'
   });
+  
+  // Iniciar job de limpeza automática
+  startCleanupJob();
 });
