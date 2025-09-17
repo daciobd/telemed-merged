@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dr. AI • Dashboard de Métricas | TeleMed</title>
+  <meta name="description" content="Dashboard de métricas e performance do Dr. AI - triagem médica automatizada" />
+  <link rel="icon" href="/assets/favicon.ico" />
+  <script src="/js/config.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 16px;
+    }
+    
+    .grid {
+      display: grid;
+      gap: 24px;
+    }
+    
+    .grid-cols-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .grid-cols-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+    
+    .metric-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    
+    .metric-label {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0;
+    }
+    
+    .chart-container {
+      height: 200px;
+      display: flex;
+      align-items: end;
+      gap: 4px;
+      margin-top: 16px;
+    }
+    
+    .chart-bar {
+      background: var(--primary);
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      flex: 1;
+      transition: all 0.3s ease;
+    }
+    
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .status-online { background: var(--success); }
+    .status-warning { background: var(--warning); }
+    .status-error { background: var(--danger); }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--bg);
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    
+    @media (max-width: 768px) {
+      .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-cols-2 { grid-template-columns: 1fr; }
+      .container { padding: 16px; }
+    }
+    
+    @media (max-width: 640px) {
+      .grid-cols-4 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div style="display:flex;align-items:center;gap:16px">
+        <a href="/" style="font-size:20px;font-weight:700;color:var(--text);text-decoration:none">
+          🩺 TeleMed
+        </a>
+        <span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600">
+          DR. AI ANALYTICS
+        </span>
+      </div>
+      
+      <nav style="display:flex;gap:16px;align-items:center">
+        <a href="/dr-ai.html" class="btn">🤖 Triagem</a>
+        <a href="/dashboard-medico.html" class="btn">👨‍⚕️ Dashboard</a>
+        <button id="btn-refresh" class="btn btn-primary">🔄 Atualizar</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <!-- Page Title -->
+    <div style="margin-bottom:32px;text-align:center">
+      <h1 style="font-size:32px;font-weight:800;margin:0 0 8px;color:var(--text)">
+        📊 Dr. AI Analytics
+      </h1>
+      <p style="color:var(--muted);margin:0;font-size:16px">
+        Métricas de performance e utilização da triagem inteligente
+      </p>
+      <p id="last-update" style="color:#94a3b8;margin:8px 0 0;font-size:14px">
+        Última atualização: Carregando...
+      </p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-4" style="margin-bottom:32px">
+      
+      <!-- Total Triagens -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Total Hoje</h3>
+          <span style="font-size:20px">📝</span>
+        </div>
+        <div class="metric-value" id="metric-triagens" style="color:var(--primary)">
+          --
+        </div>
+        <p class="metric-label">triagens realizadas</p>
+      </div>
+
+      <!-- Precisão -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Precisão</h3>
+          <span style="font-size:20px">🎯</span>
+        </div>
+        <div class="metric-value" id="metric-precisao" style="color:var(--success)">
+          --%
+        </div>
+        <p class="metric-label">validada por médicos</p>
+      </div>
+
+      <!-- Tempo Médio -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Tempo Médio</h3>
+          <span style="font-size:20px">⏱️</span>
+        </div>
+        <div class="metric-value" id="metric-tempo" style="color:var(--warning)">
+          --s
+        </div>
+        <p class="metric-label">análise por triagem</p>
+      </div>
+
+      <!-- Satisfação -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Satisfação</h3>
+          <span style="font-size:20px">⭐</span>
+        </div>
+        <div class="metric-value" id="metric-satisfacao" style="color:var(--success)">
+          --
+        </div>
+        <p class="metric-label">avaliação média</p>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-2" style="margin-bottom:32px">
+      
+      <!-- Especialidades -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">📈 Triagens por Especialidade</h3>
+        </div>
+        <div id="specialty-chart" class="chart-container">
+          <!-- Chart bars will be populated here -->
+        </div>
+        <div id="specialty-legend" style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px">
+          <!-- Legend will be populated here -->
+        </div>
+      </div>
+
+      <!-- Precisão por Especialidade -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">🎯 Precisão por Especialidade</h3>
+        </div>
+        <div id="accuracy-list" style="margin-top:16px">
+          <!-- Accuracy items will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">🔧 Status do Sistema</h3>
+      </div>
+      <div class="status-grid" id="system-status">
+        <!-- Status items will be populated here -->
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Configuration
+    const config = {
+      baseUrl: window.TELEMED_CFG?.DR_AI_URL || 'http://localhost:5001',
+      token: window.TELEMED_CFG?.DR_AI_TOKEN || 'dev-token-123',
+      refreshInterval: 30000 // 30 seconds
+    };
+
+    // API Helper
+    async function callAPI(endpoint) {
+      try {
+        const response = await fetch(`${config.baseUrl}${endpoint}`, {
+          headers: { 'X-Auth': config.token }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return null;
+      }
+    }
+
+    // Update metrics display
+    function updateMetrics(data) {
+      if (!data || !data.today) return;
+
+      const { today, specialties, accuracyBySpec, updatedAt } = data;
+      
+      // Update key metrics
+      document.getElementById('metric-triagens').textContent = today.triagens || 0;
+      document.getElementById('metric-precisao').textContent = 
+        `${Math.round((today.precisao || 0) * 100)}%`;
+      document.getElementById('metric-tempo').textContent = 
+        `${(today.tempoMin || 0).toFixed(1)}s`;
+      document.getElementById('metric-satisfacao').textContent = 
+        (today.satisfacao || 0).toFixed(1);
+
+      // Update timestamp
+      if (updatedAt) {
+        const date = new Date(updatedAt);
+        document.getElementById('last-update').textContent = 
+          `Última atualização: ${date.toLocaleString('pt-BR')}`;
+      }
+
+      // Update specialty chart
+      updateSpecialtyChart(specialties || {});
+      
+      // Update accuracy list
+      updateAccuracyList(accuracyBySpec || {});
+    }
+
+    // Update specialty chart
+    function updateSpecialtyChart(specialties) {
+      const chartContainer = document.getElementById('specialty-chart');
+      const legendContainer = document.getElementById('specialty-legend');
+      
+      chartContainer.innerHTML = '';
+      legendContainer.innerHTML = '';
+
+      const entries = Object.entries(specialties);
+      if (entries.length === 0) return;
+
+      const maxValue = Math.max(...entries.map(([,count]) => count));
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+      entries.forEach(([specialty, count], index) => {
+        const color = colors[index % colors.length];
+        const height = maxValue > 0 ? (count / maxValue) * 100 : 0;
+        
+        // Create bar
+        const bar = document.createElement('div');
+        bar.className = 'chart-bar';
+        bar.style.height = `${height}%`;
+        bar.style.background = color;
+        bar.title = `${specialty}: ${count}`;
+        chartContainer.appendChild(bar);
+        
+        // Create legend item
+        const legendItem = document.createElement('div');
+        legendItem.style.display = 'flex';
+        legendItem.style.alignItems = 'center';
+        legendItem.style.gap = '6px';
+        legendItem.style.fontSize = '12px';
+        legendItem.innerHTML = `
+          <div style="width:12px;height:12px;background:${color};border-radius:2px"></div>
+          <span>${specialty}: ${count}</span>
+        `;
+        legendContainer.appendChild(legendItem);
+      });
+    }
+
+    // Update accuracy list
+    function updateAccuracyList(accuracyBySpec) {
+      const container = document.getElementById('accuracy-list');
+      container.innerHTML = '';
+
+      const entries = Object.entries(accuracyBySpec);
+      if (entries.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);text-align:center">Nenhum dado disponível</p>';
+        return;
+      }
+
+      entries.forEach(([specialty, accuracy]) => {
+        const percentage = Math.round(accuracy * 100);
+        const color = percentage >= 85 ? 'var(--success)' : 
+                     percentage >= 70 ? 'var(--warning)' : 'var(--danger)';
+        
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.padding = '8px 0';
+        item.style.borderBottom = '1px solid var(--border)';
+        
+        item.innerHTML = `
+          <span style="font-weight:500">${specialty}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:60px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+              <div style="width:${percentage}%;height:100%;background:${color};border-radius:3px"></div>
+            </div>
+            <span style="font-weight:600;color:${color};min-width:40px">${percentage}%</span>
+          </div>
+        `;
+        
+        container.appendChild(item);
+      });
+    }
+
+    // Update system status
+    async function updateSystemStatus() {
+      const statusContainer = document.getElementById('system-status');
+      
+      // Check Dr. AI health
+      const healthData = await callAPI('/health');
+      const metricsData = await callAPI('/api/metrics/summary');
+      
+      const statuses = [
+        {
+          name: 'Dr. AI API',
+          status: healthData ? 'online' : 'error',
+          description: healthData ? 'Funcionando normalmente' : 'Sem conexão'
+        },
+        {
+          name: 'Métricas',
+          status: metricsData ? 'online' : 'warning',
+          description: metricsData ? 'Dados atualizados' : 'Dados parciais'
+        },
+        {
+          name: 'Triagem Ativa',
+          status: (metricsData?.today?.triagens || 0) > 0 ? 'online' : 'warning',
+          description: `${metricsData?.today?.triagens || 0} triagens hoje`
+        },
+        {
+          name: 'Precisão',
+          status: (metricsData?.today?.precisao || 0) >= 0.8 ? 'online' : 'warning',
+          description: `${Math.round((metricsData?.today?.precisao || 0) * 100)}% de precisão`
+        }
+      ];
+      
+      statusContainer.innerHTML = '';
+      
+      statuses.forEach(({ name, status, description }) => {
+        const statusItem = document.createElement('div');
+        statusItem.className = 'status-item';
+        statusItem.innerHTML = `
+          <div class="status-dot status-${status}"></div>
+          <div>
+            <div style="font-weight:500;margin-bottom:2px">${name}</div>
+            <div style="font-size:12px;color:var(--muted)">${description}</div>
+          </div>
+        `;
+        statusContainer.appendChild(statusItem);
+      });
+    }
+
+    // Main data refresh function
+    async function refreshData() {
+      try {
+        const [metricsData] = await Promise.all([
+          callAPI('/api/metrics/summary'),
+          updateSystemStatus()
+        ]);
+        
+        updateMetrics(metricsData);
+        
+      } catch (error) {
+        console.error('Refresh failed:', error);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('btn-refresh').onclick = refreshData;
+
+    // Initialize
+    refreshData();
+    
+    // Auto refresh
+    setInterval(refreshData, config.refreshInterval);
+
+    // Track analytics view
+    setTimeout(() => {
+      fetch(`${config.baseUrl}/api/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Auth': config.token
+        },
+        body: JSON.stringify({
+          name: 'dr_ai_dashboard_view',
+          properties: { timestamp: new Date().toISOString() }
+        })
+      }).catch(() => {}); // Silent fail
+    }, 1000);
+  </script>
+</body>
+</html>
