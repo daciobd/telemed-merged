@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed • Consulta</title>
+  <style>
+    :root{
+      --bg:#0b1020; --panel:#0f172a; --muted:#9fb3ff; --text:#eaf0ff; --ring:rgba(110,168,255,.5);
+      --ok:#16a34a; --warn:#f59e0b; --err:#ef4444; --line:rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
+    a{color:#7cb2ff}
+
+    .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);background:rgba(15,23,42,.8);border-bottom:1px solid var(--line)}
+    .topbar .wrap{display:flex;gap:16px;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:10px 16px}
+    .badge{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;opacity:.9}
+    .badge.ok{background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.35)}
+    .badge.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+
+    .consult-split{display:grid;grid-template-columns: minmax(280px, 42%) 1fr; gap:16px; max-width:1200px;margin:12px auto;padding:0 16px}
+    @media (max-width: 980px){ .consult-split{ grid-template-columns:1fr; } }
+
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .video-col{position:relative;min-height:380px;display:grid;grid-template-rows:auto 1fr auto}
+    .video-stage{display:grid;place-items:center;height:100%;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .video-stage .placeholder{opacity:.8}
+    .video-actions{display:flex;gap:8px;padding:10px;justify-content:center}
+    .btn{height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
+    .btn.primary{background:rgba(110,168,255,.18)}
+    .btn.danger{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+
+    .video-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}
+    .video-head .small{font-size:12px;opacity:.8}
+
+    .form-col{display:grid;grid-template-rows:auto 1fr auto}
+    .form-head{padding:10px 12px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .tab{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03);cursor:pointer;font-size:14px}
+    .tab[aria-selected="true"]{outline:2px solid var(--ring);}
+
+    .form-body{padding:12px; overflow:auto}
+    .grid{display:grid;gap:10px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    @media (max-width: 720px){ .grid.cols-2{grid-template-columns:1fr} }
+    label{display:block;font-size:13px;margin-bottom:4px;opacity:.9}
+    input[type=text], textarea, select{width:100%;min-height:38px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:inherit}
+    textarea{min-height:90px;resize:vertical}
+    .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:rgba(239,68,68,.6);}
+    .help{font-size:12px;opacity:.75}
+
+    .files{display:grid;gap:8px}
+    .file-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03)}
+
+    .form-foot{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid var(--line)}
+
+    .nps-modal[hidden]{display:none}
+    .nps-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50}
+    .nps-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;width:min(560px,92vw)}
+    .nps-grid{display:grid;gap:10px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap">
+      <div>
+        <strong id="appt-title">Consulta</strong>
+        <span id="appt-meta" class="badge">APT-???</span>
+      </div>
+      <div class="wrap" style="gap:8px">
+        <a id="care-guidelines" class="badge" href="/diretrizes.html" target="_blank">Diretrizes de Cuidados</a>
+        <span id="public-status" class="badge ok">Pronto</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="consult-split">
+    <!-- COLUNA VÍDEO / CONTROLES -->
+    <section class="panel video-col" id="video-col" data-role="medico" data-appointment-id="APT-EXEMPLO">
+      <div class="video-head">
+        <div>
+          <div class="small">Sala de vídeo</div>
+          <div id="wait-label" class="small">Esperando o paciente: <span id="wait-timer">--</span></div>
+        </div>
+        <div class="small" id="room-state">conectando…</div>
+      </div>
+      <div class="video-stage" id="video-stage">
+        <div class="placeholder">(Sua área de vídeo WebRTC aqui)</div>
+      </div>
+      <div class="video-actions">
+        <button id="btn-open-call" class="btn primary">Abrir consultório</button>
+        <button id="btn-join-audio" class="btn">Áudio-apenas</button>
+        <button id="btn-end-call" class="btn danger" disabled>Encerrar chamada</button>
+      </div>
+    </section>
+
+    <!-- COLUNA FORMULÁRIO / ABAS -->
+    <section class="panel form-col" id="form-col">
+      <div class="form-head">
+        <div class="tabs" role="tablist" aria-label="Editor da consulta">
+          <button class="tab" role="tab" aria-selected="true" data-tab="soap">Registro Profissional</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="notes">Notas privadas</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="files">Arquivos</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="presc">Prescrições</button>
+        </div>
+        <label class="badge warn" style="cursor:pointer">
+          <input type="checkbox" id="flag-emergency"> Marcar como emergência
+        </label>
+      </div>
+
+      <div class="form-body" id="tab-soap" role="tabpanel">
+        <div class="grid cols-2">
+          <div class="field" id="f-queixa">
+            <label for="queixa">Queixa Principal *</label>
+            <input type="text" id="queixa" placeholder="Ex.: febre e dor de garganta há 3 dias" />
+          </div>
+          <div class="field" id="f-hda">
+            <label for="hda">Doença atual *</label>
+            <input type="text" id="hda" placeholder="Resumo da história atual" />
+          </div>
+          <div class="field" id="f-hipotese">
+            <label for="hipotese">Hipótese diagnóstica *</label>
+            <input type="text" id="hipotese" placeholder="Ex.: Amigdalite (poderá ter código depois)" />
+            <div class="help">Obrigatório para finalizar. Em breve: seleção por CID/ICD.</div>
+          </div>
+          <div class="field" id="f-conduta">
+            <label for="conduta">Conduta terapêutica</label>
+            <textarea id="conduta" placeholder="Ex.: analgesia, hidratação, repouso; retorno se piora"></textarea>
+          </div>
+          <div class="field">
+            <label for="alertas">Sinais de alerta</label>
+            <select id="alertas">
+              <option value="nao">não</option>
+              <option value="sim">sim</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-body" id="tab-notes" role="tabpanel" hidden>
+        <label for="notas">Notas privadas (não visíveis ao paciente)</label>
+        <textarea id="notas" placeholder="Anotações do médico"></textarea>
+      </div>
+
+      <div class="form-body" id="tab-files" role="tabpanel" hidden>
+        <div class="grid">
+          <div>
+            <label>Enviar arquivo (pdf, jpg, png – máx 10MB)</label>
+            <input type="file" id="file-input" accept="application/pdf,image/*" />
+            <div class="help">Arquivos ficam vinculados a esta consulta.</div>
+          </div>
+          <div class="files" id="files-list"></div>
+        </div>
+      </div>
+
+      <div class="form-body" id="tab-presc" role="tabpanel" hidden>
+        <div class="grid">
+          <div class="help">Integração com Receita Certa disponível. Use o botão abaixo para abrir o seletor de medicamentos (ANVISA) e montar a prescrição.</div>
+          <div>
+            <button id="btn-new-presc" class="btn">Nova Prescrição</button>
+          </div>
+          <div id="presc-table"></div>
+        </div>
+      </div>
+
+      <div class="form-foot">
+        <div class="help" id="gate-msg">Preencha os campos obrigatórios marcados com *</div>
+        <div>
+          <button id="btn-save" class="btn">Salvar rascunho</button>
+          <button id="btn-finalize" class="btn primary" disabled>Finalizar atendimento</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal NPS pós-consulta -->
+  <div class="nps-modal" id="nps" hidden>
+    <div class="nps-card">
+      <h3>Avalie sua experiência nesta consulta</h3>
+      <div class="nps-grid">
+        <label>Teve dificuldades com a plataforma?</label>
+        <label><input type="checkbox" id="nps-audio"> Qualidade do Áudio</label>
+        <label><input type="checkbox" id="nps-video"> Qualidade do Vídeo</label>
+        <label><input type="checkbox" id="nps-lento"> Sistema lento</label>
+        <label for="nps-msg">Observações</label>
+        <textarea id="nps-msg"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn" id="nps-skip">Pular</button>
+        <button class="btn primary" id="nps-send">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // ====== Config ======
+  const room = document.getElementById('video-col');
+  const appointmentId = room?.dataset?.appointmentId || 'APT-EXEMPLO';
+  const role = room?.dataset?.role || 'medico';
+
+  document.getElementById('appt-meta').textContent = appointmentId;
+
+  // ====== Helpers ======
+  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('GET fallback', e); return null; } }
+  async function postJSON(url, data){ try{ const r=await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('POST fallback', e); return null; } }
+  function sendEvent(type, payload){ return postJSON('/api/events', { type, appointmentId, ts: new Date().toISOString(), payload }); }
+  const fmt2 = (n)=> String(n).padStart(2,'0');
+
+  // ====== Sala / Timer aguardando paciente ======
+  const roomStateEl = document.getElementById('room-state');
+  const waitTimerEl = document.getElementById('wait-timer');
+  const waitLabelEl = document.getElementById('wait-label');
+  let hostPresent=false, patientPresent=false, waitStart=Date.now(), callStartedAt=null;
+
+  async function fetchRoomState(){
+    const data = await getJSON(`/api/appointments/${appointmentId}/room-state`) || { hostPresent: role==='medico', patientPresent:false, canJoin:true };
+    hostPresent = !!data.hostPresent; patientPresent = !!data.patientPresent;
+    roomStateEl.textContent = `médico: ${hostPresent? 'presente':'ausente'} · paciente: ${patientPresent? 'presente':'aguardando'}`;
+    return data;
+  }
+  function tickWait(){
+    const d = Math.floor((Date.now()-waitStart)/1000); const m = Math.floor(d/60), s=d%60; waitTimerEl.textContent = `${fmt2(m)}m ${fmt2(s)}s`;
+  }
+
+  // ====== Vídeo actions (mock) ======
+  const btnOpen = document.getElementById('btn-open-call');
+  const btnAudio = document.getElementById('btn-join-audio');
+  const btnEnd = document.getElementById('btn-end-call');
+  btnOpen.onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/call/start`, { mode:'av' }); btnEnd.disabled=false; callStartedAt = Date.now(); sendEvent('consult_started',{ mode:'av' }); };
+  btnAudio.onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/call/start`, { mode:'audio' }); btnEnd.disabled=false; callStartedAt = Date.now(); sendEvent('consult_started',{ mode:'audio' }); };
+  btnEnd.onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/call/end`, {}); btnEnd.disabled=true; sendEvent('call_ended',{}); };
+
+  // ====== Tabs ======
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t=> t.addEventListener('click', ()=>{
+    tabs.forEach(x=> x.setAttribute('aria-selected','false'));
+    t.setAttribute('aria-selected','true');
+    document.querySelectorAll('[role="tabpanel"]').forEach(p=> p.hidden=true);
+    document.getElementById('tab-'+t.dataset.tab).hidden=false;
+  }));
+
+  // ====== Form / validação ======
+  const reqFields = [ ['f-queixa','queixa'], ['f-hda','hda'], ['f-hipotese','hipotese'] ];
+  function validate(){
+    let ok = true; let missing=[];
+    reqFields.forEach(([fid,iid])=>{
+      const f = document.getElementById(fid); const v = (document.getElementById(iid).value||'').trim();
+      if(!v){ f.classList.add('invalid'); ok=false; missing.push(iid);} else { f.classList.remove('invalid'); }
+    });
+    document.getElementById('btn-finalize').disabled = !ok;
+    document.getElementById('gate-msg').textContent = ok? 'Pronto para finalizar.' : 'Preencha os campos obrigatórios marcados com *';
+    return { ok, missing };
+  }
+  ['queixa','hda','hipotese','conduta'].forEach(id=> document.getElementById(id).addEventListener('input', validate));
+
+  // ====== Salvar rascunho / Finalizar ======
+  document.getElementById('btn-save').onclick = async ()=>{
+    const payload = collectForm(); await postJSON(`/api/appointments/${appointmentId}/note/save`, payload); sendEvent('consult_note_saved',{});
+    alert('Rascunho salvo.');
+  };
+  document.getElementById('btn-finalize').onclick = async ()=>{
+    const v = validate(); if(!v.ok){ alert('Complete os obrigatórios antes de finalizar.'); return; }
+    const payload = collectForm(); payload.finishedAt = new Date().toISOString();
+    await postJSON(`/api/appointments/${appointmentId}/finalize`, payload);
+    sendEvent('consult_completed', { duration_sec: callStartedAt? Math.round((Date.now()-callStartedAt)/1000): null });
+    showNPS();
+  };
+  function collectForm(){
+    return {
+      appointmentId,
+      emergency: document.getElementById('flag-emergency').checked,
+      queixa: document.getElementById('queixa').value.trim(),
+      hda: document.getElementById('hda').value.trim(),
+      hipotese: document.getElementById('hipotese').value.trim(),
+      conduta: document.getElementById('conduta').value.trim(),
+      alertas: document.getElementById('alertas').value,
+      notas_privadas: document.getElementById('notas').value.trim(),
+      prescricao: currentPresc
+    };
+  }
+
+  // ====== Uploads ======
+  const fileInput = document.getElementById('file-input');
+  const filesList = document.getElementById('files-list');
+  fileInput?.addEventListener('change', async (e)=>{
+    const file = e.target.files?.[0]; if(!file) return;
+    if(file.size > 10*1024*1024){ alert('Arquivo muito grande (máx 10MB).'); return; }
+    // Envio simplificado (troque por multipart real se necessário)
+    const buf = await file.arrayBuffer();
+    await fetch(`/api/uploads?appointmentId=${encodeURIComponent(appointmentId)}&filename=${encodeURIComponent(file.name)}`, { method:'POST', headers:{'Content-Type':'application/octet-stream'}, body: buf });
+    sendEvent('doc_uploaded',{ filename:file.name, size:file.size });
+    addFileRow({ name:file.name, url:`/api/uploads/${appointmentId}/${encodeURIComponent(file.name)}` });
+    fileInput.value='';
+  });
+  function addFileRow(f){
+    const row = document.createElement('div'); row.className='file-row';
+    const left = document.createElement('div'); left.textContent = f.name; row.appendChild(left);
+    const right = document.createElement('div');
+    const a = document.createElement('a'); a.href=f.url; a.target='_blank'; a.textContent='Abrir'; right.appendChild(a);
+    row.appendChild(right); filesList.appendChild(row);
+  }
+
+  // ====== Prescrição (integração placeholder) ======
+  let currentPresc = [];// [{name:'Ibuprofeno 200mg', directions:'1 cp 8/8h por 3 dias'}]
+  const prescTable = document.getElementById('presc-table');
+  function renderPresc(){
+    if(!currentPresc.length){ prescTable.innerHTML = '<div class="help">Nenhum item ainda.</div>'; return; }
+    const html = ['<table style="width:100%;border-collapse:collapse">','<tr><th style="text-align:left;padding:6px;border-bottom:1px solid var(--line)">Produto</th><th style="text-align:left;padding:6px;border-bottom:1px solid var(--line)">Indicações</th><th></th></tr>'];
+    currentPresc.forEach((it,idx)=> html.push(`<tr><td style="padding:6px;border-bottom:1px solid var(--line)">${it.name}</td><td style="padding:6px;border-bottom:1px solid var(--line)">${it.directions||''}</td><td style="padding:6px;text-align:right"><button class="btn danger" data-i="${idx}">Remover</button></td></tr>`));
+    html.push('</table>'); prescTable.innerHTML = html.join('');
+    prescTable.querySelectorAll('button[data-i]').forEach(b=> b.onclick = ()=>{ currentPresc.splice(Number(b.dataset.i),1); renderPresc(); });
+  }
+  document.getElementById('btn-new-presc').onclick = async ()=>{
+    // Abra seu seletor real aqui. Por enquanto, simulamos um item.
+    const n = prompt('Medicamento (ex.: Paracetamol 750mg)'); if(!n) return;
+    const d = prompt('Indicações (ex.: 1 cp a cada 8h por 3 dias)')||'';
+    currentPresc.push({ name:n, directions:d }); renderPresc();
+    sendEvent('prescription_item_added', { name:n });
+  };
+  renderPresc();
+
+  // ====== NPS ======
+  function showNPS(){ document.getElementById('nps').hidden=false; }
+  document.getElementById('nps-skip').onclick = ()=> location.href='/dashboard-medico';
+  document.getElementById('nps-send').onclick = async ()=>{
+    const feedback = {
+      appointmentId,
+      audio: document.getElementById('nps-audio').checked,
+      video: document.getElementById('nps-video').checked,
+      lento: document.getElementById('nps-lento').checked,
+      msg: document.getElementById('nps-msg').value||''
+    };
+    await postJSON('/api/feedback', feedback); sendEvent('feedback_submitted', feedback);
+    location.href='/dashboard-medico';
+  };
+
+  // ====== Boot ======
+  validate();
+  waitStart = Date.now(); setInterval(tickWait, 1000); tickWait();
+  (async function loop(){ await fetchRoomState(); setTimeout(loop, 5000); })();
+})();
+</script>
+</body>
+</html>
