@@ -392,15 +392,30 @@ app.post('/api/events', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'events deve ser um array' });
     }
     
+    // Importar schema de validação
+    const { validateEvent } = await import('./validation-schemas.js');
+    
     const results = [];
+    const errors = [];
     
     for (const event of events) {
+      // Validar evento conforme contrato
+      const validation = validateEvent(event.event_type, event.payload || {});
+      
+      if (!validation.valid) {
+        errors.push({
+          event_type: event.event_type,
+          errors: validation.errors || [validation.error]
+        });
+        continue;
+      }
+      
       const eventEntry = {
         traceId: event.trace_id || req.id,
         eventType: event.event_type,
         category: event.category || 'user_journey',
         level: event.level || 'INFO',
-        payload: event.payload || {},
+        payload: validation.normalizedPayload,
         userAgent: req.get('User-Agent') || 'unknown',
         ipHash: hashIP(getClientIP(req))
       };
@@ -409,7 +424,18 @@ app.post('/api/events', async (req, res) => {
       results.push({ id: savedEvent.id, event_type: event.event_type });
     }
     
-    res.json({ ok: true, processed: results.length, events: results });
+    const response = { 
+      ok: true, 
+      processed: results.length, 
+      events: results 
+    };
+    
+    if (errors.length > 0) {
+      response.validation_errors = errors;
+      response.ok = false;
+    }
+    
+    res.status(errors.length > 0 ? 400 : 200).json(response);
     
   } catch (error) {
     console.error('Events endpoint error:', error.message);

@@ -7,12 +7,12 @@ export function securityHeaders(req, res, next) {
   // Content Security Policy (CSP) - Hardened per user specification
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'sha384-JGQ8tZep6h1EgdRvdrxP1Cr21q8cF4syP8yW6sScr2ihS5+dag9Dx7T8JXL0ZOGV' 'sha384-foJDXv2dglOU7f/y+Zw/9ToZauWO3GRaP4h5UWBS8B39us76noGPN7kSl2n0c/ZI' 'sha384-DueXrOkyGHT+zxLTZuqfQGhmPSkqEy2OKK4m4nGrngnwxP6L/u3jRjvuXjhqUpjk' 'sha384-roqs9QoffllRtPyCCfiFai1ecwBEM4ZeYYSlXcsXm8sqIkDdvT3IwTRpW2RSMF39'",
+    "script-src 'self' 'sha384-JGQ8tZep6h1EgdRvdrxP1Cr21q8cF4syP8yW6sScr2ihS5+dag9Dx7T8JXL0ZOGV' 'sha384-foJDXv2dglOU7f/y+Zw/9ToZauWO3GRaP4h5UWBS8B39us76noGPN7kSl2n0c/ZI' 'sha384-DueXrOkyGHT+zxLTZuqfQGhmPSkqEy2OKK4m4nGrngnwxP6L/u3jRjvuXjhqUpjk' 'sha384-wbtbzGd6bxqCvh5TIaOjrEu9S7Cv+0TxDHB0omfMuy00VmNYK1ufmvk+FwogmV3t' 'sha384-6C8nL1L8EPHcwV2guHnf0ZQwpL1xSOx6jV+W0Q7lKbYDT4OTg72sh4vFQCy7xKec' 'sha384-roqs9QoffllRtPyCCfiFai1ecwBEM4ZeYYSlXcsXm8sqIkDdvT3IwTRpW2RSMF39'",
     "style-src 'self' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data:", // Removed https: blob: per hardening spec
-    "connect-src 'self' https://telemed-internal.onrender.com https://telemed-auction.onrender.com https://telemed-productivity.onrender.com https://medical-desk-advanced.onrender.com https://telemed-docs-automation.onrender.com https://telemed-gateway.onrender.com", // Removed wss: ws: - add specific video domains as needed
-    "media-src 'self'", // Removed blob: per hardening
+    "img-src 'self' data: blob:", // blob: required for WebRTC recordings/previews
+    "connect-src 'self' https://telemed-internal.onrender.com https://telemed-auction.onrender.com https://telemed-productivity.onrender.com https://medical-desk-advanced.onrender.com https://telemed-docs-automation.onrender.com https://telemed-gateway.onrender.com wss: ws:", // wss:/ws: required for WebRTC
+    "media-src 'self' blob:", // blob: required for WebRTC media
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

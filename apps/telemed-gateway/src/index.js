@@ -9,6 +9,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// SECURITY: Fail fast se INTERNAL_TOKEN não configurado
+if (!process.env.INTERNAL_TOKEN) {
+  console.error('❌ INTERNAL_TOKEN environment variable is required');
+  console.error('Configure a strong token shared between gateway and telemed-internal');
+  process.exit(1);
+}
+
 // Configurar CORS
 app.use(cors({
   origin: [
@@ -203,7 +210,7 @@ app.post('/api/logs', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+        'X-Internal-Token': process.env.INTERNAL_TOKEN
       },
       body: JSON.stringify(req.body)
     });
@@ -226,7 +233,7 @@ app.post('/api/events', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+        'X-Internal-Token': process.env.INTERNAL_TOKEN
       },
       body: JSON.stringify(req.body)
     });
@@ -249,7 +256,7 @@ app.post('/api/webrtc-metrics', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+        'X-Internal-Token': process.env.INTERNAL_TOKEN
       },
       body: JSON.stringify(req.body)
     });
@@ -274,7 +281,7 @@ app.get('/api/metrics', async (req, res) => {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-Internal-Token': process.env.INTERNAL_TOKEN || 'change-me-internal'
+        'X-Internal-Token': process.env.INTERNAL_TOKEN
       }
     });
     
