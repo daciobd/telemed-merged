@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>TeleMed — Hub</title>
+  <link rel="stylesheet" href="/css/telemed-status.css">
   <style>
     :root{
       --brand:#0ea5e9; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
@@ -46,8 +47,15 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>Serviços (health)</h2>
+  <!-- Status público + painel dev -->
+  <div id="telemed-status" 
+       data-endpoints='["/api/health","https://telemed-auction.onrender.com/api/health","https://telemed-internal.onrender.com/api/health","https://telemed-productivity.onrender.com/api/health"]'
+       data-hub-url="/hub.html"
+       data-scribe-url="/scribe-demo.html">
+  </div>
+
+  <section class="card dev-only">
+    <h2>Serviços (health) - Console técnico</h2>
     <p class="muted">Edite os endpoints se necessário e clique em “Testar”. Use “Abrir” para ver o <code>/healthz</code> em nova aba.</p>
     <div class="grid">
       <div>
@@ -225,6 +233,11 @@
       setMdaBadge('Erro/CORS');
     }
   }
+
+  <!-- Componente de status -->
+  const statusScript = document.createElement('script');
+  statusScript.src = '/js/telemed-status.js';
+  document.head.appendChild(statusScript);
 </script>
 </body>
 </html>

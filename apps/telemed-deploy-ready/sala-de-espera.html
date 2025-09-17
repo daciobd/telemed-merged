@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sala de Espera – TeleMed</title>
+  <link rel="stylesheet" href="/css/telemed-status.css">
   <style>
     :root {
       --bg:#0b1220; --card:#111a2b; --muted:#a5b4c3; --fg:#e6edf3;
@@ -73,17 +74,27 @@
 
       <div class="sep"></div>
 
-      <div>
-        <div class="muted">Verificações rápidas (saúde dos serviços)</div>
-        <div class="badges" id="checks">
-          <span class="badge warn">Testando…</span>
-        </div>
+      <!-- Status público + painel dev -->
+      <div id="telemed-status" 
+           data-endpoints='["/api/health","https://telemed-auction.onrender.com/api/health","https://telemed-internal.onrender.com/api/health","https://telemed-productivity.onrender.com/api/health"]'
+           data-hub-url="/hub.html"
+           data-scribe-url="/scribe-demo.html">
       </div>
 
-      <div class="foot">
-        <a class="btn btn-ghost" href="/example-integration.html">Voltar ao Hub</a>
-        <a class="btn btn-ghost" href="/scribe-demo.html" target="_blank">Abrir Scribe/CIDs</a>
-      </div>
+      <!-- Informações técnicas antigas (agora ocultas para usuários finais) -->
+      <section class="dev-only">
+        <div>
+          <div class="muted">Verificações rápidas (saúde dos serviços) - LEGADO</div>
+          <div class="badges" id="checks">
+            <span class="badge warn">Testando…</span>
+          </div>
+        </div>
+
+        <div class="foot">
+          <a class="btn btn-ghost" href="/example-integration.html">Voltar ao Hub</a>
+          <a class="btn btn-ghost" href="/scribe-demo.html" target="_blank">Abrir Scribe/CIDs</a>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -228,6 +239,9 @@
   </div>
 
   <!-- JS de exibição após 120s de espera ou em erro -->
+  <!-- Componente de status -->
+  <script src="/js/telemed-status.js"></script>
+
   <script>
     (function(){
       const params = new URLSearchParams(location.search);
