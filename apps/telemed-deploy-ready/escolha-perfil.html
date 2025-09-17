@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed • Escolha seu perfil</title>
+  <meta name="description" content="Selecione seu perfil para iniciar a demonstração no TeleMed." />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #0f1730;
+      --text: #eaf0ff;
+      --muted: #9fb3ff;
+      --primary: #6ea8ff;
+      --primary-strong: #3e82ff;
+      --ring: rgba(110, 168, 255, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% -10%, #1a244a 0%, rgba(26,36,74,0) 60%),
+                  radial-gradient(900px 700px at 120% 10%, #152046 0%, rgba(21,32,70,0) 55%),
+                  var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .shell {
+      width: min(980px, 100%);
+      display: grid;
+      gap: 20px;
+      text-align: center;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .logo {
+      display: inline-grid;
+      place-items: center;
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #6ea8ff, #83ffd9);
+      color: #0a1330;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      box-shadow: 0 10px 30px rgba(110,168,255,.25);
+      user-select: none;
+    }
+
+    h1 { margin: 0; font-size: clamp(24px, 3vw, 36px); }
+    p.lead { margin: 0; color: var(--muted); font-size: clamp(14px, 2vw, 18px); }
+
+    .card {
+      background: color-mix(in oklab, var(--card), black 5%);
+      border: 1px solid color-mix(in oklab, var(--primary), black 70%);
+      border-radius: 20px;
+      padding: clamp(16px, 3vw, 28px);
+      box-shadow: 0 8px 40px rgba(0,0,0,.35);
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .role {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+      transition: transform .15s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .role:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--primary), white 30%); box-shadow: 0 8px 24px rgba(110,168,255,.12); }
+    .role:focus-within { outline: none; border-color: var(--primary); box-shadow: 0 0 0 6px var(--ring); }
+
+    .role h2 { margin: 0; font-size: 20px; }
+    .role p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      border-radius: 12px;
+      padding: 0 18px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #0a1330;
+      background: linear-gradient(135deg, var(--primary), #83ffd9);
+      border: 1px solid color-mix(in oklab, var(--primary), black 20%);
+      box-shadow: 0 8px 24px rgba(110,168,255,.20);
+      transition: transform .1s ease, filter .2s ease;
+    }
+    .cta:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .cta:active { transform: translateY(0); filter: brightness(.98); }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+      grid-auto-flow: column;
+      justify-content: center;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .disclaimer {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    nav.top {
+      position: fixed; inset: 16px 16px auto 16px; display: flex; justify-content: space-between; align-items: center; pointer-events: none;
+    }
+    .ghost-link { pointer-events: auto; color: var(--muted); text-decoration: none; border: 1px solid color-mix(in oklab, var(--muted), black 40%); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); background: rgba(15,23,48,.4); }
+    .ghost-link:focus { outline: none; box-shadow: 0 0 0 6px var(--ring); }
+  </style>
+</head>
+<body>
+  <!-- Barra superior opcional: voltar à Landing bonita -->
+  <nav class="top" aria-label="atalhos">
+    <a class="ghost-link" href="/" aria-label="Voltar à página inicial">← Voltar</a>
+  </nav>
+
+  <main class="shell" role="main">
+    <header>
+      <div class="logo" aria-hidden="true">TM</div>
+      <h1>Escolha seu perfil</h1>
+      <p class="lead">Para começar a demonstração, selecione como deseja testar o TeleMed.</p>
+    </header>
+
+    <section class="card" aria-labelledby="roles-heading">
+      <h2 id="roles-heading" class="sr-only" style="position:absolute;left:-9999px;">Perfis disponíveis</h2>
+      <div class="grid">
+        <!-- Cartão Paciente -->
+        <article class="role" aria-labelledby="paciente-title">
+          <h2 id="paciente-title">Sou Paciente</h2>
+          <p>Fluxo guiado para cadastro, escolha de médico e sala de espera.</p>
+          <div class="actions">
+            <a class="cta" href="/demo-paciente" aria-label="Entrar no fluxo de demonstração para Paciente" data-testid="button-demo-paciente">Entrar como Paciente →</a>
+          </div>
+          <p class="disclaimer">Recomendado para pessoas leigas; não mostra páginas técnicas.</p>
+        </article>
+
+        <!-- Cartão Médico -->
+        <article class="role" aria-labelledby="medico-title">
+          <h2 id="medico-title">Sou Médico</h2>
+          <p>Fluxo para aceitar pacientes e iniciar atendimento.</p>
+          <div class="actions">
+            <a class="cta" href="/demo-medico" aria-label="Entrar no fluxo de demonstração para Médico" data-testid="button-demo-medico">Entrar como Médico →</a>
+          </div>
+          <p class="disclaimer">Áreas em desenvolvimento serão sinalizadas no percurso.</p>
+        </article>
+      </div>
+    </section>
+
+    <p class="disclaimer">Dica: esta página não exibe links técnicos (Hub, Logs, Integrações) para evitar confusão durante os testes.</p>
+  </main>
+
+  <!-- Script pequeno para "+ acessibilidade" via teclado (focus ring melhorado em mouse/teclado) -->
+  <script>
+    (function() {
+      let usingMouse = false;
+      function setOutline() {
+        document.documentElement.style.scrollBehavior = 'smooth';
+        if (usingMouse) document.body.classList.add('using-mouse');
+        else document.body.classList.remove('using-mouse');
+      }
+      window.addEventListener('mousedown', function(){ usingMouse = true; setOutline(); });
+      window.addEventListener('keydown', function(e){ if (e.key === 'Tab') { usingMouse = false; setOutline(); } });
+    })();
+  </script>
+</body>
+</html>
