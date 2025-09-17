@@ -154,9 +154,10 @@
     const b2 = btn('Contraoferta', async()=>{
       const v = prompt('Valor da contraoferta (R$)'); if(!v) return; await postJSON(`/api/bids/${x.appointmentId}/proposals`,{ price:Number(v), slot:'now' }); refresh();
     });
+    const bSlots = btn('Ver slots', ()=> openSlots(x));
     const b3 = linkBtn('Abrir consultório','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&role=medico','primary');
     const b4 = linkBtn('PHR','/phr.html?person='+encodeURIComponent(x.person));
-    act.append(b1,b2,b3,b4); c.appendChild(act); return c;
+    act.append(b1,b2,bSlots,b3,b4); c.appendChild(act); return c;
   }
   function cardUpcoming(x){
     const c = el('div','card');
@@ -165,8 +166,8 @@
     const act = el('div','actions');
     const b1 = btn('Convidar', async()=>{ await postJSON(`/api/appointments/${x.appointmentId}/invite`,{}); alert('Convite enviado.'); });
     const b2 = linkBtn('Abrir consultório','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&role=medico','primary');
-    const b3 = btn('Reagendar', ()=> alert('Reagendamento virá no sprint de agenda.'));
-    act.append(b1,b2,b3); c.appendChild(act); return c;
+    const b3 = btn('Ver slots / Reagendar', ()=> openSlots(x));
+    act.append(b1,b3,b2); c.appendChild(act); return c;
   }
   function cardRecent(x){
     const c = el('div','card');
@@ -188,5 +189,100 @@
   setInterval(refresh, 10000);
 })();
 </script>
+
+<!-- Componente de Modal de Slots / Agenda para integrar ao Dashboard Médico -->
+<!-- Cole este bloco uma única vez (ex.: no fim de dashboard-medico.html, antes de </body>) -->
+
+<style>
+  .tm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:60 }
+  .tm-modal.show{ display:flex }
+  .tm-modal .card{ background:#0f172a; border:1px solid rgba(255,255,255,.08); border-radius:16px; width:min(760px,95vw); padding:12px; color:#eaf0ff }
+  .slots-grid{ display:grid; gap:8px; grid-template-columns:1fr 1fr }
+  @media(max-width:720px){ .slots-grid{ grid-template-columns:1fr } }
+  .slot{ border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.02) }
+  .muted{ opacity:.85; font-size:13px }
+  .btn{ height:34px; padding:0 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:inherit; cursor:pointer }
+  .btn.primary{ background:rgba(110,168,255,.18) }
+</style>
+
+<div id="tm-slots-modal" class="tm-modal" aria-hidden="true">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 8px 0">
+      <strong id="tm-slots-title">Agendar</strong>
+      <button class="btn" id="tm-slots-close">Fechar</button>
+    </div>
+    <div id="tm-slots-body"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById('tm-slots-modal');
+  const body  = document.getElementById('tm-slots-body');
+  document.getElementById('tm-slots-close').onclick = ()=> { modal.classList.remove('show'); body.innerHTML=''; };
+
+  const fmtBRL = (n)=> new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(n);
+  const human  = (iso)=> new Date(iso).toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'});
+
+  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch{ return null; } }
+  async function postJSON(url,data){ try{ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch{ return null; } }
+
+  // Mocks de segurança (funciona mesmo sem backend)
+  function mockFloor(){ return { now_floor:140, in_2h_floor:110, tomorrow_floor:90 }; }
+  function mockAvailability(offer){
+    return { offer,
+      immediate:{ doctors_available: offer>=140?3:0, eta_minutes: offer>=140?10:null },
+      next_2h:{ doctors_available: offer>=110?2:1, eta_minutes:60 },
+      tomorrow:{ doctors_available:5 },
+      suggested_slots:[
+        { start:new Date(Date.now()+60*60e3).toISOString(), min_price:110 },
+        { start:new Date(Date.now()+2*60*60e3).toISOString(), min_price:110 },
+        { start:new Date(Date.now()+26*60*60e3).toISOString(), min_price:90 }
+      ] };
+  }
+
+  async function refreshSlots(ctx){
+    const spec = ctx.specialty; const region = ctx.region||'sp-capital'; const offer = Number(document.getElementById('slot-offer').value||0);
+    const floors = await getJSON(`/api/market/price-floor?specialty=${encodeURIComponent(spec)}&region=${encodeURIComponent(region)}&urgency=immediate`) || mockFloor();
+    const av = await getJSON(`/api/market/availability?specialty=${encodeURIComponent(spec)}&region=${encodeURIComponent(region)}&offer=${offer}`) || mockAvailability(offer);
+
+    document.getElementById('slot-hints').innerHTML = `Hoje: <b>mín. imediato</b> ${fmtBRL(floors.now_floor)} · <b>até 2h</b> ${fmtBRL(floors.in_2h_floor)} · <b>amanhã</b> ${fmtBRL(floors.tomorrow_floor)}`;
+    document.getElementById('slot-availability').innerHTML = `No preço <b>${fmtBRL(offer)}</b>: <b>${av.immediate.doctors_available||0}</b> médicos agora ${av.immediate.eta_minutes? '· ETA ~'+av.immediate.eta_minutes+'min':''} · <b>${av.next_2h.doctors_available||0}</b> em 1–2h · <b>${av.tomorrow.doctors_available||0}</b> amanhã.`;
+
+    const slots = document.getElementById('slot-slots'); slots.innerHTML='';
+    (av.suggested_slots||[]).forEach(s=>{
+      const el = document.createElement('div'); el.className='slot';
+      el.innerHTML = `<div><div><strong>${human(s.start)}</strong></div><div class="muted">Mín.: ${fmtBRL(s.min_price)}</div></div>`;
+      const b = document.createElement('button'); b.className='btn primary'; b.textContent='Agendar';
+      b.onclick = async()=>{ await postJSON(`/api/appointments/${ctx.appointmentId}/schedule`, { start: s.start, price: Math.max(offer, s.min_price) }); modal.classList.remove('show'); body.innerHTML=''; alert('Agendado!'); };
+      el.appendChild(b); slots.appendChild(el);
+    });
+  }
+
+  // Exponde global para ser usado pelos cards do dashboard
+  window.openSlots = function(item){
+    modal.classList.add('show');
+    document.getElementById('tm-slots-title').textContent = `Agendar • ${item.person}`;
+    body.innerHTML = `
+      <div style="display:grid;gap:8px">
+        <div>
+          <label>Oferta (R$)</label>
+          <input id="slot-offer" type="number" min="0" step="5" value="${item.offer||120}" style="height:38px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit">
+          <div id="slot-hints" class="muted" style="margin-top:6px"></div>
+        </div>
+        <div id="slot-availability" class="muted"></div>
+      </div>
+      <div style="margin-top:10px;font-size:14px">Horários sugeridos</div>
+      <div id="slot-slots" class="slots-grid" style="margin-top:6px"></div>
+    `;
+    const ctx = { appointmentId: item.appointmentId, specialty: item.specialty, region: 'sp-capital' };
+    const offerInput = document.getElementById('slot-offer');
+    offerInput.addEventListener('change', ()=> refreshSlots(ctx));
+    offerInput.addEventListener('keyup', (e)=>{ if(e.key==='Enter') refreshSlots(ctx) });
+    refreshSlots(ctx);
+  }
+})();
+</script>
+
 </body>
 </html>
