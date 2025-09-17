@@ -114,12 +114,14 @@ async function callDrAiAPI(endpoint, options = {}) {
 
   // Fallback para API real se disponível
   const baseUrl = window.TELEMED_CFG?.DR_AI_URL || 'http://localhost:5001';
-  const token = window.TELEMED_CFG?.DR_AI_TOKEN || 'dev-token-123';
+  // SECURITY: Never expose tokens in client code - tokens should come from server-side proxy
+  const token = window.TELEMED_CFG?.DR_AI_TOKEN; // No default token for security
   
+  // Only add auth header if token is configured from server-side
   const config = {
     headers: {
       'Content-Type': 'application/json',
-      'X-Auth': token
+      ...(token && { 'X-Auth': token }) // Only include token if provided by server
     },
     ...options
   };
