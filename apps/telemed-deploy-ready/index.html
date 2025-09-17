@@ -166,5 +166,121 @@
   <script src="/js/consent-manager.js" integrity="sha384-wbtbzGd6bxqCvh5TIaOjrEu9S7Cv+0TxDHB0omfMuy00VmNYK1ufmvk+FwogmV3t" crossorigin="anonymous"></script>
   <script src="/js/webrtc-metrics.js" integrity="sha384-6C8nL1L8EPHcwV2guHnf0ZQwpL1xSOx6jV+W0Q7lKbYDT4OTg72sh4vFQCy7xKec" crossorigin="anonymous"></script>
   <script src="/js/prewarm.js" integrity="sha384-roqs9QoffllRtPyCCfiFai1ecwBEM4ZeYYSlXcsXm8sqIkDdvT3IwTRpW2RSMF39" crossorigin="anonymous"></script>
+
+  <!-- Adaptador de Demo para a Landing Bonita (não quebra o design) -->
+  <!-- Barra discreta explicando o fluxo + CTA principal -->
+  <div id="tm-demo-banner" class="tm-demo-banner" role="region" aria-label="Informações da demonstração">
+    <div class="tm-demo-banner__inner">
+      <span>Estamos priorizando o <b>fluxo de conexão médico–paciente</b> nesta demonstração.</span>
+      <a id="tm-cta-demo" class="tm-cta" href="/escolha-perfil.html">Começar Demo</a>
+    </div>
+  </div>
+
+  <style>
+    /* Banner superior discreto */
+    .tm-demo-banner{ position:sticky; top:0; z-index:50; backdrop-filter:saturate(1.2) blur(6px); background:rgba(255,255,255,.7); border-bottom:1px solid rgba(0,0,0,.06); }
+    .tm-demo-banner__inner{ max-width:1100px; margin:0 auto; padding:10px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between; font-size:14px; color:#0f172a; }
+    .tm-cta{ display:inline-flex; align-items:center; justify-content:center; gap:8px; height:40px; padding:0 16px; font-weight:600; border-radius:10px; background:#2563eb; color:#fff; text-decoration:none; }
+    .tm-cta:hover{ filter:brightness(1.05) }
+
+    /* Botões/links travados visualmente, sem quebrar o layout existente */
+    .tm-locked{ position:relative; cursor:not-allowed !important; opacity:.7; }
+    .tm-locked::after{ content:attr(data-lock-msg); position:absolute; right:6px; bottom:-26px; white-space:nowrap; font-size:12px; padding:4px 8px; border-radius:8px; background:rgba(15,23,42,.92); color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.2); opacity:0; pointer-events:none; transform:translateY(4px); transition:opacity .15s ease, transform .15s ease; }
+    .tm-locked:hover::after{ opacity:1; transform:translateY(0); }
+
+    /* Selo "Em breve" para cards se quiser marcar grupos */
+    .tm-soon{ position:relative; }
+    .tm-soon::before{ content:"Em breve"; position:absolute; top:10px; right:10px; font-size:12px; padding:4px 8px; border-radius:999px; background:rgba(2,132,199,.12); color:#0369a1; border:1px solid rgba(3,105,161,.25); }
+
+    /* Modo desenvolvedor: mostrar tudo */
+    .tm-dev-on .tm-locked{ opacity:1; cursor:pointer !important; }
+    .tm-dev-on .tm-locked::after{ display:none; }
+  </style>
+
+  <script>
+  (function(){
+    // ===== Configurações =====
+    const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
+    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico' ];
+    const allowIds = [ 'tm-cta-demo', 'go' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
+    const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
+    const lockMessages = {
+      'Conheça o Dr. AI': 'Área ainda em desenvolvimento. Nesta demonstração, priorizamos a conexão médico–paciente.',
+      'Consulta online': 'Canal completo será habilitado em breve. Para testar agora, use "Começar Demo".',
+      'Demonstração para pacientes': 'Use "Começar Demo" para o fluxo guiado. Este atalho está desativado nesta versão.',
+      'Saiba Mais': 'Conteúdo institucional fora do escopo desta demo. Siga para "Começar Demo".',
+      'Para cadastro': 'Cadastro direto será aberto na próxima etapa do projeto. Utilize "Começar Demo".',
+      'Contato': 'Disponível em breve — nesta demonstração priorizamos o fluxo médico–paciente.',
+      'Suporte': 'Disponível em breve — nesta demonstração priorizamos o fluxo médico–paciente.',
+      'Termos': 'Disponível em breve — nesta demonstração priorizamos o fluxo médico–paciente.'
+    };
+
+    // ===== Checagem de modo =====
+    const url = new URL(location.href);
+    const fullParam = url.searchParams.get('full');
+    const devParam  = url.searchParams.get('dev');
+    const isFull = fullParam === '1' ? true : (fullParam === '0' ? false : !DEMO_ON_BY_DEFAULT);
+    const devOn  = devParam === '1' || localStorage.getItem('tm_dev') === 'on';
+    if(devOn) document.documentElement.classList.add('tm-dev-on');
+
+    function isAllowed(el){
+      if(isFull || devOn) return true; // tudo liberado
+      if(allowIds.includes(el.id)) return true;
+      if(el.hasAttribute('data-allow-demo')) return true;
+      const href = (el.getAttribute('href')||'').trim();
+      if(href && allowHrefsStartsWith.some(p=> href.startsWith(p))) return true;
+      // Permitir links âncora locais (como #saiba-mais)
+      if(href && href.startsWith('#')) return true;
+      return false;
+    }
+
+    function textMatch(el){
+      const t = (el.textContent||'').trim();
+      return lockByText.some(s=> t.toLowerCase().includes(s.toLowerCase()));
+    }
+
+    function lock(el){
+      if(el.classList.contains('tm-locked')) return;
+      // Decide mensagem institucional
+      const defaultMsg = 'Disponível em breve — nesta demonstração priorizamos o fluxo médico–paciente.';
+      const text = (el.textContent||'').trim();
+      const key = Object.keys(lockMessages).find(k=> text.toLowerCase().includes(k.toLowerCase()));
+      const msg = key ? lockMessages[key] : defaultMsg;
+
+      el.classList.add('tm-locked');
+      el.setAttribute('aria-disabled','true');
+      el.setAttribute('data-lock-msg', msg);
+      el.setAttribute('title', msg);
+      el.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); }, { capture:true });
+    }
+
+    function applyLocks(){
+      const clickables = Array.from(document.querySelectorAll('a, button'));
+      clickables.forEach(el => {
+        if(isAllowed(el)) return; // whitelisted
+        // travar por texto conhecido ou por padrão, desde que não seja navegação principal
+        const href = (el.getAttribute('href')||'').trim();
+        const likelyPrimaryNav = href==='#' || href==='' || href.startsWith('#');
+        if(textMatch(el) || (!href && el.tagName==='BUTTON') || (!likelyPrimaryNav && href)){
+          lock(el);
+        }
+      });
+
+      // Marcar grupos/cards inteiros como "Em breve" se tiver data-soon
+      document.querySelectorAll('[data-soon]')?.forEach(c => c.classList.add('tm-soon'));
+    }
+
+    // Atalho de teclado para dev: Ctrl+Alt+D
+    document.addEventListener('keydown', (e)=>{
+      if(e.ctrlKey && e.altKey && e.key.toLowerCase()==='d'){
+        const next = !(localStorage.getItem('tm_dev')==='on');
+        localStorage.setItem('tm_dev', next? 'on':'off');
+        location.reload();
+      }
+    });
+
+    if(!isFull || devOn) applyLocks();
+  })();
+  </script>
 </body>
 </html>
