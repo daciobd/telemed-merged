@@ -25,9 +25,9 @@
       <textarea id="text" placeholder="Ex.: Paciente masculino, 58 anos, dor torácica há 2h, sudorese, dispneia..."></textarea>
       <div class="row">
         <button id="go" class="btn">Sugerir CIDs</button>
-        <a href="/example-integration.html" class="muted">← Voltar ao Hub</a>
+        <a href="/hub.html" class="muted">← Voltar ao Hub</a>
         <span style="flex:1"></span>
-        <small class="muted">PRODUCTIVITY_URL: <span id="purl"></span></small>
+        <small class="muted dev-only">PRODUCTIVITY_URL: <span id="purl"></span></small>
       </div>
       <div id="out"></div>
     </div>
@@ -71,6 +71,28 @@
       }
     };
   })();
+  </script>
+
+  <!-- Componente de status simplificado -->
+  <script>
+    // Apenas ocultar elementos dev-only se não estiver em modo dev
+    (function() {
+      const devMode = new URLSearchParams(location.search).get('dev') === '1' 
+                      || localStorage.getItem('tm_dev') === 'on';
+      
+      document.querySelectorAll('.dev-only').forEach(el => {
+        el.hidden = !devMode;
+      });
+
+      // Atalho Ctrl+Alt+D
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'd') {
+          const current = localStorage.getItem('tm_dev') === 'on';
+          localStorage.setItem('tm_dev', current ? 'off' : 'on');
+          location.reload();
+        }
+      });
+    })();
   </script>
 </body>
 </html>
