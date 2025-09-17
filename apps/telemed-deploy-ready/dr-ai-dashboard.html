@@ -316,7 +316,7 @@
     // Configuration
     const config = {
       baseUrl: window.TELEMED_CFG?.DR_AI_URL || 'http://localhost:5001',
-      token: window.TELEMED_CFG?.DR_AI_TOKEN || 'dev-token-123',
+      token: window.TELEMED_CFG?.DR_AI_TOKEN, // SECURITY: No default token - must be provided by server
       refreshInterval: 30000 // 30 seconds
     };
 
@@ -340,9 +340,12 @@
 
       // Fallback para API real
       try {
-        const response = await fetch(`${config.baseUrl}${endpoint}`, {
-          headers: { 'X-Auth': config.token }
-        });
+        const headers = { 'Content-Type': 'application/json' };
+        if (config.token) {
+          headers['X-Auth'] = config.token; // Only include token if provided by server
+        }
+        
+        const response = await fetch(`${config.baseUrl}${endpoint}`, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);

@@ -99,21 +99,39 @@
   async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('GET fallback',e); return null; } }
   async function postJSON(url, data){ try{ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('POST fallback',e); return null; } }
 
-  function mockDashboard(){
+  function mockDashboard(spec = 'all'){
     const now=new Date(); const inMin=(m)=> new Date(Date.now()+m*60e3).toISOString();
-    const queue=[
+    
+    // Dados completos (sempre os mesmos para consistência)
+    const allQueue=[
       {appointmentId:'APT-101', person:'Karina Pinheiro', age:31, complaint:'ansiedade', offer:120, since:inMin(-12), specialty:'psiquiatria'},
       {appointmentId:'APT-102', person:'William Nascimento', age:27, complaint:'dor de garganta', offer:90, since:inMin(-5), specialty:'clinica_geral'}
     ];
-    const upcoming=[
+    const allUpcoming=[
       {appointmentId:'APT-201', person:'Solange Vicentini', age:55, at:inMin(45), minPrice:110, specialty:'psiquiatria'},
       {appointmentId:'APT-202', person:'Claudio Correa', age:36, at:inMin(120), minPrice:90, specialty:'clinica_geral'}
     ];
-    const recent=[
+    const allRecent=[
       {appointmentId:'APT-090', person:'Karina Pinheiro', age:31, finishedAt:inMin(-60), durationMin:20, specialty:'psiquiatria'},
       {appointmentId:'APT-089', person:'Ramon Lima', age:23, finishedAt:inMin(-120), durationMin:18, specialty:'clinica_geral'}
     ];
-    return { queue, upcoming, recent, stats:{queue:queue.length, upcoming:upcoming.length, done:2} };
+
+    // Filtrar por especialidade se especificado
+    const filter = (items) => {
+      if (spec === 'all') return items;
+      return items.filter(item => item.specialty === spec);
+    };
+
+    const queue = filter(allQueue);
+    const upcoming = filter(allUpcoming);  
+    const recent = filter(allRecent);
+
+    return { 
+      queue, 
+      upcoming, 
+      recent, 
+      stats: { queue: queue.length, upcoming: upcoming.length, done: recent.length } 
+    };
   }
 
   async function refresh(){
@@ -121,7 +139,7 @@
     // Usar dados mock por enquanto (Dr. AI integration phase)
     // TODO: Implementar endpoint /api/doctor/dashboard quando necessário
     console.log(`📊 Dashboard refresh - spec: ${spec}, window: ${w}`);
-    const data = mockDashboard();
+    const data = mockDashboard(spec);
     const {queue, upcoming, recent, stats} = data;
 
     // counters
