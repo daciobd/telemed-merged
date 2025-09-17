@@ -50,8 +50,13 @@
           <button id="updateRoom" class="btn btn-ghost" style="margin-bottom:8px" data-testid="button-update-room">Atualizar Sala</button>
         </div>
 
+        <!-- Status da sala -->
+        <div id="roomStatus" style="margin:12px 0;padding:10px;border:1px solid #26344f;border-radius:8px;background:#071223">
+          <span class="muted">Status:</span> <span id="statusText" class="warn" style="font-weight:600">🔄 Verificando disponibilidade...</span>
+        </div>
+
         <div class="row">
-          <button id="join" class="btn btn-primary" data-testid="button-join-video">Entrar na Sala de Vídeo</button>
+          <button id="join" class="btn btn-primary" data-testid="button-join-video" disabled style="opacity:0.5;cursor:not-allowed">Aguardando médico...</button>
           <button id="copy" class="btn btn-ghost" data-testid="button-copy-link">Copiar link desta sala</button>
         </div>
         <div class="copy muted" id="copied" style="display:none;margin-top:6px">Link copiado ✔</div>
@@ -87,6 +92,10 @@
     const p = new URLSearchParams(location.search);
     let room = (p.get('appointmentId') || 'telemed-demo').trim();
     
+    // Controle de estado da sala (host-first security)
+    let hostPresent = false;
+    let canJoin = false;
+    
     function updateRoomDisplay(roomId) {
       document.getElementById('appt').innerHTML = `<code>${roomId}</code>`;
       document.getElementById('appointmentInput').value = roomId;
@@ -97,8 +106,60 @@
       document.getElementById('linkPatient').href = patientUrl;
       document.getElementById('linkDoctor').href = doctorUrl;
       
-      // Atualizar botão principal
-      document.getElementById('join').onclick = () => { location.href = patientUrl };
+      // Iniciar verificação do estado da sala
+      checkRoomState(roomId);
+      
+      // Polling a cada 5 segundos
+      setInterval(() => checkRoomState(roomId), 5000);
+    }
+    
+    async function checkRoomState(appointmentId) {
+      try {
+        const response = await fetch(`/api/appointments/${appointmentId}/room-state`);
+        if (response.ok) {
+          const state = await response.json();
+          hostPresent = state.hostPresent || false;
+          canJoin = hostPresent || state.canJoin || false;
+        }
+      } catch (error) {
+        // Mock behavior: para demo, simula que médico não está presente
+        console.log('Mock: Verificando estado da sala...');
+        hostPresent = false;
+        canJoin = false;
+      }
+      
+      updateRoomUI(appointmentId);
+    }
+    
+    function updateRoomUI(appointmentId) {
+      const joinBtn = document.getElementById('join');
+      const statusText = document.getElementById('statusText');
+      
+      if (canJoin && hostPresent) {
+        // Médico presente - pode entrar
+        joinBtn.disabled = false;
+        joinBtn.style.opacity = '1';
+        joinBtn.style.cursor = 'pointer';
+        joinBtn.textContent = 'Entrar na Sala de Vídeo';
+        joinBtn.onclick = () => { 
+          location.href = `/consulta/?appointmentId=${encodeURIComponent(appointmentId)}&role=patient`; 
+        };
+        
+        statusText.textContent = '✅ Médico presente - pode entrar na sala';
+        statusText.className = '';
+        statusText.style.color = 'var(--ok)';
+      } else {
+        // Aguardando médico
+        joinBtn.disabled = true;
+        joinBtn.style.opacity = '0.5';
+        joinBtn.style.cursor = 'not-allowed';
+        joinBtn.textContent = 'Aguardando médico...';
+        joinBtn.onclick = null;
+        
+        statusText.textContent = '🔄 Aguardando o médico entrar na sala...';
+        statusText.className = 'warn';
+        statusText.style.color = 'var(--warn)';
+      }
     }
     
     // Inicializar display
