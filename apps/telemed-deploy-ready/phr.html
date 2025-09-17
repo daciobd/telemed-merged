@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed • PHR Básico + Timeline</title>
+  <style>
+    :root{ --bg:#0b1020; --panel:#0f172a; --line:rgba(255,255,255,.08); --text:#eaf0ff; --muted:#9fb3ff; --ring:rgba(110,168,255,.5); --ok:#16a34a; --warn:#f59e0b; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:#7cb2ff}
+    .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);background:rgba(15,23,42,.85);border-bottom:1px solid var(--line)}
+    .wrap{max-width:1200px;margin:0 auto;padding:12px 16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .grid{display:grid;gap:12px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+    @media(max-width:1000px){ .grid.cols-2{grid-template-columns:1fr} .grid.cols-4{grid-template-columns:1fr 1fr} }
+    @media(max-width:600px){ .grid.cols-4{grid-template-columns:1fr} }
+
+    .h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .body{padding:12px}
+    .badge{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;opacity:.9}
+    .badge.ok{background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.35)}
+    .badge.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+    
+    .patient-header{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
+    .patient-info h2{margin:0 0 8px;font-size:24px}
+    .patient-meta{color:var(--muted);font-size:14px;line-height:1.4}
+    .patient-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+    .summary-item{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;padding:12px}
+    .summary-item h4{margin:0 0 8px;font-size:14px;color:var(--muted)}
+    .summary-item .value{font-size:16px;font-weight:600}
+    .summary-item .list{margin:6px 0 0;font-size:14px}
+    .summary-item .list div{margin:2px 0;opacity:.9}
+
+    .timeline{display:grid;gap:8px}
+    .event{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+    .event-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:16px}
+    .event-icon.signup{background:rgba(110,168,255,.2);color:#7cb2ff}
+    .event-icon.consult{background:rgba(22,163,74,.2);color:var(--ok)}
+    .event-icon.doc{background:rgba(245,158,11,.2);color:var(--warn)}
+    .event-icon.prescription{background:rgba(168,85,247,.2);color:#a855f7}
+    .event-icon.feedback{background:rgba(239,68,68,.2);color:#ef4444}
+    .event-content h5{margin:0 0 4px;font-size:15px}
+    .event-content .meta{font-size:12px;color:var(--muted)}
+    .event-time{font-size:12px;color:var(--muted);white-space:nowrap}
+
+    .btn{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer;text-decoration:none}
+    .btn.primary{background:rgba(110,168,255,.18)}
+
+    .empty{opacity:.8;font-size:14px;text-align:center;padding:20px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap row" style="justify-content:space-between">
+      <div class="row">
+        <strong>PHR • Prontuário</strong>
+        <span id="patient-id" class="badge">P-0000</span>
+      </div>
+      <div class="row">
+        <a href="/dashboard-medico.html" class="btn">← Dashboard</a>
+        <button id="btn-refresh" class="btn">Atualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap grid" style="margin-top:12px">
+    <!-- Cabeçalho do Paciente -->
+    <section class="panel">
+      <div class="body">
+        <div class="patient-header">
+          <div class="patient-info">
+            <h2 id="patient-name">Nome do Paciente</h2>
+            <div class="patient-meta">
+              <div id="patient-age">— anos</div>
+              <div id="patient-gender">Sexo: —</div>
+              <div id="patient-doc">CPF: —</div>
+              <div id="patient-joined">Cadastrado em: —</div>
+            </div>
+          </div>
+          <div class="patient-actions">
+            <a id="btn-new-consult" class="btn primary" href="/consulta.html">Nova Consulta</a>
+            <button id="btn-contact" class="btn">Contato</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resumo Clínico -->
+    <section class="panel">
+      <div class="h"><strong>Resumo Clínico</strong></div>
+      <div class="body">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <h4>Alergias</h4>
+            <div id="allergies" class="list">
+              <div class="empty">Nenhuma alergia registrada</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <h4>Medicações</h4>
+            <div id="medications" class="list">
+              <div class="empty">Nenhuma medicação em uso</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <h4>Condições</h4>
+            <div id="conditions" class="list">
+              <div class="empty">Nenhuma condição crônica</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <h4>Equipe Médica</h4>
+            <div id="team" class="list">
+              <div class="empty">Nenhum profissional atribuído</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Timeline de Eventos -->
+    <section class="panel">
+      <div class="h">
+        <strong>Timeline de Eventos</strong>
+        <span class="badge" id="events-count">0 eventos</span>
+      </div>
+      <div class="body">
+        <div id="timeline" class="timeline"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const personName = params.get('person') || 'Paciente';
+  const personId = params.get('personId') || 'P-0001';
+
+  document.getElementById('patient-id').textContent = personId;
+  document.title = `TeleMed • PHR ${personName}`;
+
+  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('GET fallback',e); return null; } }
+
+  function ago(iso){ const s=Math.floor((Date.now()-new Date(iso))/1000); const m=Math.floor(s/60); const h=Math.floor(m/60); const d=Math.floor(h/24); return d>0?d+' dias':h>0?h+'h':m>0?m+' min':s+' s' }
+  function humanDate(iso){ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) }
+
+  function mockPHR(){
+    const now = new Date();
+    const daysAgo = (d) => new Date(Date.now() - d*24*60*60*1000).toISOString();
+    return {
+      patient: {
+        name: personName,
+        age: 34,
+        gender: 'Feminino',
+        document: '123.456.789-00',
+        joinedAt: daysAgo(120)
+      },
+      allergies: ['Dipirona', 'Frutos do mar'],
+      medications: ['Losartana 50mg (1x/dia)', 'Vitamina D 2000UI (diário)'],
+      conditions: ['Hipertensão arterial', 'Ansiedade'],
+      team: ['Dr. Silva (Cardiologista)', 'Dra. Santos (Clínica Geral)']
+    };
+  }
+
+  function mockEvents(){
+    const now = new Date();
+    const minsAgo = (m) => new Date(Date.now() - m*60*1000).toISOString();
+    const hoursAgo = (h) => new Date(Date.now() - h*60*60*1000).toISOString();
+    const daysAgo = (d) => new Date(Date.now() - d*24*60*60*1000).toISOString();
+    
+    return [
+      {type:'feedback_submitted', ts:minsAgo(30), details:'Avaliação da consulta: qualidade satisfatória'},
+      {type:'consult_completed', ts:minsAgo(45), details:'Consulta finalizada', duration:18},
+      {type:'prescription_item_added', ts:minsAgo(50), details:'Paracetamol 750mg prescrito'},
+      {type:'consult_started', ts:minsAgo(63), details:'Consulta iniciada - ansiedade'},
+      {type:'doc_uploaded', ts:hoursAgo(2), details:'Exame de sangue (hemograma.pdf)'},
+      {type:'consult_created', ts:hoursAgo(3), details:'Nova consulta agendada'},
+      {type:'signup', ts:daysAgo(120), details:'Cadastro realizado na plataforma'}
+    ];
+  }
+
+  function renderPatient(data){
+    document.getElementById('patient-name').textContent = data.name;
+    document.getElementById('patient-age').textContent = data.age + ' anos';
+    document.getElementById('patient-gender').textContent = 'Sexo: ' + data.gender;
+    document.getElementById('patient-doc').textContent = 'CPF: ' + data.document;
+    document.getElementById('patient-joined').textContent = 'Cadastrado em: ' + humanDate(data.joinedAt);
+    
+    document.getElementById('btn-new-consult').href = `/consulta.html?appointmentId=APT-NEW&role=medico&patient=${encodeURIComponent(data.name)}`;
+  }
+
+  function renderSummary(data){
+    const allergiesEl = document.getElementById('allergies');
+    if(data.allergies && data.allergies.length){
+      allergiesEl.innerHTML = data.allergies.map(a => `<div>${a}</div>`).join('');
+    }
+
+    const medsEl = document.getElementById('medications');
+    if(data.medications && data.medications.length){
+      medsEl.innerHTML = data.medications.map(m => `<div>${m}</div>`).join('');
+    }
+
+    const condsEl = document.getElementById('conditions');
+    if(data.conditions && data.conditions.length){
+      condsEl.innerHTML = data.conditions.map(c => `<div>${c}</div>`).join('');
+    }
+
+    const teamEl = document.getElementById('team');
+    if(data.team && data.team.length){
+      teamEl.innerHTML = data.team.map(t => `<div>${t}</div>`).join('');
+    }
+  }
+
+  function renderTimeline(events){
+    const timeline = document.getElementById('timeline');
+    document.getElementById('events-count').textContent = events.length + ' eventos';
+    
+    if(!events.length){
+      timeline.innerHTML = '<div class="empty">Nenhum evento registrado ainda</div>';
+      return;
+    }
+
+    const eventIcons = {
+      signup: '👋',
+      consult_created: '📅',
+      consult_started: '🩺',
+      consult_completed: '✅',
+      doc_uploaded: '📄',
+      prescription_item_added: '💊',
+      feedback_submitted: '⭐'
+    };
+
+    const eventTitles = {
+      signup: 'Cadastro realizado',
+      consult_created: 'Consulta agendada',
+      consult_started: 'Consulta iniciada',
+      consult_completed: 'Consulta finalizada',
+      doc_uploaded: 'Documento enviado',
+      prescription_item_added: 'Medicamento prescrito',
+      feedback_submitted: 'Feedback enviado'
+    };
+
+    timeline.innerHTML = events.map(evt => {
+      const icon = eventIcons[evt.type] || '📋';
+      const title = eventTitles[evt.type] || evt.type;
+      const duration = evt.duration ? ` (${evt.duration} min)` : '';
+      
+      return `
+        <div class="event">
+          <div class="event-icon ${evt.type}">${icon}</div>
+          <div class="event-content">
+            <h5>${title}${duration}</h5>
+            <div class="meta">${evt.details || '—'}</div>
+          </div>
+          <div class="event-time">${ago(evt.ts)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function refresh(){
+    // Busca dados do paciente
+    const phrData = await getJSON(`/api/patients/${personId}/phr`) || mockPHR();
+    renderPatient(phrData.patient);
+    renderSummary(phrData);
+
+    // Busca eventos da timeline
+    const eventsData = await getJSON(`/api/patients/${personId}/events`) || mockEvents();
+    renderTimeline(eventsData);
+
+    // Calcula duração da última consulta para exibição
+    const lastConsult = eventsData.find(e => e.type === 'consult_completed');
+    if(lastConsult && lastConsult.duration){
+      console.log(`Última consulta: ${lastConsult.duration} min`);
+    }
+  }
+
+  document.getElementById('btn-refresh').onclick = refresh;
+  document.getElementById('btn-contact').onclick = () => alert('Funcionalidade de contato em desenvolvimento');
+  
+  refresh();
+})();
+</script>
+</body>
+</html>
