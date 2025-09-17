@@ -118,7 +118,10 @@
 
   async function refresh(){
     const spec = specSel.value; const w = winSel.value;
-    const data = await getJSON(`/api/doctor/dashboard?spec=${spec}&window=${w}`) || mockDashboard();
+    // Usar dados mock por enquanto (Dr. AI integration phase)
+    // TODO: Implementar endpoint /api/doctor/dashboard quando necessário
+    console.log(`📊 Dashboard refresh - spec: ${spec}, window: ${w}`);
+    const data = mockDashboard();
     const {queue, upcoming, recent, stats} = data;
 
     // counters
