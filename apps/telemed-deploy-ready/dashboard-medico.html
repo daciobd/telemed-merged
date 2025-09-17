@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed • Dashboard Médico (MVP)</title>
+  <style>
+    :root{ --bg:#0b1020; --panel:#0f172a; --line:rgba(255,255,255,.08); --text:#eaf0ff; --muted:#9fb3ff; --ring:rgba(110,168,255,.5); }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:#7cb2ff}
+    .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);background:rgba(15,23,42,.85);border-bottom:1px solid var(--line)}
+    .wrap{max-width:1200px;margin:0 auto;padding:12px 16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .grid{display:grid;gap:12px}
+    .grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+    @media(max-width:1100px){ .grid.cols-3{grid-template-columns:1fr} }
+
+    .h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .body{padding:10px 12px}
+    .badge{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;opacity:.9}
+    .stat{display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+
+    .filters{display:flex;gap:8px;align-items:center}
+    select,input{height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:inherit}
+
+    .card{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:6px;background:rgba(255,255,255,.02)}
+    .card .meta{font-size:12px;opacity:.8}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
+    .btn.primary{background:rgba(110,168,255,.18)}
+    .btn.warn{background:rgba(245,158,11,.18)}
+
+    .empty{opacity:.8;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap row" style="justify-content:space-between">
+      <div class="row">
+        <strong>Dashboard Médico</strong>
+        <span id="doctor-name" class="badge">Dr(a). Nome</span>
+      </div>
+      <div class="filters">
+        <label>Especialidade
+          <select id="filter-spec">
+            <option value="all">Todas</option>
+            <option value="clinica_geral">Clínica Geral</option>
+            <option value="psiquiatria">Psiquiatria</option>
+          </select>
+        </label>
+        <label>Janela
+          <select id="filter-window">
+            <option value="today">Hoje</option>
+            <option value="next48">Próx. 48h</option>
+          </select>
+        </label>
+        <button id="btn-refresh" class="btn">Atualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap grid" style="margin-top:12px">
+    <section class="grid cols-3">
+      <div class="stat"><div class="meta">Na fila (agora)</div><div id="s-queue" style="font-size:22px">0</div></div>
+      <div class="stat"><div class="meta">Agendados (hoje)</div><div id="s-upcoming" style="font-size:22px">0</div></div>
+      <div class="stat"><div class="meta">Consultas concluídas (hoje)</div><div id="s-done" style="font-size:22px">0</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><strong>Fila (atender agora)</strong><span class="badge" id="q-count">0 itens</span></div>
+      <div id="queue" class="body grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><strong>Agendados</strong><span class="badge" id="u-count">0 itens</span></div>
+      <div id="upcoming" class="body grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><strong>Histórico recente</strong><span class="badge" id="r-count">0 itens</span></div>
+      <div id="recent" class="body grid"></div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  const specSel = document.getElementById('filter-spec');
+  const winSel  = document.getElementById('filter-window');
+  const btnRefresh = document.getElementById('btn-refresh');
+  const qWrap = document.getElementById('queue');
+  const uWrap = document.getElementById('upcoming');
+  const rWrap = document.getElementById('recent');
+
+  function humanDate(iso){ const d=new Date(iso); return d.toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'}) }
+  function ago(iso){ const s=Math.floor((Date.now()-new Date(iso))/1000); const m=Math.floor(s/60); return m>0? m+" min": s+" s" }
+
+  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('GET fallback',e); return null; } }
+  async function postJSON(url, data){ try{ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('POST fallback',e); return null; } }
+
+  function mockDashboard(){
+    const now=new Date(); const inMin=(m)=> new Date(Date.now()+m*60e3).toISOString();
+    const queue=[
+      {appointmentId:'APT-101', person:'Karina Pinheiro', age:31, complaint:'ansiedade', offer:120, since:inMin(-12), specialty:'psiquiatria'},
+      {appointmentId:'APT-102', person:'William Nascimento', age:27, complaint:'dor de garganta', offer:90, since:inMin(-5), specialty:'clinica_geral'}
+    ];
+    const upcoming=[
+      {appointmentId:'APT-201', person:'Solange Vicentini', age:55, at:inMin(45), minPrice:110, specialty:'psiquiatria'},
+      {appointmentId:'APT-202', person:'Claudio Correa', age:36, at:inMin(120), minPrice:90, specialty:'clinica_geral'}
+    ];
+    const recent=[
+      {appointmentId:'APT-090', person:'Karina Pinheiro', age:31, finishedAt:inMin(-60), durationMin:20, specialty:'psiquiatria'},
+      {appointmentId:'APT-089', person:'Ramon Lima', age:23, finishedAt:inMin(-120), durationMin:18, specialty:'clinica_geral'}
+    ];
+    return { queue, upcoming, recent, stats:{queue:queue.length, upcoming:upcoming.length, done:2} };
+  }
+
+  async function refresh(){
+    const spec = specSel.value; const w = winSel.value;
+    const data = await getJSON(`/api/doctor/dashboard?spec=${spec}&window=${w}`) || mockDashboard();
+    const {queue, upcoming, recent, stats} = data;
+
+    // counters
+    document.getElementById('s-queue').textContent = stats.queue;
+    document.getElementById('s-upcoming').textContent = stats.upcoming;
+    document.getElementById('s-done').textContent = stats.done||0;
+
+    // queue
+    qWrap.innerHTML = '';
+    if(!queue.length){ qWrap.innerHTML='<div class="empty">Nada na fila agora.</div>'; }
+    queue.forEach(item=> qWrap.appendChild(cardQueue(item)) );
+    document.getElementById('q-count').textContent = queue.length+ ' itens';
+
+    // upcoming
+    uWrap.innerHTML = '';
+    if(!upcoming.length){ uWrap.innerHTML='<div class="empty">Sem agendamentos na janela.</div>'; }
+    upcoming.forEach(item=> uWrap.appendChild(cardUpcoming(item)) );
+    document.getElementById('u-count').textContent = upcoming.length+ ' itens';
+
+    // recent
+    rWrap.innerHTML = '';
+    if(!recent.length){ rWrap.innerHTML='<div class="empty">Sem histórico recente.</div>'; }
+    recent.forEach(item=> rWrap.appendChild(cardRecent(item)) );
+    document.getElementById('r-count').textContent = recent.length+ ' itens';
+  }
+
+  function cardQueue(x){
+    const c = el('div','card');
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span></div>
+      <div class="meta">Queixa: ${x.complaint || '—'} · Oferta: R$ ${x.offer} · em fila há ${ago(x.since)}</div>`;
+    const act = el('div','actions');
+    const b1 = btn('Aceitar', async()=>{ await postJSON(`/api/bids/${x.appointmentId}/accept`,{}); refresh(); });
+    const b2 = btn('Contraoferta', async()=>{
+      const v = prompt('Valor da contraoferta (R$)'); if(!v) return; await postJSON(`/api/bids/${x.appointmentId}/proposals`,{ price:Number(v), slot:'now' }); refresh();
+    });
+    const b3 = linkBtn('Abrir consultório','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&role=medico','primary');
+    const b4 = linkBtn('PHR','/phr.html?person='+encodeURIComponent(x.person));
+    act.append(b1,b2,b3,b4); c.appendChild(act); return c;
+  }
+  function cardUpcoming(x){
+    const c = el('div','card');
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span></div>
+      <div class="meta">${humanDate(x.at)} · piso ${x.minPrice? 'R$ '+x.minPrice:'—'}</div>`;
+    const act = el('div','actions');
+    const b1 = btn('Convidar', async()=>{ await postJSON(`/api/appointments/${x.appointmentId}/invite`,{}); alert('Convite enviado.'); });
+    const b2 = linkBtn('Abrir consultório','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&role=medico','primary');
+    const b3 = btn('Reagendar', ()=> alert('Reagendamento virá no sprint de agenda.'));
+    act.append(b1,b2,b3); c.appendChild(act); return c;
+  }
+  function cardRecent(x){
+    const c = el('div','card');
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span></div>
+      <div class="meta">Finalizada ${ago(x.finishedAt)} · duração ${x.durationMin||'—'} min</div>`;
+    const act = el('div','actions');
+    const b1 = linkBtn('Ver registro','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&readOnly=1');
+    const b2 = linkBtn('PHR','/phr.html?person='+encodeURIComponent(x.person));
+    act.append(b1,b2); c.appendChild(act); return c;
+  }
+
+  function el(tag, cls){ const e=document.createElement(tag); if(cls) e.className=cls; return e; }
+  function btn(label, onClick, kind){ const b=el('button','btn'+(kind? ' '+kind:'')); b.textContent=label; b.onclick=onClick; return b; }
+  function linkBtn(label, href, kind){ const a=document.createElement('a'); a.className='btn'+(kind? ' '+kind:''); a.textContent=label; a.href=href; return a; }
+
+  btnRefresh.onclick = refresh;
+  specSel.onchange = refresh; winSel.onchange = refresh;
+  refresh();
+  setInterval(refresh, 10000);
+})();
+</script>
+</body>
+</html>
