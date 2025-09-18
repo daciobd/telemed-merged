@@ -148,6 +148,13 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 - Foco retorna ao botão modal
 - `data-testid` completo (rx-emit, rx-link, rx-reprint)
 
+### 📄 **Guia de Teste Imprimível**
+- **Página**: `guia-teste.html` - Layout A4 otimizado para impressão
+- **Conteúdo**: Passo-a-passo para paciente e médico, cenários de teste
+- **QR Customizável**: `?faq=https://SEU_DOMINIO/faq.html` para link personalizado
+- **Fallbacks**: Múltiplos serviços de QR + fallback para link texto
+- **Layout**: 2 colunas, checklist completo, visual profissional
+
 ---
 
 **🎉 PLATAFORMA TELEMEDICINA ENTERPRISE - PRODUCTION READY!**
