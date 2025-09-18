@@ -539,6 +539,7 @@
 
   async function getJSON(u){ try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
   async function postJSON(u,d){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
+  async function postJSONWithIdempotency(u,d,key){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
 
   function mockDrugs(){
     return [
@@ -562,13 +563,26 @@
 
   async function emitRx(){
     if(!selected.length){ alert('Selecione pelo menos 1 item.'); return; }
+    
+    // Gerencia Idempotency-Key para retry/double-click
+    const storageKey = `rx_idem_${appointmentId}`;
+    let idempotencyKey = sessionStorage.getItem(storageKey);
+    if(!idempotencyKey){
+      idempotencyKey = 'RX-' + Date.now() + '-' + Math.random().toString(36).substr(2);
+      sessionStorage.setItem(storageKey, idempotencyKey);
+    }
+    
     const payload = {
       appointmentId,
       diagnosis_code: diagCode?.value || null,
       items: selected.map(x=> ({ anvisa_code:x.anvisa_code, name:x.name, directions:x.directions||'', quantity:x.quantity||'', route:x.route||'', duration:x.duration||'' }))
     };
-    const res = await postJSON('/api/prescriptions', payload) || { ok:true, id:'RX-123', pdf_url:'#' };
+    
+    const res = await postJSONWithIdempotency('/api/prescriptions', payload, idempotencyKey) || { ok:true, id:'RX-123', pdf_url:'#' };
     if(res?.ok){
+      // Mantém a chave durante a sessão da consulta para idempotência
+      // sessionStorage.removeItem(storageKey); // Removido: mantém para testes de idempotência
+      
       // atualiza a tabela da aba Prescrições, se existir (usa variáveis do arquivo consulta.html)
       try{
         if(window.currentPresc){

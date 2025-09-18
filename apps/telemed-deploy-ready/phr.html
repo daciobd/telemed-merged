@@ -120,6 +120,12 @@
               <div class="empty">Nenhum profissional atribuído</div>
             </div>
           </div>
+          <div class="summary-item">
+            <h4>Prescrições recentes</h4>
+            <div id="prescriptions" class="list">
+              <div class="empty">Nenhuma prescrição registrada</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -177,7 +183,8 @@
     return [
       {type:'feedback_submitted', ts:minsAgo(30), details:'Avaliação da consulta: qualidade satisfatória'},
       {type:'consult_completed', ts:minsAgo(45), details:'Consulta finalizada', duration:18},
-      {type:'prescription_item_added', ts:minsAgo(50), details:'Paracetamol 750mg prescrito'},
+      {type:'prescription_emitted', ts:minsAgo(50), details:'Receita digital emitida com 2 medicamentos', pdf_url:'/api/prescriptions/RX-001/pdf?sig=demo'},
+      {type:'prescription_item_added', ts:minsAgo(52), details:'Paracetamol 750mg prescrito'},
       {type:'consult_started', ts:minsAgo(63), details:'Consulta iniciada - ansiedade'},
       {type:'doc_uploaded', ts:hoursAgo(2), details:'Exame de sangue (hemograma.pdf)'},
       {type:'consult_created', ts:hoursAgo(3), details:'Nova consulta agendada'},
@@ -186,13 +193,15 @@
   }
 
   function renderPatient(data){
-    document.getElementById('patient-name').textContent = data.name;
-    document.getElementById('patient-age').textContent = data.age + ' anos';
-    document.getElementById('patient-gender').textContent = 'Sexo: ' + data.gender;
-    document.getElementById('patient-doc').textContent = 'CPF: ' + data.document;
-    document.getElementById('patient-joined').textContent = 'Cadastrado em: ' + humanDate(data.joinedAt);
+    // Compatibilidade: aceita tanto {patient:{...}} quanto {person:{...}}
+    const patient = data.patient || data.person || data;
+    document.getElementById('patient-name').textContent = patient.name;
+    document.getElementById('patient-age').textContent = patient.age + ' anos';
+    document.getElementById('patient-gender').textContent = 'Sexo: ' + patient.gender;
+    document.getElementById('patient-doc').textContent = 'CPF: ' + patient.document;
+    document.getElementById('patient-joined').textContent = 'Cadastrado em: ' + humanDate(patient.joinedAt);
     
-    document.getElementById('btn-new-consult').href = `/consulta.html?appointmentId=APT-NEW&role=medico&patient=${encodeURIComponent(data.name)}`;
+    document.getElementById('btn-new-consult').href = `/consulta.html?appointmentId=APT-NEW&role=medico&patient=${encodeURIComponent(patient.name)}`;
   }
 
   function renderSummary(data){
@@ -217,6 +226,47 @@
     }
   }
 
+  function mockPrescriptions(){
+    const daysAgo = (d) => new Date(Date.now() - d*24*60*60*1000).toISOString();
+    return [
+      { id:'RX-001', createdAt:new Date().toISOString(), items:[{name:'Paracetamol 750mg', directions:'1 cp 8/8h por 3 dias'}], pdf_url:'/api/prescriptions/RX-001/pdf?sig=demo' },
+      { id:'RX-002', createdAt:daysAgo(2), items:[{name:'Ibuprofeno 600mg', directions:'1 cp 12/12h se dor'}], pdf_url:'/api/prescriptions/RX-002/pdf?sig=demo' }
+    ];
+  }
+
+  function renderPrescriptions(prescriptions){
+    const prescrEl = document.getElementById('prescriptions');
+    if(prescriptions && prescriptions.length){
+      prescrEl.innerHTML = prescriptions.slice(0, 3).map(rx => 
+        `<div>
+          <strong>${humanDate(rx.createdAt)}</strong> 
+          <button class="btn" style="font-size:11px;height:24px;margin-left:8px" onclick="openPDF('${rx.pdf_url}')">Ver PDF</button>
+          <div style="font-size:12px;opacity:.8;margin-top:2px">${rx.items.map(i => i.name).join(', ')}</div>
+        </div>`
+      ).join('');
+    }
+  }
+
+  // Tratamento amigável para PDF expirado
+  async function openPDF(url){
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if(response.status === 403 || response.status === 410){
+        alert('⚠️ Este link de receita expirou. Entre em contato com o médico para uma nova via.');
+        return;
+      }
+      if(!response.ok){
+        throw new Error('PDF indisponível');
+      }
+      window.open(url, '_blank');
+    } catch(error) {
+      alert('❌ Erro ao acessar PDF da receita. Tente novamente ou entre em contato com o suporte.');
+    }
+  }
+
+  // Torna openPDF global para uso nos botões
+  window.openPDF = openPDF;
+
   function renderTimeline(events){
     const timeline = document.getElementById('timeline');
     document.getElementById('events-count').textContent = events.length + ' eventos';
@@ -233,6 +283,7 @@
       consult_completed: '✅',
       doc_uploaded: '📄',
       prescription_item_added: '💊',
+      prescription_emitted: '💊',
       feedback_submitted: '⭐'
     };
 
@@ -243,6 +294,7 @@
       consult_completed: 'Consulta finalizada',
       doc_uploaded: 'Documento enviado',
       prescription_item_added: 'Medicamento prescrito',
+      prescription_emitted: 'Receita emitida',
       feedback_submitted: 'Feedback enviado'
     };
 
@@ -250,6 +302,8 @@
       const icon = eventIcons[evt.type] || '📋';
       const title = eventTitles[evt.type] || evt.type;
       const duration = evt.duration ? ` (${evt.duration} min)` : '';
+      const pdfBtn = evt.type === 'prescription_emitted' && evt.pdf_url ? 
+        `<button class="btn" style="font-size:11px;height:28px" onclick="openPDF('${evt.pdf_url}')">Ver PDF</button>` : '';
       
       return `
         <div class="event">
@@ -257,6 +311,7 @@
           <div class="event-content">
             <h5>${title}${duration}</h5>
             <div class="meta">${evt.details || '—'}</div>
+            ${pdfBtn}
           </div>
           <div class="event-time">${ago(evt.ts)}</div>
         </div>
@@ -267,12 +322,16 @@
   async function refresh(){
     // Busca dados do paciente
     const phrData = await getJSON(`/api/patients/${personId}/phr`) || mockPHR();
-    renderPatient(phrData.patient);
+    renderPatient(phrData); // Passa o wrapper completo
     renderSummary(phrData);
 
     // Busca eventos da timeline
     const eventsData = await getJSON(`/api/patients/${personId}/events`) || mockEvents();
     renderTimeline(eventsData);
+
+    // Busca prescrições recentes
+    const prescriptionsData = await getJSON(`/api/patients/${personId}/prescriptions?limit=3`) || mockPrescriptions();
+    renderPrescriptions(prescriptionsData);
 
     // Calcula duração da última consulta para exibição
     const lastConsult = eventsData.find(e => e.type === 'consult_completed');

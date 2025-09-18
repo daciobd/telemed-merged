@@ -14,8 +14,9 @@
     .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
     .grid{display:grid;gap:12px}
-    .grid.cols-3{grid-template-columns:1fr 1fr 1fr}
-    @media(max-width:1100px){ .grid.cols-3{grid-template-columns:1fr} }
+    .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media(max-width:1100px){ .grid.cols-4{grid-template-columns:1fr 1fr} }
+    @media(max-width:720px){ .grid.cols-4{grid-template-columns:1fr} }
 
     .h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
     .body{padding:10px 12px}
@@ -31,6 +32,7 @@
     .btn{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
     .btn.primary{background:rgba(110,168,255,.18)}
     .btn.warn{background:rgba(245,158,11,.18)}
+    .ok{border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.12)}
 
     .empty{opacity:.8;font-size:14px}
   </style>
@@ -62,10 +64,11 @@
   </div>
 
   <main class="wrap grid" style="margin-top:12px">
-    <section class="grid cols-3">
+    <section class="grid cols-4">
       <div class="stat"><div class="meta">Na fila (agora)</div><div id="s-queue" style="font-size:22px">0</div></div>
       <div class="stat"><div class="meta">Agendados (hoje)</div><div id="s-upcoming" style="font-size:22px">0</div></div>
       <div class="stat"><div class="meta">Consultas concluídas (hoje)</div><div id="s-done" style="font-size:22px">0</div></div>
+      <div class="stat"><div class="meta">Prescrições (hoje)</div><div id="s-rx" style="font-size:22px">0</div></div>
     </section>
 
     <section class="panel">
@@ -112,8 +115,8 @@
       {appointmentId:'APT-202', person:'Claudio Correa', age:36, at:inMin(120), minPrice:90, specialty:'clinica_geral'}
     ];
     const allRecent=[
-      {appointmentId:'APT-090', person:'Karina Pinheiro', age:31, finishedAt:inMin(-60), durationMin:20, specialty:'psiquiatria'},
-      {appointmentId:'APT-089', person:'Ramon Lima', age:23, finishedAt:inMin(-120), durationMin:18, specialty:'clinica_geral'}
+      {appointmentId:'APT-090', person:'Karina Pinheiro', age:31, finishedAt:inMin(-60), durationMin:20, specialty:'psiquiatria', rx:true},
+      {appointmentId:'APT-089', person:'Ramon Lima', age:23, finishedAt:inMin(-120), durationMin:18, specialty:'clinica_geral', rx:false}
     ];
 
     // Filtrar por especialidade se especificado
@@ -130,7 +133,7 @@
       queue, 
       upcoming, 
       recent, 
-      stats: { queue: queue.length, upcoming: upcoming.length, done: recent.length } 
+      stats: { queue: queue.length, upcoming: upcoming.length, done: recent.length, rx: recent.filter(r => r.rx).length } 
     };
   }
 
@@ -146,6 +149,7 @@
     document.getElementById('s-queue').textContent = stats.queue;
     document.getElementById('s-upcoming').textContent = stats.upcoming;
     document.getElementById('s-done').textContent = stats.done||0;
+    document.getElementById('s-rx').textContent = stats.rx||0;
 
     // queue
     qWrap.innerHTML = '';
@@ -192,7 +196,8 @@
   }
   function cardRecent(x){
     const c = el('div','card');
-    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span></div>
+    const rxBadge = x.rx? ' <span class="badge ok">Receita emitida</span>':'';
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span>${rxBadge}</div>
       <div class="meta">Finalizada ${ago(x.finishedAt)} · duração ${x.durationMin||'—'} min</div>`;
     const act = el('div','actions');
     const b1 = linkBtn('Ver registro','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&readOnly=1');
