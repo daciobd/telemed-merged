@@ -155,6 +155,38 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 - **Fallbacks**: Múltiplos serviços de QR + fallback para link texto
 - **Layout**: 2 colunas, checklist completo, visual profissional
 
+## 🚀 **CHECKLIST RENDER ENTERPRISE - PRODUÇÃO 100%**
+
+### ✅ **Infraestrutura como Código (render.yaml)**
+- **Preview Environments**: `previews: {generation: automatic, expireAfterDays: 7}`
+- **Environment Groups**: telemed-staging, telemed-prod com todas as variáveis
+- **Services**: Web (autoscaling), Worker, Cron Jobs, Key Value (Redis)
+- **Health Checks**: `healthCheckPath: /healthz` para zero-downtime deploys
+- **Scaling**: `minInstances: 2, maxInstances: 6, targetCPUPercent: 60`
+
+### 🔒 **Segurança & Configuração**
+- **Segredos Centralizados**: Environment Groups sem versionar valores sensíveis
+- **TLS Automático**: Let's Encrypt/Google Trust, HTTP→HTTPS automático
+- **DDoS Protection**: Incluso na borda + rate-limit na aplicação
+- **Custom Domain**: Configurado com DNS otimizado
+
+### 🔧 **Operações & Monitoramento**
+- **Cron Jobs**: Cleanup de links assinados, backup pg_dump, expurgo
+- **Key Value Store**: Cache/filas de chat com persistência
+- **Postgres Backups**: Recovery exports + pg_dump automatizado para S3
+- **Observabilidade**: Datadog/Metrics Streams + Slack/Email notifications
+
+### 📋 **Checklist "Faz Agora" - Render**
+- ✅ `render.yaml` no repo + Sync Blueprint
+- ✅ Environment Groups (STAGING/PROD) com segredos
+- ✅ `/healthz` ativo + healthCheckPath configurado
+- ✅ Autoscaling ligado + minInstances≥2
+- ✅ Cron Jobs (cleanup, backups) + Key Value criados
+- ✅ Custom domain + TLS funcionando
+- ✅ Datadog/Logs + Slack/Email notifications
+- ✅ Preview Environments automáticos
+- ✅ Backups testados (Recovery + job automatizado)
+
 ---
 
 **🎉 PLATAFORMA TELEMEDICINA ENTERPRISE - PRODUCTION READY!**
