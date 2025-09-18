@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-br" data-telemed="meus-pacientes">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed • Meus Pacientes</title>
+  <style>
+    :root{ --bg:#0b1020; --panel:#0f172a; --line:rgba(255,255,255,.08); --text:#eaf0ff }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:1100px;margin:0 auto;padding:12px 16px}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .body{padding:10px 12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    input,select{height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:inherit;padding:0 10px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+    .btn{height:32px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;margin:0 4px 0 0}
+    .btn:hover{background:rgba(255,255,255,.1)}
+    .header-nav{padding:12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+    .header-nav a{color:var(--text);text-decoration:none;margin-right:16px}
+    .header-nav a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <nav class="header-nav">
+    <a href="/dashboard-medico.html">← Dashboard Médico</a>
+    <a href="/dr-ai.html">Dr. AI Triagem</a>
+    <a href="/dr-ai-dashboard.html">Métricas Dr. AI</a>
+  </nav>
+
+  <main class="wrap">
+    <section class="panel">
+      <div class="h">
+        <strong>Meus Pacientes</strong>
+        <div style="font-size:14px;opacity:.8">Gerencie o histórico de seus pacientes</div>
+      </div>
+      <div class="body">
+        <div class="row" style="margin-bottom:15px">
+          <input id="f-id" placeholder="ID" style="width:120px" data-testid="input-patient-id">
+          <input id="f-name" placeholder="Nome" data-testid="input-patient-name">
+          <select id="f-spec" data-testid="select-specialty">
+            <option value="">Especialidade (todas)</option>
+            <option value="clinica_geral">Clínica Geral</option>
+            <option value="psiquiatria">Psiquiatria</option>
+            <option value="neurologia">Neurologia</option>
+            <option value="cardiologia">Cardiologia</option>
+            <option value="dermatologia">Dermatologia</option>
+          </select>
+          <button class="btn" id="btn-search" data-testid="button-search">Buscar</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Última especialidade</th>
+              <th>Última consulta</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="rows" data-testid="table-patients"></tbody>
+        </table>
+        <div id="loading" style="text-align:center;padding:20px;display:none">
+          Carregando pacientes...
+        </div>
+        <div id="empty" style="text-align:center;padding:20px;opacity:.6;display:none">
+          Nenhum paciente encontrado com os filtros aplicados.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Widget de Suporte/Ajuda (Módulo D) -->
+  <style>
+    #tm-help{ position:fixed; right:16px; bottom:16px; z-index:70 }
+    #tm-help .btn-help{ height:46px; width:46px; border-radius:50%; border:none; background:#2563eb; color:#fff; cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,.35) }
+    #tm-help .panel{ position:absolute; right:0; bottom:56px; width:min(320px, 92vw); background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.35); display:none }
+    #tm-help .panel.show{ display:block }
+    #tm-help .help-row{ display:flex; gap:8px; padding:10px; border-bottom:1px solid rgba(255,255,255,.08) }
+    #tm-help a, #tm-help button.link{ color:#9fb3ff; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline }
+  </style>
+  <div id="tm-help">
+    <button class="btn-help" title="Ajuda" data-testid="button-help">?</button>
+    <div class="panel" aria-hidden="true">
+      <div class="help-row"><strong>Ajuda rápida</strong></div>
+      <div class="help-row">
+        <button class="link" id="help-faq" data-testid="link-faq">Abrir FAQ</button>
+        <button class="link" id="help-report" data-testid="link-report">Reportar problema</button>
+      </div>
+      <div class="help-row" id="help-dev" hidden>
+        <a href="/hub" target="_blank">Hub</a>
+        <a href="/scribe" target="_blank">Scribe/CIDs</a>
+        <a href="/status" target="_blank">Status</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const rows=document.getElementById('rows');
+  const loading=document.getElementById('loading');
+  const empty=document.getElementById('empty');
+  
+  async function getJSON(u){ 
+    try{ 
+      const r=await fetch(u,{cache:'no-store'}); 
+      if(!r.ok) throw new Error(r.status); 
+      return await r.json(); 
+    }catch(e){ 
+      console.warn('API fallback for:', u, e);
+      return null; 
+    } 
+  }
+
+  // Mock data com pacientes mais realistas
+  function mock(){
+    return [
+      { 
+        personId:'P-0001', 
+        name:'Karina Pinheiro', 
+        lastSpec:'psiquiatria', 
+        lastAppt:'2025-09-17T14:10:00-03:00' 
+      },
+      { 
+        personId:'P-0002', 
+        name:'William Nascimento', 
+        lastSpec:'clinica_geral', 
+        lastAppt:'2025-09-16T11:00:00-03:00' 
+      },
+      { 
+        personId:'P-0003', 
+        name:'Maria Silva', 
+        lastSpec:'neurologia', 
+        lastAppt:'2025-09-15T16:30:00-03:00' 
+      },
+      { 
+        personId:'P-0004', 
+        name:'José Santos', 
+        lastSpec:'cardiologia', 
+        lastAppt:'2025-09-14T10:00:00-03:00' 
+      },
+      { 
+        personId:'P-0005', 
+        name:'Ana Costa', 
+        lastSpec:'dermatologia', 
+        lastAppt:'2025-09-13T15:20:00-03:00' 
+      }
+    ];
+  }
+
+  function fmt(iso){ 
+    return new Date(iso).toLocaleString('pt-BR',{
+      day:'2-digit',
+      month:'2-digit',
+      hour:'2-digit',
+      minute:'2-digit'
+    }); 
+  }
+
+  async function search(){
+    const qid=document.getElementById('f-id').value.trim();
+    const qn=document.getElementById('f-name').value.trim();
+    const sp=document.getElementById('f-spec').value;
+    
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    rows.innerHTML='';
+
+    // Simular delay da API
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const data = await getJSON(`/api/doctor/patients?personId=${encodeURIComponent(qid)}&name=${encodeURIComponent(qn)}&spec=${encodeURIComponent(sp)}`) || mock();
+    
+    // Aplicar filtros locais
+    const filtered = data.filter(p => {
+      if (qid && !p.personId.toLowerCase().includes(qid.toLowerCase())) return false;
+      if (qn && !p.name.toLowerCase().includes(qn.toLowerCase())) return false;
+      if (sp && p.lastSpec !== sp) return false;
+      return true;
+    });
+
+    loading.style.display = 'none';
+    
+    if (!filtered.length) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    filtered.forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>${p.personId}</td>
+        <td><strong>${p.name}</strong></td>
+        <td><span style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:6px;font-size:12px">${p.lastSpec||'—'}</span></td>
+        <td>${p.lastAppt? fmt(p.lastAppt):'—'}</td>
+      `;
+      
+      const td=document.createElement('td');
+      const a1=document.createElement('a'); 
+      a1.className='btn'; 
+      a1.textContent='PHR'; 
+      a1.href=`/phr.html?person=${encodeURIComponent(p.name)}&personId=${encodeURIComponent(p.personId)}`;
+      a1.title='Ver prontuário do paciente';
+      a1.setAttribute('data-testid', `link-phr-${p.personId}`);
+      
+      const a2=document.createElement('a'); 
+      a2.className='btn'; 
+      a2.textContent='Abrir consultório'; 
+      a2.href=`/consulta.html?appointmentId=NEW-${encodeURIComponent(p.personId)}&role=medico`;
+      a2.title='Iniciar nova consulta';
+      a2.setAttribute('data-testid', `link-consulta-${p.personId}`);
+      
+      td.append(a1,a2); 
+      tr.appendChild(td); 
+      rows.appendChild(tr);
+    });
+  }
+
+  // Event listeners
+  document.getElementById('btn-search').onclick=search; 
+  
+  // Search on enter
+  ['f-id', 'f-name'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') search();
+    });
+  });
+
+  // Auto-search on specialty change
+  document.getElementById('f-spec').addEventListener('change', search);
+
+  // Widget de Suporte/Ajuda
+  const helpWrap=document.getElementById('tm-help'); 
+  if(helpWrap) {
+    const btn=helpWrap.querySelector('.btn-help'); 
+    const panel=helpWrap.querySelector('.panel');
+    btn.onclick = ()=> panel.classList.toggle('show');
+    
+    const devOn = new URLSearchParams(location.search).get('dev')==='1' || localStorage.getItem('tm_dev')==='on';
+    if(devOn) document.getElementById('help-dev').hidden=false;
+    
+    document.getElementById('help-faq').onclick = ()=> window.open('/faq.html','_blank');
+    document.getElementById('help-report').onclick = async ()=>{
+      const msg = prompt('Descreva o problema:'); 
+      if(!msg) return;
+      await fetch('/api/support/ticket',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ 
+          msg, 
+          url: location.href, 
+          ts: new Date().toISOString() 
+        })
+      });
+      alert('Obrigado! Ticket registrado.');
+    };
+  }
+
+  // Initial load
+  search();
+})();
+</script>
+</body>
+</html>

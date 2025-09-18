@@ -343,5 +343,120 @@
   (async function loop(){ await fetchRoomState(); setTimeout(loop, 5000); })();
 })();
 </script>
+<!-- TeleMed Sprint Pack 02 - Módulo A: Chat + CID/CIAP -->
+<style>
+  /* Chat flutuante (consulta) */
+  #tm-chat{ position:fixed; right:16px; bottom:16px; width:min(360px, 92vw); z-index:60; font-family:inherit }
+  #tm-chat .card{ background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.08); border-radius:14px; box-shadow:0 10px 40px rgba(0,0,0,.35) }
+  #tm-chat .h{ display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.08) }
+  #tm-chat .list{ max-height:280px; overflow:auto; padding:8px 10px; display:grid; gap:6px }
+  #tm-chat .msg{ padding:8px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03) }
+  #tm-chat .me{ background:rgba(110,168,255,.12); border-color:rgba(110,168,255,.35) }
+  #tm-chat form{ display:flex; gap:6px; padding:8px; border-top:1px solid rgba(255,255,255,.08) }
+  #tm-chat input{ flex:1; height:38px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit; padding:0 10px }
+  #tm-chat button{ height:38px; padding:0 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(110,168,255,.18); color:inherit; cursor:pointer }
+  #tm-chat .muted{ opacity:.8; font-size:12px }
+  .icd-hints{ position:absolute; z-index:40; background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:10px; width:100%; margin-top:4px; box-shadow:0 10px 20px rgba(0,0,0,.35) }
+  .icd-hints div{ padding:8px 10px; cursor:pointer }
+  .icd-hints div:hover{ background:rgba(255,255,255,.06) }
+</style>
+<div id="tm-chat" hidden>
+  <div class="card">
+    <div class="h">
+      <strong>Chat da Consulta</strong>
+      <div style="display:flex;gap:6px">
+        <button id="tm-invite" title="Convidar paciente">Convidar</button>
+        <button id="tm-close">Fechar</button>
+      </div>
+    </div>
+    <div id="tm-chat-list" class="list"></div>
+    <form id="tm-chat-form">
+      <input id="tm-chat-input" placeholder="Escreva uma mensagem…" autocomplete="off" />
+      <button type="submit">Enviar</button>
+    </form>
+    <div class="muted" style="padding:0 10px 8px">Dica: use o chat quando a internet estiver ruim ou para compartilhar nomes difíceis.</div>
+  </div>
+</div>
+<script>
+(function(){
+  // Detecta consulta.html pré-existente
+  const videoCol = document.getElementById('video-col');
+  if(!videoCol) return; // não está na página de consulta
+  const appointmentId = videoCol.dataset.appointmentId || 'APT-EXEMPLO';
+  const role = videoCol.dataset.role || 'medico';
+
+  // Injeta botão "Chat" perto dos controles de vídeo
+  const actions = document.querySelector('.video-actions');
+  if(actions){ const b=document.createElement('button'); b.className='btn'; b.textContent='Chat'; b.onclick=()=> toggleChat(true); actions.prepend(b); }
+
+  const root = document.getElementById('tm-chat');
+  const list = document.getElementById('tm-chat-list');
+  const form = document.getElementById('tm-chat-form');
+  const input= document.getElementById('tm-chat-input');
+  document.getElementById('tm-close').onclick = ()=> toggleChat(false);
+  document.getElementById('tm-invite').onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/invite`,{}); toast('Convite enviado ao paciente.'); };
+
+  function toggleChat(on){ root.hidden = !on; if(on) input.focus(); }
+  function toast(t){ const x=document.createElement('div'); x.textContent=t; x.style.cssText='position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#0f172a;border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:10px;color:#eaf0ff;z-index:70'; document.body.appendChild(x); setTimeout(()=>x.remove(),1800); }
+
+  async function getJSON(u){ try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
+  async function postJSON(u,d){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
+
+  // Histórico (fallback mock)
+  function mockHistory(){ return [ {from:'sistema', text:'Você entrou na sala.'} ]; }
+  async function loadHistory(){ const h = await getJSON(`/api/chat/history?appointmentId=${encodeURIComponent(appointmentId)}`) || mockHistory(); h.forEach(addMsg); list.scrollTop = list.scrollHeight; }
+
+  // WebSocket (opcional)
+  try{
+    const ws = new WebSocket(location.origin.replace('http','ws') + `/ws/appointments/${appointmentId}`);
+    ws.onmessage = (ev)=>{ try{ const msg=JSON.parse(ev.data); if(msg.type==='chat_message') addMsg(msg.payload); if(msg.type==='invite_patient') toast('Paciente convidado'); }catch{} };
+  }catch{}
+
+  form.onsubmit = async (e)=>{
+    e.preventDefault(); const text=(input.value||'').trim(); if(!text) return;
+    addMsg({from: role, text}); input.value='';
+    await postJSON('/api/chat/send', { appointmentId, from: role, text, ts: new Date().toISOString() });
+  };
+
+  function addMsg(m){
+    const div=document.createElement('div'); div.className='msg'+(m.from===role? ' me':''); div.textContent = (m.from? m.from+': ':'')+ m.text; list.appendChild(div);
+  }
+
+  // ICD/CIAP Lookup (aplica sobre o #hipotese)
+  const hip = document.getElementById('hipotese');
+  if(hip){
+    const wrap = hip.parentElement; wrap.style.position='relative';
+    const box = document.createElement('div'); box.className='icd-hints'; box.hidden=true; wrap.appendChild(box);
+    const hidden = document.createElement('input'); hidden.type='hidden'; hidden.id='hipotese_code'; wrap.appendChild(hidden);
+
+    hip.addEventListener('input', async ()=>{
+      const q=(hip.value||'').trim(); if(q.length<2){ box.hidden=true; return; }
+      const res = await getJSON(`/api/codes/search?systems=icd10,ciap&q=${encodeURIComponent(q)}`) || sampleCodes(q);
+      box.innerHTML=''; res.slice(0,8).forEach(item=>{
+        const d=document.createElement('div'); d.textContent = `${item.system.toUpperCase()} ${item.code} — ${item.label}`;
+        d.onclick = ()=>{ hip.value = item.label; hidden.value = `${item.system}:${item.code}`; box.hidden=true; };
+        box.appendChild(d);
+      });
+      box.hidden = res.length===0;
+    });
+    hip.addEventListener('blur', ()=> setTimeout(()=> box.hidden=true, 120));
+  }
+
+  function sampleCodes(q){
+    const data=[
+      {system:'icd10', code:'J02.9', label:'Faringite aguda, não especificada'},
+      {system:'icd10', code:'B34.9', label:'Infecção viral, não especificada'},
+      {system:'icd10', code:'F41.1', label:'Transtorno de ansiedade generalizada'},
+      {system:'ciap',  code:'R74',  label:'Infecção aguda do trato respiratório superior'},
+      {system:'ciap',  code:'P74',  label:'Ansiedade/estado ansioso'},
+    ];
+    return data.filter(x=> x.label.toLowerCase().includes(q.toLowerCase()) || x.code.toLowerCase().includes(q.toLowerCase()));
+  }
+
+  // Boot
+  loadHistory();
+})();
+</script>
+
 </body>
 </html>
