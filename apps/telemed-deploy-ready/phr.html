@@ -240,7 +240,7 @@
       prescrEl.innerHTML = prescriptions.slice(0, 3).map(rx => 
         `<div>
           <strong>${humanDate(rx.createdAt)}</strong> 
-          <button class="btn" style="font-size:11px;height:24px;margin-left:8px" onclick="openPDF('${rx.pdf_url}')">Ver PDF</button>
+          <button class="btn" style="font-size:11px;height:24px;margin-left:8px" onclick="openPDF('${rx.pdf_url}')" data-testid="rx-link">Ver PDF</button>
           <div style="font-size:12px;opacity:.8;margin-top:2px">${rx.items.map(i => i.name).join(', ')}</div>
         </div>`
       ).join('');
@@ -303,7 +303,7 @@
       const title = eventTitles[evt.type] || evt.type;
       const duration = evt.duration ? ` (${evt.duration} min)` : '';
       const pdfBtn = evt.type === 'prescription_emitted' && evt.pdf_url ? 
-        `<button class="btn" style="font-size:11px;height:28px" onclick="openPDF('${evt.pdf_url}')">Ver PDF</button>` : '';
+        `<button class="btn" style="font-size:11px;height:28px" onclick="openPDF('${evt.pdf_url}')" data-testid="rx-link">Ver PDF</button>` : '';
       
       return `
         <div class="event">
