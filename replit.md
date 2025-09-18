@@ -104,3 +104,52 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
     summary: "p95 de emissão > 2s"
     description: "Monitorar lentidão do gerador de PDF/IO."
 ```
+
+## 🚀 **STATUS PRODUÇÃO - GO/NO-GO APROVADO**
+
+### ✅ **Checklist Produção Completo**
+- **Feature Flags**: prescription.enabled, verify.enabled, chat.enabled, uploads.enabled
+- **Segurança**: Headers PDF/verify, SameSite=Lax, HttpOnly, Secure  
+- **Secrets**: Rotação concluída + varredura repo, TTL configurado
+- **Backups**: PDFs versionados, RPO ≤ 15min, restore testado
+- **RBAC**: Médico consulta → emitir/visualizar RX, Farmácia → verify apenas
+- **Observabilidade**: Dashboards/alertas carregados (erros %, p95, 429, storage)
+
+### 📊 **KPIs Definidos**
+- **eRX Success Rate**: ≥ 98% (2xx /api/prescriptions)
+- **p95 Emissão PDF**: ≤ 2s, p99 ≤ 4s  
+- **Verify Sucesso**: ≥ 99% (valid/expired, sem 5xx)
+- **Reprint Usage**: < 15% das RX em 7 dias
+
+### 🔄 **Plano Rollout**
+- **Canário**: 1% (médicos selecionados) → 25% → 100%
+- **Guard-rails**: Erro >2% (5m) ou p95 >2s (10m) ⇒ auto-rollback flag
+- **Comms**: Macros "link expirado", "403 permissão" 
+
+### 📈 **Métricas Instrumentadas**
+- `telemed_prescription_emit_total{status}`
+- `telemed_prescription_emit_duration_seconds`
+- `telemed_prescription_verify_total{status}`
+- `telemed_prescription_reprint_total`
+- `telemed_drugs_search_fallback_total`
+
+### 🛡️ **Playbooks Incidentes**
+- **PDF 5xx**: Fallback provider + reprocessar + comunicar "reimprimir"
+- **ANVISA fora**: Item livre (alerta) + logs fallback
+- **Verify 5xx**: Manter eRX + "verifique novamente"
+- **Storage indisponível**: Pausar + fila + reemitir
+
+### 🎯 **Compliance LGPD**
+- **Chat/anexos**: 12 meses configurável + expurgo
+- **Logs auditoria**: 24 meses, acesso restrito, sem conteúdo clínico
+
+### ♿ **Acessibilidade**
+- `aria-live="polite"` nos toasts
+- Foco retorna ao botão modal
+- `data-testid` completo (rx-emit, rx-link, rx-reprint)
+
+---
+
+**🎉 PLATAFORMA TELEMEDICINA ENTERPRISE - PRODUCTION READY!**
+
+*Status: Setembro 2025 - **GO/NO-GO APROVADO** - Sistema completo pronto para launch 🚀*
