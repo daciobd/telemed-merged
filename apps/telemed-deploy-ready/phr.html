@@ -241,6 +241,7 @@
         `<div>
           <strong>${humanDate(rx.createdAt)}</strong> 
           <button class="btn" style="font-size:11px;height:24px;margin-left:8px" onclick="openPDF('${rx.pdf_url}', '${rx.id}')" data-testid="rx-link">Ver PDF</button>
+          <button class="btn" style="font-size:11px;height:24px;margin-left:6px" onclick="reprintPDFLink('${rx.id}')">Reimprimir link</button>
           <div style="font-size:12px;opacity:.8;margin-top:2px">${rx.items.map(i => i.name).join(', ')}</div>
         </div>`
       ).join('');
