@@ -550,15 +550,38 @@
 
   async function search(){
     const term=(q.value||'').trim(); if(!term) return;
-    const data = await getJSON(`/api/drugs/search?q=${encodeURIComponent(term)}`) || mockDrugs();
-    results.innerHTML='';
-    data.forEach(d=>{
+    try {
+      const data = await getJSON(`/api/drugs/search?q=${encodeURIComponent(term)}`);
+      if(data && data.length) {
+        results.innerHTML='';
+        data.forEach(d=>{
+          const row=document.createElement('div'); row.className='rx-item';
+          row.innerHTML = `<div><div><strong>${d.name}</strong></div><div class="muted">ANVISA ${d.anvisa_code||'—'} · ${d.form||''} ${d.concentration||''}</div></div>`;
+          const right=document.createElement('div');
+          const add=document.createElement('button'); add.className='btn'; add.textContent='Adicionar'; add.onclick=()=>{ selected.push({ ...d, directions:dDirections.value, quantity:dQty.value, route:dRoute.value||d.route, duration:dDur.value }); renderSelected(); };
+          right.appendChild(add); row.appendChild(right); results.appendChild(row);
+        });
+      } else {
+        throw new Error('No results from API');
+      }
+    } catch(error) {
+      // Fallback: permitir item livre com alerta
+      console.warn('Drug search API failed, falling back to free input:', error);
+      const freeItem = {
+        anvisa_code: 'LIVRE-' + Date.now(),
+        name: term + ' (medicamento livre)',
+        form: 'livre',
+        concentration: '',
+        route: 'conforme orientação médica'
+      };
+      
+      results.innerHTML='';
       const row=document.createElement('div'); row.className='rx-item';
-      row.innerHTML = `<div><div><strong>${d.name}</strong></div><div class="muted">ANVISA ${d.anvisa_code||'—'} · ${d.form||''} ${d.concentration||''}</div></div>`;
+      row.innerHTML = `<div><div><strong>${freeItem.name}</strong></div><div class="muted">⚠️ Base ANVISA indisponível - Item livre</div></div>`;
       const right=document.createElement('div');
-      const add=document.createElement('button'); add.className='btn'; add.textContent='Adicionar'; add.onclick=()=>{ selected.push({ ...d, directions:dDirections.value, quantity:dQty.value, route:dRoute.value||d.route, duration:dDur.value }); renderSelected(); };
+      const add=document.createElement('button'); add.className='btn'; add.textContent='Adicionar'; add.onclick=()=>{ selected.push({ ...freeItem, directions:dDirections.value, quantity:dQty.value, route:freeItem.route, duration:dDur.value }); renderSelected(); };
       right.appendChild(add); row.appendChild(right); results.appendChild(row);
-    });
+    }
   }
 
   async function emitRx(){
@@ -578,8 +601,24 @@
       items: selected.map(x=> ({ anvisa_code:x.anvisa_code, name:x.name, directions:x.directions||'', quantity:x.quantity||'', route:x.route||'', duration:x.duration||'' }))
     };
     
+    // Log auditoria para observabilidade (conforme checklist go-live)
+    console.log('prescription_emit_attempt', {
+      appointmentId,
+      idempotencyKey,
+      timestamp: new Date().toISOString(),
+      user_agent: navigator.userAgent,
+      items_count: selected.length
+    });
+    
     const res = await postJSONWithIdempotency('/api/prescriptions', payload, idempotencyKey) || { ok:true, id:'RX-123', pdf_url:'#' };
     if(res?.ok){
+      // Log auditoria sucesso
+      console.log('prescription_emitted', {
+        rx_id: res.id,
+        appointmentId,
+        timestamp: new Date().toISOString(),
+        pdf_generated: !!res.pdf_url
+      });
       // Mantém a chave durante a sessão da consulta para idempotência
       // sessionStorage.removeItem(storageKey); // Removido: mantém para testes de idempotência
       

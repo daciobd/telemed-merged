@@ -183,7 +183,7 @@
     return [
       {type:'feedback_submitted', ts:minsAgo(30), details:'Avaliação da consulta: qualidade satisfatória'},
       {type:'consult_completed', ts:minsAgo(45), details:'Consulta finalizada', duration:18},
-      {type:'prescription_emitted', ts:minsAgo(50), details:'Receita digital emitida com 2 medicamentos', pdf_url:'/api/prescriptions/RX-001/pdf?sig=demo'},
+      {type:'prescription_emitted', ts:minsAgo(50), details:'Receita digital emitida com 2 medicamentos', pdf_url:'/api/prescriptions/RX-001/pdf?sig=demo', rx_id:'RX-001'},
       {type:'prescription_item_added', ts:minsAgo(52), details:'Paracetamol 750mg prescrito'},
       {type:'consult_started', ts:minsAgo(63), details:'Consulta iniciada - ansiedade'},
       {type:'doc_uploaded', ts:hoursAgo(2), details:'Exame de sangue (hemograma.pdf)'},
@@ -240,19 +240,25 @@
       prescrEl.innerHTML = prescriptions.slice(0, 3).map(rx => 
         `<div>
           <strong>${humanDate(rx.createdAt)}</strong> 
-          <button class="btn" style="font-size:11px;height:24px;margin-left:8px" onclick="openPDF('${rx.pdf_url}')" data-testid="rx-link">Ver PDF</button>
+          <button class="btn" style="font-size:11px;height:24px;margin-left:8px" onclick="openPDF('${rx.pdf_url}', '${rx.id}')" data-testid="rx-link">Ver PDF</button>
           <div style="font-size:12px;opacity:.8;margin-top:2px">${rx.items.map(i => i.name).join(', ')}</div>
         </div>`
       ).join('');
     }
   }
 
-  // Tratamento amigável para PDF expirado
-  async function openPDF(url){
+  // Tratamento amigável para PDF expirado + reimprimir link
+  async function openPDF(url, rxId){
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if(response.status === 403 || response.status === 410){
-        alert('⚠️ Este link de receita expirou. Entre em contato com o médico para uma nova via.');
+        // Opção de reimprimir link sem duplicar receita
+        const reprint = confirm('⚠️ Este link de receita expirou.\n\nDeseja gerar um novo link para a mesma receita?');
+        if(reprint && rxId){
+          await reprintPDFLink(rxId);
+        } else {
+          alert('Entre em contato com o médico para uma nova via.');
+        }
         return;
       }
       if(!response.ok){
@@ -261,6 +267,24 @@
       window.open(url, '_blank');
     } catch(error) {
       alert('❌ Erro ao acessar PDF da receita. Tente novamente ou entre em contato com o suporte.');
+    }
+  }
+
+  // Cenário "reimprimir link" - gera novo URL assinado sem duplicar receita
+  async function reprintPDFLink(rxId){
+    try {
+      const response = await fetch(`/api/prescriptions/${rxId}/reprint`, { method: 'POST' });
+      if(response.ok){
+        const data = await response.json();
+        if(data.pdf_url){
+          window.open(data.pdf_url, '_blank');
+          alert('✅ Novo link gerado com sucesso!');
+        }
+      } else {
+        throw new Error('Falha ao gerar novo link');
+      }
+    } catch(error) {
+      alert('❌ Erro ao gerar novo link. Entre em contato com o suporte.');
     }
   }
 
@@ -303,7 +327,7 @@
       const title = eventTitles[evt.type] || evt.type;
       const duration = evt.duration ? ` (${evt.duration} min)` : '';
       const pdfBtn = evt.type === 'prescription_emitted' && evt.pdf_url ? 
-        `<button class="btn" style="font-size:11px;height:28px" onclick="openPDF('${evt.pdf_url}')" data-testid="rx-link">Ver PDF</button>` : '';
+        `<button class="btn" style="font-size:11px;height:28px" onclick="openPDF('${evt.pdf_url}', '${evt.rx_id || ''}')" data-testid="rx-link">Ver PDF</button>` : '';
       
       return `
         <div class="event">
