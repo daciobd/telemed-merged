@@ -1,0 +1,324 @@
+openapi: 3.1.0
+info:
+  title: TeleMed API
+  version: 0.2.0
+  description: |
+    Contratos mínimos para suportar os frontends entregues (Dashboard Médico, Consulta, PHR, Sala de Espera,
+    Agenda/Slots, Chat, Busca de códigos CID-10/CIAP e Widget de Suporte).
+servers:
+  - url: https://api.telemed.local
+    description: Produção
+  - url: http://localhost:5173
+    description: Dev/preview (mesmo host do FE)
+security:
+  - cookieSession: []
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieSession:
+      type: apiKey
+      in: cookie
+      name: telemed.sid
+  parameters:
+    AppointmentId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    PersonId:
+      name: personId
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    ApiOk: { type: object, properties: { ok: { type: boolean } }, required: [ok] }
+    RoomState:
+      type: object
+      properties:
+        hostPresent: { type: boolean }
+        patientPresent: { type: boolean }
+        canJoin: { type: boolean }
+    DoctorDashboard:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            queue: { type: integer }
+            upcoming: { type: integer }
+            done: { type: integer }
+        queue:
+          type: array
+          items:
+            type: object
+            properties:
+              appointmentId: { type: string }
+              person: { type: string }
+              age: { type: integer }
+              complaint: { type: string }
+              offer: { type: number }
+              since: { type: string, format: date-time }
+              specialty: { type: string }
+        upcoming:
+          type: array
+          items:
+            type: object
+            properties:
+              appointmentId: { type: string }
+              person: { type: string }
+              age: { type: integer }
+              at: { type: string, format: date-time }
+              minPrice: { type: number }
+              specialty: { type: string }
+        recent:
+          type: array
+          items:
+            type: object
+            properties:
+              appointmentId: { type: string }
+              person: { type: string }
+              age: { type: integer }
+              finishedAt: { type: string, format: date-time }
+              durationMin: { type: integer }
+              specialty: { type: string }
+    PriceFloor:
+      type: object
+      properties:
+        now_floor: { type: number }
+        in_2h_floor: { type: number }
+        tomorrow_floor: { type: number }
+    Availability:
+      type: object
+      properties:
+        offer: { type: number }
+        immediate: { type: object, properties: { doctors_available: { type: integer }, eta_minutes: { type: integer, nullable: true } } }
+        next_2h: { type: object, properties: { doctors_available: { type: integer }, eta_minutes: { type: integer, nullable: true } } }
+        tomorrow: { type: object, properties: { doctors_available: { type: integer } } }
+        suggested_slots:
+          type: array
+          items:
+            type: object
+            properties:
+              start: { type: string, format: date-time }
+              min_price: { type: number }
+    PHR:
+      type: object
+      properties:
+        person: { type: object, properties: { name: {type: string}, doc: {type: string}, sex: {type: string}, birth: {type: string, format: date} } }
+        allergies: { type: array, items: { type: string } }
+        meds: { type: array, items: { type: string } }
+        conditions: { type: array, items: { type: string } }
+        team: { type: array, items: { type: string } }
+    Events:
+      type: array
+      items:
+        type: object
+        properties:
+          type: { type: string }
+          ts: { type: string, format: date-time }
+          payload: { type: object }
+    CodeResult:
+      type: object
+      properties:
+        system: { type: string, enum: [icd10, ciap] }
+        code: { type: string }
+        label: { type: string }
+paths:
+  /api/doctor/dashboard:
+    get:
+      tags: [doctor]
+      summary: Dados do dashboard do médico
+      parameters:
+        - in: query; name: spec; schema: { type: string }
+        - in: query; name: window; schema: { type: string, enum: [today, next48] }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/DoctorDashboard' } } } }
+  /api/bids/{id}/accept:
+    post:
+      tags: [doctor]
+      summary: Aceitar bid da fila
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/bids/{id}/proposals:
+    post:
+      tags: [doctor]
+      summary: Contraoferta para bid
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { price: { type: number }, slot: { type: string } }, required: [price] }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/invite:
+    post:
+      tags: [appointments]
+      summary: Enviar convite para o paciente entrar na chamada
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/call/start:
+    post:
+      tags: [appointments]
+      summary: Abrir consultório (iniciar sala)
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { mode: { type: string, enum: [av, audio] } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/call/end:
+    post:
+      tags: [appointments]
+      summary: Encerrar chamada
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/room-state:
+    get:
+      tags: [appointments]
+      summary: Estado da sala
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/RoomState' } } } } }
+  /api/appointments/{id}/note/save:
+    post:
+      tags: [appointments]
+      summary: Salvar rascunho do registro da consulta
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      requestBody: { content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/finalize:
+    post:
+      tags: [appointments]
+      summary: Finalizar consulta
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      requestBody: { content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/schedule:
+    post:
+      tags: [appointments]
+      summary: Criar agendamento
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { start: { type: string, format: date-time }, price: { type: number } }, required: [start, price] }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/appointments/{id}/reschedule:
+    put:
+      tags: [appointments]
+      summary: Reagendar
+      parameters: [ { $ref: '#/components/parameters/AppointmentId' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { start: { type: string, format: date-time }, price: { type: number } }, required: [start] }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/market/price-floor:
+    get:
+      tags: [market]
+      summary: Pisos de preço dinâmicos
+      parameters:
+        - in: query; name: specialty; required: true; schema: { type: string }
+        - in: query; name: region; required: true; schema: { type: string }
+        - in: query; name: urgency; schema: { type: string }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PriceFloor' } } } } }
+  /api/market/availability:
+    get:
+      tags: [market]
+      summary: Disponibilidade de médicos para uma oferta
+      parameters:
+        - in: query; name: specialty; required: true; schema: { type: string }
+        - in: query; name: region; required: true; schema: { type: string }
+        - in: query; name: offer; required: true; schema: { type: number }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Availability' } } } } }
+  /api/patients/{personId}/phr:
+    get:
+      tags: [patients]
+      summary: PHR do paciente
+      parameters: [ { $ref: '#/components/parameters/PersonId' } ]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/PHR' } } } } }
+  /api/patients/{personId}/events:
+    get:
+      tags: [patients]
+      summary: Eventos do paciente
+      parameters: [ { $ref: '#/components/parameters/PersonId' } ]
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Events' } } } } }
+  /api/doctor/patients:
+    get:
+      tags: [doctor]
+      summary: Busca de pacientes do médico
+      parameters:
+        - in: query; name: personId; schema: { type: string }
+        - in: query; name: name; schema: { type: string }
+        - in: query; name: spec; schema: { type: string }
+      responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: object, properties: { personId: {type: string}, name: {type: string}, lastSpec: {type: string}, lastAppt: {type: string, format: date-time} } } } } } } }
+  /api/chat/history:
+    get:
+      tags: [chat]
+      summary: Histórico do chat de uma consulta
+      parameters:
+        - in: query; name: appointmentId; required: true; schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { type: object, properties: { from: {type: string}, text: {type: string}, ts: {type: string, format: date-time} } } } } } }
+  /api/chat/send:
+    post:
+      tags: [chat]
+      summary: Envio de mensagem de chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { appointmentId: {type: string}, from: {type: string}, text: {type: string}, ts: {type: string, format: date-time} }, required: [appointmentId, from, text] }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/uploads:
+    post:
+      tags: [uploads]
+      summary: Upload binário vinculado a appointmentId
+      parameters:
+        - in: query; name: appointmentId; required: true; schema: { type: string }
+        - in: query; name: filename; required: true; schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream: { schema: { type: string, format: binary } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/events:
+    post:
+      tags: [events]
+      summary: Auditoria/eventos de produto
+      requestBody: { content: { application/json: { schema: { type: object, properties: { type: {type: string}, appointmentId: {type: string}, ts: {type: string, format: date-time}, payload: {type: object} }, required: [type, ts] } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/feedback:
+    post:
+      tags: [feedback]
+      summary: Feedback/NPS pós-consulta
+      requestBody: { content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+  /api/codes/search:
+    get:
+      tags: [codes]
+      summary: Busca de códigos CID-10/CIAP
+      parameters:
+        - in: query; name: systems; required: true; schema: { type: string, example: icd10,ciap }
+        - in: query; name: q; required: true; schema: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/CodeResult' } } } } }
+  /api/support/ticket:
+    post:
+      tags: [support]  
+      summary: Criar ticket de suporte
+      requestBody: { content: { application/json: { schema: { type: object, properties: { description: {type: string}, category: {type: string} } } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ApiOk' } } } } }
+
+x-websocket:
+  appointments-channel:
+    url: wss://api.telemed.local/ws/appointments/{appointmentId}
+    events:
+      - host_joined
+      - host_left
+      - invite_patient
+      - chat_message

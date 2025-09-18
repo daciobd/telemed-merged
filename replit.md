@@ -237,6 +237,55 @@ WebSocket /ws/appointments/:id
 4. Adicionar logs de auditoria para PHI
 5. **Configurar secrets management** para produção
 
+## TeleMed - OpenAPI 3.1 + Playwright Smoke (IMPLEMENTADO)
+
+A plataforma TeleMed agora possui **documentação completa da API** e **testes de fumaça automatizados**:
+
+### 📋 **OpenAPI 3.1 Specification**
+- ✅ **Contratos completos**: Todos os endpoints da UI atual documentados
+- ✅ **Schemas estruturados**: Modelos de dados para Dashboard, PHR, Chat, etc.
+- ✅ **Autenticação**: Suporte a cookies e Bearer tokens
+- ✅ **WebSocket**: Documentação do canal de appointments
+
+### 🧪 **Playwright Smoke Tests**
+- ✅ **6 cenários de teste**: Consulta, Dashboard, Meus Pacientes, CID-10/CIAP, Suporte, Dr. AI
+- ✅ **Mocks de rede**: Simula respostas de API para testes isolados
+- ✅ **Seletores robustos**: Compatível com data-testid e elementos HTML existentes
+- ✅ **Configuração otimizada**: Timeout de 60s, Chrome headless
+
+### 📁 **Estrutura Implementada**
+```
+./openapi.yaml                 # Especificação OpenAPI 3.1
+./playwright.config.ts         # Configuração Playwright
+./tests/smoke.spec.ts          # Testes de fumaça com mocks
+```
+
+### 🚀 **Como Usar**
+```bash
+# Dependências já instaladas:
+npm i -D @playwright/test && npx playwright install
+
+# Definir URL base (opcional):
+export BASE_URL=http://localhost:5173  
+
+# Executar testes:
+npx playwright test
+```
+
+### 🔧 **Cenários de Teste Inclusos**
+1. **Consulta SOAP**: Validação de campos, chat e finalização com NPS
+2. **Dashboard Médico**: Modal de slots e agendamento
+3. **Meus Pacientes**: Busca por filtros e abertura de PHR
+4. **CID-10/CIAP**: Autocomplete com preenchimento de código oculto
+5. **Widget Suporte**: Reportar problema via help widget
+6. **Dr. AI Dashboard**: Carregamento de métricas e componentes
+
+### 🎯 **Benefícios**
+- **Documentação viva**: OpenAPI mantém contratos atualizados
+- **Testes contínuos**: Smoke tests validam fluxos críticos
+- **Mock-first**: Funciona sem backend real para desenvolvimento
+- **CI/CD Ready**: Integração fácil com pipelines de deploy
+
 ---
 
 ## Deploy e Produção
