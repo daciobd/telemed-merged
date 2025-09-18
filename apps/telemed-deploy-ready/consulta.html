@@ -509,6 +509,22 @@
 </div>
 <script>
 (function(){
+  // UTIL: reimprimir link assinado (sem duplicar a RX)
+  async function reprintPDFLink(rxId) {
+    try {
+      const r = await fetch(`/api/prescriptions/${encodeURIComponent(rxId)}/reprint`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const { pdf_url } = await r.json();
+      if (pdf_url) window.open(pdf_url, '_blank');
+      else alert('Não foi possível reemitir o link agora.');
+    } catch (e) {
+      alert('Falha ao reemitir link: ' + e.message);
+    }
+  }
+
   const btn = document.getElementById('btn-new-presc');
   if(!btn) return;
   const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-EXEMPLO';
@@ -621,6 +637,14 @@
       });
       // Mantém a chave durante a sessão da consulta para idempotência
       // sessionStorage.removeItem(storageKey); // Removido: mantém para testes de idempotência
+      
+      // Adicionar botão "Reimprimir link" após emissão
+      const reprintBtn = document.createElement('button');
+      reprintBtn.className = 'btn';
+      reprintBtn.textContent = 'Reimprimir link';
+      reprintBtn.setAttribute('data-testid','rx-reprint');
+      reprintBtn.onclick = () => reprintPDFLink(res.id);
+      document.querySelector('.rx-actions')?.prepend(reprintBtn);
       
       // atualiza a tabela da aba Prescrições, se existir (usa variáveis do arquivo consulta.html)
       try{
