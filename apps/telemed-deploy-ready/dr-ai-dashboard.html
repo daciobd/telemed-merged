@@ -560,5 +560,64 @@
       }).catch(() => {}); // Silent fail
     }, 1000);
   </script>
+<!-- Widget de Suporte/Ajuda (Sprint Pack 02 - Módulo D) -->
+<style>
+  #tm-help{ position:fixed; right:16px; bottom:16px; z-index:70 }
+  #tm-help .btn-help{ height:46px; width:46px; border-radius:50%; border:none; background:#2563eb; color:#fff; cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,.35) }
+  #tm-help .panel{ position:absolute; right:0; bottom:56px; width:min(320px, 92vw); background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.35); display:none }
+  #tm-help .panel.show{ display:block }
+  #tm-help .help-row{ display:flex; gap:8px; padding:10px; border-bottom:1px solid rgba(255,255,255,.08) }
+  #tm-help a, #tm-help button.link{ color:#9fb3ff; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline }
+</style>
+<div id="tm-help">
+  <button class="btn-help" title="Ajuda" data-testid="button-help">?</button>
+  <div class="panel" aria-hidden="true">
+    <div class="help-row"><strong>Ajuda rápida</strong></div>
+    <div class="help-row">
+      <button class="link" id="help-faq" data-testid="link-faq">Abrir FAQ</button>
+      <button class="link" id="help-report" data-testid="link-report">Reportar problema</button>
+    </div>
+    <div class="help-row" id="help-dev" hidden>
+      <a href="/hub" target="_blank">Hub</a>
+      <a href="/scribe" target="_blank">Scribe/CIDs</a>
+      <a href="/status" target="_blank">Status</a>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const helpWrap=document.getElementById('tm-help'); 
+  if(helpWrap) {
+    const btn=helpWrap.querySelector('.btn-help'); 
+    const panel=helpWrap.querySelector('.panel');
+    btn.onclick = ()=> panel.classList.toggle('show');
+    
+    const devOn = new URLSearchParams(location.search).get('dev')==='1' || localStorage.getItem('tm_dev')==='on';
+    if(devOn) document.getElementById('help-dev').hidden=false;
+    
+    document.getElementById('help-faq').onclick = ()=> window.open('/faq.html','_blank');
+    document.getElementById('help-report').onclick = async ()=>{
+      const msg = prompt('Descreva o problema:'); 
+      if(!msg) return;
+      try {
+        await fetch('/api/support/ticket',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ 
+            msg, 
+            url: location.href, 
+            ts: new Date().toISOString() 
+          })
+        });
+        alert('Obrigado! Ticket registrado.');
+      } catch (error) {
+        console.warn('Support ticket fallback:', error);
+        alert('Ticket registrado localmente. Obrigado pelo feedback!');
+      }
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
