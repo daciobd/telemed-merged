@@ -246,7 +246,16 @@
   const human  = (iso)=> new Date(iso).toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'});
 
   async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch{ return null; } }
-  async function postJSON(url,data){ try{ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch{ return null; } }
+  async function postJSON(url,data){ 
+    try{ 
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); 
+      if(!r.ok) throw new Error(`HTTP ${r.status} - ${r.statusText}`); 
+      return await r.json(); 
+    }catch(e){ 
+      console.error(`API error for ${url}:`, e);
+      throw e; // Re-throw para ser tratado pelo chamador
+    } 
+  }
 
   // Mocks de segurança (funciona mesmo sem backend)
   function mockFloor(){ return { now_floor:140, in_2h_floor:110, tomorrow_floor:90 }; }
@@ -275,7 +284,22 @@
       const el = document.createElement('div'); el.className='slot';
       el.innerHTML = `<div><div><strong>${human(s.start)}</strong></div><div class="muted">Mín.: ${fmtBRL(s.min_price)}</div></div>`;
       const b = document.createElement('button'); b.className='btn primary'; b.textContent='Agendar';
-      b.onclick = async()=>{ await postJSON(`/api/appointments/${ctx.appointmentId}/schedule`, { start: s.start, price: Math.max(offer, s.min_price) }); modal.classList.remove('show'); body.innerHTML=''; alert('Agendado!'); };
+      b.onclick = async()=>{ 
+        try {
+          const result = await postJSON(`/api/appointments/${ctx.appointmentId}/schedule`, { start: s.start, price: Math.max(offer, s.min_price) }); 
+          if (result && result.ok !== false) {
+            modal.classList.remove('show'); 
+            body.innerHTML=''; 
+            alert('✅ Agendado com sucesso!'); 
+            refresh(); // Atualizar dashboard
+          } else {
+            throw new Error('Falha no agendamento - resposta inválida');
+          }
+        } catch (error) {
+          console.error('Erro no agendamento:', error);
+          alert('❌ Erro ao agendar consulta. Verifique se o backend está configurado ou tente novamente.');
+        }
+      };
       el.appendChild(b); slots.appendChild(el);
     });
   }
