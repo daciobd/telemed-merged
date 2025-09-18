@@ -178,6 +178,65 @@ A plataforma TeleMed agora inclui um **sistema completo de triagem médica com I
 - **Production Ready**: Arquitetura preparada para APIs reais
 - **Bug Fixes**: Dashboard médico com filtros funcionais
 
+## Sprint Pack 02 - Integração Completa (FINALIZADO)
+
+A plataforma TeleMed agora inclui **4 módulos plug-and-play do Sprint Pack 02** totalmente integrados:
+
+### 🚀 Módulos Implementados
+
+#### **Módulo A: Chat na Consulta + CID-10/CIAP**
+- ✅ **Chat Flutuante**: Integrado em `consulta.html` com suporte WebSocket
+- ✅ **Convite ao Paciente**: Botão para POST `/api/appointments/:id/invite`
+- ✅ **Autocomplete CID-10/CIAP**: Campo `#hipotese` com busca inteligente
+- ✅ **API Endpoints**: `/api/chat/send`, `/api/chat/history`, `/ws/appointments/:id`
+
+#### **Módulo B: Página "Meus Pacientes"**
+- ✅ **Nova Página**: `meus-pacientes.html` com navegação
+- ✅ **Filtros Funcionais**: ID, nome, especialidade com busca em tempo real
+- ✅ **Ações Paciente**: Links para PHR e abertura de consultório
+- ✅ **API Endpoint**: GET `/api/doctor/patients` com fallback mock
+
+#### **Módulo C: Agendamento Real**
+- ✅ **Modal de Slots**: Já integrado no dashboard médico existente
+- ✅ **APIs Mercado**: `/api/market/price-floor`, `/api/market/availability`
+- ✅ **Agendamento**: POST `/api/appointments/:id/schedule`
+- ✅ **Error Handling**: Corrigido bug de falso sucesso em 404
+
+#### **Módulo D: Widget de Suporte/Ajuda**
+- ✅ **Botão Flutuante**: "?" em todas as páginas principais
+- ✅ **FAQ & Tickets**: Sistema de reportar problemas
+- ✅ **Dev Tools**: Atalhos Hub/Scribe/Status (via `?dev=1`)
+- ✅ **API Endpoint**: POST `/api/support/ticket`
+
+### 🧪 Status de Testes
+- **Frontend**: ✅ Testes end-to-end passando
+- **Error Handling**: ✅ Corrigido - não mostra mais falso sucesso
+- **Mock Services**: ✅ Fallbacks funcionais para desenvolvimento
+- **UX/UI**: ✅ Componentes responsivos com data-testid
+
+### 📋 Para Produção
+**Endpoints Backend a Implementar:**
+```
+POST /api/appointments/:id/schedule
+POST /api/appointments/:id/invite  
+POST /api/support/ticket
+GET /api/doctor/patients
+GET /api/codes/search (CID-10/CIAP)
+WebSocket /ws/appointments/:id
+```
+
+**🔒 Segurança Crítica:**
+- ⚠️ **Chaves removidas**: private.pem e public.pem excluídas (vazamento corrigido)
+- 🔑 **Rotacionar**: Gerar novas chaves para produção
+- 🛡️ **JWT Auth**: Implementar autenticação em todos endpoints/WebSockets
+
+**Próximos Passos:**
+1. Implementar endpoints backend com persistência
+2. Configurar autenticação JWT em WebSockets  
+3. Substituir alerts por toasts para melhor UX
+4. Adicionar logs de auditoria para PHI
+5. **Configurar secrets management** para produção
+
 ---
 
 ## Deploy e Produção
