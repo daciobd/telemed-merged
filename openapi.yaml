@@ -415,6 +415,7 @@ paths:
     get:
       tags: [prescriptions]
       summary: Baixar PDF da prescrição
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
       parameters:
         - in: path
           name: id
@@ -422,9 +423,22 @@ paths:
           schema: { type: string }
       responses:
         '200':
-          description: PDF
+          description: PDF com headers de segurança
+          headers:
+            X-Frame-Options: 
+              schema: { type: string, enum: [DENY] }
+            X-Content-Type-Options:
+              schema: { type: string, enum: [nosniff] }
+            Cache-Control:
+              schema: { type: string, enum: [no-store] }
+            Strict-Transport-Security:
+              schema: { type: string }
           content:
             application/pdf: {}
+        '403':
+          description: Link expirado ou sem permissão
+        '410':
+          description: PDF expirado
   /api/prescriptions/{id}/verify:
     get:
       tags: [prescriptions]
@@ -461,17 +475,19 @@ paths:
                           name: { type: string }
                       qr_payload:
                         type: object
-                        description: "Dados para geração do QR Code"
+                        description: "Dados completos para geração do QR Code conforme checklist go-live"
+                        required: [rx_id, appointmentId, issuedAt, doctor, content_hash]
                         properties:
-                          rx_id: { type: string }
-                          appointmentId: { type: string }
-                          issuedAt: { type: string, format: date-time }
+                          rx_id: { type: string, description: "ID único da prescrição" }
+                          appointmentId: { type: string, description: "ID da consulta" }
+                          issuedAt: { type: string, format: date-time, description: "Timestamp de emissão" }
                           doctor: 
                             type: object
+                            required: [crm, uf]
                             properties:
-                              crm: { type: string }
-                              uf: { type: string }
-                          content_hash: { type: string }
+                              crm: { type: string, description: "CRM do médico" }
+                              uf: { type: string, description: "UF do CRM" }
+                          content_hash: { type: string, description: "Hash SHA-256 do conteúdo da receita" }
   /api/patients/{personId}/prescriptions:
     get:
       tags: [patients]
@@ -505,6 +521,31 @@ paths:
                           name: { type: string }
                           directions: { type: string }
                     pdf_url: { type: string }
+  /api/prescriptions/{id}/reprint:
+    post:
+      tags: [prescriptions]
+      summary: Gerar novo link assinado sem duplicar receita
+      security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Novo link gerado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  pdf_url: { type: string, description: "Nova URL assinada" }
+                  expires_at: { type: string, format: date-time }
+        '403':
+          description: Sem permissão para esta prescrição
+        '404':
+          description: Prescrição não encontrada
 
 x-websocket:
   appointments-channel:
