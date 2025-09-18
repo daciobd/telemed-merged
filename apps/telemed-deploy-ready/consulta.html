@@ -312,13 +312,6 @@
     currentPresc.forEach((it,idx)=> html.push(`<tr><td style="padding:6px;border-bottom:1px solid var(--line)">${it.name}</td><td style="padding:6px;border-bottom:1px solid var(--line)">${it.directions||''}</td><td style="padding:6px;text-align:right"><button class="btn danger" data-i="${idx}">Remover</button></td></tr>`));
     html.push('</table>'); prescTable.innerHTML = html.join('');
     prescTable.querySelectorAll('button[data-i]').forEach(b=> b.onclick = ()=>{ currentPresc.splice(Number(b.dataset.i),1); renderPresc(); });
-  }
-  document.getElementById('btn-new-presc').onclick = async ()=>{
-    // Abra seu seletor real aqui. Por enquanto, simulamos um item.
-    const n = prompt('Medicamento (ex.: Paracetamol 750mg)'); if(!n) return;
-    const d = prompt('Indicações (ex.: 1 cp a cada 8h por 3 dias)')||'';
-    currentPresc.push({ name:n, directions:d }); renderPresc();
-    sendEvent('prescription_item_added', { name:n });
   };
   renderPresc();
 
