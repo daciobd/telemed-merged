@@ -291,10 +291,12 @@ npx playwright test
 A plataforma TeleMed agora inclui **sistema completo de prescrição digital** integrado:
 
 ### 💊 **Funcionalidades Implementadas**
-- ✅ **Modal ANVISA**: Busca inteligente de medicamentos por nome/código
+- ✅ **Modal ANVISA**: Busca inteligente de medicamentos por nome/código  
 - ✅ **Montagem Receita**: Seleção de medicamentos com posologia completa
 - ✅ **Emissão PDF**: Geração de receita digital com links assinados
 - ✅ **Integração Consulta**: Substitui prompt() do botão "Nova Prescrição"
+- ✅ **Verificação Farmácia**: Página verify-rx.html para validação sem dados clínicos
+- ✅ **Template PDF**: rx-template.html profissional com QR Code e hash de segurança
 
 ### 📋 **OpenAPI Endpoints Adicionados**
 ```
@@ -320,6 +322,8 @@ GET /api/prescriptions/{id}/pdf - Download PDF assinado
 2. **Busca Inteligente**: Digite medicamento → resultados ANVISA
 3. **Montagem**: Adicione posologia, quantidade, duração
 4. **Emissão**: PDF gerado e tabela atualizada automaticamente
+5. **Verificação**: QR Code no PDF aponta para verify-rx.html?rx_id=xxx
+6. **Validação Farmácia**: Sem dados clínicos, apenas metadados e status
 
 ---
 
@@ -339,8 +343,30 @@ GET /api/prescriptions/{id}/pdf - Download PDF assinado
 4. Testar integração completa
 5. Monitoramento e logs
 
+## TeleMed - Verify de Receita + Template PDF (IMPLEMENTADO)
+
+Sistema completo de **verificação farmacêutica** e **template PDF profissional**:
+
+### 🏥 **Verificação para Farmácias**
+- **Página**: `verify-rx.html` - Interface dedicada sem dados clínicos
+- **Endpoint**: GET `/api/prescriptions/{id}/verify` → `{valid, status, doctor, content_hash}`
+- **Segurança**: Apenas metadados mínimos (CRM/UF, hash parcial, timestamp)
+- **Estados**: VÁLIDA, EXPIRADA, REVOGADA com visual diferenciado
+
+### 📄 **Template PDF Profissional**
+- **Template**: `rx-template.html` - HTML → PDF com Handlebars/Mustache
+- **QR Code**: Aponta para `verify-rx.html?rx_id={{rx_id}}`
+- **Hash SHA-256**: Conteúdo ordenado `{appointmentId, items[], doctor, issuedAt}`
+- **Compliance**: Cabeçalho CFM, assinatura eletrônica, carimbo temporal
+
+### 🔗 **Integração Completa**
+- **QR Target**: `https://seu-dominio/verify-rx.html?rx_id={{rx_id}}`
+- **Placeholders**: `{{clinic_name}}`, `{{doctor_crm}}`, `{{content_hash}}`, `{{qr_base64}}`
+- **Headers Segurança**: X-Frame-Options: DENY, nosniff, Cache-Control: no-store
+- **Fallbacks**: Link expirado → botão "reemitir link" sem duplicar receita
+
 ---
 
 **🎉 PLATAFORMA TELEMEDICINA COMPLETA - PRONTA PARA PRODUÇÃO!**
 
-*Última atualização: Setembro 2025 - **Dr. AI Medical Triage System integrado e funcional** 🤖*
+*Última atualização: Setembro 2025 - **Sistema de Verificação Farmacêutica + Template PDF Profissional** 💊*
