@@ -286,6 +286,41 @@ npx playwright test
 - **Mock-first**: Funciona sem backend real para desenvolvimento
 - **CI/CD Ready**: Integração fácil com pipelines de deploy
 
+## TeleMed - Prescrição Digital (IMPLEMENTADO)
+
+A plataforma TeleMed agora inclui **sistema completo de prescrição digital** integrado:
+
+### 💊 **Funcionalidades Implementadas**
+- ✅ **Modal ANVISA**: Busca inteligente de medicamentos por nome/código
+- ✅ **Montagem Receita**: Seleção de medicamentos com posologia completa
+- ✅ **Emissão PDF**: Geração de receita digital com links assinados
+- ✅ **Integração Consulta**: Substitui prompt() do botão "Nova Prescrição"
+
+### 📋 **OpenAPI Endpoints Adicionados**
+```
+GET /api/drugs/search - Busca medicamentos ANVISA
+GET /api/prescriptions - Lista prescrições por consulta  
+POST /api/prescriptions - Emitir prescrição digital
+GET /api/prescriptions/{id}/pdf - Download PDF assinado
+```
+
+### 🧪 **Teste Playwright**
+- ✅ **tests/prescricao.spec.ts**: Teste completo de emissão com mocks
+- ✅ **Busca ANVISA**: Validação de pesquisa e seleção 
+- ✅ **Fluxo completo**: Buscar → Adicionar → Emitir → Verificar
+
+### 🔒 **Segurança Implementada**
+- URLs PDF assinadas com expiração curta (≤ 5min)
+- Auditoria de prescrições por appointmentId
+- Idempotência em emissão com Idempotency-Key
+- Permissões por consulta (apenas médico da consulta)
+
+### 🚀 **Como Funciona**
+1. **Modal Integrado**: Botão "Nova Prescrição" abre modal ANVISA
+2. **Busca Inteligente**: Digite medicamento → resultados ANVISA
+3. **Montagem**: Adicione posologia, quantidade, duração
+4. **Emissão**: PDF gerado e tabela atualizada automaticamente
+
 ---
 
 ## Deploy e Produção
