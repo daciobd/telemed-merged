@@ -458,5 +458,139 @@
 })();
 </script>
 
+<!-- Modal de Prescrição Digital (Sprint Pack integração) -->
+<style>
+  #rx-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:70; background:rgba(0,0,0,.5) }
+  #rx-modal.show{ display:flex }
+  #rx-card{ width:min(900px,95vw); background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+  #rx-card .h{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.08) }
+  #rx-body{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:12px }
+  @media(max-width: 900px){ #rx-body{ grid-template-columns:1fr } }
+  .rx-panel{ border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:10px; background:rgba(255,255,255,.02) }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .rx-list{ display:grid; gap:6px; max-height:280px; overflow:auto }
+  .rx-item{ display:flex; justify-content:space-between; gap:8px; padding:8px; border:1px solid rgba(255,255,255,.08); border-radius:10px; background:rgba(255,255,255,.03) }
+  input.rx, textarea.rx, select.rx{ width:100%; height:38px; padding:0 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit }
+  textarea.rx{ height:80px }
+  .rx-actions{ display:flex; gap:8px; justify-content:flex-end; padding:10px 12px; border-top:1px solid rgba(255,255,255,.08) }
+</style>
+<div id="rx-modal" aria-hidden="true">
+  <div id="rx-card">
+    <div class="h">
+      <strong>Prescrição Digital</strong>
+      <div class="row">
+        <button id="rx-close" class="btn">Fechar</button>
+      </div>
+    </div>
+    <div id="rx-body">
+      <div class="rx-panel">
+        <div class="row" style="margin-bottom:6px">
+          <input id="drug-q" class="rx" placeholder="Buscar medicamento (nome, substância ou ANVISA)">
+          <button id="drug-search" class="btn">Buscar</button>
+        </div>
+        <div id="drug-results" class="rx-list"></div>
+      </div>
+      <div class="rx-panel">
+        <div class="row" style="margin-bottom:6px">
+          <input id="rx-directions" class="rx" placeholder="Indicações gerais (ex.: 1 cp 8/8h por 3 dias)">
+          <input id="rx-qty" class="rx" placeholder="Quantidade (ex.: 6 comprimidos)">
+        </div>
+        <div class="row" style="margin-bottom:6px">
+          <input id="rx-route" class="rx" placeholder="Via (ex.: VO)">
+          <input id="rx-duration" class="rx" placeholder="Duração (ex.: 3 dias)">
+        </div>
+        <div id="rx-items" class="rx-list" style="min-height:120px"></div>
+      </div>
+    </div>
+    <div class="rx-actions">
+      <button id="rx-emit" class="btn primary">Emitir Prescrição</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const btn = document.getElementById('btn-new-presc');
+  if(!btn) return;
+  const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-EXEMPLO';
+  const diagCode = document.getElementById('hipotese_code');
+  const modal = document.getElementById('rx-modal');
+  const close = document.getElementById('rx-close');
+  const q = document.getElementById('drug-q');
+  const searchBtn = document.getElementById('drug-search');
+  const results = document.getElementById('drug-results');
+  const list = document.getElementById('rx-items');
+  const emit = document.getElementById('rx-emit');
+  const dDirections = document.getElementById('rx-directions');
+  const dQty = document.getElementById('rx-qty');
+  const dRoute = document.getElementById('rx-route');
+  const dDur = document.getElementById('rx-duration');
+
+  let selected = [];
+
+  function show(on){ modal.classList.toggle('show', !!on); }
+  function itemRow(it){
+    const row=document.createElement('div'); row.className='rx-item';
+    row.innerHTML = `<div><div><strong>${it.name}</strong></div><div class="muted">ANVISA ${it.anvisa_code||'—'} · ${it.form||''} ${it.concentration||''}</div></div>`;
+    const right=document.createElement('div');
+    const rm=document.createElement('button'); rm.className='btn'; rm.textContent='Remover'; rm.onclick=()=>{ selected=selected.filter(x=>x.anvisa_code!==it.anvisa_code||x.name!==it.name); renderSelected(); };
+    right.appendChild(rm); row.appendChild(right); return row;
+  }
+  function renderSelected(){ list.innerHTML=''; if(!selected.length){ list.innerHTML='<div class="muted">Nenhum item selecionado.</div>'; return; } selected.forEach(it=> list.appendChild(itemRow(it))); }
+
+  async function getJSON(u){ try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
+  async function postJSON(u,d){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
+
+  function mockDrugs(){
+    return [
+      { anvisa_code:'102310045', name:'Paracetamol 750mg comprimido', form:'cp', concentration:'750mg', route:'VO' },
+      { anvisa_code:'109990012', name:'Ibuprofeno 200mg comprimido', form:'cp', concentration:'200mg', route:'VO' }
+    ];
+  }
+
+  async function search(){
+    const term=(q.value||'').trim(); if(!term) return;
+    const data = await getJSON(`/api/drugs/search?q=${encodeURIComponent(term)}`) || mockDrugs();
+    results.innerHTML='';
+    data.forEach(d=>{
+      const row=document.createElement('div'); row.className='rx-item';
+      row.innerHTML = `<div><div><strong>${d.name}</strong></div><div class="muted">ANVISA ${d.anvisa_code||'—'} · ${d.form||''} ${d.concentration||''}</div></div>`;
+      const right=document.createElement('div');
+      const add=document.createElement('button'); add.className='btn'; add.textContent='Adicionar'; add.onclick=()=>{ selected.push({ ...d, directions:dDirections.value, quantity:dQty.value, route:dRoute.value||d.route, duration:dDur.value }); renderSelected(); };
+      right.appendChild(add); row.appendChild(right); results.appendChild(row);
+    });
+  }
+
+  async function emitRx(){
+    if(!selected.length){ alert('Selecione pelo menos 1 item.'); return; }
+    const payload = {
+      appointmentId,
+      diagnosis_code: diagCode?.value || null,
+      items: selected.map(x=> ({ anvisa_code:x.anvisa_code, name:x.name, directions:x.directions||'', quantity:x.quantity||'', route:x.route||'', duration:x.duration||'' }))
+    };
+    const res = await postJSON('/api/prescriptions', payload) || { ok:true, id:'RX-123', pdf_url:'#' };
+    if(res?.ok){
+      // atualiza a tabela da aba Prescrições, se existir (usa variáveis do arquivo consulta.html)
+      try{
+        if(window.currentPresc){
+          window.currentPresc.push(...selected.map(x=> ({ name:x.name, directions:x.directions })));
+          if(window.renderPresc) window.renderPresc();
+        }
+      }catch{}
+      show(false);
+      if(res.pdf_url && res.pdf_url!=='#'){ window.open(res.pdf_url,'_blank'); }
+    }else{
+      alert('Falha ao emitir prescrição.');
+    }
+  }
+
+  btn.onclick = ()=> show(true);
+  close.onclick = ()=> show(false);
+  searchBtn.onclick = search;
+  q.addEventListener('keyup', (e)=>{ if(e.key==='Enter') search(); });
+  emit.onclick = emitRx;
+  renderSelected();
+})();
+</script>
+
 </body>
 </html>
