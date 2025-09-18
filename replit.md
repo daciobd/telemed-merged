@@ -55,3 +55,52 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **Handlebars/Mustache**: Para templating de documentos PDF.
 -   **Playwright**: Ferramenta para testes de ponta a ponta.
 -   **Swagger/OpenAPI**: Para documentação da API.
+
+## TeleMed - Sistema de Prescrição Digital Completo
+
+### 💊 **Funcionalidades Implementadas**
+- ✅ **Modal ANVISA**: Busca inteligente de medicamentos por nome/código  
+- ✅ **Montagem Receita**: Seleção de medicamentos com posologia completa
+- ✅ **Emissão PDF**: Geração de receita digital com links assinados
+- ✅ **Integração Consulta**: Substitui prompt() do botão "Nova Prescrição"
+- ✅ **Verificação Farmácia**: Página verify-rx.html para validação sem dados clínicos
+- ✅ **Template PDF**: rx-template.html profissional com QR Code e hash de segurança
+
+### 🏥 **Verificação para Farmácias**
+- **Página**: `verify-rx.html` - Interface dedicada sem dados clínicos
+- **Endpoint**: GET `/api/prescriptions/{id}/verify` → `{valid, status, doctor, content_hash}`
+- **Segurança**: Apenas metadados mínimos (CRM/UF, hash parcial, timestamp)
+- **Estados**: VÁLIDA, EXPIRADA, REVOGADA com visual diferenciado
+
+### 📄 **Template PDF Profissional**
+- **Template**: `rx-template.html` - HTML → PDF com Handlebars/Mustache
+- **QR Code**: Aponta para `verify-rx.html?rx_id={{rx_id}}`
+- **Hash SHA-256**: Conteúdo ordenado `{appointmentId, items[], doctor, issuedAt}`
+- **Compliance**: Cabeçalho CFM, assinatura eletrônica, carimbo temporal
+
+### 🔄 **Funcionalidade "Reimprimir Link"**
+- **Modal Prescrição**: Botão `data-testid="rx-reprint"` após emitir receita
+- **PHR Timeline**: Botão "Reimprimir link" ao lado de "Ver PDF" nas prescrições recentes
+- **Endpoint**: POST `/api/prescriptions/{id}/reprint` → gera novo URL assinado
+- **UX**: Evita ida/volta ao consultório quando paciente pede "link novo"
+
+### 🚨 **Alertas de Produção (Prometheus)**
+```yaml
+- alert: TelemedPrescriptionErrorRateHigh
+  expr: |
+    sum(rate(http_requests_total{route="/api/prescriptions",status=~"5.."}[5m]))
+      / sum(rate(http_requests_total{route="/api/prescriptions"}[5m])) > 0.02
+  for: 5m
+  labels: { severity: page }
+  annotations:
+    summary: "Erros de prescrição > 2% (5m)"
+    description: "Verifique storage/PDF/sign service."
+
+- alert: TelemedPrescriptionLatencyP95High
+  expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route="/api/prescriptions"}[5m])) by (le)) > 2
+  for: 10m
+  labels: { severity: ticket }
+  annotations:
+    summary: "p95 de emissão > 2s"
+    description: "Monitorar lentidão do gerador de PDF/IO."
+```
