@@ -96,3 +96,27 @@ test('Prescrição: PDF expirado exibe aviso amigável', async ({ page }) => {
   // Aguarda um pouco para garantir que o alert foi capturado
   await page.waitForTimeout(100);
 });
+
+// 4) Verificação farmacêutica: página verify-rx.html funciona corretamente
+test('Farmácia: verificação de receita via verify-rx.html', async ({ page }) => {
+  // Mock endpoint de verificação
+  await page.route(/\/api\/prescriptions\/RX-test\/verify$/, r => r.fulfill(ok({
+    valid: true,
+    status: 'valid',
+    issuedAt: new Date().toISOString(),
+    doctor: { crm: '12345', uf: 'SP' },
+    content_hash: 'abc123def456789...',
+    pdf_url: '/api/prescriptions/RX-test/pdf?sig=valid'
+  })));
+
+  // Acessa página de verificação com rx_id
+  await page.goto('/verify-rx.html?rx_id=RX-test');
+
+  // Verifica se mostra status válido
+  await expect(page.getByText('VÁLIDA')).toBeVisible();
+  await expect(page.getByText('CRM 12345/SP')).toBeVisible();
+  
+  // Verifica botão "Abrir PDF" está disponível
+  await expect(page.getByTestId('rx-link')).toBeVisible();
+  await expect(page.getByTestId('rx-link')).toHaveAttribute('href', '/api/prescriptions/RX-test/pdf?sig=valid');
+});
