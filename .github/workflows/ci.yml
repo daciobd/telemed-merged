@@ -31,6 +31,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx -y @playwright/test@1.46.0 install --with-deps
 
+      - name: Check Playwright install
+        run: |
+          npm ls @playwright/test || true
+          node -e "console.log(require.resolve('@playwright/test/package.json'))"
+
       - name: Start server.js (porta 3000)
         run: |
           node server.js &
