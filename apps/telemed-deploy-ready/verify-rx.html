@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Verificação de Receita • TeleMed</title>
+<style>
+:root{ --bg:#0b1020; --panel:#0f172a; --line:rgba(255,255,255,.1); --text:#eaf0ff; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{opacity:.85}
+.ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.08);padding:8px;border-radius:10px}
+.warn{border:1px solid rgba(245,158,11,.35);background:rgba(245,158,11,.08);padding:8px;border-radius:10px}
+.err{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);padding:8px;border-radius:10px}
+.btn{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
+a.btn{display:inline-flex;align-items:center;text-decoration:none}
+code{background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="card">
+<h1 style="margin:6px 0 12px">Verificação de Receita</h1>
+<div id="box" class="muted">Carregando…</div>
+<div class="row" style="margin-top:12px">
+<a id="open-pdf" class="btn" target="_blank" rel="noopener" data-testid="rx-link" hidden>Abrir PDF</a>
+<button id="refresh" class="btn">Reverificar</button>
+</div>
+<div class="muted" style="margin-top:10px;font-size:12px">Dúvidas? Contato: suporte@telemed.local</div>
+</div>
+</main>
+<script>
+(function(){
+const params = new URLSearchParams(location.search);
+const rxId = params.get('rx_id') || params.get('id');
+const box = document.getElementById('box');
+const btn = document.getElementById('open-pdf');
+const refresh = document.getElementById('refresh');
+
+async function getJSON(u){ try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }catch(e){ return { error: String(e) }; } }
+
+async function verify(){
+if(!rxId){ box.innerHTML = '<div class="err">Parâmetro <code>rx_id</code> ausente.</div>'; return; }
+box.textContent = 'Carregando…'; btn.hidden = true; btn.removeAttribute('href');
+
+const v = await getJSON(`/api/prescriptions/${encodeURIComponent(rxId)}/verify`);
+if(v.error){ box.innerHTML = `<div class="err">Falha ao verificar. Tente novamente. <small>${v.error}</small></div>`; return; }
+
+// Espera { valid: boolean, status: 'valid'|'expired'|'revoked', issuedAt, doctor:{crm,uf}, content_hash, pdf_url? }
+const head = `<div class="muted">RX <code>${rxId}</code> • emitida em ${v.issuedAt? new Date(v.issuedAt).toLocaleString('pt-BR'):'—'} • Médico CRM ${v.doctor?.crm||'—'}/${v.doctor?.uf||'—'}</div>`;
+
+if(v.valid){ box.innerHTML = head + `<div class="ok" style="margin-top:8px">Prescrição <strong>VÁLIDA</strong>. Assinatura conferida (hash <code>${(v.content_hash||'').slice(0,10)}…</code>).</div>`; }
+else if(v.status==='expired'){ box.innerHTML = head + `<div class="warn" style="margin-top:8px">Link <strong>EXPIRADO</strong>. Solicite reemissão do link (a receita permanece válida).</div>`; }
+else { box.innerHTML = head + `<div class="err" style="margin-top:8px">Prescrição <strong>NÃO VÁLIDA</strong> ou <strong>REVOGADA</strong>. Não dispensar.</div>`; }
+
+if(v.pdf_url){ btn.hidden=false; btn.href=v.pdf_url; }
+}
+
+refresh.onclick = verify; verify();
+})();
+</script>
+</body>
+</html>

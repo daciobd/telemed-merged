@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Obrigado — TeleMed</title>
+  <title>Obrigado — TeleMed Consulta</title>
   <style>
     body { 
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; 
@@ -159,8 +159,8 @@
     </p>
     
     <div class="actions">
-      <a href="/" class="btn btn-primary" data-testid="button-home">Voltar ao TeleMed</a>
-      <a href="/consulta/" class="btn btn-secondary" data-testid="button-consultation">Nova Consulta</a>
+      <a id="cta" class="btn btn-primary" href="#" data-testid="button-responder-feedback">Responder feedback (1 min) →</a>
+      <a href="/" class="btn btn-secondary" data-testid="button-home">Voltar ao TeleMed</a>
     </div>
     
     <div class="stats">
@@ -180,6 +180,14 @@
   </div>
 
   <script>
+    // Lê role e appointmentId da query e constrói o link para /feedback.html
+    const q = new URLSearchParams(location.search);
+    const role = q.get('role') || 'paciente';
+    const appointmentId = q.get('appointmentId') || '';
+    const step = q.get('step') || 'end';
+    const href = `/feedback.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=${encodeURIComponent(step)}`;
+    document.getElementById('cta').setAttribute('href', href);
+    
     // Simula estatísticas básicas (em produção, viriam da API)
     function displayStats() {
       // Dados de exemplo - em produção viriam do Google Sheets ou API
@@ -197,34 +205,18 @@
       }, 800);
     }
     
-    // Redirect automático opcional após 10 segundos
-    function setupAutoRedirect() {
-      let countdown = 10;
-      const redirectTimer = setInterval(() => {
-        countdown--;
-        if (countdown <= 0) {
-          clearInterval(redirectTimer);
-          window.location.href = '/';
-        }
-      }, 1000);
-      
-      // Cancela redirect se user interagir
-      document.addEventListener('click', () => {
-        clearInterval(redirectTimer);
-      });
-    }
-    
     // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
       displayStats();
-      // setupAutoRedirect(); // Descomente se quiser redirect automático
     });
     
     // Track analytics event se disponível
     if (window.TelemedAnalytics && typeof window.TelemedAnalytics.track === 'function') {
       window.TelemedAnalytics.track('evaluation_completed', {
         timestamp: new Date().toISOString(),
-        referrer: document.referrer
+        referrer: document.referrer,
+        role: role,
+        appointmentId: appointmentId
       });
     }
   </script>

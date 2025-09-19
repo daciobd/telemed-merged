@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Receita Médica</title>
+<style>
+@page{ size: A4; margin: 18mm 14mm; }
+body{ font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#0b1020; }
+.hdr{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0b1020; padding-bottom:8px; margin-bottom:12px }
+.clinic{ font-weight:700; font-size:18px }
+.muted{ color:#475569; font-size:12px }
+.block{ margin:10px 0 }
+.rx-item{ border:1px solid #e2e8f0; border-radius:8px; padding:8px; margin:6px 0 }
+.footer{ border-top:1px dashed #94a3b8; padding-top:8px; margin-top:12px; font-size:12px; display:flex; justify-content:space-between; align-items:center }
+.qr{ width:110px; height:110px; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center }
+.sig{ margin-top:18px }
+.sig .line{ border-top:1px solid #0b1020; width:240px }
+.sig small{ display:block; color:#475569 }
+.right{ text-align:right }
+.h2{ font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:.04em; margin:10px 0 6px }
+</style>
+</head>
+<body>
+<div class="hdr">
+<div>
+<div class="clinic">{{clinic_name}}</div>
+<div class="muted">CNPJ {{clinic_cnpj}} • {{clinic_addr}}</div>
+</div>
+<div class="right">
+<div><strong>Receita Médica</strong></div>
+<div class="muted">RX {{rx_id}} • {{issued_at}}</div>
+</div>
+</div>
+
+<div class="block">
+<div><strong>Paciente:</strong> {{patient_name}}</div>
+<div class="muted">Documento: {{patient_doc}}</div>
+</div>
+
+<div class="block">
+<div class="h2">Prescrições</div>
+{{#each items}}
+<div class="rx-item">
+<div><strong>{{name}}</strong></div>
+<div class="muted">{{route}} • {{quantity}} • {{duration}}</div>
+<div>{{directions}}</div>
+</div>
+{{/each}}
+</div>
+
+<div class="block">
+<div class="h2">Médico</div>
+<div><strong>{{doctor_name}}</strong> — CRM {{doctor_crm}}/{{doctor_uf}}</div>
+</div>
+
+<div class="footer">
+<div>
+<div class="sig">
+<div class="line"></div>
+<small>Assinatura do médico (eletrônica)</small>
+</div>
+<div class="muted" style="margin-top:6px">
+Hash do conteúdo: {{content_hash}}<br>
+Emissão: {{issued_at}}
+</div>
+</div>
+<div>
+<div class="qr">
+<!-- Insira aqui uma imagem de QR base64 -->
+<img src="{{qr_base64}}" alt="QR" style="width:100%;height:100%;object-fit:contain" />
+</div>
+<div class="muted" style="margin-top:4px; max-width:110px">Escaneie para verificar a autenticidade.</div>
+</div>
+</div>
+</body>
+</html>

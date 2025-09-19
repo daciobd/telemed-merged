@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Feedback do Piloto — TeleMed Consulta</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; margin:0; background:#0b1020; color:#eaf0ff}
+    .wrap{max-width:820px; margin:0 auto; padding:24px}
+    .card{background:#121935;border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:24px; box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    h1{margin:0 0 12px}
+    p{color:#b9c2e2; margin:8px 0}
+    label{display:block; margin:14px 0 6px}
+    input[type="text"], input[type="email"], select, textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0f1530; color:#eaf0ff; box-sizing:border-box}
+    textarea{min-height:90px; resize:vertical}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:760px){.row{grid-template-columns:1fr}}
+    .actions{display:flex; gap:10px; align-items:center; margin-top:16px}
+    .btn{background:#1c7bff; color:#fff; padding:12px 16px; border:none; border-radius:10px; font-weight:700; cursor:pointer}
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
+    .note{font-size:13px; color:#9fb1da}
+    .ok{color:#39d98a; font-weight:700}
+    .err{color:#ff6b6b; font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <form id="f" class="card" novalidate>
+      <h1>Feedback do Piloto</h1>
+      <p>Leva cerca de <strong>1 minuto</strong>. Obrigado por nos ajudar! 🙏</p>
+
+      <div class="row">
+        <div>
+          <label>Seu perfil</label>
+          <select name="role" id="role" data-testid="select-role">
+            <option value="medico">Médico</option>
+            <option value="paciente">Paciente</option>
+          </select>
+        </div>
+        <div>
+          <label>ID da consulta (opcional)</label>
+          <input type="text" name="appointmentId" id="appointmentId" placeholder="APT-TESTE-001" data-testid="input-appointment-id" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Facilidade de uso (1–5)</label>
+          <select name="facilidade_uso" id="facilidade_uso" data-testid="select-facilidade">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div>
+          <label>NPS (0–10): indicaria para alguém?</label>
+          <select name="nps" id="nps" data-testid="select-nps">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10" selected>10</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>O fluxo ficou claro?</label>
+          <select name="clareza_fluxo" id="clareza_fluxo" data-testid="select-clareza">
+            <option value="sim" selected>Sim</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+        <div>
+          <label>O Dr. AI ajudou?</label>
+          <select name="dr_ai_ajudou" id="dr_ai_ajudou" data-testid="select-dr-ai">
+            <option value="sim">Sim</option>
+            <option value="nao" selected>Não</option>
+            <option value="na">Não usei</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Qual foi o recurso mais útil?</label>
+      <input type="text" name="recurso_mais_util" id="recurso_mais_util" placeholder="Ex.: Sala de espera, aceite de consulta, etc." data-testid="input-recurso"/>
+
+      <label>Encontrou bugs / problemas?</label>
+      <textarea name="bugs_ou_erros" id="bugs_ou_erros" placeholder="Descreva rapidamente o que aconteceu ou cole um link/print." data-testid="textarea-bugs"></textarea>
+
+      <input type="hidden" name="step" id="step" value="end"/>
+      <input type="hidden" name="ui_url" id="ui_url"/>
+
+      <div class="actions">
+        <button class="btn" id="send" type="submit" data-testid="button-enviar-feedback">Enviar feedback</button>
+        <span id="msg" class="note"></span>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Usar o mesmo endpoint de avaliação já configurado no sistema
+    const FEEDBACK_ENDPOINT = '/api/avaliacao-proxy'; // Usa o proxy já existente
+
+    const qs = new URLSearchParams(location.search);
+    // Preenche campos a partir da query
+    const role = qs.get('role'); if(role) document.getElementById('role').value = role;
+    const appointmentId = qs.get('appointmentId'); if(appointmentId) document.getElementById('appointmentId').value = appointmentId;
+    const step = qs.get('step') || 'end'; document.getElementById('step').value = step;
+    document.getElementById('ui_url').value = location.href;
+
+    // Envio do formulário
+    const f = document.getElementById('f');
+    const btn = document.getElementById('send');
+    const msg = document.getElementById('msg');
+
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true; msg.textContent = 'Enviando…';
+      
+      // Converte FormData para objeto simples
+      const formData = new FormData(f);
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+      
+      try{
+        const r = await fetch(FEEDBACK_ENDPOINT, {
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(data).toString()
+        });
+        
+        if(!r.ok) throw new Error('Falha ao enviar');
+        const j = await r.json().catch(()=>({ok:true}));
+        msg.textContent = 'Obrigado! Feedback recebido.'; msg.className = 'note ok';
+        // Redireciona de volta ao início após 2s
+        setTimeout(()=>{ window.location.href = '/obrigado.html'; }, 2000);
+      }catch(err){
+        console.error(err);
+        msg.textContent = 'Erro ao enviar. Tente novamente em instantes.'; msg.className = 'note err';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

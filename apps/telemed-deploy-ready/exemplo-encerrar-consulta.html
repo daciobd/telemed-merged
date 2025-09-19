@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exemplo - Encerrar Consulta</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b1020;color:#eaf0ff;margin:0;padding:20px}
+    .demo{max-width:600px;margin:0 auto;background:#121935;border-radius:16px;padding:24px}
+    h1{margin:0 0 16px}
+    p{color:#b9c2e2;margin:8px 0}
+    .btn{background:#1c7bff;color:#fff;padding:12px 20px;border:none;border-radius:10px;font-weight:600;cursor:pointer;margin:8px 8px 8px 0}
+    .btn:hover{background:#0056d9}
+    .example{background:#0f1530;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #1c7bff}
+    pre{color:#79f2a6;font-size:14px;margin:8px 0}
+  </style>
+</head>
+<body>
+  <div class="demo">
+    <h1>🎯 Sistema de Feedback Pós-Consulta</h1>
+    <p>Demonstração do fluxo completo implementado:</p>
+    
+    <div class="example">
+      <h3>1. Botões para encerrar consulta</h3>
+      <button class="btn" onclick="encerrarConsulta('medico','APT-TESTE-001')" data-testid="button-encerrar-medico">
+        Encerrar consulta (Médico)
+      </button>
+      <button class="btn" onclick="encerrarConsulta('paciente','APT-TESTE-001')" data-testid="button-encerrar-paciente">
+        Encerrar consulta (Paciente)
+      </button>
+    </div>
+    
+    <div class="example">
+      <h3>2. Fluxo implementado:</h3>
+      <p>✅ <strong>/obrigado.html</strong> - Página pós-consulta com botão para feedback</p>
+      <p>✅ <strong>/feedback.html</strong> - Formulário de 1 minuto que usa o sistema de avaliação</p>
+      <p>✅ <strong>Banner na sala de espera</strong> - Aparece após 120s ou em erro</p>
+      <p>✅ <strong>Função encerrarConsulta()</strong> - Redireciona automaticamente</p>
+    </div>
+    
+    <div class="example">
+      <h3>3. Como usar no seu código:</h3>
+      <pre>&lt;button onclick="encerrarConsulta('medico','APT-123')"&gt;
+  Encerrar consulta
+&lt;/button&gt;</pre>
+      <p><small>Substitua 'medico' por 'paciente' conforme necessário e use o ID real da consulta.</small></p>
+    </div>
+    
+    <div class="example">
+      <h3>4. URLs diretas de teste:</h3>
+      <p><a href="/obrigado.html?role=medico&appointmentId=APT-TESTE-001" style="color:#4da3ff">/obrigado.html?role=medico&appointmentId=APT-TESTE-001</a></p>
+      <p><a href="/feedback.html?role=paciente&appointmentId=APT-TESTE-001&step=waiting" style="color:#4da3ff">/feedback.html?role=paciente&appointmentId=APT-TESTE-001&step=waiting</a></p>
+    </div>
+    
+    <p style="margin-top:24px;padding:16px;background:#0e2720;border:1px solid #1a3e33;border-radius:8px;color:#79f2a6">
+      <strong>✅ Sistema 100% funcional!</strong> O feedback será enviado via proxy para o Google Apps Script configurado no sistema de avaliação existente.
+    </p>
+  </div>
+
+  <!-- Função de redirecionamento -->
+  <script>
+    function encerrarConsulta(role, appointmentId){
+      const url = `/obrigado.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=end`;
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>

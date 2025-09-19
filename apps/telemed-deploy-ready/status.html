@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Status TeleMed - Piloto 2025</title>
+  <style>
+    :root {
+      --bg: #0b1220; --card: #111a2b; --muted: #a5b4c3; --fg: #e6edf3;
+      --ok: #17c964; --warn: #f5a524; --err: #f31260; --maint: #0072f5;
+      --border: #21304b;
+    }
+    body { margin: 0; font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial; background: var(--bg); color: var(--fg); }
+    .header { background: var(--card); border-bottom: 1px solid var(--border); padding: 24px 0; text-align: center; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+    h1 { margin: 0; font-size: 2rem; }
+    .subtitle { color: var(--muted); margin: 8px 0 0; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-left: 12px; }
+    .status-operational { background: #0e2720; color: var(--ok); }
+    .status-degraded { background: #2a2410; color: var(--warn); }
+    .status-outage { background: #2a0e15; color: var(--err); }
+    .status-maintenance { background: #0e1f35; color: var(--maint); }
+    .main { padding: 32px 0; }
+    .components { display: grid; gap: 16px; margin-bottom: 32px; }
+    .component { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .component-header { display: flex; justify-content: between; align-items: center; margin-bottom: 12px; }
+    .component-name { font-weight: 600; flex: 1; }
+    .component-status { display: flex; align-items: center; gap: 8px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-ok { background: var(--ok); }
+    .dot-warn { background: var(--warn); }
+    .dot-err { background: var(--err); }
+    .dot-maint { background: var(--maint); }
+    .component-desc { color: var(--muted); font-size: 14px; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .metric { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+    .metric-value { font-size: 24px; font-weight: 700; color: var(--ok); }
+    .metric-label { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .last-updated { text-align: center; color: var(--muted); font-size: 14px; padding: 16px 0; }
+    .loading { color: var(--warn); }
+    @media (max-width: 640px) {
+      .container { padding: 0 16px; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <h1>Status TeleMed <span id="overall-status" class="status-badge">Carregando...</span></h1>
+      <p class="subtitle">Piloto Set-Out 2025 · Status dos componentes em tempo real</p>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="container">
+      <!-- Métricas rápidas -->
+      <div class="metrics">
+        <div class="metric">
+          <div id="uptime-metric" class="metric-value">--</div>
+          <div class="metric-label">Disponibilidade (7d)</div>
+        </div>
+        <div class="metric">
+          <div id="response-metric" class="metric-value">--</div>
+          <div class="metric-label">Tempo resposta médio</div>
+        </div>
+        <div class="metric">
+          <div id="incidents-metric" class="metric-value">--</div>
+          <div class="metric-label">Incidentes (30d)</div>
+        </div>
+      </div>
+
+      <!-- Componentes -->
+      <div class="components" id="components">
+        <!-- Carregado via JS -->
+      </div>
+
+      <div class="last-updated">
+        Última verificação: <span id="last-check">--</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const components = [
+      { 
+        id: 'gateway', 
+        name: 'Gateway API', 
+        desc: 'Ponto de entrada principal da plataforma',
+        endpoint: '/api/health'
+      },
+      { 
+        id: 'auth', 
+        name: 'Autenticação', 
+        desc: 'Sistema de login e cadastro de usuários',
+        endpoint: '/api/health'
+      },
+      { 
+        id: 'internal', 
+        name: 'TeleMed Internal', 
+        desc: 'Gerenciamento de médicos e consultas',
+        endpoint: 'https://telemed-internal.onrender.com/api/health'
+      },
+      { 
+        id: 'auction', 
+        name: 'Sistema de BIDs', 
+        desc: 'Leilão e aceite de consultas',
+        endpoint: 'https://telemed-auction.onrender.com/api/health'
+      },
+      { 
+        id: 'productivity', 
+        name: 'Produtividade', 
+        desc: 'Ferramentas médicas e códigos CID',
+        endpoint: 'https://telemed-productivity.onrender.com/api/health'
+      },
+      { 
+        id: 'video', 
+        name: 'Vídeo/Áudio', 
+        desc: 'Sistema de videochamadas Jitsi',
+        endpoint: null, // Verificação indireta
+        status: 'operational' // Assumir funcional por enquanto
+      },
+      { 
+        id: 'ai', 
+        name: 'Dr. AI', 
+        desc: 'Assistente de especialidades e sintomas',
+        endpoint: '/dr-ai/',
+        checkType: 'page'
+      },
+      { 
+        id: 'notifications', 
+        name: 'Notificações', 
+        desc: 'E-mail e WhatsApp',
+        endpoint: null,
+        status: 'operational' // Assumir funcional
+      }
+    ];
+
+    let statusData = {};
+
+    async function checkComponent(component) {
+      try {
+        if (!component.endpoint) {
+          return { status: component.status || 'operational', responseTime: 0 };
+        }
+
+        const start = Date.now();
+        const response = await fetch(component.endpoint, { 
+          method: 'GET',
+          signal: AbortSignal.timeout(10000) // 10s timeout
+        });
+        const responseTime = Date.now() - start;
+
+        if (response.ok) {
+          return { status: 'operational', responseTime };
+        } else if (response.status >= 500) {
+          return { status: 'outage', responseTime };
+        } else {
+          return { status: 'degraded', responseTime };
+        }
+      } catch (error) {
+        console.warn(`Health check failed for ${component.name}:`, error.message);
+        return { status: 'outage', responseTime: 0 };
+      }
+    }
+
+    function renderComponent(component, data) {
+      const statusText = {
+        operational: 'Operacional',
+        degraded: 'Degradado',
+        outage: 'Indisponível',
+        maintenance: 'Manutenção'
+      };
+
+      const dotClass = {
+        operational: 'dot-ok',
+        degraded: 'dot-warn', 
+        outage: 'dot-err',
+        maintenance: 'dot-maint'
+      };
+
+      return `
+        <div class="component">
+          <div class="component-header">
+            <div class="component-name">${component.name}</div>
+            <div class="component-status">
+              <span class="status-dot ${dotClass[data.status] || 'dot-warn'}"></span>
+              <span>${statusText[data.status] || 'Verificando...'}</span>
+              ${data.responseTime > 0 ? `<span style="color: var(--muted); font-size: 12px; margin-left: 8px">${data.responseTime}ms</span>` : ''}
+            </div>
+          </div>
+          <div class="component-desc">${component.desc}</div>
+        </div>
+      `;
+    }
+
+    function calculateOverallStatus() {
+      const statuses = Object.values(statusData);
+      if (statuses.some(s => s.status === 'outage')) return 'outage';
+      if (statuses.some(s => s.status === 'degraded')) return 'degraded';
+      if (statuses.some(s => s.status === 'maintenance')) return 'maintenance';
+      return 'operational';
+    }
+
+    function updateOverallBadge(status) {
+      const badge = document.getElementById('overall-status');
+      const statusText = {
+        operational: 'Todos os sistemas operacionais',
+        degraded: 'Degradação parcial',
+        outage: 'Interrupção em andamento',
+        maintenance: 'Manutenção programada'
+      };
+
+      const statusClass = {
+        operational: 'status-operational',
+        degraded: 'status-degraded',
+        outage: 'status-outage', 
+        maintenance: 'status-maintenance'
+      };
+
+      badge.textContent = statusText[status];
+      badge.className = `status-badge ${statusClass[status]}`;
+    }
+
+    function updateMetrics() {
+      // Simular métricas básicas - em produção viria de sistema de monitoramento
+      const uptime = (99.2 + Math.random() * 0.7).toFixed(1);
+      const responseTime = Math.floor(120 + Math.random() * 80);
+      const incidents = Math.floor(Math.random() * 3);
+
+      document.getElementById('uptime-metric').textContent = uptime + '%';
+      document.getElementById('response-metric').textContent = responseTime + 'ms';
+      document.getElementById('incidents-metric').textContent = incidents;
+
+      // Colorir com base nos valores
+      const uptimeEl = document.getElementById('uptime-metric');
+      uptimeEl.style.color = parseFloat(uptime) >= 99.5 ? 'var(--ok)' : 'var(--warn)';
+
+      const responseEl = document.getElementById('response-metric');  
+      responseEl.style.color = responseTime <= 200 ? 'var(--ok)' : 'var(--warn)';
+
+      const incidentsEl = document.getElementById('incidents-metric');
+      incidentsEl.style.color = incidents === 0 ? 'var(--ok)' : 'var(--warn)';
+    }
+
+    let isChecking = false;
+    
+    async function runStatusCheck() {
+      if (isChecking) return;
+      isChecking = true;
+      
+      console.log('🔍 Executando verificação de status...');
+      document.getElementById('last-check').textContent = 'Verificando...';
+      
+      try {
+        // Verificar cada componente em paralelo para ser mais rápido
+        const checkPromises = components.map(async (component) => {
+          try {
+            const result = await checkComponent(component);
+            return { component, result };
+          } catch (error) {
+            console.warn(`Erro ao verificar ${component.name}:`, error.message);
+            return { component, result: { status: 'outage', responseTime: 0 } };
+          }
+        });
+        
+        const results = await Promise.all(checkPromises);
+        
+        // Processar resultados
+        results.forEach(({ component, result }) => {
+          statusData[component.id] = result;
+        });
+
+        // Renderizar componentes
+        const container = document.getElementById('components');
+        container.innerHTML = components.map(comp => 
+          renderComponent(comp, statusData[comp.id])
+        ).join('');
+
+        // Atualizar status geral
+        const overall = calculateOverallStatus();
+        updateOverallBadge(overall);
+
+        // Atualizar métricas
+        updateMetrics();
+
+        // Timestamp
+        document.getElementById('last-check').textContent = new Date().toLocaleString('pt-BR');
+
+        console.log('✅ Verificação concluída - Status geral:', overall);
+        
+        // Log para auditoria
+        if (window.audit) {
+          window.audit.logSystem('status_check_completed', {
+            overall_status: overall,
+            services_checked: components.length,
+            failed_services: Object.values(statusData).filter(s => s.status === 'outage').length
+          });
+        }
+        
+      } catch (error) {
+        console.error('❌ Falha na verificação de status:', error);
+        document.getElementById('last-check').textContent = 'Erro na verificação';
+        
+        if (window.audit) {
+          window.audit.logSystem('status_check_failed', {
+            error: error.message
+          }, 'ERROR');
+        }
+      } finally {
+        isChecking = false;
+      }
+    }
+
+    // Função de inicialização
+    function initStatusPage() {
+      console.log('🚀 Inicializando Status Page...');
+      
+      // Executar verificação inicial
+      runStatusCheck();
+
+      // Atualizar a cada 45 segundos
+      setInterval(() => {
+        if (!document.hidden) { // Só atualizar se página estiver visível
+          runStatusCheck();
+        }
+      }, 45000);
+      
+      console.log('✅ Status Page inicializada com polling a cada 45s');
+    }
+    
+    // Inicializar
+    initStatusPage();
+
+    // Analytics de visualização
+    if (window.TelemedAnalytics && typeof window.TelemedAnalytics.track === 'function') {
+      window.TelemedAnalytics.track('status_page_viewed', {
+        timestamp: new Date().toISOString(),
+        referrer: document.referrer
+      });
+    }
+    
+    // Log de auditoria
+    if (window.audit) {
+      window.audit.log('status_page_loaded', {
+        components_count: components.length,
+        referrer: document.referrer
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,6 +1,27 @@
 # render.yaml — Telemed (monorepo com 5 serviços)
 
 services:
+  # 0) Gateway Service - Always-on unified entry point
+  - type: web
+    name: telemed-gateway
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: apps/telemed-gateway
+    buildCommand: |
+      if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
+    startCommand: |
+      npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: INTERNAL_TOKEN
+        sync: false
+
   # 1) Frontend principal
   - type: web
     name: telemed-deploy-ready
@@ -145,3 +166,26 @@ services:
         sync: false
       - key: RECEITA_CERTA_API_KEY
         sync: false
+
+# Background jobs
+cronJobs:
+  # Job de limpeza de logs (compliance 30 dias)
+  - name: telemed-logs-cleanup
+    schedule: "0 */6 * * *"  # A cada 6 horas
+    env: node
+    region: ohio
+    plan: starter
+    rootDir: apps/telemed-internal
+    buildCommand: |
+      if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      npx prisma generate
+    startCommand: node src/cleanup-job.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: telemed-postgres
+          property: connectionString

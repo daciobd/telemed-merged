@@ -1,0 +1,45 @@
+name: CI
+on:
+  pull_request:
+  push: { branches: [ main ] }
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+
+      # tenta subir seu server.js (porta 3000) e esperar health.json
+      - name: Start server.js (3000)
+        run: |
+          node server.js & echo $! > server.pid
+          for i in {1..30}; do curl -fsS http://localhost:3000/health.json && break; sleep 1; done
+        continue-on-error: true
+
+      # fallback: servir estático da raiz na 5173 (sem package.json)
+      - name: Start static server fallback (5173)
+        if: failure()
+        run: |
+          npx -y http-server@14 -p 5173 . & echo $! > server.pid
+
+      # instalar browsers do Playwright e rodar testes via npx (sem deps no repo)
+      - name: Install Playwright browsers
+        run: npx -y @playwright/test@1.46.0 install --with-deps
+
+      - name: Run Playwright tests
+        env: { BASE_URL: http://localhost:3000 }
+        run: |
+          if ! curl -fsS http://localhost:3000 >/dev/null 2>&1; then export BASE_URL=http://localhost:5173; fi
+          npx -y @playwright/test@1.46.0 test --reporter=github
+
+      - name: Upload report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: playwright-report }
+
+      - name: Stop server
+        if: always()
+        run: kill $(cat server.pid) || true

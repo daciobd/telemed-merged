@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sala de Espera – TeleMed</title>
+  <link rel="stylesheet" href="/css/telemed-status.css">
   <style>
     :root {
       --bg:#0b1220; --card:#111a2b; --muted:#a5b4c3; --fg:#e6edf3;
@@ -50,8 +51,13 @@
           <button id="updateRoom" class="btn btn-ghost" style="margin-bottom:8px" data-testid="button-update-room">Atualizar Sala</button>
         </div>
 
+        <!-- Status da sala -->
+        <div id="roomStatus" style="margin:12px 0;padding:10px;border:1px solid #26344f;border-radius:8px;background:#071223">
+          <span class="muted">Status:</span> <span id="statusText" class="warn" style="font-weight:600">🔄 Verificando disponibilidade...</span>
+        </div>
+
         <div class="row">
-          <button id="join" class="btn btn-primary" data-testid="button-join-video">Entrar na Sala de Vídeo</button>
+          <button id="join" class="btn btn-primary" data-testid="button-join-video" disabled style="opacity:0.5;cursor:not-allowed">Aguardando médico...</button>
           <button id="copy" class="btn btn-ghost" data-testid="button-copy-link">Copiar link desta sala</button>
         </div>
         <div class="copy muted" id="copied" style="display:none;margin-top:6px">Link copiado ✔</div>
@@ -68,17 +74,27 @@
 
       <div class="sep"></div>
 
-      <div>
-        <div class="muted">Verificações rápidas (saúde dos serviços)</div>
-        <div class="badges" id="checks">
-          <span class="badge warn">Testando…</span>
-        </div>
+      <!-- Status público + painel dev -->
+      <div id="telemed-status" 
+           data-endpoints='["/api/health","https://telemed-auction.onrender.com/api/health","https://telemed-internal.onrender.com/api/health","https://telemed-productivity.onrender.com/api/health"]'
+           data-hub-url="/hub.html"
+           data-scribe-url="/scribe-demo.html">
       </div>
 
-      <div class="foot">
-        <a class="btn btn-ghost" href="/example-integration.html">Voltar ao Hub</a>
-        <a class="btn btn-ghost" href="/scribe-demo.html" target="_blank">Abrir Scribe/CIDs</a>
-      </div>
+      <!-- Informações técnicas antigas (agora ocultas para usuários finais) -->
+      <section class="dev-only">
+        <div>
+          <div class="muted">Verificações rápidas (saúde dos serviços) - LEGADO</div>
+          <div class="badges" id="checks">
+            <span class="badge warn">Testando…</span>
+          </div>
+        </div>
+
+        <div class="foot">
+          <a class="btn btn-ghost" href="/example-integration.html">Voltar ao Hub</a>
+          <a class="btn btn-ghost" href="/scribe-demo.html" target="_blank">Abrir Scribe/CIDs</a>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -86,6 +102,10 @@
     // 1) Resgata appointmentId -> vira a "room" do Jitsi
     const p = new URLSearchParams(location.search);
     let room = (p.get('appointmentId') || 'telemed-demo').trim();
+    
+    // Controle de estado da sala (host-first security)
+    let hostPresent = false;
+    let canJoin = false;
     
     function updateRoomDisplay(roomId) {
       document.getElementById('appt').innerHTML = `<code>${roomId}</code>`;
@@ -97,8 +117,60 @@
       document.getElementById('linkPatient').href = patientUrl;
       document.getElementById('linkDoctor').href = doctorUrl;
       
-      // Atualizar botão principal
-      document.getElementById('join').onclick = () => { location.href = patientUrl };
+      // Iniciar verificação do estado da sala
+      checkRoomState(roomId);
+      
+      // Polling a cada 5 segundos
+      setInterval(() => checkRoomState(roomId), 5000);
+    }
+    
+    async function checkRoomState(appointmentId) {
+      try {
+        const response = await fetch(`/api/appointments/${appointmentId}/room-state`);
+        if (response.ok) {
+          const state = await response.json();
+          hostPresent = state.hostPresent || false;
+          canJoin = hostPresent || state.canJoin || false;
+        }
+      } catch (error) {
+        // Mock behavior: para demo, simula que médico não está presente
+        console.log('Mock: Verificando estado da sala...');
+        hostPresent = false;
+        canJoin = false;
+      }
+      
+      updateRoomUI(appointmentId);
+    }
+    
+    function updateRoomUI(appointmentId) {
+      const joinBtn = document.getElementById('join');
+      const statusText = document.getElementById('statusText');
+      
+      if (canJoin && hostPresent) {
+        // Médico presente - pode entrar
+        joinBtn.disabled = false;
+        joinBtn.style.opacity = '1';
+        joinBtn.style.cursor = 'pointer';
+        joinBtn.textContent = 'Entrar na Sala de Vídeo';
+        joinBtn.onclick = () => { 
+          location.href = `/consulta/?appointmentId=${encodeURIComponent(appointmentId)}&role=patient`; 
+        };
+        
+        statusText.textContent = '✅ Médico presente - pode entrar na sala';
+        statusText.className = '';
+        statusText.style.color = 'var(--ok)';
+      } else {
+        // Aguardando médico
+        joinBtn.disabled = true;
+        joinBtn.style.opacity = '0.5';
+        joinBtn.style.cursor = 'not-allowed';
+        joinBtn.textContent = 'Aguardando médico...';
+        joinBtn.onclick = null;
+        
+        statusText.textContent = '🔄 Aguardando o médico entrar na sala...';
+        statusText.className = 'warn';
+        statusText.style.color = 'var(--warn)';
+      }
     }
     
     // Inicializar display
@@ -157,6 +229,45 @@
         $.appendChild(span);
       });
     })();
+  </script>
+
+  <!-- Banner de Feedback (aparece após 120s ou em erro) -->
+  <div id="feedback-banner" style="display:none; position:fixed; left:16px; right:16px; bottom:16px; background:#121935; color:#eaf0ff; border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px 16px; box-shadow:0 10px 24px rgba(0,0,0,.25); z-index:9999">
+    <strong>Teve dificuldade para entrar?</strong> Conte para a gente (leva 1 min).
+    <a id="feedback-link" href="#" style="margin-left:12px; font-weight:700; color:#4da3ff; text-decoration:none" data-testid="link-feedback">Responder feedback →</a>
+    <button id="banner-close" aria-label="Fechar" style="float:right; background:transparent; border:none; color:#9fb1da; cursor:pointer" data-testid="button-close-banner">✕</button>
+  </div>
+
+  <!-- JS de exibição após 120s de espera ou em erro -->
+  <!-- Componente de status -->
+  <script src="/js/telemed-status.js"></script>
+
+  <script>
+    (function(){
+      const params = new URLSearchParams(location.search);
+      const appointmentId = params.get('appointmentId') || room;
+      const role = 'paciente'; // na sala de espera, assume paciente
+      const link = `/feedback.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=waiting`;
+      const banner = document.getElementById('feedback-banner');
+      const a = document.getElementById('feedback-link'); a.href = link;
+      document.getElementById('banner-close').onclick = ()=> banner.style.display = 'none';
+
+      // Exibe após 120s aguardando
+      let showed = false;
+      setTimeout(()=>{ if(!showed){ banner.style.display='block'; showed = true; } }, 120000);
+
+      // Opcional: se detectar erro na call, mostra imediatamente
+      window.addEventListener('telemed:call_error', ()=>{ if(!showed){ banner.style.display='block'; showed=true; } });
+    })();
+  </script>
+
+  <!-- Função para encerrar consulta -->
+  <script>
+    function encerrarConsulta(role, appointmentId){
+      const url = `/obrigado.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=end`;
+      window.location.href = url;
+    }
+    // Exemplo de uso no botão: <button onclick="encerrarConsulta('medico','APT-TESTE-001')">Encerrar consulta</button>
   </script>
 </body>
 </html>
