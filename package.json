@@ -2,7 +2,7 @@
   "name": "telemed-merged",
   "private": true,
   "devDependencies": {
-    "@playwright/test": "1.46.0",
+    "@playwright/test": "^1.46.0",
     "http-server": "14.1.1"
   },
   "scripts": {
