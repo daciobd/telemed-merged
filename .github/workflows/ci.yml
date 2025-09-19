@@ -1,0 +1,47 @@
+name: CI
+on:
+  pull_request:
+  push: { branches: [ main ] }
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+
+      # Escolhe o servidor automaticamente
+      - name: Start app (server.js ou estático)
+        run: |
+          if [ -f server.js ]; then
+            echo "server.js encontrado; iniciando em 3000"
+            node server.js & echo $! > server.pid
+            echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
+            # aguarda subir (se houver health.json)
+            for i in {1..30}; do
+              curl -fsS http://localhost:3000/health.json && break
+              sleep 1
+            done
+          else
+            echo "server.js não encontrado; servindo estático na 5173"
+            npx -y http-server@14 -p 5173 . & echo $! > server.pid
+            echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
+          fi
+
+      - name: Install Playwright browsers
+        run: npx -y @playwright/test@1.46.0 install --with-deps
+
+      - name: Run Playwright tests
+        run: npx -y @playwright/test@1.46.0 test --reporter=github
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+
+      - name: Stop server
+        if: always()
+        run: kill $(cat server.pid) || true
