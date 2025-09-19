@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "node index.js",
-    "start": "node index.js",
+    "start": "node server.js",
     "test:e2e": "playwright test --reporter=list",
     "postinstall": "npx playwright install --with-deps"
   },
