@@ -20,10 +20,16 @@ jobs:
           node-version: 18
           cache: npm
 
-      - name: Install deps
+      - name: Install Node deps
         run: |
-          npm ci || npm i
-          npx playwright install --with-deps
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install Playwright browsers
+        run: npx -y @playwright/test@1.46.0 install --with-deps
 
       - name: Start server.js (porta 3000)
         run: |
