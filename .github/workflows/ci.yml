@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install deps
+        run: |
+          npm ci || npm i
+          npx playwright install --with-deps
+
+      # Inicie seu servidor local para os testes:
+      # 1) Se você usa server.js (Express) → PORT=3000
+      - name: Start server.js
+        run: |
+          node server.js &
+          echo $! > server.pid
+          # aguarda o servidor subir
+          for i in {1..30}; do
+            curl -fsS http://localhost:3000/health.json && break
+            sleep 1
+          done
+        continue-on-error: true
+
+      # 2) Se NÃO tiver server.js, sirva a pasta estática (troque porta se quiser):
+      - name: Start static server (fallback)
+        if: failure()                    # só roda se o step anterior falhar
+        run: |
+          npx http-server -p 5173 . &
+          echo $! > server.pid
+
+      - name: Run Playwright
+        env:
+          BASE_URL: http://localhost:3000
+        run: |
+          # Se o step anterior de fallback rodou, a porta será 5173
+          if ! curl -fsS http://localhost:3000 >/dev/null 2>&1; then
+            export BASE_URL=http://localhost:5173
+          fi
+          npx playwright test --reporter=github
+
+      - name: Upload Playwright report (se falhar)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
+      - name: Stop server
+        if: always()
+        run: kill $(cat server.pid) || true

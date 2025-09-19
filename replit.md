@@ -187,6 +187,15 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 - ✅ Preview Environments automáticos
 - ✅ Backups testados (Recovery + job automatizado)
 
+### 🔄 **CI/CD - GitHub Actions Playwright**
+- **Workflow CI**: `.github/workflows/ci.yml` configurado
+- **Triggers**: Pull requests + push na main branch
+- **Testes E2E**: Playwright automático em PRs/pushes
+- **Fallback Server**: server.js (3000) + http-server (5173) como backup
+- **Artifacts**: Upload de relatórios Playwright em falhas
+- **Timeout**: 15 minutos com retry automático
+- **Dependencies**: http-server instalado para servidor estático
+
 ---
 
 **🎉 PLATAFORMA TELEMEDICINA ENTERPRISE - PRODUCTION READY!**
