@@ -1,14 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// @ts-ignore - process is available in Node.js environment
+const isCI = process.env.CI;
+// @ts-ignore - process is available in Node.js environment  
+const baseURL = process.env.BASE_URL || 'http://localhost:3000';
+
 export default defineConfig({
   testDir: '../tests',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  forbidOnly: !!isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -20,6 +25,6 @@ export default defineConfig({
   webServer: {
     command: 'npm run start',
     port: 3000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !isCI,
   },
 });
