@@ -1,10 +1,10 @@
 name: e2e
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main, release/** ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   e2e:
@@ -21,23 +21,22 @@ jobs:
 
       - name: Install deps (root)
         run: npm ci
-        working-directory: .
 
-      - name: Install deps for docs automation (if needed)
+      - name: Install deps (docs automation)
         run: |
           if [ -f apps/telemed-docs-automation/package-lock.json ]; then
             (cd apps/telemed-docs-automation && npm ci)
           elif [ -f apps/telemed-docs-automation/package.json ]; then
             (cd apps/telemed-docs-automation && npm install --include=dev)
           fi
-        working-directory: .
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
         working-directory: telemed-merged
+        run: npx playwright install --with-deps
 
       - name: Build
-        run: npm run build || echo "No build script found"
+        working-directory: telemed-merged
+        run: npm run build --if-present
 
       - name: Start docs automation
         run: |
@@ -47,15 +46,14 @@ jobs:
           npx -y tsx apps/telemed-docs-automation/src/index.ts &
           echo $! > "$PIDFILE"
           sleep 2
-        working-directory: .
 
       - name: Sanity - ensure @playwright/test is resolvable
-        run: node -e "require('@playwright/test'); console.log('playwright ok')"
         working-directory: telemed-merged
+        run: node -e "require('@playwright/test'); console.log('playwright ok')"
 
       - name: Run Playwright tests
-        run: npx playwright test
         working-directory: telemed-merged
+        run: npx playwright test
 
       - name: Stop servers
         if: always()
