@@ -35,7 +35,22 @@ jobs:
 
       - name: Start app (server.js ou estático)
         run: |
-          if [ -f ../apps/telemed-deploy-ready/server.js ]; then
+          # Criar diretório para server.pid se não existir
+          mkdir -p .
+          if [ -f ../index.js ]; then
+            # Primeiro tenta o servidor principal (telemed-docs-automation)
+            cd .. && npm run dev & echo $! > telemed-merged/server.pid
+            sleep 3
+            if curl -fsS http://localhost:5000/health.json 2>/dev/null; then
+              echo "BASE_URL=http://localhost:5000" >> $GITHUB_ENV
+            else
+              # Fallback para servidor estático se port 5000 não responder
+              kill $(cat telemed-merged/server.pid) || true
+              cd telemed-merged
+              npx -y http-server@14 -p 5173 ../. & echo $! > server.pid
+              echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
+            fi
+          elif [ -f ../apps/telemed-deploy-ready/server.js ]; then
             node ../apps/telemed-deploy-ready/server.js & echo $! > server.pid
             echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
             for i in {1..30}; do curl -fsS http://localhost:3000/health.json && break; sleep 1; done
@@ -57,4 +72,10 @@ jobs:
 
       - name: Stop server
         if: always()
-        run: kill $(cat server.pid) || true
+        run: |
+          # Para server.pid local
+          kill $(cat server.pid 2>/dev/null) 2>/dev/null || true
+          # Para server.pid no diretório pai (se existir)
+          kill $(cat ../telemed-merged/server.pid 2>/dev/null) 2>/dev/null || true
+          # Para qualquer processo tsx que possa estar rodando
+          pkill -f "tsx watch" || true
