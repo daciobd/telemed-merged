@@ -1,13 +1,19 @@
 name: e2e
-on: [push, pull_request]
 
-defaults:
-  run:
-    working-directory: telemed-merged   # <= SUBPASTA DO APP
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, release/** ]
+  pull_request:
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: telemed-merged
+
     steps:
       - uses: actions/checkout@v4
 
@@ -18,52 +24,45 @@ jobs:
           cache-dependency-path: telemed-merged/package-lock.json
 
       - name: Install deps
-        run: npm ci
+        run: npm ci --workspaces --include=dev
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: Build
-        run: npm run build
+        run: npm run build --workspaces --if-present
 
-      - name: Start preview
+      - name: Start docs automation
         run: |
-          # Tenta usar o servidor principal na porta 5000, senão fallback para 5173
-          if [ -f ../index.js ]; then
-            cd .. && node index.js &
-            echo $! > telemed-merged/server.pid
-            npx wait-on http://localhost:5000 || (
-              echo "Fallback to static server"
-              cd telemed-merged && npm run preview &
-              echo $! > server.pid
-              npx wait-on http://localhost:5173
-              echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
-            )
-            echo "BASE_URL=http://localhost:5000" >> $GITHUB_ENV
-          else
-            npm run preview &
-            echo $! > server.pid
-            npx wait-on http://localhost:5173
-            echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
-          fi
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/telemed-merged"
+          PIDFILE="$ROOT/server.pid"
+          mkdir -p "$ROOT"
+          echo "🚀 Starting TeleMed Docs Automation Service..."
+          # Sem depender de devDep: baixa e usa tsx on-the-fly
+          npx -y tsx telemed-docs-automation/src/index.ts &
+          echo $! > "$PIDFILE"
+          sleep 2
 
       - name: Sanity - ensure @playwright/test is resolvable
-        run: node -e "console.log(require.resolve('@playwright/test'))"
-
-      - name: Debug deps
-        run: |
-          pwd && ls -la
-          node -v && npm -v
-          npm ls @playwright/test || true
+        run: node -e "require('@playwright/test'); console.log('playwright ok')"
 
       - name: Run Playwright tests
-        env:
-          BASE_URL: ${{ env.BASE_URL || 'http://localhost:5000' }}
-          CI: true
-        run: npx playwright test --reporter=line
+        run: npx playwright test
 
       - name: Stop servers
         if: always()
         run: |
-          kill $(cat server.pid) 2>/dev/null || true
-          kill $(cat ../telemed-merged/server.pid) 2>/dev/null || true
+          set +e
+          ROOT="$GITHUB_WORKSPACE/telemed-merged"
+          PIDFILE="$ROOT/server.pid"
+          if [ -f "$PIDFILE" ]; then
+            PID=$(cat "$PIDFILE")
+            echo "🛑 Stopping docs automation service ($PID)"
+            kill "$PID" || true
+            sleep 2
+            kill -9 "$PID" 2>/dev/null || true
+            rm -f "$PIDFILE"
+          else
+            echo "ℹ️ No PID file to stop."
+          fi
