@@ -20,18 +20,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: npm
-          # cache precisa do caminho do lockfile relativo ao repositório
+          node-version: 20
+          cache: 'npm'
           cache-dependency-path: telemed-merged/package-lock.json
 
-      - name: Install Node deps (ci with fallback)
+      - name: Install deps
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci --no-audit --no-fund || (echo "npm ci falhou; usando npm install" && npm install --no-audit --no-fund)
-          else
-            npm install --no-audit --no-fund
-          fi
+          # Install deps for telemed-merged
+          npm ci --no-audit --no-fund
+          # Install deps for telemed-docs-automation (has tsx)
+          cd ../apps/telemed-docs-automation && npm ci --no-audit --no-fund
 
       - name: Start app (server.js ou estático)
         run: |
