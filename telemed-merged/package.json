@@ -1,6 +1,9 @@
 {
   "name": "telemed-merged",
   "private": true,
+  "workspaces": [
+    "../apps/telemed-docs-automation"
+  ],
   "scripts": {
     "test:e2e": "playwright test",
     "pw:browsers": "playwright install --with-deps",

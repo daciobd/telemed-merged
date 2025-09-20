@@ -4,16 +4,14 @@ on:
   push: { branches: [ release/sprint-pack-02 ] }
   workflow_dispatch: {}
 
-# 👇 Tudo que for "run:" passa a rodar em telemed-merged/
-defaults:
-  run:
-    shell: bash
-    working-directory: telemed-merged
-
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+
+    # opcional mas recomendado: define o diretório padrão do job
+    defaults:
+      run:
+        working-directory: telemed-merged
 
     steps:
       - uses: actions/checkout@v4
@@ -21,59 +19,47 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: telemed-merged/package-lock.json
 
       - name: Install deps
-        run: |
-          # Install deps for telemed-merged
-          npm ci --no-audit --no-fund
-          # Install deps for telemed-docs-automation (has tsx)
-          cd ../apps/telemed-docs-automation && npm ci --no-audit --no-fund
-
-      - name: Start app (server.js ou estático)
-        run: |
-          # Criar diretório para server.pid se não existir
-          mkdir -p .
-          if [ -f ../index.js ]; then
-            # Primeiro tenta o servidor principal (telemed-docs-automation)
-            cd .. && npm run dev & echo $! > telemed-merged/server.pid
-            sleep 3
-            if curl -fsS http://localhost:5000/health.json 2>/dev/null; then
-              echo "BASE_URL=http://localhost:5000" >> $GITHUB_ENV
-            else
-              # Fallback para servidor estático se port 5000 não responder
-              kill $(cat telemed-merged/server.pid) || true
-              cd telemed-merged
-              npx -y http-server@14 -p 5173 ../. & echo $! > server.pid
-              echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
-            fi
-          elif [ -f ../apps/telemed-deploy-ready/server.js ]; then
-            node ../apps/telemed-deploy-ready/server.js & echo $! > server.pid
-            echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
-            for i in {1..30}; do curl -fsS http://localhost:3000/health.json && break; sleep 1; done
-          else
-            npx -y http-server@14 -p 5173 ../. & echo $! > server.pid
-            echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
-          fi
+        run: npm ci --workspaces --include=dev
 
       - name: Install Playwright browsers
-        run: npx -y @playwright/test@1.46.0 install --with-deps
+        run: npx playwright install --with-deps
 
-      - name: Run Playwright SMOKE
+      - name: Build
+        run: npm run build --workspaces --if-present
+
+      - name: Start preview
+        # ❗ executa no telemed-merged e escreve PID com caminho absoluto
         run: |
-          npx -y @playwright/test@1.46.0 test \
-            tests/smoke-ci.spec.ts \
-            --workers=1 \
-            --reporter=list \
-            --trace on-first-retry
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/telemed-merged"
+          PIDFILE="$ROOT/server.pid"
+          echo "🚀 Starting TeleMed Docs Automation Service (TypeScript)..."
+          # usa npx para não depender do tsx instalado no repo
+          npx -y tsx watch telemed-docs-automation/src/index.ts &
+          echo $! > "$PIDFILE"
+          sleep 2
 
-      - name: Stop server
+      - name: Sanity - ensure @playwright/test is resolvable
+        run: node -e "require('@playwright/test'); console.log('playwright ok')"
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Stop servers
         if: always()
         run: |
-          # Para server.pid local
-          kill $(cat server.pid 2>/dev/null) 2>/dev/null || true
-          # Para server.pid no diretório pai (se existir)
-          kill $(cat ../telemed-merged/server.pid 2>/dev/null) 2>/dev/null || true
-          # Para qualquer processo tsx que possa estar rodando
-          pkill -f "tsx watch" || true
+          set +e
+          ROOT="$GITHUB_WORKSPACE/telemed-merged"
+          PIDFILE="$ROOT/server.pid"
+          if [ -f "$PIDFILE" ]; then
+            PID=$(cat "$PIDFILE")
+            echo "🛑 Stopping docs automation service ($PID)"
+            kill "$PID" || true
+            rm -f "$PIDFILE"
+          else
+            echo "ℹ️ No PID file to stop."
+          fi
