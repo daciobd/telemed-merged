@@ -17,7 +17,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            telemed-merged/package-lock.json
+            apps/telemed-docs-automation/package-lock.json
 
       - name: Install deps (root)
         run: npm ci
@@ -29,6 +32,21 @@ jobs:
           elif [ -f apps/telemed-docs-automation/package.json ]; then
             (cd apps/telemed-docs-automation && npm install --include=dev)
           fi
+
+      - name: Install deps (app: telemed-merged)
+        working-directory: telemed-merged
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install --include=dev
+          fi
+
+      - name: Ensure @playwright/test is present
+        working-directory: telemed-merged
+        run: |
+          node -e "require('@playwright/test')" >/dev/null 2>&1 || \
+          npm install --no-save -D @playwright/test@latest
 
       - name: Install Playwright browsers
         working-directory: telemed-merged
