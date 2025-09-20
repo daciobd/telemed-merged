@@ -2,35 +2,37 @@ name: e2e
 
 on:
   push:
-    branches: [ main, release/** ]
+    branches:
+      - main
+      - 'release/**'
   pull_request:
   workflow_dispatch:
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: |
             package-lock.json
             telemed-merged/package-lock.json
-            apps/telemed-docs-automation/package-lock.json
+            telemed-docs-automation/package-lock.json
 
       - name: Install deps (root)
         run: npm ci
 
       - name: Install deps (docs automation)
         run: |
-          if [ -f apps/telemed-docs-automation/package-lock.json ]; then
-            (cd apps/telemed-docs-automation && npm ci)
-          elif [ -f apps/telemed-docs-automation/package.json ]; then
-            (cd apps/telemed-docs-automation && npm install --include=dev)
+          if [ -f telemed-docs-automation/package-lock.json ]; then
+            cd telemed-docs-automation && npm ci
+          elif [ -f telemed-docs-automation/package.json ]; then
+            cd telemed-docs-automation && npm install --include=dev
           fi
 
       - name: Install deps (app: telemed-merged)
@@ -61,7 +63,7 @@ jobs:
           set -euo pipefail
           PIDFILE="$GITHUB_WORKSPACE/server.pid"
           echo "🚀 Starting TeleMed Docs Automation Service..."
-          npx -y tsx apps/telemed-docs-automation/src/index.ts &
+          npx -y tsx telemed-docs-automation/src/index.ts &
           echo $! > "$PIDFILE"
           sleep 2
 
@@ -79,9 +81,7 @@ jobs:
           set +e
           PIDFILE="$GITHUB_WORKSPACE/server.pid"
           if [ -f "$PIDFILE" ]; then
-            PID=$(cat "$PIDFILE")
-            echo "🛑 Stopping docs automation service ($PID)"
-            kill "$PID" || true
+            kill "$(cat "$PIDFILE")" || true
             rm -f "$PIDFILE"
           else
             echo "ℹ️ No PID file to stop."
