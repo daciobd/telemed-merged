@@ -1,68 +1,58 @@
 name: CI
-
 on:
   pull_request:
-  push:
-    branches: [ main ]
+  push: { branches: [ main ] }
+  workflow_dispatch: {}
+
+# 👇 tudo que der "run:" roda dentro do subdiretório do monorepo
+defaults:
+  run:
+    working-directory: telemed-merged
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: telemed-merged
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 18
+          cache: npm
           cache-dependency-path: telemed-merged/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Start server.js (porta 3000)
+      # ⬅️ AGORA, neste diretório, o package.json certo é encontrado
+      - name: Install Node deps
         run: |
-          node ../server.js &
-          echo $! > server.pid
-          for i in {1..30}; do
-            curl -fsS http://localhost:3000/health.json && break
-            sleep 1
-          done
-        continue-on-error: true
-
-      - name: Wait for server (ou fallback)
-        run: |
-          if ! curl -fsS http://localhost:3000 >/dev/null 2>&1; then
-            echo "No server at :3000 - using fallback :5173"
-            npx http-server -p 5173 ../. &
-            echo $! > server.pid
-            export BASE_URL=http://localhost:5173
+          if [ -f package-lock.json ]; then
+            npm ci
           else
-            export BASE_URL=http://localhost:3000
+            npm install
           fi
-          echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
 
-      - name: Run Playwright tests
-        env:
-          BASE_URL: ${{ env.BASE_URL }}
-        run: npx playwright test
+      - name: Start app (server.js ou estático)
+        run: |
+          if [ -f ../apps/telemed-deploy-ready/server.js ]; then
+            node ../apps/telemed-deploy-ready/server.js & echo $! > server.pid
+            echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
+            for i in {1..30}; do curl -fsS http://localhost:3000/health.json && break; sleep 1; done
+          else
+            npx -y http-server@14 -p 5173 ../. & echo $! > server.pid
+            echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
+          fi
 
-      - name: Upload Playwright report (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report
+      - name: Install Playwright browsers
+        run: npx -y @playwright/test@1.46.0 install --with-deps
+
+      - name: Run Playwright SMOKE
+        run: |
+          npx -y @playwright/test@1.46.0 test \
+            tests/smoke-ci.spec.ts \
+            --workers=1 \
+            --reporter=list \
+            --trace on-first-retry
 
       - name: Stop server
         if: always()
