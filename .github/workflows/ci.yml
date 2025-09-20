@@ -1,59 +1,69 @@
-name: CI
-on:
-  pull_request:
-  push: { branches: [ main ] }
-  workflow_dispatch: {}
+name: e2e
+on: [push, pull_request]
 
-# 👇 tudo que der "run:" roda dentro do subdiretório do monorepo
 defaults:
   run:
-    working-directory: telemed-merged
+    working-directory: telemed-merged   # <= SUBPASTA DO APP
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
           cache-dependency-path: telemed-merged/package-lock.json
 
-      # ⬅️ AGORA, neste diretório, o package.json certo é encontrado
-      - name: Install Node deps
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+      - name: Install deps
+        run: npm ci
 
-      - name: Start app (server.js ou estático)
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Start preview
         run: |
-          if [ -f ../apps/telemed-deploy-ready/server.js ]; then
-            node ../apps/telemed-deploy-ready/server.js & echo $! > server.pid
-            echo "BASE_URL=http://localhost:3000" >> $GITHUB_ENV
-            for i in {1..30}; do curl -fsS http://localhost:3000/health.json && break; sleep 1; done
+          # Tenta usar o servidor principal na porta 5000, senão fallback para 5173
+          if [ -f ../index.js ]; then
+            cd .. && node index.js &
+            echo $! > telemed-merged/server.pid
+            npx wait-on http://localhost:5000 || (
+              echo "Fallback to static server"
+              cd telemed-merged && npm run preview &
+              echo $! > server.pid
+              npx wait-on http://localhost:5173
+              echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
+            )
+            echo "BASE_URL=http://localhost:5000" >> $GITHUB_ENV
           else
-            npx -y http-server@14 -p 5173 ../. & echo $! > server.pid
+            npm run preview &
+            echo $! > server.pid
+            npx wait-on http://localhost:5173
             echo "BASE_URL=http://localhost:5173" >> $GITHUB_ENV
           fi
 
-      - name: Install Playwright browsers
-        run: npx -y @playwright/test@1.46.0 install --with-deps
+      - name: Sanity - ensure @playwright/test is resolvable
+        run: node -e "console.log(require.resolve('@playwright/test'))"
 
-      - name: Run Playwright SMOKE
+      - name: Debug deps
         run: |
-          npx -y @playwright/test@1.46.0 test \
-            tests/smoke-ci.spec.ts \
-            --workers=1 \
-            --reporter=list \
-            --trace on-first-retry
+          pwd && ls -la
+          node -v && npm -v
+          npm ls @playwright/test || true
 
-      - name: Stop server
+      - name: Run Playwright tests
+        env:
+          BASE_URL: ${{ env.BASE_URL || 'http://localhost:5000' }}
+          CI: true
+        run: npx playwright test --reporter=line
+
+      - name: Stop servers
         if: always()
-        run: kill $(cat server.pid) || true
+        run: |
+          kill $(cat server.pid) 2>/dev/null || true
+          kill $(cat ../telemed-merged/server.pid) 2>/dev/null || true

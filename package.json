@@ -1,9 +1,12 @@
 {
   "name": "workspace",
-  "type": "module", 
+  "type": "module",
   "scripts": {
     "dev": "node index.js",
     "start": "node server.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "http-server": "^14.1.1",
+    "wait-on": "^9.0.0"
+  }
 }
