@@ -9,6 +9,9 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: telemed-merged
 
     steps:
       - name: Checkout
@@ -17,8 +20,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: npm
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: telemed-merged/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -28,7 +32,7 @@ jobs:
 
       - name: Start server.js (porta 3000)
         run: |
-          node server.js &
+          node ../server.js &
           echo $! > server.pid
           for i in {1..30}; do
             curl -fsS http://localhost:3000/health.json && break
@@ -36,20 +40,22 @@ jobs:
           done
         continue-on-error: true
 
-      - name: Start static server fallback (porta 5173)
-        if: failure()
-        run: |
-          npx http-server -p 5173 . &
-          echo $! > server.pid
-
-      - name: Run Playwright
-        env:
-          BASE_URL: http://localhost:3000
+      - name: Wait for server (ou fallback)
         run: |
           if ! curl -fsS http://localhost:3000 >/dev/null 2>&1; then
+            echo "No server at :3000 - using fallback :5173"
+            npx http-server -p 5173 ../. &
+            echo $! > server.pid
             export BASE_URL=http://localhost:5173
+          else
+            export BASE_URL=http://localhost:3000
           fi
-          npx playwright test --reporter=github
+          echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
+
+      - name: Run Playwright tests
+        env:
+          BASE_URL: ${{ env.BASE_URL }}
+        run: npx playwright test
 
       - name: Upload Playwright report (on failure)
         if: failure()

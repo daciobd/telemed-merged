@@ -1,12 +1,9 @@
 {
-  "name": "telemed-merged",
-  "private": true,
-  "devDependencies": {
-    "@playwright/test": "^1.46.0",
-    "http-server": "14.1.1"
-  },
+  "name": "workspace",
+  "type": "module", 
   "scripts": {
-    "test:e2e": "playwright test",
-    "test:smoke": "playwright test tests/smoke-ci.spec.ts --workers=1"
-  }
+    "dev": "node index.js",
+    "start": "node server.js"
+  },
+  "dependencies": {}
 }
