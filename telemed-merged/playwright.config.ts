@@ -20,11 +20,11 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   webServer: {
-    command: 'npx vite preview --port 5173 --strictPort --host 127.0.0.1',
+    command: 'npm run preview',
     url: 'http://127.0.0.1:5173',
     // @ts-ignore - process is available in Node.js environment
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    timeout: 120_000, // ↑ 120s
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
