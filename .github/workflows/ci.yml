@@ -43,9 +43,13 @@ jobs:
         working-directory: telemed-merged
         run: npm ci
 
-      - name: Install Playwright
+      - name: Install Playwright (browsers + deps)
         working-directory: telemed-merged
         run: npx playwright install --with-deps
+
+      - name: Sanity ensure @playwright/test resolvable
+        working-directory: telemed-merged
+        run: node -e "require('@playwright/test'); console.log('playwright ok')"
 
       - name: Build
         working-directory: telemed-merged
@@ -60,10 +64,6 @@ jobs:
           npx -y tsx telemed-docs-automation/src/index.ts &
           echo $! > "$PIDFILE"
           sleep 2
-
-      - name: Sanity ensure playwright resolvable
-        working-directory: telemed-merged
-        run: node -e "require('@playwright/test'); console.log('playwright ok')"
 
       - name: Run Playwright tests
         working-directory: telemed-merged
