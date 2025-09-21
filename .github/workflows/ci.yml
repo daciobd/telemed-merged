@@ -39,11 +39,11 @@ jobs:
             npm install --include=dev
           fi
 
-      - name: Install deps app telemed-merged
+      - name: Install deps telemed-merged
         working-directory: telemed-merged
         run: npm ci
 
-      - name: Install Playwright browsers
+      - name: Install Playwright
         working-directory: telemed-merged
         run: npx playwright install --with-deps
 
