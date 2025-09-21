@@ -39,20 +39,21 @@ jobs:
             npm install --include=dev
           fi
 
+      - name: Install deps root
+        run: npm ci
+
       - name: Install deps telemed-merged
         working-directory: telemed-merged
         run: npm ci
 
       - name: Install Playwright (browsers + deps)
-        working-directory: telemed-merged
         run: npx playwright install --with-deps
 
-      - name: Debug devDeps + node_modules presence
-        working-directory: telemed-merged
+      - name: Sanity @playwright/test at root
         run: |
           node -e "const p=require('./package.json'); console.log('devDep @playwright/test:', p.devDependencies?.['@playwright/test']||'MISSING')"
           test -f node_modules/@playwright/test/package.json && echo "node_modules/@playwright/test OK" || (echo "MISSING node_modules/@playwright/test" && exit 1)
-          pwd && ls -la node_modules/.bin | head
+          node -e "console.log('resolve:', require.resolve('@playwright/test/package.json'))"
 
       - name: Build
         working-directory: telemed-merged
@@ -69,8 +70,7 @@ jobs:
           sleep 2
 
       - name: Run Playwright tests
-        working-directory: telemed-merged
-        run: ./node_modules/.bin/playwright test
+        run: npx --no-install playwright test
 
       - name: Stop servers
         if: always()
