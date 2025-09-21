@@ -1,0 +1,44 @@
+name: deploy-now
+on: workflow_dispatch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploys
+        env:
+          HOOKS: |
+            ${{ secrets.RENDER_HOOK_HUB }}
+            ${{ secrets.RENDER_HOOK_AUCTION }}
+            ${{ secrets.RENDER_HOOK_INTERNAL }}
+            ${{ secrets.RENDER_HOOK_PRODUCTIVITY }}
+        run: |
+          set -e
+          for url in $HOOKS; do
+            if [ -n "$url" ]; then
+              echo "Deploy: $url"
+              curl -fsS -X POST "$url"
+            fi
+          done
+
+      # (Opcional) Smoke simples nas URLs públicas
+      - name: Smoke check
+        env:
+          URLS: |
+            https://telemed-deploy-ready.onrender.com
+            https://telemed-auction.onrender.com
+            https://telemed-internal.onrender.com
+            https://telemed-productivity.onrender.com
+        run: |
+          set -e
+          ok=0
+          for u in $URLS; do
+            echo "→ $u"
+            # tenta até 30x
+            for i in $(seq 1 30); do
+              code=$(curl -m 5 -s -o /dev/null -w "%{http_code}" "$u" || echo "000")
+              if [ "$code" = "200" ]; then echo "200 OK"; ok=$((ok+1)); break; fi
+              sleep 5
+            done
+          done
+          test "$ok" -ge 3 || { echo "Alguma URL não respondeu 200"; exit 1; }
