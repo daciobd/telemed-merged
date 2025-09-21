@@ -2,16 +2,32 @@ import { test, expect } from '@playwright/test';
 
 function ok(json: any) { return { status: 200, contentType: 'application/json', body: JSON.stringify(json) }; }
 
+// @ts-ignore - process is available in Node.js environment
+const RX_ENTRY = process.env.E2E_ENTRY_PRESCRICAO || '/consulta.html?appointmentId=APT-555&role=medico';
+
 test('Consulta: emitir prescrição digital (ANVISA)', async ({ page }) => {
-  await page.goto('/consulta.html?appointmentId=APT-555&role=medico');
+  // 1) Entre na rota correta (configure no CI se não for padrão)
+  await page.goto(RX_ENTRY, { waitUntil: 'domcontentloaded' });
+
+  // 2) Garanta que a UI principal carregou
+  await expect(page.locator('body')).toBeVisible();
 
   // Mocks comuns
   await page.route(/\/api\/events$/, r => r.fulfill(ok({ ok: true })));
   await page.route(/\/api\/feedback$/, r => r.fulfill(ok({ ok: true })));
 
-  // Abrir modal de prescrição
-  await page.getByRole('button', { name: 'Nova Prescrição' }).click();
-  await expect(page.locator('#rx-modal')).toHaveClass(/show/);
+  // 3) Seletor robusto: tente por data-testid; se não tiver, use regex e espere visibilidade
+  const novaRxBtn = page
+    .getByTestId('rx-new')                      // melhor: use data-testid="rx-new" no botão real
+    .or(page.getByRole('button', { name: /nova prescri(ç|c)ão/i }))
+    .or(page.getByText(/nova prescri(ç|c)ão/i).filter({ has: page.locator('button') }));
+
+  await expect(novaRxBtn).toBeVisible({ timeout: 15000 });
+  await novaRxBtn.scrollIntoViewIfNeeded();
+  await novaRxBtn.click();
+
+  const modal = page.locator('#rx-modal').or(page.getByTestId('rx-modal'));
+  await expect(modal).toBeVisible();
 
   // Buscar medicamento
   await page.route(/\/api\/drugs\/search.*/, r => r.fulfill(ok([

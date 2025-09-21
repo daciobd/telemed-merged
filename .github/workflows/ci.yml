@@ -107,7 +107,18 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
           CI: "1"
           BASE_URL: http://127.0.0.1:5173
+          E2E_ENTRY_PRESCRICAO: /consulta.html?appointmentId=APT-555&role=medico
         run: timeout 20m npx playwright test --reporter=line --workers=2
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            telemed-merged/test-results/**
+            telemed-merged/playwright-report/**
+          retention-days: 7
 
       - name: Stop servers
         if: always()
