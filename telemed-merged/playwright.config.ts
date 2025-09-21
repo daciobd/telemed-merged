@@ -2,8 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 // @ts-ignore - process is available in Node.js environment
 const isCI = process.env.CI;
-// @ts-ignore - process is available in Node.js environment  
-const baseURL = process.env.BASE_URL || 'http://localhost:3000';
 
 export default defineConfig({
   testDir: './tests',
@@ -14,7 +12,9 @@ export default defineConfig({
   workers: isCI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL,
+    // @ts-ignore - process is available in Node.js environment
+    baseURL: process.env.BASE_URL || 'http://127.0.0.1:5173',
+    headless: true,
     trace: 'on-first-retry',
   },
   projects: [
@@ -23,10 +23,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run start',
-    port: 3000,
-    timeout: 120_000,
-    reuseExistingServer: !isCI,
-  },
 });

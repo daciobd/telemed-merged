@@ -12,6 +12,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency:
+      group: e2e-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
       - uses: actions/checkout@v4
 
@@ -42,40 +46,56 @@ jobs:
         run: |
           set -e
           if [ -f "telemed-docs-automation/package-lock.json" ]; then
-            cd telemed-docs-automation
-            npm ci
+            cd telemed-docs-automation && npm ci
           elif [ -f "telemed-docs-automation/package.json" ]; then
-            cd telemed-docs-automation
+            cd telemed-docs-automation && npm install --include=dev
+          fi
+
+      - name: Install deps app telemed-merged
+        shell: bash
+        working-directory: telemed-merged
+        run: |
+          set -e
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          else
             npm install --include=dev
           fi
 
-      - name: Install deps telemed-merged
+      # Se @playwright/test já for devDep do app, pode remover este step
+      - name: Ensure @playwright/test present
         working-directory: telemed-merged
-        run: npm ci
+        run: npm install --no-save -D @playwright/test@latest
 
-      # Instala só Chromium e com timeout
       - name: Install Playwright Chromium
         working-directory: telemed-merged
         env:
           PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
-        run: |
-          timeout 12m npx playwright install chromium
+        run: timeout 12m npx playwright install chromium
 
       - name: Build
         working-directory: telemed-merged
         run: npm run build --if-present
 
-      # Sobe o serviço auxiliar e espera no máx 60s
       - name: Start docs automation
         shell: bash
         run: |
           set -euo pipefail
-          PIDFILE="$GITHUB_WORKSPACE/server.pid"
-          npx -y tsx telemed-docs-automation/src/index.ts & echo $! > "$PIDFILE"
-          # health check: wait for service to be ready
+          npx -y tsx telemed-docs-automation/src/index.ts & echo $! > "$GITHUB_WORKSPACE/server.pid"
+
+      - name: Start web preview (5173) + healthcheck
+        shell: bash
+        working-directory: telemed-merged
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+        run: |
+          set -euo pipefail
+          # tenta Vite preview; se não houver, cai para http-server do diretório dist
+          (npx -y vite preview --port 5173 --strictPort --host 127.0.0.1 || npx -y http-server dist -p 5173 --silent) & 
+          echo $! > "$GITHUB_WORKSPACE/web.pid"
           for i in {1..60}; do
-            curl -fsS http://localhost:5000/ && break || sleep 1
-          done || { echo "Service didn't get healthy"; exit 1; }
+            curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1
+          done || { echo "Preview did not start"; exit 1; }
 
       - name: Sanity ensure playwright resolvable
         working-directory: telemed-merged
@@ -86,18 +106,25 @@ jobs:
         env:
           PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
           CI: "1"
-        run: |
-          timeout 20m npx playwright test --reporter=line --workers=2
+          BASE_URL: http://127.0.0.1:5173
+        run: timeout 20m npx playwright test --reporter=line --workers=2
 
       - name: Stop servers
         if: always()
         shell: bash
         run: |
           set +e
-          PIDFILE="$GITHUB_WORKSPACE/server.pid"
-          if [ -f "$PIDFILE" ]; then
-            kill "$(cat "$PIDFILE")" || true
-            rm -f "$PIDFILE"
-          else
-            echo "ℹ️ No PID file to stop."
-          fi
+          for f in "$GITHUB_WORKSPACE/server.pid" "$GITHUB_WORKSPACE/web.pid"; do
+            [ -f "$f" ] && kill "$(cat "$f")" || true
+            [ -f "$f" ] && rm -f "$f"
+          done
+
+      # Salva cache (se baixou browsers) para os próximos runs
+      - name: Post Cache Playwright browsers
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('telemed-merged/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ms-playwright-
