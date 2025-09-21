@@ -19,7 +19,17 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Internal-Token"]
 }));
 
+// Health checks (público)
 app.get('/healthz', (_req,res)=>res.json({ok:true}));
+app.get('/health', (_req,res)=>res.json({ok:true}));
+
+// Root endpoint para resolver 404
+app.get('/', (_req,res)=>res.json({
+  service: 'telemed-auction',
+  status: 'running',
+  endpoints: ['/healthz', '/bids', '/bids/:id/accept'],
+  version: '1.0.0'
+}));
 
 // Padronizado: /api/health
 app.get('/api/health', (req, res) => {

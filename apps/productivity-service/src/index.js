@@ -13,7 +13,17 @@ app.use(
   })
 );
 
+// Health checks (público)
 app.get("/healthz", (req, res) => res.json({ ok: true }));
+app.get("/health", (req, res) => res.json({ ok: true }));
+
+// Root endpoint para resolver 404
+app.get('/', (req, res) => res.json({
+  service: 'telemed-productivity',
+  status: 'running', 
+  endpoints: ['/healthz', '/suggest/cids', '/codes/suggest'],
+  version: '1.0.0'
+}));
 
 // Padronizado: /api/health
 app.get('/api/health', (req, res) => {

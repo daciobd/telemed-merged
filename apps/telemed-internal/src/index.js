@@ -39,8 +39,17 @@ app.use((req, res, next) => {
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
 
-// Health check endpoints para observabilidade
+// Health check endpoints para observabilidade (PÚBLICO - sem auth)
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
+// Root endpoint para resolver 404
+app.get('/', (_req, res) => res.json({
+  service: 'telemed-internal',
+  status: 'running',
+  endpoints: ['/healthz', '/api/health', '/ai/complete'],
+  version: '1.0.0'
+}));
 
 // Padronizado: /api/health
 app.get('/api/health', (req, res) => {
@@ -170,7 +179,7 @@ app.get('/status.json', async (req, res) => {
 
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
-  if (req.path === '/healthz' || req.path === '/api/health') return next(); // não exige token no health
+  if (req.path === '/healthz' || req.path === '/health' || req.path === '/api/health' || req.path === '/') return next(); // não exige token no health e root
   const tok = req.header('X-Internal-Token');
   const expectedToken = process.env.INTERNAL_TOKEN || '';
   
