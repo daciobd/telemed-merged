@@ -40,22 +40,8 @@ jobs:
           fi
 
       - name: Install deps app telemed-merged
-        shell: bash
         working-directory: telemed-merged
-        run: |
-          set -e
-          if [ -f "package-lock.json" ]; then
-            npm ci
-          else
-            npm install --include=dev
-          fi
-
-      - name: Ensure playwright test present
-        shell: bash
-        working-directory: telemed-merged
-        run: |
-          node -e "require('@playwright/test')" >/dev/null 2>&1 || \
-          npm install --no-save -D @playwright/test@latest
+        run: npm ci
 
       - name: Install Playwright browsers
         working-directory: telemed-merged
