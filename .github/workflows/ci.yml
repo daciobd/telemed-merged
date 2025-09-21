@@ -87,6 +87,18 @@ jobs:
         working-directory: telemed-merged
         run: npm run build
 
+      - name: Start web preview (static root) + healthcheck
+        shell: bash
+        working-directory: apps/telemed-deploy-ready
+        run: |
+          set -euo pipefail
+          # tenta http-server; se não existir, baixa via npx
+          npx -y http-server . -p 5173 --silent & 
+          echo $! > "$GITHUB_WORKSPACE/web.pid"
+          for i in {1..60}; do
+            curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1
+          done || { echo "Preview did not start"; exit 1; }
+
       - name: Sanity ensure playwright resolvable
         working-directory: telemed-merged
         run: node -e "require('@playwright/test'); console.log('playwright ok')"
@@ -116,7 +128,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          for f in "$GITHUB_WORKSPACE/server.pid"; do
+          for f in "$GITHUB_WORKSPACE/server.pid" "$GITHUB_WORKSPACE/web.pid"; do
             [ -f "$f" ] && kill "$(cat "$f")" || true
             [ -f "$f" ] && rm -f "$f"
           done

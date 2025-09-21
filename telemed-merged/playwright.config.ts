@@ -19,13 +19,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  webServer: {
-    command: 'npm run preview',
-    url: 'http://127.0.0.1:5173',
-    // @ts-ignore - process is available in Node.js environment
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000, // ↑ 120s
-  },
+  // webServer removed - CI handles static server setup
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
