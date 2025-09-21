@@ -49,6 +49,13 @@ jobs:
       - name: Install Playwright (browsers + deps)
         run: npx playwright install --with-deps
 
+      - name: Verify server entrypoint path
+        run: |
+          pwd
+          ls -la apps/telemed-deploy-ready | grep -E "(server|index)" 
+          test -f apps/telemed-deploy-ready/server.js && echo "server.js FOUND" || (echo "server.js NOT FOUND" && exit 1)
+          echo "telemed-merged start script should work: npm run start from telemed-merged/ -> ../apps/telemed-deploy-ready/server.js"
+
       - name: Sanity @playwright/test at root
         run: |
           node -e "const p=require('./package.json'); console.log('devDep @playwright/test:', p.devDependencies?.['@playwright/test']||'MISSING')"
