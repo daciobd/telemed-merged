@@ -1,15 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// @ts-ignore - process is available in Node.js environment
-const isCI = process.env.CI;
-
 export default defineConfig({
   testDir: './tests',
   testMatch: ['**/*.spec.ts'],
   fullyParallel: true,
-  forbidOnly: !!isCI,
+  // @ts-ignore - process is available in Node.js environment
+  forbidOnly: !!process.env.CI,
   retries: 2,
-  workers: isCI ? 1 : undefined,
+  // @ts-ignore - process is available in Node.js environment
+  workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   expect: { timeout: 10_000 },
   use: {
@@ -20,10 +19,14 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
+  webServer: {
+    command: 'npx vite preview --port 5173 --strictPort --host 127.0.0.1',
+    url: 'http://127.0.0.1:5173',
+    // @ts-ignore - process is available in Node.js environment
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
+  },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
 });

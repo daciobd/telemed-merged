@@ -3,22 +3,19 @@ import { test, expect } from '@playwright/test';
 function ok(json: any) { return { status: 200, contentType: 'application/json', body: JSON.stringify(json) }; }
 
 // @ts-ignore - process is available in Node.js environment
-const RX_ENTRY = process.env.E2E_ENTRY_PRESCRICAO || '/consulta.html?appointmentId=APT-555&role=medico';
+const BASE = process.env.BASE_URL || 'http://127.0.0.1:5173';
+// @ts-ignore - process is available in Node.js environment
+const ENTRY = process.env.E2E_ENTRY_PRESCRICAO || '/'; // ajuste no CI
 
 test('Consulta: emitir prescrição digital (ANVISA)', async ({ page }) => {
-  // 1) Entre na rota correta (configure no CI se não for padrão)
-  await page.goto(RX_ENTRY, { waitUntil: 'domcontentloaded' });
-
-  // 2) Garanta que a UI principal carregou
-  await expect(page.locator('body')).toBeVisible();
+  await page.goto(`${BASE}${ENTRY}`, { waitUntil: 'domcontentloaded' });
 
   // Mocks comuns
   await page.route(/\/api\/events$/, r => r.fulfill(ok({ ok: true })));
   await page.route(/\/api\/feedback$/, r => r.fulfill(ok({ ok: true })));
 
-  // 3) Seletor robusto: tente por data-testid; se não tiver, use regex e espere visibilidade
   const novaRxBtn = page
-    .getByTestId('rx-new')                      // melhor: use data-testid="rx-new" no botão real
+    .getByTestId('rx-new') // ideal: adicione data-testid="rx-new" no botão real
     .or(page.getByRole('button', { name: /nova prescri(ç|c)ão/i }))
     .or(page.getByText(/nova prescri(ç|c)ão/i).filter({ has: page.locator('button') }));
 

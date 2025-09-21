@@ -83,20 +83,6 @@ jobs:
           set -euo pipefail
           npx -y tsx telemed-docs-automation/src/index.ts & echo $! > "$GITHUB_WORKSPACE/server.pid"
 
-      - name: Start web preview (5173) + healthcheck
-        shell: bash
-        working-directory: telemed-merged
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
-        run: |
-          set -euo pipefail
-          # tenta Vite preview; se não houver, cai para http-server do diretório dist
-          (npx -y vite preview --port 5173 --strictPort --host 127.0.0.1 || npx -y http-server dist -p 5173 --silent) & 
-          echo $! > "$GITHUB_WORKSPACE/web.pid"
-          for i in {1..60}; do
-            curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1
-          done || { echo "Preview did not start"; exit 1; }
-
       - name: Sanity ensure playwright resolvable
         working-directory: telemed-merged
         run: node -e "require('@playwright/test'); console.log('playwright ok')"
@@ -107,7 +93,8 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
           CI: "1"
           BASE_URL: http://127.0.0.1:5173
-          E2E_ENTRY_PRESCRICAO: /consulta.html?appointmentId=APT-555&role=medico
+          # ajuste a página onde vive o botão "Nova Prescrição"
+          E2E_ENTRY_PRESCRICAO: /medico
         run: timeout 20m npx playwright test --reporter=line --workers=2
 
       - name: Upload Playwright artifacts
@@ -125,7 +112,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          for f in "$GITHUB_WORKSPACE/server.pid" "$GITHUB_WORKSPACE/web.pid"; do
+          for f in "$GITHUB_WORKSPACE/server.pid"; do
             [ -f "$f" ] && kill "$(cat "$f")" || true
             [ -f "$f" ] && rm -f "$f"
           done
