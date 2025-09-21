@@ -1,0 +1,25 @@
+name: deploy-now
+on: workflow_dispatch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploys
+        env:
+          HOOKS: |
+            ${{ secrets.RENDER_HOOK_HUB }}
+            ${{ secrets.RENDER_HOOK_AUCTION }}
+            ${{ secrets.RENDER_HOOK_INTERNAL }}
+            ${{ secrets.RENDER_HOOK_PRODUCTIVITY }}
+        run: |
+          set -e
+          c=0
+          while read -r url; do
+            if [ -n "$url" ]; then
+              echo "Deploy: $url"
+              curl -fsS -X POST "$url"
+              c=$((c+1))
+            fi
+          done <<< "$HOOKS"
+          echo "Hooks acionados: $c"
