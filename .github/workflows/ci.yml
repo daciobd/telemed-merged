@@ -11,6 +11,7 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -23,6 +24,15 @@ jobs:
             package-lock.json
             telemed-merged/package-lock.json
             telemed-docs-automation/package-lock.json
+
+      # Cache dos browsers do Playwright
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('telemed-merged/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ms-playwright-
 
       - name: Install deps root
         run: npm ci
@@ -39,51 +49,45 @@ jobs:
             npm install --include=dev
           fi
 
-      - name: Install deps root
-        run: npm ci
-
       - name: Install deps telemed-merged
         working-directory: telemed-merged
         run: npm ci
 
-      - name: Install Playwright (browsers + deps)
-        run: npx playwright install --with-deps
-
-      - name: Verify server entrypoint path
+      # Instala só Chromium e com timeout
+      - name: Install Playwright Chromium
+        working-directory: telemed-merged
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
         run: |
-          pwd
-          ls -la apps/telemed-deploy-ready | grep -E "(server|index)" 
-          test -f apps/telemed-deploy-ready/server.js && echo "server.js FOUND" || (echo "server.js NOT FOUND" && exit 1)
-          echo "telemed-merged start script should work: npm run start from telemed-merged/ -> ../apps/telemed-deploy-ready/server.js"
-
-      - name: Sanity @playwright/test at root
-        run: |
-          node -e "const p=require('./package.json'); console.log('devDep @playwright/test:', p.devDependencies?.['@playwright/test']||'MISSING')"
-          test -f node_modules/@playwright/test/package.json && echo "node_modules/@playwright/test OK" || (echo "MISSING node_modules/@playwright/test" && exit 1)
-          node -e "console.log('resolve:', require.resolve('@playwright/test/package.json'))"
+          timeout 12m npx playwright install chromium
 
       - name: Build
         working-directory: telemed-merged
         run: npm run build --if-present
 
+      # Sobe o serviço auxiliar e espera no máx 60s
       - name: Start docs automation
         shell: bash
         run: |
           set -euo pipefail
           PIDFILE="$GITHUB_WORKSPACE/server.pid"
-          echo "🚀 Starting TeleMed Docs Automation Service..."
-          npx -y tsx telemed-docs-automation/src/index.ts &
-          echo $! > "$PIDFILE"
-          sleep 2
+          npx -y tsx telemed-docs-automation/src/index.ts & echo $! > "$PIDFILE"
+          # health check: wait for service to be ready
+          for i in {1..60}; do
+            curl -fsS http://localhost:5000/ && break || sleep 1
+          done || { echo "Service didn't get healthy"; exit 1; }
 
-      - name: List tests dir
-        run: ls -R tests | head -n 50
+      - name: Sanity ensure playwright resolvable
+        working-directory: telemed-merged
+        run: node -e "require('@playwright/test'); console.log('playwright ok')"
 
-      - name: Wait for server
-        run: npx wait-on tcp:3000
-
-      - name: Run Playwright tests (debug)
-        run: npx --no-install playwright test --reporter=list --verbose
+      - name: Run Playwright tests (fail fast)
+        working-directory: telemed-merged
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+          CI: "1"
+        run: |
+          timeout 20m npx playwright test --reporter=line --workers=2
 
       - name: Stop servers
         if: always()
