@@ -76,8 +76,14 @@ jobs:
           echo $! > "$PIDFILE"
           sleep 2
 
-      - name: Run Playwright tests
-        run: npx --no-install playwright test
+      - name: List tests dir
+        run: ls -R tests | head -n 50
+
+      - name: Wait for server
+        run: npx wait-on tcp:3000
+
+      - name: Run Playwright tests (debug)
+        run: npx --no-install playwright test --reporter=list --verbose
 
       - name: Stop servers
         if: always()

@@ -10,7 +10,7 @@ const baseURL = process.env.BASE_URL || 'http://localhost:3000';
 const appDir = path.resolve(__dirname, 'telemed-merged');
 
 export default defineConfig({
-  testDir: 'tests',
+  testDir: './tests',
   testMatch: ['**/*.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!isCI,
