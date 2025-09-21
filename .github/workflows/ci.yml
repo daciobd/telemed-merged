@@ -47,13 +47,17 @@ jobs:
         working-directory: telemed-merged
         run: npx playwright install --with-deps
 
+      - name: Debug devDeps
+        working-directory: telemed-merged
+        run: |
+          node -e "try{console.log(require('./package.json').devDependencies['@playwright/test']||'MISSING')}catch(e){console.log('package.json missing')}"
+          test -f node_modules/@playwright/test/package.json && echo "node_modules ok" || echo "node_modules MISSING"
+
       - name: Sanity ensure @playwright/test resolvable
         working-directory: telemed-merged
         run: |
-          pwd
-          node -v
-          npx playwright --version
           node -e "require('@playwright/test'); console.log('playwright ok'); console.log(require.resolve('@playwright/test/package.json'))"
+          ls -la node_modules/@playwright/test | head
 
       - name: Build
         working-directory: telemed-merged
