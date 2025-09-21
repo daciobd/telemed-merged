@@ -49,7 +49,11 @@ jobs:
 
       - name: Sanity ensure @playwright/test resolvable
         working-directory: telemed-merged
-        run: node -e "require('@playwright/test'); console.log('playwright ok')"
+        run: |
+          pwd
+          node -v
+          npx playwright --version
+          node -e "require('@playwright/test'); console.log('playwright ok'); console.log(require.resolve('@playwright/test/package.json'))"
 
       - name: Build
         working-directory: telemed-merged
@@ -67,7 +71,7 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: telemed-merged
-        run: npx playwright test
+        run: npx --no-install playwright test
 
       - name: Stop servers
         if: always()
