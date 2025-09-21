@@ -7,6 +7,7 @@ const baseURL = process.env.BASE_URL || 'http://localhost:3000';
 
 export default defineConfig({
   testDir: '../tests',
+  testMatch: ['**/*.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!isCI,
   retries: isCI ? 2 : 0,
@@ -25,6 +26,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run start',
     port: 3000,
+    timeout: 120_000,
     reuseExistingServer: !isCI,
   },
 });
