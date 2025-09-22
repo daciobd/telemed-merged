@@ -1,8 +1,70 @@
-node_modules
-dist
+# ==============================
+# .gitignore — TelemedMerge (monorepo Node.js)
+# Mantém o repositório limpo. NÃO ignore lockfiles (package-lock.json/pnpm-lock.yaml/yarn.lock).
+# ==============================
+
+# Dependências
+node_modules/
+**/node_modules/
+.pnpm-store/
+.pnp.cjs
+.pnp.data.json
+.pnp.loader.mjs
+
+# Builds/Artefatos
+dist/
+build/
+out/
+coverage/
+.cache/
+.next/
+**/.next/
+.nuxt/
+.turbo/
+.esbuild/
+vite.dist/
+vite.cache/
+storybook-static/
+
+# Monorepo: apps/* artefatos
+apps/*/node_modules/
+apps/*/dist/
+apps/*/build/
+apps/*/.next/
+apps/*/.turbo/
+apps/*/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SO/IDE
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+Thumbs.db
+.idea/
+.vscode/
+
+# Variáveis de Ambiente (expor só templates)
+.env
+.env.*
+!.env.example
+
+# Ferramentas de Deploy (manter configs)
+# NÃO ignore: .replit, render.yaml, production.js, Dockerfile, docker-compose.yml
+.vercel/
+.netlify/
+firebase-debug.log
+.now
+
+# Test runners
+.jest-cache/
+.jest/
+.mocha/
+.nyc_output/
+pytest_cache/
+
 # Replit editor artifacts
 attached_assets/
+*.tar.gz

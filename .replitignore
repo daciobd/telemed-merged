@@ -1,0 +1,57 @@
+# ==============================
+# .replitignore — TelemedMerge
+# Objetivo: manter o workspace leve no Replit e evitar export desnecessário
+# Atenção: NÃO ignore arquivos de configuração essenciais (.replit, render.yaml, production.js, package.json, lockfiles)
+# ==============================
+
+# Dependências e artefatos
+node_modules/
+**/node_modules/
+.pnpm-store/
+.pnp.cjs
+.pnp.data.json
+.pnp.loader.mjs
+
+# Builds/sCaches
+dist/
+build/
+out/
+coverage/
+.cache/
+.next/
+**/.next/
+.nuxt/
+.turbo/
+.esbuild/
+vite.dist/
+vite.cache/
+.storybook-out/
+storybook-static/
+
+# Monorepo: apps/* artefatos
+apps/*/node_modules/
+apps/*/dist/
+apps/*/build/
+apps/*/.next/
+apps/*/.turbo/
+apps/*/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SO/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Ambiente (manter .env.example versionado)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
