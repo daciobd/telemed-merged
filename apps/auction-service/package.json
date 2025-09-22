@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "prisma generate && echo 'JavaScript service built with Prisma client'",
-    "start": "node src/index.js",
-    "dev": "NODE_ENV=development node src/index.js",
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
     "prisma:generate": "prisma generate",
     "migrate": "prisma migrate deploy"
   },
