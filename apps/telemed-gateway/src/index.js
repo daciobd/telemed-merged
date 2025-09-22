@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { securityHeaders, apiSecurityHeaders, rateLimitHeaders } from './security-headers.js';
+import aiRoutes from './routes/ai.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -30,9 +31,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('public'));
 
+// ===== AI ROUTES =====
+app.use("/ai", aiRoutes);
+
 // Aplicar headers de segurança
 app.use(securityHeaders);
-app.use('/api/*', apiSecurityHeaders);
+app.use('/api', apiSecurityHeaders);
 app.use(rateLimitHeaders(100, 900000)); // 100 requests per 15 min
 
 // Dados dos serviços TeleMed
@@ -192,7 +196,10 @@ app.get('/', (_req, res) => {
     endpoints: {
       health: '/health',
       status: '/status.json',
-      pages: CRITICAL_PAGES
+      pages: CRITICAL_PAGES,
+      ai: {
+        ping: '/ai/ping'
+      }
     },
     services: Object.keys(SERVICES),
     timestamp: new Date().toISOString()
