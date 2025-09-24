@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('Diretrizes abre Dr. AI com contexto', async ({ page, context }) => {
-  // Navegar para a página de consulta como médico
-  await page.goto('/consulta/sala?role=medico');
+  // Navegar para a página de consulta HTML
+  await page.goto('/consulta.html');
   
   // Preencher os dados do paciente
   await page.fill('[name="chief-complaint"]', 'Dor torácica ao esforço');
@@ -15,22 +15,22 @@ test('Diretrizes abre Dr. AI com contexto', async ({ page, context }) => {
   // Esperar por uma nova página ao clicar no botão Diretrizes
   const [newPage] = await Promise.all([
     context.waitForEvent('page'),
-    page.click('button:has-text("Diretrizes")')
+    page.click('#diretrizes-btn')
   ]);
 
   // Aguardar a nova página carregar completamente
   await newPage.waitForLoadState('domcontentloaded');
 
   // Verificar se a URL contém os parâmetros corretos
-  await expect(newPage).toHaveURL(/\/dr-ai\/\?(.+&)?q=Dor\+tor%C3%A1cica\+ao\+esfor%C3%A7o&age=54&sex=male/);
+  await expect(newPage).toHaveURL(/\/dr-ai\.html\?(.+&)?q=Dor\+tor%C3%A1cica\+ao\+esfor%C3%A7o&age=54&sex=male/);
 
-  // Verificar se os campos estão pré-preenchidos
-  await expect(newPage.locator('#symptom-input')).toHaveValue('Dor torácica ao esforço');
-  await expect(newPage.locator('#age-input')).toHaveValue('54');
-  await expect(newPage.locator('#gender-select')).toHaveValue('male');
+  // Verificar se os campos estão pré-preenchidos (usando os IDs corretos)
+  await expect(newPage.locator('#symptoms')).toHaveValue('Dor torácica ao esforço');
+  await expect(newPage.locator('#age')).toHaveValue('54');
+  await expect(newPage.locator('#gender')).toHaveValue('masculino'); // mapeado de 'male' para 'masculino'
 
   // Verificar se o banner de contexto está visível
-  const contextBanner = newPage.locator('.dr-ai-container > div:first-child');
+  const contextBanner = newPage.locator('.alert.alert-info');
   await expect(contextBanner).toContainText('Contexto da Consulta');
   await expect(contextBanner).toContainText('Dor torácica ao esforço');
   await expect(contextBanner).toContainText('54 anos');
@@ -38,11 +38,11 @@ test('Diretrizes abre Dr. AI com contexto', async ({ page, context }) => {
 });
 
 test('Botão Diretrizes desabilitado sem dados completos', async ({ page }) => {
-  // Navegar para a página de consulta como médico
-  await page.goto('/consulta/sala?role=medico');
+  // Navegar para a página de consulta HTML
+  await page.goto('/consulta.html');
   
   // Inicialmente o botão deve estar desabilitado
-  const diretrizesButton = page.locator('[data-testid="button-diretrizes"]');
+  const diretrizesButton = page.locator('#diretrizes-btn');
   await expect(diretrizesButton).toBeDisabled();
   
   // Preencher apenas a queixa
@@ -59,10 +59,10 @@ test('Botão Diretrizes desabilitado sem dados completos', async ({ page }) => {
 });
 
 test('Validação de idade fora do intervalo', async ({ page }) => {
-  // Navegar para a página de consulta como médico
-  await page.goto('/consulta/sala?role=medico');
+  // Navegar para a página de consulta HTML
+  await page.goto('/consulta.html');
   
-  const diretrizesButton = page.locator('[data-testid="button-diretrizes"]');
+  const diretrizesButton = page.locator('#diretrizes-btn');
   
   // Preencher com idade inválida (muito alta)
   await page.fill('[name="chief-complaint"]', 'Teste');
@@ -77,10 +77,10 @@ test('Validação de idade fora do intervalo', async ({ page }) => {
 });
 
 test('Queixa muito curta não habilita botão', async ({ page }) => {
-  // Navegar para a página de consulta como médico
-  await page.goto('/consulta/sala?role=medico');
+  // Navegar para a página de consulta HTML
+  await page.goto('/consulta.html');
   
-  const diretrizesButton = page.locator('[data-testid="button-diretrizes"]');
+  const diretrizesButton = page.locator('#diretrizes-btn');
   
   // Preencher com queixa muito curta
   await page.fill('[name="chief-complaint"]', 'dor');

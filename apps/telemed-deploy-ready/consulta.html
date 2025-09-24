@@ -70,7 +70,9 @@
         <span id="appt-meta" class="badge">APT-???</span>
       </div>
       <div class="wrap" style="gap:8px">
-        <a id="care-guidelines" class="badge" href="/diretrizes.html" target="_blank">Diretrizes de Cuidados</a>
+        <button id="diretrizes-btn" class="badge" disabled title="Preencha queixa, idade e sexo">
+          📋 Diretrizes
+        </button>
         <span id="public-status" class="badge ok">Pronto</span>
       </div>
     </div>
@@ -114,7 +116,20 @@
         <div class="grid cols-2">
           <div class="field" id="f-queixa">
             <label for="queixa">Queixa Principal *</label>
-            <input type="text" id="queixa" placeholder="Ex.: febre e dor de garganta há 3 dias" />
+            <input type="text" id="queixa" name="chief-complaint" placeholder="Ex.: febre e dor de garganta há 3 dias" />
+          </div>
+          <div class="field" id="f-idade">
+            <label for="patient-age">Idade do Paciente *</label>
+            <input type="number" id="patient-age" name="patient-age" placeholder="Ex.: 54" min="0" max="120" />
+          </div>
+          <div class="field" id="f-sexo">
+            <label for="patient-gender">Sexo do Paciente *</label>
+            <select id="patient-gender" name="patient-gender">
+              <option value="">Selecione...</option>
+              <option value="male">Masculino</option>
+              <option value="female">Feminino</option>
+              <option value="other">Outro</option>
+            </select>
           </div>
           <div class="field" id="f-hda">
             <label for="hda">Doença atual *</label>
@@ -659,6 +674,84 @@
   q.addEventListener('keyup', (e)=>{ if(e.key==='Enter') search(); });
   emit.onclick = emitRx;
   renderSelected();
+})();
+
+// === DIRETRIZES BUTTON LOGIC (Especificação Opção B) ===
+(function() {
+  const $btn = document.getElementById('diretrizes-btn');
+
+  function getConsultData() {
+    const q = document.querySelector('[name="chief-complaint"]')?.value?.trim() || '';
+    const age = document.querySelector('[name="patient-age"]')?.value || '';
+    let sex = (document.querySelector('[name="patient-gender"]')?.value || '').toLowerCase();
+
+    // normalizar sexo
+    const map = { 
+      m: 'male', masc: 'male', male: 'male', h: 'male',
+      f: 'female', fem: 'female', female: 'female',
+      outro: 'other', other: 'other' 
+    };
+    sex = map[sex] || sex;
+
+    return { q, age, sex };
+  }
+
+  function validate({ q, age, sex }) {
+    const hasQ = q.length > 2;
+    const a = Number(age);
+    const ageOk = Number.isFinite(a) && a >= 0 && a <= 120;
+    const sexOk = ['male', 'female', 'other'].includes(sex);
+    return hasQ && ageOk && sexOk;
+  }
+
+  function updateButtonState() {
+    const data = getConsultData();
+    const ok = validate(data);
+    $btn.disabled = !ok;
+    $btn.setAttribute('aria-disabled', String(!ok));
+    $btn.title = ok ? 'Abrir Diretrizes (Dr. AI)' : 'Preencha queixa, idade e sexo';
+    
+    // Visual feedback
+    if (ok) {
+      $btn.style.opacity = '1';
+      $btn.style.cursor = 'pointer';
+    } else {
+      $btn.style.opacity = '0.6';
+      $btn.style.cursor = 'not-allowed';
+    }
+  }
+
+  ['input','change','blur'].forEach(evt => {
+    document.addEventListener(evt, updateButtonState, true);
+  });
+  updateButtonState();
+
+  $btn.addEventListener('click', () => {
+    const data = getConsultData();
+    if (!validate(data)) return;
+
+    // telemetria opcional
+    try {
+      fetch('/api/events', { 
+        method:'POST', 
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ 
+          type:'guidelines_opened', 
+          ...data, 
+          source:'consulta' 
+        })
+      });
+    } catch {}
+
+    const params = new URLSearchParams({ 
+      q: data.q, 
+      age: String(data.age), 
+      sex: data.sex, 
+      source: 'consulta' 
+    });
+    const w = window.open(`/dr-ai.html?${params.toString()}`, '_blank');
+    if (w) w.opener = null;
+  });
 })();
 </script>
 

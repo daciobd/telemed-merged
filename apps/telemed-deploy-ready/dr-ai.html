@@ -498,6 +498,89 @@
     };
   }
 })();
+
+// === DR. AI PRE-FILL LOGIC (Especificação Opção B) ===
+document.addEventListener('DOMContentLoaded', () => {
+  const sp = new URLSearchParams(location.search);
+  const q = sp.get('q') || '';
+  const age = sp.get('age') || '';
+  const sex = sp.get('sex') || '';
+
+  // Pre-fill the form fields if they exist
+  if (q) {
+    const symptomEl = document.getElementById('symptoms');
+    if (symptomEl) symptomEl.value = q;
+  }
+  
+  if (age) {
+    const ageEl = document.getElementById('age');
+    if (ageEl) ageEl.value = age;
+  }
+  
+  if (sex) {
+    const genderEl = document.getElementById('gender');
+    if (genderEl && (sex === 'male' || sex === 'female' || sex === 'other')) {
+      // Map values to options that exist in the select
+      const mapping = {
+        'male': 'masculino',
+        'female': 'feminino', 
+        'other': 'nao_informar'
+      };
+      genderEl.value = mapping[sex] || sex;
+    }
+  }
+
+  // Add consultation context banner if any data was provided
+  if (q || age || sex) {
+    const container = document.querySelector('main') || document.body;
+    const banner = document.createElement('div');
+    banner.className = 'alert alert-info';
+    banner.style.cssText = `
+      background: #dbeafe;
+      border: 1px solid #93c5fd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: start;
+      gap: 12px;
+    `;
+    banner.innerHTML = `
+      <div style="color: #1e40af; font-size: 20px;">📋</div>
+      <div style="flex: 1;">
+        <strong style="color: #1e40af;">Contexto da Consulta:</strong>
+        <span style="color: #1e40af; margin-left: 8px;">
+          ${q || '—'} | ${age ? age + ' anos' : '—'} | ${sex || '—'}
+        </span>
+      </div>
+      <button 
+        onclick="this.parentElement.remove()" 
+        style="
+          background: none;
+          border: none;
+          color: #3b82f6;
+          font-size: 18px;
+          cursor: pointer;
+          line-height: 1;
+          padding: 0;
+        "
+        aria-label="Fechar"
+      >×</button>
+    `;
+    container.prepend(banner);
+
+    // Auto-show the form if we have consultation context
+    const triageForm = document.getElementById('triage-form');
+    if (triageForm) {
+      triageForm.style.display = 'block';
+    }
+  }
+
+  // If there's a symptom and the analyze function exists, optionally trigger initial suggestion
+  // if (q && typeof window.runInitialSuggestion === 'function') {
+  //   window.runInitialSuggestion(q, age, sex);
+  // }
+});
 </script>
 
 </body>
