@@ -112,6 +112,8 @@
         </label>
       </div>
 
+      <!-- FORM WRAPPER para Autosave -->
+      <form id="form-consulta" data-autosave="on" data-autosave-key="consulta:APT-EXEMPLO">
       <div class="form-body" id="tab-soap" role="tabpanel">
         <div class="grid cols-2">
           <div class="field" id="f-queixa">
@@ -187,6 +189,7 @@
           <button id="btn-finalize" class="btn primary" disabled>Finalizar atendimento</button>
         </div>
       </div>
+      </form>
     </section>
   </main>
 
@@ -208,6 +211,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Badge Autosave -->
+  <div id="autosave-badge" aria-live="polite" style="position:fixed;right:16px;bottom:16px;background:#eef;border:1px solid #cde;padding:6px 10px;border-radius:8px;font:12px/1.2 system-ui;opacity:.9"></div>
 
 <script>
 (function(){
@@ -751,6 +757,192 @@
     });
     const w = window.open(`/dr-ai.html?${params.toString()}`, '_blank');
     if (w) w.opener = null;
+  });
+})();
+
+// === SISTEMA DE AUTOSAVE ROBUSTO ===
+(() => {
+  // ===== Config =====
+  const AUTOSAVE_INTERVAL_MS = 10000;
+  const INPUT_DEBOUNCE_MS = 1200;
+  const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
+  const USER_ID = window.__SESSION?.userId || 'anonymous';
+  const getConsultationId = () =>
+    document.querySelector('[data-autosave-key]')?.getAttribute('data-autosave-key') || 'page:' + location.pathname.replace(/\W/g,'_');
+
+  // ===== Helpers =====
+  const badge = document.getElementById('autosave-badge');
+  const stamp = () => new Date().toLocaleTimeString();
+  const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('autosave') : null;
+  let leader = true; // líder faz o autosave de intervalo
+
+  channel?.addEventListener('message', (ev) => {
+    if (ev.data?.type === 'iam-leader' && ev.data.key === location.pathname) leader = false;
+  });
+  channel?.postMessage({ type: 'iam-leader', key: location.pathname });
+
+  const makeStorageKey = () => {
+    return `draft:${USER_ID}:${getConsultationId()}`;
+  };
+
+  const setBadge = (text) => { if (badge) badge.textContent = text; };
+
+  const serializeForm = (form) => {
+    const data = {};
+    // FormData não inclui checkboxes desmarcados; tratamos manualmente
+    form.querySelectorAll('input, textarea, select').forEach(el => {
+      if (!el.name || el.disabled) return;
+      if (el.type === 'checkbox') {
+        data[el.name] = [...(data[el.name] || []), ...(el.checked ? [el.value || true] : [])];
+      } else if (el.type === 'radio') {
+        if (el.checked) data[el.name] = el.value;
+        else if (!(el.name in data)) data[el.name] = ''; // garante chave
+      } else if (el.multiple) {
+        data[el.name] = Array.from(el.selectedOptions).map(o => o.value);
+      } else {
+        data[el.name] = el.value ?? '';
+      }
+    });
+    // contenteditable opt-in
+    form.querySelectorAll('[contenteditable][data-name]').forEach(el => {
+      data[el.dataset.name] = el.innerHTML;
+    });
+    return data;
+  };
+
+  const restoreForm = (form, draft) => {
+    Object.entries(draft || {}).forEach(([name, value]) => {
+      const els = form.querySelectorAll(`[name="${CSS.escape(name)}"]`);
+      if (!els.length) return;
+      const el = els[0];
+      if (Array.isArray(value)) {
+        // checkbox[] ou select[multiple]
+        els.forEach(cb => { if (cb.type === 'checkbox') cb.checked = value.includes(cb.value || true); });
+        if (el.multiple) {
+          Array.from(el.options).forEach(opt => { opt.selected = value.includes(opt.value); });
+        }
+      } else if (el.type === 'radio') {
+        els.forEach(r => { r.checked = (r.value === value); });
+      } else {
+        els.forEach(e => { e.value = value; });
+      }
+    });
+    // contenteditable
+    form.querySelectorAll('[contenteditable][data-name]').forEach(el => {
+      if (draft[el.dataset.name] != null) el.innerHTML = draft[el.dataset.name];
+    });
+  };
+
+  const loadDraft = (form) => {
+    try {
+      const raw = localStorage.getItem(makeStorageKey());
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.ts || (Date.now() - parsed.ts) > DRAFT_TTL_MS) return;
+      restoreForm(form, parsed.data);
+      setBadge('📄 Rascunho recuperado');
+    } catch {}
+  };
+
+  const saveLocal = (data) => {
+    // GC simples: apaga drafts antigos para evitar quota
+    try {
+      const key = makeStorageKey();
+      localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+    } catch (e) {
+      if (e?.name === 'QuotaExceededError') {
+        Object.keys(localStorage).filter(k => k.startsWith('draft:')).forEach(k => localStorage.removeItem(k));
+      }
+    }
+  };
+
+  // fila local para replays
+  const queueKey = () => `draftQueue:${USER_ID}`;
+  const pushQueue = (payload) => {
+    const arr = JSON.parse(localStorage.getItem(queueKey()) || '[]');
+    arr.push(payload);
+    localStorage.setItem(queueKey(), JSON.stringify(arr.slice(-50))); // mantém últimas 50
+  };
+  const flushQueue = async () => {
+    const arr = JSON.parse(localStorage.getItem(queueKey()) || '[]');
+    if (!arr.length) return;
+    const next = arr[0];
+    try {
+      await fetch('/api/consultations/' + next.consultationId + '/draft', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next.body),
+        credentials: 'include'
+      });
+      arr.shift();
+      localStorage.setItem(queueKey(), JSON.stringify(arr));
+      if (arr.length) flushQueue();
+    } catch {}
+  };
+
+  let inputTimer;
+  const onInput = (form) => {
+    clearTimeout(inputTimer);
+    inputTimer = setTimeout(() => doSave(form), INPUT_DEBOUNCE_MS);
+  };
+
+  const doSave = async (form, { reason } = {}) => {
+    const data = serializeForm(form);
+    saveLocal(data);
+    setBadge(`💾 Rascunho salvo • ${stamp()}`);
+
+    // tenta servidor (se souber o ID de consulta)
+    const cid = getConsultationId().split(':')[1];
+    if (!cid || cid.startsWith('page')) return;
+
+    const payload = { body: { notes: data, updatedAt: new Date().toISOString(), reason: reason || 'autosave' }, consultationId: cid };
+    try {
+      await fetch(`/api/consultations/${cid}/draft`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload.body)
+      });
+    } catch {
+      pushQueue(payload);
+    }
+  };
+
+  const initForm = (form) => {
+    loadDraft(form);
+
+    form.addEventListener('input', () => onInput(form), true);
+    form.addEventListener('blur', () => doSave(form, { reason: 'blur' }), true);
+    form.addEventListener('submit', () => {
+      // limpar draft e despejar fila com sendBeacon
+      localStorage.removeItem(makeStorageKey());
+      const arr = JSON.parse(localStorage.getItem(queueKey()) || '[]');
+      if (arr.length) {
+        const cid = getConsultationId().split(':')[1];
+        if (cid) {
+          const blob = new Blob([JSON.stringify(arr.map(a => a.body))], { type: 'application/json' });
+          navigator.sendBeacon(`/api/consultations/${cid}/draft/beacon`, blob);
+          localStorage.removeItem(queueKey());
+        }
+      }
+    }, { once: false });
+
+    // intervalo periódico (somente líder e com a aba visível)
+    setInterval(() => {
+      if (!leader) return;
+      if (document.hidden) return;
+      doSave(form, { reason: 'interval' });
+    }, AUTOSAVE_INTERVAL_MS);
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) flushQueue();
+    });
+    window.addEventListener('online', flushQueue);
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form[data-autosave="on"]').forEach(initForm);
+    flushQueue();
   });
 })();
 </script>
