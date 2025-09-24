@@ -5,7 +5,7 @@
   <title>PHR — TeleMed</title>
   <meta name="robots" content="noindex,nofollow">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"/>
-  <link rel="stylesheet" href="/css/telemed.css">
+  <link rel="stylesheet" href="/css/style.css">
   <style>
     .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
     .skel { background:#f2f3f5; height:14px; border-radius:6px; animation:pulse 1.2s infinite linear; }
@@ -47,11 +47,14 @@
 
 <script>
 (async () => {
+  console.log('📋 PHR Script iniciado');
   const patientId = location.pathname.split('/').filter(Boolean).pop() || 
                    new URLSearchParams(location.search).get('id') || 'PAT-123';
+  console.log('🔍 Patient ID:', patientId);
   const $top = document.getElementById('top');
   const $blocks = document.getElementById('blocks');
   const $err = document.getElementById('error');
+  console.log('🎯 Elementos encontrados:', { top: !!$top, blocks: !!$blocks, err: !!$err });
 
   const copyBtn = document.getElementById('copy');
   copyBtn.addEventListener('click', async () => {
@@ -74,6 +77,7 @@
   });
 
   try {
+    console.log('🚀 Iniciando carregamento PHR');
     // auditoria (fire-and-forget)
     fetch('/api/events', {
       method:'POST',
@@ -81,13 +85,17 @@
       body:JSON.stringify({type:'phr_viewed', patientId})
     }).catch(() => {});
 
+    console.log('📡 Fazendo fetch da API');
     const resp = await fetch(`/api/patients/${encodeURIComponent(patientId)}/phr?limit=20`);
+    console.log('📡 Response status:', resp.status);
     if (resp.status === 403) throw new Error('Sem permissão para visualizar este PHR.');
     if (!resp.ok) throw new Error('Falha ao carregar dados do PHR.');
 
     const data = await resp.json(); // { patient, consultations[], exams[], allergies[], meds[] }
+    console.log('📊 Dados carregados:', data);
 
     // topo
+    console.log('✍️ Atualizando topo');
     $top.innerHTML = `
       <div class="patient-summary">
         <h2>${data.patient.name}</h2>
@@ -95,6 +103,7 @@
         ${data.patient.phone ? `<p>${data.patient.phone}</p>` : ''}
       </div>
     `;
+    console.log('✅ Topo atualizado');
 
     const block = (title, html) => `
       <section class="section">
@@ -143,7 +152,7 @@
     $top.innerHTML = '';
     $blocks.innerHTML = '';
   }
-});
+})();
 </script>
 
 </body>

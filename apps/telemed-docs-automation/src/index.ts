@@ -20,7 +20,7 @@ app.use(express.static(staticPath));
 app.use(cors({ 
   origin: ['https://telemed-deploy-ready.onrender.com'], 
   credentials: true,
-  methods: ["GET","POST","OPTIONS"],
+  methods: ["GET","POST","PATCH","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization","X-Internal-Token"]
 }));
 
@@ -199,6 +199,85 @@ app.post('/api/rc/prescriptions', async (req: express.Request, res: express.Resp
     console.error('Error proxying to ReceitaCerta:', e);
     res.status(502).json({ error: 'Bad Gateway to Receita Certa' });
   }
+});
+
+// In-memory storage for drafts (usar banco real em produção)
+const drafts = new Map();
+
+// Mock data para PHR
+const mockPHRData = {
+  'PAT-123': {
+    patient: { name: 'João Silva', age: 54, sex: 'Masculino', phone: '(11) 99999-9999' },
+    consultations: [
+      { date: '2024-01-15', doctor: 'Dr. Maria Santos', diagnosis: 'Hipertensão arterial', notes: 'Pressão controlada' },
+      { date: '2024-01-10', doctor: 'Dr. Pedro Lima', diagnosis: 'Consulta de rotina', notes: 'Exames em dia' }
+    ],
+    exams: [
+      { date: '2024-01-12', type: 'Hemograma completo', result: 'Normal', doctor: 'Dr. Ana Costa' },
+      { date: '2024-01-08', type: 'Radiografia de tórax', result: 'Sem alterações', doctor: 'Dr. Carlos Souza' }
+    ],
+    allergies: ['Penicilina', 'Dipirona'],
+    meds: [
+      { name: 'Losartana 50mg', frequency: '1x/dia', duration: 'Uso contínuo' },
+      { name: 'Sinvastatina 20mg', frequency: '1x/dia à noite', duration: 'Uso contínuo' }
+    ]
+  }
+};
+
+// === ROTAS DE AUTOSAVE ===
+app.patch('/api/consultations/:id/draft', (req: express.Request, res: express.Response) => {
+  const consultationId = req.params.id;
+  const draftKey = `${consultationId}`;
+  drafts.set(draftKey, { ...req.body, savedAt: new Date().toISOString() });
+  
+  console.log(`📝 Draft saved for consultation ${consultationId}`);
+  
+  res.status(200).json({ ok: true, savedAt: new Date().toISOString() });
+});
+
+app.post('/api/consultations/:id/draft/beacon', (req: express.Request, res: express.Response) => {
+  const consultationId = req.params.id;
+  
+  console.log(`🚨 Beacon draft received for consultation ${consultationId}`);
+  
+  // Processar fila de drafts
+  if (Array.isArray(req.body)) {
+    req.body.forEach((draft: any, idx: number) => {
+      const draftKey = `${consultationId}_beacon_${idx}`;
+      drafts.set(draftKey, { ...draft, savedAt: new Date().toISOString() });
+    });
+  }
+  
+  res.status(200).json({ ok: true, processed: Array.isArray(req.body) ? req.body.length : 1 });
+});
+
+// === ROTA PHR ===
+app.get('/api/patients/:id/phr', (req: express.Request, res: express.Response) => {
+  const patientId = req.params.id;
+  const limit = parseInt(req.query.limit as string) || 20;
+  
+  const phrData = mockPHRData[patientId as keyof typeof mockPHRData];
+  if (!phrData) {
+    return res.status(404).json({ ok: false, error: 'Patient not found' });
+  }
+  
+  // Simular auditoria
+  console.log(`👁️ PHR viewed for patient ${patientId}`);
+  
+  // Limitar resultados
+  const limitedData = {
+    ...phrData,
+    consultations: phrData.consultations.slice(0, limit),
+    exams: phrData.exams.slice(0, limit)
+  };
+  
+  res.status(200).json(limitedData);
+});
+
+// === ROTA DE EVENTOS (telemetria) ===
+app.post('/api/events', (req: express.Request, res: express.Response) => {
+  console.log(`📊 Event: ${req.body.type} - ${JSON.stringify(req.body)}`);
+  res.status(200).json({ ok: true });
 });
 
 // Middleware simples de auth interna por token
