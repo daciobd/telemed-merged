@@ -2,6 +2,7 @@ import { env } from '@/lib/env';
 import { ids } from '@/lib/ids';
 import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
+import ConsultaDiretrizesButton from '@/components/ConsultaDiretrizesButton';
 
 export default function ConsultaSala() {
   const [searchParams] = useSearchParams();
@@ -17,6 +18,11 @@ export default function ConsultaSala() {
   const [newMessage, setNewMessage] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<Array<{name: string, url: string, timestamp: Date}>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Estados para dados do paciente (necessários para o botão Diretrizes)
+  const [chiefComplaint, setChiefComplaint] = useState('');
+  const [patientAge, setPatientAge] = useState('');
+  const [patientGender, setPatientGender] = useState<'male' | 'female' | 'other' | ''>('');
 
   const mdaUrl = env.MDA_BASE
     ? `${env.MDA_BASE}/?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`
@@ -196,11 +202,67 @@ export default function ConsultaSala() {
           </div>
         </div>
 
+        {/* Dados do Paciente - para médicos */}
+        {role === 'medico' && (
+          <div className="bg-white rounded-lg p-4 mb-6">
+            <h3 className="font-semibold mb-3">👤 Dados do Paciente</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Queixa Principal *
+                </label>
+                <input
+                  type="text"
+                  value={chiefComplaint}
+                  onChange={(e) => setChiefComplaint(e.target.value)}
+                  placeholder="Ex: Dor torácica ao esforço"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  data-testid="input-chief-complaint"
+                  name="chief-complaint"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Idade *
+                </label>
+                <input
+                  type="number"
+                  value={patientAge}
+                  onChange={(e) => setPatientAge(e.target.value)}
+                  placeholder="Ex: 54"
+                  min="0"
+                  max="120"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  data-testid="input-patient-age"
+                  name="patient-age"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sexo *
+                </label>
+                <select
+                  value={patientGender}
+                  onChange={(e) => setPatientGender(e.target.value as 'male' | 'female' | 'other')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  data-testid="select-patient-gender"
+                  name="patient-gender"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="male">Masculino</option>
+                  <option value="female">Feminino</option>
+                  <option value="other">Outro</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Ferramentas médicas - só para médicos */}
         {role === 'medico' && (
           <div className="bg-white rounded-lg p-4 mb-6">
             <h3 className="font-semibold mb-3">🩺 Ferramentas Médicas</h3>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               {env.MDA_BASE && (
                 <button 
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
@@ -219,6 +281,11 @@ export default function ConsultaSala() {
                   📋 ReceitaCerta
                 </button>
               )}
+              <ConsultaDiretrizesButton 
+                chiefComplaint={chiefComplaint}
+                age={patientAge}
+                sex={patientGender || undefined}
+              />
               <button className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors">
                 🔒 Finalizar consulta
               </button>
