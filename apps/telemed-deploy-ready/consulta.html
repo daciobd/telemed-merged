@@ -59,6 +59,31 @@
     // Utilidades simples
     const uid = (p) => `${p}_${Math.random().toString(36).slice(2, 8)}`;
 
+    // Validações e sanitização
+    const MAX_LENGTHS = {
+      queixa: 500,
+      doencaAtual: 1000,
+      conduta: 1000,
+      notasPrivadas: 2000,
+      exames: 1000,
+      prescricoes: 1000,
+      encaminhamento: 500,
+      contato: 200
+    };
+
+    const sanitizeText = (text) => {
+      return text
+        .replace(/<[^>]*>/g, '') // Remove tags HTML
+        .replace(/javascript:/gi, '') // Remove javascript: URLs
+        .replace(/on\w+=/gi, '') // Remove event handlers
+        .trim();
+    };
+
+    const validateLength = (text, maxLength) => {
+      const sanitized = sanitizeText(text);
+      return sanitized.length > maxLength ? sanitized.substring(0, maxLength) : sanitized;
+    };
+
     class AutoSave {
       constructor(key) {
         this.key = key;

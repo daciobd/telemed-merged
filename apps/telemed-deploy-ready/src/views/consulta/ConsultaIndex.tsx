@@ -15,6 +15,31 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 // Utilidades simples
 const uid = (p: string) => `${p}_${Math.random().toString(36).slice(2, 8)}`;
 
+// Validações e sanitização
+const MAX_LENGTHS = {
+  queixa: 500,
+  doencaAtual: 1000,
+  conduta: 1000,
+  notasPrivadas: 2000,
+  exames: 1000,
+  prescricoes: 1000,
+  encaminhamento: 500,
+  contato: 200
+};
+
+const sanitizeText = (text: string): string => {
+  return text
+    .replace(/<[^>]*>/g, '') // Remove tags HTML
+    .replace(/javascript:/gi, '') // Remove javascript: URLs
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .trim();
+};
+
+const validateLength = (text: string, maxLength: number): string => {
+  const sanitized = sanitizeText(text);
+  return sanitized.length > maxLength ? sanitized.substring(0, maxLength) : sanitized;
+};
+
 class AutoSave {
   timer: any;
   key: string;
@@ -143,6 +168,31 @@ export default function ConsultaDoc24() {
     return () => clearInterval(timer);
   }, [reg]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Alt+D para diretrizes
+      if (e.altKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        abrirDiretrizes();
+      }
+      // Ctrl+S para salvar rascunho manual
+      if (e.ctrlKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        autosave.current.save(reg);
+        // Mostrar feedback visual brevemente
+        const toast = document.createElement('div');
+        toast.textContent = 'Rascunho salvo!';
+        toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-md z-50';
+        document.body.appendChild(toast);
+        setTimeout(() => document.body.removeChild(toast), 2000);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [reg]);
+
   const addHipotese = (h: string) =>
     setReg((r) => ({ ...r, hipoteses: Array.from(new Set([...r.hipoteses, h])) }));
   const rmHipotese = (h: string) =>
@@ -208,18 +258,22 @@ export default function ConsultaDoc24() {
                 <label className="mb-1 block text-sm font-medium" data-testid="label-queixa">Queixa Principal *</label>
                 <textarea
                   value={reg.queixa}
-                  onChange={(e) => setReg((r) => ({ ...r, queixa: e.target.value }))}
+                  onChange={(e) => setReg((r) => ({ ...r, queixa: validateLength(e.target.value, MAX_LENGTHS.queixa) }))}
                   className="min-h-[64px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                   data-testid="textarea-queixa"
+                  maxLength={MAX_LENGTHS.queixa}
+                  placeholder={`Máximo ${MAX_LENGTHS.queixa} caracteres`}
                 />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium" data-testid="label-doenca-atual">Doença atual *</label>
                 <textarea
                   value={reg.doencaAtual}
-                  onChange={(e) => setReg((r) => ({ ...r, doencaAtual: e.target.value }))}
+                  onChange={(e) => setReg((r) => ({ ...r, doencaAtual: validateLength(e.target.value, MAX_LENGTHS.doencaAtual) }))}
                   className="min-h-[96px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                   data-testid="textarea-doenca-atual"
+                  maxLength={MAX_LENGTHS.doencaAtual}
+                  placeholder={`Máximo ${MAX_LENGTHS.doencaAtual} caracteres`}
                 />
               </div>
 
@@ -261,9 +315,11 @@ export default function ConsultaDoc24() {
                     content: (
                       <textarea
                         value={reg.conduta}
-                        onChange={(e) => setReg((r) => ({ ...r, conduta: e.target.value }))}
+                        onChange={(e) => setReg((r) => ({ ...r, conduta: validateLength(e.target.value, MAX_LENGTHS.conduta) }))}
                         className="min-h-[120px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                         data-testid="textarea-conduta"
+                        maxLength={MAX_LENGTHS.conduta}
+                        placeholder={`Máximo ${MAX_LENGTHS.conduta} caracteres`}
                       />
                     ),
                   },
@@ -278,10 +334,12 @@ export default function ConsultaDoc24() {
                         <textarea
                           value={reg.notasPrivadas}
                           onChange={(e) =>
-                            setReg((r) => ({ ...r, notasPrivadas: e.target.value }))
+                            setReg((r) => ({ ...r, notasPrivadas: validateLength(e.target.value, MAX_LENGTHS.notasPrivadas) }))
                           }
                           className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                           data-testid="textarea-notas-privadas"
+                          maxLength={MAX_LENGTHS.notasPrivadas}
+                          placeholder={`Máximo ${MAX_LENGTHS.notasPrivadas} caracteres`}
                         />
                       </div>
                     ),
@@ -292,9 +350,11 @@ export default function ConsultaDoc24() {
                     content: (
                       <textarea
                         value={reg.exames}
-                        onChange={(e) => setReg((r) => ({ ...r, exames: e.target.value }))}
+                        onChange={(e) => setReg((r) => ({ ...r, exames: validateLength(e.target.value, MAX_LENGTHS.exames) }))}
                         className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                         data-testid="textarea-exames"
+                        maxLength={MAX_LENGTHS.exames}
+                        placeholder={`Máximo ${MAX_LENGTHS.exames} caracteres`}
                       />
                     ),
                   },
@@ -304,9 +364,11 @@ export default function ConsultaDoc24() {
                     content: (
                       <textarea
                         value={reg.prescricoes}
-                        onChange={(e) => setReg((r) => ({ ...r, prescricoes: e.target.value }))}
+                        onChange={(e) => setReg((r) => ({ ...r, prescricoes: validateLength(e.target.value, MAX_LENGTHS.prescricoes) }))}
                         className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                         data-testid="textarea-prescricoes"
+                        maxLength={MAX_LENGTHS.prescricoes}
+                        placeholder={`Máximo ${MAX_LENGTHS.prescricoes} caracteres`}
                       />
                     ),
                   },
@@ -317,10 +379,12 @@ export default function ConsultaDoc24() {
                       <textarea
                         value={reg.encaminhamento}
                         onChange={(e) =>
-                          setReg((r) => ({ ...r, encaminhamento: e.target.value }))
+                          setReg((r) => ({ ...r, encaminhamento: validateLength(e.target.value, MAX_LENGTHS.encaminhamento) }))
                         }
                         className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                         data-testid="textarea-encaminhamento"
+                        maxLength={MAX_LENGTHS.encaminhamento}
+                        placeholder={`Máximo ${MAX_LENGTHS.encaminhamento} caracteres`}
                       />
                     ),
                   },
@@ -340,9 +404,11 @@ export default function ConsultaDoc24() {
                     content: (
                       <textarea
                         value={reg.contato}
-                        onChange={(e) => setReg((r) => ({ ...r, contato: e.target.value }))}
+                        onChange={(e) => setReg((r) => ({ ...r, contato: validateLength(e.target.value, MAX_LENGTHS.contato) }))}
                         className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                         data-testid="textarea-contato"
+                        maxLength={MAX_LENGTHS.contato}
+                        placeholder={`Máximo ${MAX_LENGTHS.contato} caracteres`}
                       />
                     ),
                   },
