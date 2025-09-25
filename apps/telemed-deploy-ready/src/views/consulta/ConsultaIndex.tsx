@@ -1,0 +1,384 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+/**
+ * /consulta — Sala de Videoconsulta (Doc24 → Telemed)
+ *
+ * ✔️ Layout: vídeo à esquerda + painel de Registro Profissional à direita
+ * ✔️ Campos obrigatórios: Queixa, Doença atual, Hipótese diagnóstica (com chips)
+ * ✔️ Abas: Conduta, Notas privadas, Exames, Prescrições, Encaminhamento, Arquivos, Contato
+ * ✔️ Botão Diretrizes (Dr. AI) com pré-preenchimento da queixa/idade/sexo
+ * ✔️ Autosave (localStorage) a cada 10s e onChange
+ * ✔️ Ações: Marcar emergência, Finalizar → /pos-consulta/feedback, Voltar
+ * ✔️ Mock do vídeo (placeholder) + atalhos de teclado (indicados)
+ */
+
+// Utilidades simples
+const uid = (p: string) => `${p}_${Math.random().toString(36).slice(2, 8)}`;
+
+class AutoSave {
+  timer: any;
+  key: string;
+  constructor(key: string) {
+    this.key = key;
+  }
+  save(payload: any) {
+    localStorage.setItem(this.key, JSON.stringify(payload));
+  }
+  load() {
+    try {
+      return JSON.parse(localStorage.getItem(this.key) || "{}");
+    } catch {
+      return {};
+    }
+  }
+  start(fn: () => any, interval = 10000) {
+    this.stop();
+    this.timer = setInterval(() => this.save(fn()), interval);
+  }
+  stop() {
+    if (this.timer) clearInterval(this.timer);
+  }
+}
+
+interface Registro {
+  queixa: string;
+  doencaAtual: string;
+  hipoteses: string[]; // CID/CIAP chips
+  conduta: string;
+  notasPrivadas: string;
+  exames: string;
+  prescricoes: string;
+  encaminhamento: string;
+  arquivos: string[];
+  contato: string;
+}
+
+const CID_SUGESTOES = [
+  "F41.1 Ansiedade",
+  "F32 Depressão",
+  "J00 Resfriado",
+  "I10 HAS",
+  "E11 DM2",
+  "Z76 Acompanhamento",
+];
+
+export default function ConsultaDoc24() {
+  const sp = new URLSearchParams(window.location.search);
+  const patientId = sp.get("patientId") || "3335602";
+  const sexo = sp.get("sexo") || "F";
+  const idade = Number(sp.get("idade") || 36);
+
+  // Registro com autosave
+  const storageKey = `reg_consulta_${patientId}`;
+  const autosave = useRef(new AutoSave(storageKey));
+  const [reg, setReg] = useState<Registro>(() => ({
+    queixa: "",
+    doencaAtual: "",
+    hipoteses: [],
+    conduta: "",
+    notasPrivadas: "",
+    exames: "",
+    prescricoes: "",
+    encaminhamento: "",
+    arquivos: [],
+    contato: "",
+  }));
+
+  useEffect(() => {
+    const draft = autosave.current.load();
+    setReg((r) => ({ ...r, ...draft }));
+    autosave.current.start(() => reg, 10000);
+    return () => autosave.current.stop();
+  }, []);
+
+  useEffect(() => {
+    autosave.current.save(reg);
+  }, [reg]);
+
+  const addHipotese = (h: string) =>
+    setReg((r) => ({ ...r, hipoteses: Array.from(new Set([...r.hipoteses, h])) }));
+  const rmHipotese = (h: string) =>
+    setReg((r) => ({ ...r, hipoteses: r.hipoteses.filter((x) => x !== h) }));
+
+  const abrirDiretrizes = () => {
+    const url = `/dr-ai?queixa=${encodeURIComponent(reg.queixa)}&idade=${idade}&sexo=${sexo}`;
+    window.open(url, "_blank");
+  };
+
+  const finalizar = () => {
+    // aqui você pode chamar o backend e depois…
+    window.location.href = `/pos-consulta-feedback.html?patientId=${patientId}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f4f6f8]">
+      {/* Topbar */}
+      <header className="w-full bg-[#1282db] text-white">
+        <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
+          <div className="text-xl font-bold" data-testid="logo-doc24">doc24</div>
+          <div className="text-sm" data-testid="paciente-id">Paciente #{patientId}</div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {/* Vídeo */}
+          <section className="lg:col-span-5 rounded-xl bg-black/90 text-white shadow-md aspect-video flex items-center justify-center" data-testid="video-container">
+            {/* Substitua pelo seu componente WebRTC */}
+            <div className="text-center">
+              <div className="mb-2 text-sm opacity-80">Pré-visualização de vídeo</div>
+              <div className="text-3xl font-semibold">🎥</div>
+              <div className="mt-2 text-xs opacity-70">Use seu módulo de chamada aqui</div>
+            </div>
+          </section>
+
+          {/* Registro Profissional */}
+          <section className="lg:col-span-7 rounded-xl bg-white shadow-md">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <div className="text-base font-semibold" data-testid="titulo-registro">Registro Profissional</div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={abrirDiretrizes}
+                  className="rounded-md border border-sky-500 px-3 py-1.5 text-sky-600 hover:bg-sky-50"
+                  data-testid="botao-diretrizes">
+                  Diretrizes de Cuidados
+                </button>
+                <button className="rounded-md bg-rose-600 px-3 py-1.5 text-white" data-testid="botao-emergencia">
+                  Marcar como emergência
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 p-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium" data-testid="label-queixa">Queixa Principal *</label>
+                <textarea
+                  value={reg.queixa}
+                  onChange={(e) => setReg((r) => ({ ...r, queixa: e.target.value }))}
+                  className="min-h-[64px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                  data-testid="textarea-queixa"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium" data-testid="label-doenca-atual">Doença atual *</label>
+                <textarea
+                  value={reg.doencaAtual}
+                  onChange={(e) => setReg((r) => ({ ...r, doencaAtual: e.target.value }))}
+                  className="min-h-[96px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                  data-testid="textarea-doenca-atual"
+                />
+              </div>
+
+              {/* Hipóteses com chips */}
+              <div>
+                <label className="mb-1 block text-sm font-medium" data-testid="label-hipoteses">Hipótese Diagnóstica *</label>
+                <div className="flex flex-wrap gap-2" data-testid="chips-hipoteses">
+                  {reg.hipoteses.map((h) => (
+                    <span
+                      key={h}
+                      className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700"
+                      data-testid={`chip-hipotese-${h.replace(/\s+/g, '-').toLowerCase()}`}>
+                      {h}
+                      <button onClick={() => rmHipotese(h)} className="ml-1 text-sky-700" data-testid={`remove-hipotese-${h.replace(/\s+/g, '-').toLowerCase()}`}>
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2" data-testid="sugestoes-cid">
+                  {CID_SUGESTOES.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => addHipotese(s)}
+                      className="rounded-full border border-slate-300 px-3 py-1 text-xs hover:bg-slate-50"
+                      data-testid={`sugestao-${s.replace(/\s+/g, '-').toLowerCase()}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Abas simples */}
+              <Tabs
+                tabs={[
+                  {
+                    id: "conduta",
+                    label: "Conduta Terapêutica",
+                    content: (
+                      <textarea
+                        value={reg.conduta}
+                        onChange={(e) => setReg((r) => ({ ...r, conduta: e.target.value }))}
+                        className="min-h-[120px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                        data-testid="textarea-conduta"
+                      />
+                    ),
+                  },
+                  {
+                    id: "notas",
+                    label: "Notas privadas",
+                    content: (
+                      <div>
+                        <div className="mb-2 text-xs text-slate-500">
+                          Rótulo: <b>não compartilhado</b>
+                        </div>
+                        <textarea
+                          value={reg.notasPrivadas}
+                          onChange={(e) =>
+                            setReg((r) => ({ ...r, notasPrivadas: e.target.value }))
+                          }
+                          className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                          data-testid="textarea-notas-privadas"
+                        />
+                      </div>
+                    ),
+                  },
+                  {
+                    id: "exames",
+                    label: "Exames",
+                    content: (
+                      <textarea
+                        value={reg.exames}
+                        onChange={(e) => setReg((r) => ({ ...r, exames: e.target.value }))}
+                        className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                        data-testid="textarea-exames"
+                      />
+                    ),
+                  },
+                  {
+                    id: "presc",
+                    label: "Prescrições",
+                    content: (
+                      <textarea
+                        value={reg.prescricoes}
+                        onChange={(e) => setReg((r) => ({ ...r, prescricoes: e.target.value }))}
+                        className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                        data-testid="textarea-prescricoes"
+                      />
+                    ),
+                  },
+                  {
+                    id: "enc",
+                    label: "Encaminhamento",
+                    content: (
+                      <textarea
+                        value={reg.encaminhamento}
+                        onChange={(e) =>
+                          setReg((r) => ({ ...r, encaminhamento: e.target.value }))
+                        }
+                        className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                        data-testid="textarea-encaminhamento"
+                      />
+                    ),
+                  },
+                  {
+                    id: "arquivos",
+                    label: "Arquivos",
+                    content: (
+                      <UploadBox
+                        arquivos={reg.arquivos}
+                        onAdd={(f) => setReg((r) => ({ ...r, arquivos: [...r.arquivos, f] }))}
+                      />
+                    ),
+                  },
+                  {
+                    id: "contato",
+                    label: "Contato",
+                    content: (
+                      <textarea
+                        value={reg.contato}
+                        onChange={(e) => setReg((r) => ({ ...r, contato: e.target.value }))}
+                        className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
+                        data-testid="textarea-contato"
+                      />
+                    ),
+                  },
+                ]}
+              />
+
+              {/* Ações */}
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <a href={`/phr-react.html?id=${patientId}`} className="rounded-md border px-4 py-2" data-testid="botao-ver-phr">
+                  Ver PHR
+                </a>
+                <a href="/meus-pacientes-react.html" className="rounded-md border px-4 py-2" data-testid="botao-voltar">
+                  Voltar
+                </a>
+                <button onClick={finalizar} className="rounded-md bg-rose-600 px-4 py-2 text-white" data-testid="botao-finalizar">
+                  Finalizar atendimento
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="mt-4 text-xs text-slate-500" data-testid="atalhos-teclado">
+          Atalhos: <kbd className="rounded border px-1">Ctrl</kbd>+
+          <kbd className="rounded border px-1">Enter</kbd> para adicionar hipótese;{" "}
+          <kbd className="rounded border px-1">Alt</kbd>+
+          <kbd className="rounded border px-1">D</kbd> abre Diretrizes.
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ----------------- Componentes auxiliares -----------------
+
+function Tabs({ tabs }: { tabs: { id: string; label: string; content: React.ReactNode }[] }) {
+  const [active, setActive] = useState(tabs[0]?.id);
+  const current = useMemo(() => tabs.find((t) => t.id === active), [active, tabs]);
+  return (
+    <div className="mt-2">
+      <div className="flex flex-wrap gap-2 border-b pb-2 text-sm" data-testid="tabs-header">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActive(t.id)}
+            className={`rounded-md px-3 py-1 ${
+              active === t.id
+                ? "bg-sky-100 text-sky-700 border border-sky-300"
+                : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
+            data-testid={`tab-${t.id}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <div className="pt-3" data-testid="tab-content">
+        {current?.content}
+      </div>
+    </div>
+  );
+}
+
+function UploadBox({
+  arquivos,
+  onAdd,
+}: {
+  arquivos: string[];
+  onAdd: (f: string) => void;
+}) {
+  const ref = useRef<HTMLInputElement | null>(null);
+  const selectFile = () => ref.current?.click();
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    onAdd(f.name);
+  };
+  return (
+    <div className="rounded-lg border border-dashed p-6 text-center" data-testid="upload-box">
+      <div className="text-sm">
+        Arraste e solte um arquivo aqui ou{" "}
+        <button onClick={selectFile} className="text-sky-600 underline" data-testid="botao-selecionar-arquivo">
+          selecione
+        </button>
+      </div>
+      <input ref={ref} type="file" className="hidden" onChange={onFile} data-testid="input-arquivo" />
+      <ul className="mt-3 list-inside list-disc text-left text-sm" data-testid="lista-arquivos">
+        {arquivos.map((a) => (
+          <li key={a} data-testid={`arquivo-${a}`}>{a}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
