@@ -262,18 +262,22 @@
                     <label className="mb-1 block text-sm font-medium" data-testid="label-queixa">Queixa Principal *</label>
                     <textarea
                       value={reg.queixa}
-                      onChange={(e) => setReg((r) => ({ ...r, queixa: e.target.value }))}
+                      onChange={(e) => setReg((r) => ({ ...r, queixa: validateLength(e.target.value, MAX_LENGTHS.queixa) }))}
                       className="min-h-[64px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                       data-testid="textarea-queixa"
+                      maxLength={MAX_LENGTHS.queixa}
+                      placeholder={`Máximo ${MAX_LENGTHS.queixa} caracteres`}
                     />
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium" data-testid="label-doenca-atual">Doença atual *</label>
                     <textarea
                       value={reg.doencaAtual}
-                      onChange={(e) => setReg((r) => ({ ...r, doencaAtual: e.target.value }))}
+                      onChange={(e) => setReg((r) => ({ ...r, doencaAtual: validateLength(e.target.value, MAX_LENGTHS.doencaAtual) }))}
                       className="min-h-[96px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                       data-testid="textarea-doenca-atual"
+                      maxLength={MAX_LENGTHS.doencaAtual}
+                      placeholder={`Máximo ${MAX_LENGTHS.doencaAtual} caracteres`}
                     />
                   </div>
 
@@ -315,9 +319,11 @@
                         content: (
                           <textarea
                             value={reg.conduta}
-                            onChange={(e) => setReg((r) => ({ ...r, conduta: e.target.value }))}
+                            onChange={(e) => setReg((r) => ({ ...r, conduta: validateLength(e.target.value, MAX_LENGTHS.conduta) }))}
                             className="min-h-[120px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                             data-testid="textarea-conduta"
+                            maxLength={MAX_LENGTHS.conduta}
+                            placeholder={`Máximo ${MAX_LENGTHS.conduta} caracteres`}
                           />
                         ),
                       },
@@ -332,10 +338,12 @@
                             <textarea
                               value={reg.notasPrivadas}
                               onChange={(e) =>
-                                setReg((r) => ({ ...r, notasPrivadas: e.target.value }))
+                                setReg((r) => ({ ...r, notasPrivadas: validateLength(e.target.value, MAX_LENGTHS.notasPrivadas) }))
                               }
                               className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                               data-testid="textarea-notas-privadas"
+                              maxLength={MAX_LENGTHS.notasPrivadas}
+                              placeholder={`Máximo ${MAX_LENGTHS.notasPrivadas} caracteres`}
                             />
                           </div>
                         ),
@@ -346,9 +354,11 @@
                         content: (
                           <textarea
                             value={reg.exames}
-                            onChange={(e) => setReg((r) => ({ ...r, exames: e.target.value }))}
+                            onChange={(e) => setReg((r) => ({ ...r, exames: validateLength(e.target.value, MAX_LENGTHS.exames) }))}
                             className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                             data-testid="textarea-exames"
+                            maxLength={MAX_LENGTHS.exames}
+                            placeholder={`Máximo ${MAX_LENGTHS.exames} caracteres`}
                           />
                         ),
                       },
@@ -358,9 +368,11 @@
                         content: (
                           <textarea
                             value={reg.prescricoes}
-                            onChange={(e) => setReg((r) => ({ ...r, prescricoes: e.target.value }))}
+                            onChange={(e) => setReg((r) => ({ ...r, prescricoes: validateLength(e.target.value, MAX_LENGTHS.prescricoes) }))}
                             className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                             data-testid="textarea-prescricoes"
+                            maxLength={MAX_LENGTHS.prescricoes}
+                            placeholder={`Máximo ${MAX_LENGTHS.prescricoes} caracteres`}
                           />
                         ),
                       },
@@ -371,10 +383,12 @@
                           <textarea
                             value={reg.encaminhamento}
                             onChange={(e) =>
-                              setReg((r) => ({ ...r, encaminhamento: e.target.value }))
+                              setReg((r) => ({ ...r, encaminhamento: validateLength(e.target.value, MAX_LENGTHS.encaminhamento) }))
                             }
                             className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                             data-testid="textarea-encaminhamento"
+                            maxLength={MAX_LENGTHS.encaminhamento}
+                            placeholder={`Máximo ${MAX_LENGTHS.encaminhamento} caracteres`}
                           />
                         ),
                       },
@@ -394,9 +408,11 @@
                         content: (
                           <textarea
                             value={reg.contato}
-                            onChange={(e) => setReg((r) => ({ ...r, contato: e.target.value }))}
+                            onChange={(e) => setReg((r) => ({ ...r, contato: validateLength(e.target.value, MAX_LENGTHS.contato) }))}
                             className="min-h-[100px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-sky-500"
                             data-testid="textarea-contato"
+                            maxLength={MAX_LENGTHS.contato}
+                            placeholder={`Máximo ${MAX_LENGTHS.contato} caracteres`}
                           />
                         ),
                       },
