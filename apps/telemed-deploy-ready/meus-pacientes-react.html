@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meus Pacientes • TeleMed</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='12' width='64' height='64' fill='%231e40af'/%3E%3Ctext x='32' y='42' font-family='Inter,Arial' font-size='36' text-anchor='middle' fill='white'%3ETM%3C/text%3E%3C/svg%3E" />
+  
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" crossorigin href="/assets/index-BixFYIh2.css">
+  <style>
+    /* Tailwind CSS adicional para garantir que as classes do componente funcionem */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    /* Cores do Doc24 */
+    .bg-doc24-blue { background-color: #1282db; }
+    .bg-doc24-blue-dark { background-color: #0e6fb9; }
+    .bg-doc24-light-blue { background-color: #22a2f2; }
+    .bg-doc24-light-blue-dark { background-color: #128dd8; }
+    
+    /* Loading skeleton */
+    .loading-skeleton {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+  </style>
+</head>
+<body>
+  <div id="meus-pacientes-root">
+    <!-- Loading skeleton while React loads -->
+    <div class="min-h-screen bg-gray-50">
+      <div class="bg-blue-600 text-white">
+        <div class="mx-auto max-w-6xl px-6 py-4">
+          <div class="loading-skeleton h-8 bg-blue-700 rounded w-32"></div>
+        </div>
+      </div>
+      <div class="mx-auto max-w-6xl px-6 py-6">
+        <div class="loading-skeleton h-12 bg-gray-200 rounded w-48 mb-6"></div>
+        <div class="loading-skeleton h-32 bg-white rounded-xl shadow-sm mb-6"></div>
+        <div class="loading-skeleton h-64 bg-white rounded-xl shadow-sm"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- React e dependências -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel standalone para compilar JSX no browser (apenas para prototipagem) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Componente React inline -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+    
+    // Tipos e helpers
+    const formatarDataBR = (iso) => {
+      const d = new Date(iso);
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    };
+
+    const calcularIdade = (iso) => {
+      const hoje = new Date();
+      const nasc = new Date(iso);
+      let idade = hoje.getFullYear() - nasc.getFullYear();
+      const m = hoje.getMonth() - nasc.getMonth();
+      if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+      return idade;
+    };
+
+    const ESPECIALIDADES = [
+      "Clínica Geral",
+      "Psiquiatria", 
+      "Pediatria",
+      "Dermatologia",
+      "Ginecologia",
+      "Cardiologia",
+    ];
+
+    // Mock data
+    const MOCK = [
+      {
+        idPersona: "3335602",
+        nome: "Dheliciane",
+        sobrenome: "Da Silva Costa", 
+        mae: "Maria",
+        identificacao: "03262894370",
+        dataNascimento: "1988-09-23",
+        sexo: "F",
+        email: "dhelicanecosta@icloud.com",
+        telefone: "-",
+        especialidade: "Clínica Geral",
+      },
+      {
+        idPersona: "4537263",
+        nome: "Hadassa",
+        sobrenome: "Da Silva Santos Garcia",
+        mae: "Ana", 
+        identificacao: "14109089760",
+        dataNascimento: "1991-08-01",
+        sexo: "F",
+        email: "silvadassa@gmail.com",
+        telefone: "+5521995040225",
+        especialidade: "Psiquiatria",
+      },
+      {
+        idPersona: "4849323",
+        nome: "William",
+        sobrenome: "Lopes Do Nascimento",
+        mae: "Vera",
+        identificacao: "02876267179", 
+        dataNascimento: "1997-09-10",
+        sexo: "M",
+        email: "02876267179@mail.com",
+        telefone: "-",
+        especialidade: "Clínica Geral",
+      },
+      {
+        idPersona: "5150400",
+        nome: "Erika",
+        sobrenome: "Carvalho Mendes",
+        mae: "Sonia",
+        identificacao: "11892779722",
+        dataNascimento: "1987-05-04", 
+        sexo: "F",
+        email: "erika.c.mendes@gmail.com",
+        telefone: "+5521960184773",
+        especialidade: "Psiquiatria",
+      },
+      {
+        idPersona: "5155665",
+        nome: "Natalia", 
+        sobrenome: "Da Silva Mello",
+        mae: "Rita",
+        identificacao: "09941565708",
+        dataNascimento: "1982-12-27",
+        sexo: "F",
+        email: "natalla.cathiva@gmail.com", 
+        telefone: "+5511961725613",
+        especialidade: "Clínica Geral",
+      },
+    ];
+
+    function MeusPacientesDoc24() {
+      // Estado: filtros
+      const [idPersona, setIdPersona] = useState("");
+      const [nome, setNome] = useState("");
+      const [sobrenome, setSobrenome] = useState("");
+      const [mae, setMae] = useState("");
+      const [identificacao, setIdentificacao] = useState("");
+      const [especialidade, setEspecialidade] = useState("");
+
+      // Estado: dados + paginação
+      const [dados, setDados] = useState([]);
+      const [pagina, setPagina] = useState(1);
+      const porPagina = 10;
+
+      // Carregar mock
+      useEffect(() => {
+        setDados(MOCK);
+      }, []);
+
+      // Aplicar filtros (client-side)
+      const filtrados = useMemo(() => {
+        return dados.filter((p) => {
+          if (idPersona && !p.idPersona.includes(idPersona)) return false;
+          if (nome && !p.nome.toLowerCase().includes(nome.toLowerCase())) return false;
+          if (sobrenome && !p.sobrenome.toLowerCase().includes(sobrenome.toLowerCase())) return false;
+          if (mae && !(p.mae || "").toLowerCase().includes(mae.toLowerCase())) return false;
+          if (identificacao && !(p.identificacao || "").includes(identificacao)) return false;
+          if (especialidade && p.especialidade !== especialidade) return false;
+          return true;
+        });
+      }, [dados, idPersona, nome, sobrenome, mae, identificacao, especialidade]);
+
+      const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
+      const inicio = (pagina - 1) * porPagina;
+      const paginaAtual = filtrados.slice(inicio, inicio + porPagina);
+
+      // Ações
+      const verPHR = (id) => {
+        window.location.href = `/phr.html?id=${id}`;
+      };
+
+      const novaAtencao = (id) => {
+        window.location.href = `/consulta.html?patientId=${id}`;
+      };
+
+      const aplicarFiltro = (e) => {
+        e.preventDefault();
+        setPagina(1);
+      };
+
+      const limpar = () => {
+        setIdPersona("");
+        setNome("");
+        setSobrenome("");
+        setMae("");
+        setIdentificacao("");
+        setEspecialidade("");
+        setPagina(1);
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-50 text-slate-800">
+          {/* Topbar */}
+          <header className="w-full bg-blue-600 text-white">
+            <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+              <div className="text-2xl font-bold">doc24</div>
+              <div className="text-sm opacity-90">Bem-vindo, <span className="font-semibold">Dácio Bonoldi Dutra</span></div>
+            </div>
+          </header>
+
+          {/* Breadcrumb / título */}
+          <div className="w-full bg-blue-700 text-white">
+            <div className="mx-auto max-w-6xl px-6 py-3 text-lg font-semibold">Meus pacientes</div>
+          </div>
+
+          {/* Conteúdo */}
+          <main className="mx-auto max-w-6xl px-6 py-6">
+            {/* Filtros */}
+            <section className="mb-6 rounded-xl bg-white p-5 shadow-sm">
+              <form onSubmit={aplicarFiltro} className="grid grid-cols-1 gap-3 md:grid-cols-6">
+                <div className="md:col-span-1">
+                  <label className="mb-1 block text-sm font-medium">ID Persona</label>
+                  <input 
+                    data-testid="input-id-persona"
+                    value={idPersona} 
+                    onChange={(e) => setIdPersona(e.target.value)} 
+                    placeholder="ID Persona" 
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="mb-1 block text-sm font-medium">Nome</label>
+                  <input 
+                    data-testid="input-nome"
+                    value={nome} 
+                    onChange={(e) => setNome(e.target.value)} 
+                    placeholder="Nome" 
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="mb-1 block text-sm font-medium">Sobrenome completo</label>
+                  <input 
+                    data-testid="input-sobrenome"
+                    value={sobrenome} 
+                    onChange={(e) => setSobrenome(e.target.value)} 
+                    placeholder="Sobrenome completo" 
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="mb-1 block text-sm font-medium">Nome da Mãe</label>
+                  <input 
+                    data-testid="input-mae"
+                    value={mae} 
+                    onChange={(e) => setMae(e.target.value)} 
+                    placeholder="Nome da Mãe" 
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="mb-1 block text-sm font-medium">Identificação</label>
+                  <input 
+                    data-testid="input-identificacao"
+                    value={identificacao} 
+                    onChange={(e) => setIdentificacao(e.target.value)} 
+                    placeholder="CPF/ID" 
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="mb-1 block text-sm font-medium">Especialidade</label>
+                  <select 
+                    data-testid="select-especialidade"
+                    value={especialidade} 
+                    onChange={(e) => setEspecialidade(e.target.value)} 
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600">
+                    <option value="">-- Especialidade --</option>
+                    {ESPECIALIDADES.map((esp) => (
+                      <option key={esp} value={esp}>{esp}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="md:col-span-6 flex items-center gap-3 pt-1">
+                  <button 
+                    data-testid="button-filtrar"
+                    type="submit" 
+                    className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Filtrar</button>
+                  <button 
+                    data-testid="button-limpar"
+                    type="button" 
+                    onClick={limpar} 
+                    className="rounded-md border border-slate-300 px-4 py-2 hover:bg-slate-50">Limpar</button>
+                  <span 
+                    data-testid="text-resultado-count"
+                    className="ml-auto text-sm text-slate-500">{filtrados.length} resultado(s)</span>
+                </div>
+              </form>
+            </section>
+
+            {/* Lista */}
+            <section className="rounded-xl bg-white shadow-sm">
+              <div className="border-b px-5 py-3 text-base font-semibold text-slate-700">Meus pacientes</div>
+
+              <div className="w-full overflow-x-auto">
+                <table className="min-w-full text-left text-sm" data-testid="table-pacientes">
+                  <thead className="bg-gray-50 text-slate-600">
+                    <tr>
+                      <th className="px-5 py-3 font-medium">ID Persona</th>
+                      <th className="px-5 py-3 font-medium">Nome completo</th>
+                      <th className="px-5 py-3 font-medium">Identificação</th>
+                      <th className="px-5 py-3 font-medium">Data de Nascimento</th>
+                      <th className="px-5 py-3 font-medium">Idade</th>
+                      <th className="px-5 py-3 font-medium">Sexo</th>
+                      <th className="px-5 py-3 font-medium">Conta de email</th>
+                      <th className="px-5 py-3 font-medium">Telefone</th>
+                      <th className="px-5 py-3 font-medium"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginaAtual.map((p) => (
+                      <tr key={p.idPersona} className="border-t" data-testid={`row-patient-${p.idPersona}`}>
+                        <td className="px-5 py-3 align-top" data-testid={`text-id-${p.idPersona}`}>{p.idPersona}</td>
+                        <td className="px-5 py-3 align-top">
+                          <div className="font-medium text-slate-800" data-testid={`text-nome-${p.idPersona}`}>{p.nome} {p.sobrenome}</div>
+                        </td>
+                        <td className="px-5 py-3 align-top" data-testid={`text-identificacao-${p.idPersona}`}>{p.identificacao || "-"}</td>
+                        <td className="px-5 py-3 align-top" data-testid={`text-nascimento-${p.idPersona}`}>{formatarDataBR(p.dataNascimento)}</td>
+                        <td className="px-5 py-3 align-top" data-testid={`text-idade-${p.idPersona}`}>{calcularIdade(p.dataNascimento)} anos</td>
+                        <td className="px-5 py-3 align-top" data-testid={`text-sexo-${p.idPersona}`}>{p.sexo}</td>
+                        <td className="px-5 py-3 align-top" data-testid={`text-email-${p.idPersona}`}>{p.email || "-"}</td>
+                        <td className="px-5 py-3 align-top" data-testid={`text-telefone-${p.idPersona}`}>{p.telefone || "-"}</td>
+                        <td className="px-5 py-3 align-top">
+                          <div className="flex gap-2">
+                            <button 
+                              data-testid={`button-ver-phr-${p.idPersona}`}
+                              onClick={() => verPHR(p.idPersona)} 
+                              className="rounded-md bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-700">Ver PHR</button>
+                            <button 
+                              data-testid={`button-nova-atencao-${p.idPersona}`}
+                              onClick={() => novaAtencao(p.idPersona)} 
+                              className="rounded-md bg-green-600 px-3 py-1.5 text-white hover:bg-green-700">Nova atenção offline</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {paginaAtual.length === 0 && (
+                      <tr>
+                        <td className="px-5 py-6 text-center text-slate-500" colSpan={9} data-testid="text-sem-pacientes">Nenhum paciente encontrado.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Paginação */}
+              <div className="flex items-center justify-between border-t px-5 py-3 text-sm">
+                <div data-testid="text-paginacao-info">Mostrando {Math.min(filtrados.length, inicio + 1)}–{Math.min(filtrados.length, inicio + paginaAtual.length)} de {filtrados.length}</div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    data-testid="button-pagina-anterior"
+                    disabled={pagina <= 1} 
+                    onClick={() => setPagina((p) => Math.max(1, p - 1))} 
+                    className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50">Anterior</button>
+                  <span data-testid="text-pagina-atual">
+                    Página <b>{pagina}</b> de <b>{totalPaginas}</b>
+                  </span>
+                  <button 
+                    data-testid="button-pagina-proxima"
+                    disabled={pagina >= totalPaginas} 
+                    onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} 
+                    className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50">Próxima</button>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      );
+    }
+
+    // Renderizar o componente
+    ReactDOM.render(<MeusPacientesDoc24 />, document.getElementById('meus-pacientes-root'));
+    
+    console.log('✅ Componente Meus Pacientes Doc24 carregado com sucesso!');
+  </script>
+</body>
+</html>
