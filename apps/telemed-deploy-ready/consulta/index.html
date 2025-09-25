@@ -468,9 +468,9 @@
 <script>
 /** ========= CONFIG (troque se quiser) ========= */
 const API = {
-  start  : (id)=> `/api/consults/${id}/start`,
-  notes  : (id)=> `/api/consults/${id}/notes`,
-  finish : (id)=> `/api/consults/${id}/finalize`,
+  start  : (id)=> `/api/consultas/${id}/start`,
+  notes  : (id)=> `/api/consultas/${id}/notes`,
+  finish : (id)=> `/api/consultas/${id}/finalize`,
   cid10  : (q)=> `/api/cid10/search?q=${encodeURIComponent(q)}`,
   aiAsk  : '/api/ai/ask'
 };
@@ -493,9 +493,13 @@ function finalizeConsultationLocal(appointmentId) {
     // Notificar sucesso
     alert("✅ Consulta finalizada com sucesso!");
     
-    // Redirecionar para agenda
+    // Redirecionar para feedback pós-consulta
     setTimeout(() => {
-      window.location.href = "/agenda.html";
+      const patientId = new URLSearchParams(window.location.search).get("patientId") || "3335602";
+      const idade = new URLSearchParams(window.location.search).get("idade") || "36";
+      const sexo = new URLSearchParams(window.location.search).get("sexo") || "F";
+      
+      window.location.href = `/pos-consulta-feedback.html?patientId=${patientId}&idade=${idade}&sexo=${sexo}`;
     }, 1000);
     
     return true;
