@@ -18,23 +18,61 @@ const uid = (p: string) => `${p}_${Math.random().toString(36).slice(2, 8)}`;
 class AutoSave {
   timer: any;
   key: string;
+  private TTL = 7 * 24 * 3600 * 1000; // 7 dias
+  
   constructor(key: string) {
     this.key = key;
   }
+  
   save(payload: any) {
-    localStorage.setItem(this.key, JSON.stringify(payload));
+    const data = {
+      ts: Date.now(),
+      data: payload
+    };
+    localStorage.setItem(this.key, JSON.stringify(data));
   }
+  
   load() {
     try {
-      return JSON.parse(localStorage.getItem(this.key) || "{}");
+      const item = localStorage.getItem(this.key);
+      if (!item) return {};
+      
+      const parsed = JSON.parse(item);
+      
+      // Verifica se é formato antigo (sem timestamp)
+      if (!parsed.ts) {
+        return parsed; // Retorna dados antigos para compatibilidade
+      }
+      
+      // Verifica TTL
+      if (Date.now() - parsed.ts > this.TTL) {
+        localStorage.removeItem(this.key); // Remove dados expirados
+        return {};
+      }
+      
+      return parsed.data || {};
     } catch {
       return {};
     }
   }
+  
+  hasExpiredDraft() {
+    try {
+      const item = localStorage.getItem(this.key);
+      if (!item) return false;
+      
+      const parsed = JSON.parse(item);
+      return parsed.ts && (Date.now() - parsed.ts > this.TTL);
+    } catch {
+      return false;
+    }
+  }
+  
   start(fn: () => any, interval = 10000) {
     this.stop();
     this.timer = setInterval(() => this.save(fn()), interval);
   }
+  
   stop() {
     if (this.timer) clearInterval(this.timer);
   }
@@ -116,6 +154,12 @@ export default function ConsultaDoc24() {
   };
 
   const finalizar = () => {
+    // Validações obrigatórias
+    if (!reg.queixa?.trim() || !reg.doencaAtual?.trim() || reg.hipoteses.length === 0) {
+      alert("Preencha Queixa Principal, Doença atual e ao menos 1 Hipótese Diagnóstica.");
+      return;
+    }
+    
     // aqui você pode chamar o backend e depois…
     window.location.href = `/pos-consulta-feedback.html?patientId=${patientId}`;
   };
