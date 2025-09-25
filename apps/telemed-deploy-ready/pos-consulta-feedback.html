@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feedback Pós-Consulta • TeleMed</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='12' width='64' height='64' fill='%231e40af'/%3E%3Ctext x='32' y='42' font-family='Inter,Arial' font-size='36' text-anchor='middle' fill='white'%3ETM%3C/text%3E%3C/svg%3E" />
+  
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" crossorigin href="/assets/index-BixFYIh2.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    /* Loading skeleton */
+    .loading-skeleton {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+  </style>
+</head>
+<body>
+  <div id="feedback-root">
+    <!-- Loading skeleton while React loads -->
+    <div class="min-h-screen bg-gray-100">
+      <div class="bg-blue-600 text-white">
+        <div class="mx-auto max-w-5xl px-6 py-4">
+          <div class="loading-skeleton h-8 bg-blue-700 rounded w-32"></div>
+        </div>
+      </div>
+      <div class="mx-auto max-w-5xl px-6 py-6">
+        <div class="loading-skeleton h-32 bg-white rounded-xl shadow-sm mb-6"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="loading-skeleton h-40 bg-white rounded-xl shadow-sm md:col-span-2"></div>
+          <div class="loading-skeleton h-32 bg-white rounded-xl shadow-sm"></div>
+          <div class="loading-skeleton h-32 bg-white rounded-xl shadow-sm"></div>
+          <div class="loading-skeleton h-24 bg-white rounded-xl shadow-sm md:col-span-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- React e dependências -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel standalone para compilar JSX no browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Componente React inline -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+    
+    function PosConsultaFeedback() {
+      const sp = new URLSearchParams(window.location.search);
+      const patientId = sp.get("patientId") || "3335602";
+      const nome = sp.get("nome") || "Claudio Felipe Montanha Correa";
+      const idade = sp.get("idade") || "36";
+      const cpf = sp.get("cpf") || "39232384876";
+      const espera = sp.get("espera") || "28"; // min
+      const atendimento = sp.get("atendimento") || "20"; // min
+
+      const STORAGE_KEY = `feedback_${patientId}`;
+
+      const [fb, setFb] = useState(() => {
+        try { 
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); 
+        } catch { 
+          return {}; 
+        }
+      });
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(fb));
+      }, [fb]);
+
+      const set = (patch) => setFb((f) => ({ ...f, ...patch }));
+
+      const enviar = (e) => {
+        e.preventDefault();
+        if (fb.nps === null || fb.nps === undefined) {
+          alert("Selecione um score NPS (0–10).");
+          return;
+        }
+        // Aqui você pode fazer fetch('/api/feedback', {method:'POST', body: JSON.stringify({...fb, patientId})})
+        localStorage.removeItem(STORAGE_KEY);
+        window.location.href = "/meus-pacientes-react.html";
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-100 text-slate-800">
+          {/* Topbar */}
+          <header className="w-full bg-blue-600 text-white">
+            <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+              <div className="text-xl font-bold" data-testid="logo-doc24">doc24</div>
+              <div className="text-sm" data-testid="titulo-pos-consulta">Pós‑consulta</div>
+            </div>
+          </header>
+
+          <main className="mx-auto max-w-5xl px-6 py-6">
+            {/* Card do paciente */}
+            <section className="mb-6 rounded-xl bg-white shadow-sm">
+              <div className="border-b px-5 py-3 text-base font-semibold" data-testid="titulo-atendimento-finalizado">
+                Você finalizou o atendimento
+              </div>
+              <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-3">
+                <div className="md:col-span-2">
+                  <div className="flex items-start gap-4">
+                    <div className="h-16 w-16 rounded bg-slate-200" data-testid="avatar-paciente" />
+                    <div>
+                      <div className="text-base font-semibold" data-testid="nome-paciente">{nome}</div>
+                      <div className="text-sm text-slate-600" data-testid="idade-cpf-paciente">{idade} anos, CPF • {cpf}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <div className="text-slate-500">Tempo de espera</div>
+                    <div className="text-slate-800" data-testid="tempo-espera">{espera} minutos</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <div className="text-slate-500">Tempo de atendimento</div>
+                    <div className="text-slate-800" data-testid="tempo-atendimento">{atendimento} minutos</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <form onSubmit={enviar} className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* NPS */}
+              <section className="rounded-xl bg-white p-5 shadow-sm md:col-span-2">
+                <div className="mb-2 text-base font-semibold" data-testid="titulo-nps">
+                  Por favor, qualifique sua experiência
+                </div>
+                <div className="text-sm text-slate-600" data-testid="subtitulo-nps">
+                  De 0 a 10, o quanto você recomendaria esta plataforma a um colega?
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2" data-testid="botoes-nps">
+                  {Array.from({ length: 11 }, (_, i) => i).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => set({ nps: n })}
+                      className={`h-9 w-9 rounded-full border text-sm ${
+                        fb.nps === n
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-slate-300 hover:bg-slate-50'
+                      }`}
+                      data-testid={`botao-nps-${n}`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                {fb.nps !== null && fb.nps !== undefined && (
+                  <div className="mt-2 text-sm text-slate-600" data-testid="nps-selecionado">
+                    Score selecionado: <span className="font-semibold">{fb.nps}</span>
+                  </div>
+                )}
+              </section>
+
+              {/* Dificuldades na interação */}
+              <section className="rounded-xl bg-white p-5 shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="text-sm font-semibold" data-testid="titulo-dificuldades">
+                    Dificuldades na interação com o paciente?
+                  </div>
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!!fb.dificuldadeInteracao}
+                      onChange={(e) => set({ dificuldadeInteracao: e.target.checked })}
+                      data-testid="checkbox-dificuldade-interacao"
+                    />
+                    <span>Sim</span>
+                  </label>
+                </div>
+                <textarea
+                  placeholder="Especifique as dificuldades"
+                  value={fb.dificuldadeInteracaoObs || ''}
+                  onChange={(e) => set({ dificuldadeInteracaoObs: e.target.value })}
+                  className="min-h-[96px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600"
+                  data-testid="textarea-dificuldade-observacoes"
+                />
+              </section>
+
+              {/* Problemas da plataforma */}
+              <section className="rounded-xl bg-white p-5 shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="text-sm font-semibold" data-testid="titulo-problemas-plataforma">
+                    Experimentou inconvenientes com a plataforma?
+                  </div>
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={!!fb.problemasPlataforma}
+                      onChange={(e) => set({ problemasPlataforma: e.target.checked })}
+                      data-testid="checkbox-problemas-plataforma"
+                    />
+                    <span>Sim</span>
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 gap-2 text-sm">
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!fb.plAudio}
+                      onChange={(e) => set({ plAudio: e.target.checked })}
+                      data-testid="checkbox-problema-audio"
+                    />
+                    Dificuldades com a qualidade do áudio
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!fb.plVideo}
+                      onChange={(e) => set({ plVideo: e.target.checked })}
+                      data-testid="checkbox-problema-video"
+                    />
+                    Dificuldades com a qualidade do vídeo
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!fb.plLento}
+                      onChange={(e) => set({ plLento: e.target.checked })}
+                      data-testid="checkbox-problema-lento"
+                    />
+                    Sistema lento
+                  </label>
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!fb.plOutros}
+                      onChange={(e) => set({ plOutros: e.target.checked })}
+                      data-testid="checkbox-problema-outros"
+                    />
+                    Outros
+                  </label>
+                </div>
+              </section>
+
+              {/* Observações */}
+              <section className="rounded-xl bg-white p-5 shadow-sm md:col-span-2">
+                <div className="mb-2 text-sm font-semibold" data-testid="titulo-observacoes">Observações</div>
+                <textarea
+                  placeholder="Deixe aqui seus comentários"
+                  value={fb.obs || ''}
+                  onChange={(e) => set({ obs: e.target.value })}
+                  className="min-h-[96px] w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-blue-600"
+                  data-testid="textarea-observacoes"
+                />
+              </section>
+
+              <div className="md:col-span-2 flex items-center justify-end gap-3">
+                <a
+                  href={`/consulta.html?patientId=${patientId}`}
+                  className="rounded-md border px-4 py-2"
+                  data-testid="botao-seguir-atendendo">
+                  Seguir atendendo
+                </a>
+                <button
+                  type="submit"
+                  className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                  data-testid="botao-enviar-encerrar">
+                  Enviar e encerrar
+                </button>
+              </div>
+            </form>
+          </main>
+        </div>
+      );
+    }
+
+    // Renderizar o componente
+    ReactDOM.render(<PosConsultaFeedback />, document.getElementById('feedback-root'));
+    
+    console.log('✅ Componente Feedback Pós-Consulta Doc24 carregado com sucesso!');
+  </script>
+</body>
+</html>
