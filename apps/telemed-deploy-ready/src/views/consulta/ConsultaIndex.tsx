@@ -84,15 +84,25 @@ export default function ConsultaDoc24() {
     contato: "",
   }));
 
+  // Load saved data on mount
   useEffect(() => {
     const draft = autosave.current.load();
-    setReg((r) => ({ ...r, ...draft }));
-    autosave.current.start(() => reg, 10000);
-    return () => autosave.current.stop();
+    if (Object.keys(draft).length > 0) {
+      setReg((r) => ({ ...r, ...draft }));
+    }
   }, []);
 
+  // Save data whenever reg changes
   useEffect(() => {
     autosave.current.save(reg);
+  }, [reg]);
+
+  // Auto-save timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      autosave.current.save(reg);
+    }, 10000);
+    return () => clearInterval(timer);
   }, [reg]);
 
   const addHipotese = (h: string) =>
