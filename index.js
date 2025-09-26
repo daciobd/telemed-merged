@@ -6,14 +6,14 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-console.log('🚀 Starting TeleMed Docs Automation Service (TypeScript)...');
+console.log('🚀 Starting TeleMed Deploy Ready Frontend Service...');
 
-// Change to docs automation directory and start it
-const docsPath = join(__dirname, 'apps', 'telemed-docs-automation');
-process.chdir(docsPath);
+// Change to deploy ready directory and start it
+const frontendPath = join(__dirname, 'apps', 'telemed-deploy-ready');
+process.chdir(frontendPath);
 
-// Start the docs automation service
-const child = spawn('npm', ['run', 'dev'], { 
+// Start the frontend service with server.js
+const child = spawn('node', ['server.js'], { 
   stdio: 'inherit',
   shell: true 
 });
@@ -24,6 +24,6 @@ child.on('error', (error) => {
 });
 
 child.on('close', (code) => {
-  console.log(`Docs automation service exited with code ${code}`);
+  console.log(`Frontend service exited with code ${code}`);
   process.exit(code);
 });

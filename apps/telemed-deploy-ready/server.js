@@ -149,6 +149,22 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // === ROTAS SPA PHR ===
+  // Serve phr-react.html para rotas PHR e compatibilidade
+  const urlPath = req.url.split('?')[0];
+  if (urlPath === '/phr' || urlPath.startsWith('/phr/') || urlPath === '/registro-saude') {
+    fs.readFile(path.join(process.cwd(), 'phr-react.html'), (err, content) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('PHR SPA not found');
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(content, 'utf-8');
+      }
+    });
+    return;
+  }
+
 
   // Sanitize the URL and prevent directory traversal
   let requestPath = req.url === '/' ? '/index.html' : req.url;
