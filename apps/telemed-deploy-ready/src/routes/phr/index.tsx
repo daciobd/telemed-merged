@@ -1,3 +1,4 @@
+import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PHRDoc24 from '@/views/phr/PHRIndex';
 
