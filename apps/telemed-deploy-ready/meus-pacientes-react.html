@@ -189,13 +189,27 @@
       const inicio = (pagina - 1) * porPagina;
       const paginaAtual = filtrados.slice(inicio, inicio + porPagina);
 
-      // Ações
-      const verPHR = (id) => {
+      // Utils - ID seguro sem conversão numérica
+      const safeId = (val) => {
+        // Nunca formate como número; mantenha como string crua.
+        // Se vier "3.335.602", limpamos os separadores.
+        const s = String(val ?? "").trim();
+        const digits = s.replace(/\D/g, "");
+        return digits;
+      };
+
+      // Ações - ponto único de verdade para navegação PHR
+      const goToPhr = (p) => {
+        const id = safeId(p.idPersona ?? p.id ?? p.ID);
+        if (!id) return console.warn("Paciente sem idPersona:", p);
+        // alerta dev se ID ficar curto (pega nosso bug)
+        if (id.length < 7) console.warn("ID curto detectado:", id, p);
         window.location.href = `/phr/${id}`;
       };
 
       const novaAtencao = (id) => {
-        window.location.href = `/consulta.html?patientId=${id}`;
+        const cleanId = safeId(id);
+        window.location.href = `/consulta.html?patientId=${cleanId}`;
       };
 
       const aplicarFiltro = (e) => {
@@ -330,7 +344,11 @@
                   </thead>
                   <tbody>
                     {paginaAtual.map((p) => (
-                      <tr key={p.idPersona} className="border-t" data-testid={`row-patient-${p.idPersona}`}>
+                      <tr key={p.idPersona} 
+                          className="border-t cursor-pointer hover:bg-gray-50" 
+                          style={{cursor: 'pointer'}}
+                          data-testid={`row-patient-${p.idPersona}`}
+                          onClick={() => goToPhr(p)}>
                         <td className="px-5 py-3 align-top" data-testid={`text-id-${p.idPersona}`}>{p.idPersona}</td>
                         <td className="px-5 py-3 align-top">
                           <div className="font-medium text-slate-800" data-testid={`text-nome-${p.idPersona}`}>{p.nome} {p.sobrenome}</div>
@@ -343,13 +361,15 @@
                         <td className="px-5 py-3 align-top" data-testid={`text-telefone-${p.idPersona}`}>{p.telefone || "-"}</td>
                         <td className="px-5 py-3 align-top">
                           <div className="flex gap-2">
-                            <button 
-                              data-testid={`button-ver-phr-${p.idPersona}`}
-                              onClick={() => verPHR(p.idPersona)} 
-                              className="rounded-md bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-700">Ver PHR</button>
+                            <a href={`/phr/${safeId(p.idPersona)}`} 
+                               onClick={(e) => { e.stopPropagation(); }} 
+                               data-testid={`button-ver-phr-${p.idPersona}`}
+                               className="rounded-md bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-700 text-center no-underline">
+                              Ver PHR
+                            </a>
                             <button 
                               data-testid={`button-nova-atencao-${p.idPersona}`}
-                              onClick={() => novaAtencao(p.idPersona)} 
+                              onClick={(e) => { e.stopPropagation(); novaAtencao(p.idPersona); }} 
                               className="rounded-md bg-green-600 px-3 py-1.5 text-white hover:bg-green-700">Nova atenção offline</button>
                           </div>
                         </td>

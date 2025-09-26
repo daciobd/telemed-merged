@@ -4,7 +4,9 @@ import PHRDoc24 from '@/views/phr/PHRIndex';
 function RegistroSaudeRedirect() {
   const loc = useLocation();
   const sp = new URLSearchParams(loc.search);
-  const id = sp.get("patientId") || sp.get("id");
+  const rawId = sp.get("patientId") || sp.get("id") || "";
+  // Limpar ID (compatibilidade com IDs que podem ter formatação)
+  const id = rawId.replace(/\D/g, "");
   return id ? <Navigate to={`/phr/${id}`} replace /> : <Navigate to="/meus-pacientes" replace />;
 }
 
