@@ -155,7 +155,7 @@ export default function MeusPacientesDoc24() {
 
   // Ações
   const verPHR = (id: string) => {
-    window.location.href = `/phr-react.html?id=${id}`;
+    window.location.href = `/phr/${id}`;
   };
 
   const novaAtencao = (id: string) => {
