@@ -64,15 +64,9 @@ const Card: React.FC<{ title: string; children?: React.ReactNode; right?: React.
 
 export default function PHRDoc24API() {
   const params = new URLSearchParams(window.location.search);
-  const pathId = (()=>{
-    const m = window.location.pathname.match(/\/phr\/(\w+)/);
-    return m?m[1]:null;
-  })();
-  const id =
-    pathId ||
-    params.get("patientId") ||   // novo: compat com ?patientId=
-    params.get("id") ||          // compat com ?id=
-    "3335602";
+  const pathId = (window.location.pathname.match(/\/phr\/(\w+)/) || [])[1];
+  const rawId = pathId || params.get("patientId") || params.get("id") || "3335602";
+  const id = rawId.replace(/\D/g, "");  // Limpa formatação, mantém só dígitos
 
   const [data, setData] = useState<PHRData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -96,7 +90,7 @@ export default function PHRDoc24API() {
         return;
       }
       setData(null);
-      setError("PHR não encontrado para este paciente.");
+      setError(`PHR não encontrado para ID: ${id}`);
     } catch(e){
       setError("Falha ao carregar PHR. Verifique sua conexão.");
       setData(null);
