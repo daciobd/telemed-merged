@@ -143,6 +143,7 @@ function Tabs({ tabs }: { tabs: Tab[] }) {
                   ? "border-b-2 border-sky-500 text-sky-600"
                   : "text-slate-500 hover:text-slate-700"
               }`}
+              data-testid={`button-tab-${tab.id}`}
             >
               {tab.label}
             </button>
@@ -280,14 +281,26 @@ export default function ConsultaSecurePatch() {
     try {
       setLoading(true); setError(null);
       const payload = { id: `c_${Date.now()}`, patientId, doctorId: user.id || "med1", registro: reg, createdAt: new Date().toISOString() };
-      await fetch("/api/consultas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), credentials: "include" }).catch(()=>{});
+      const response = await fetch("/api/consultas", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(payload), 
+        credentials: "include" 
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+      
       autosave.current.clear();
       // Preserva todos os params
       const preserved = new URLSearchParams(window.location.search);
       if (!preserved.get("patientId")) preserved.set("patientId", patientId);
       alert("✅ Consulta finalizada com sucesso!");
       setTimeout(() => { window.location.href = `/pos-consulta/feedback?${preserved.toString()}`; }, 1000);
-    } catch { setError("Não foi possível finalizar. Tente novamente."); }
+    } catch (err) { 
+      setError(`Não foi possível finalizar a consulta: ${err instanceof Error ? err.message : 'Erro desconhecido'}. Tente novamente.`); 
+    }
     finally { setLoading(false); }
   };
 
@@ -312,7 +325,7 @@ export default function ConsultaSecurePatch() {
         {/* Banner rascunho / erro */}
         {draftFound && (
           <div className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-            Rascunho local encontrado. Você quer <button onClick={restoreLocalDraft} className="underline">restaurar</button> ou <button onClick={discardLocalDraft} className="underline">descartar</button>?
+            Rascunho local encontrado. Você quer <button onClick={restoreLocalDraft} className="underline" data-testid="button-restore-draft">restaurar</button> ou <button onClick={discardLocalDraft} className="underline" data-testid="button-discard-draft">descartar</button>?
           </div>
         )}
         {error && (
