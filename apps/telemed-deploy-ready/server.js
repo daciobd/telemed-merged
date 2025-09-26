@@ -24,6 +24,37 @@ const mockPHRData = {
       { name: 'Losartana 50mg', frequency: '1x/dia', duration: 'Uso contínuo' },
       { name: 'Sinvastatina 20mg', frequency: '1x/dia à noite', duration: 'Uso contínuo' }
     ]
+  },
+  '3335602': {
+    patient: { name: 'Dheliciane Da Silva Costa', age: 36, sex: 'Feminino', phone: '(11) 98765-4321' },
+    consultations: [
+      { date: '2024-08-01', doctor: 'Dr. A', diagnosis: 'Consulta clínica', notes: 'Paciente apresentando bom estado geral' },
+      { date: '2024-07-15', doctor: 'Dr. B', diagnosis: 'Acompanhamento de rotina', notes: 'Pressão arterial controlada' }
+    ],
+    exams: [
+      { date: '2024-07-20', type: 'Hemograma completo', result: 'Valores dentro da normalidade', doctor: 'Dr. A' },
+      { date: '2024-07-10', type: 'Glicemia de jejum', result: '95 mg/dL - Normal', doctor: 'Dr. B' }
+    ],
+    allergies: [],
+    meds: [
+      { name: 'Vitamina D 2000UI', frequency: '1x/dia', duration: '3 meses' }
+    ]
+  },
+  '4537263': {
+    patient: { name: 'Hadassa Da Silva Santos Garcia', age: 33, sex: 'Feminino', phone: '(11) 97654-3210' },
+    consultations: [
+      { date: '2024-08-05', doctor: 'Dr. C', diagnosis: 'Check-up preventivo', notes: 'Exame clínico sem alterações' },
+      { date: '2024-07-22', doctor: 'Dr. A', diagnosis: 'Consulta ginecológica', notes: 'Resultado do papanicolau normal' }
+    ],
+    exams: [
+      { date: '2024-07-25', type: 'Papanicolau', result: 'Normal', doctor: 'Dr. A' },
+      { date: '2024-07-15', type: 'Ultrassom pélvico', result: 'Sem alterações', doctor: 'Dr. C' }
+    ],
+    allergies: ['Lactose'],
+    meds: [
+      { name: 'Ácido fólico 5mg', frequency: '1x/dia', duration: 'Uso contínuo' },
+      { name: 'Ferro quelato 14mg', frequency: '1x/dia após almoço', duration: '6 meses' }
+    ]
   }
 };
 
