@@ -68,7 +68,11 @@ export default function PHRDoc24API() {
     const m = window.location.pathname.match(/\/phr\/(\w+)/);
     return m?m[1]:null;
   })();
-  const id = pathId || params.get("id") || "3335602";
+  const id =
+    pathId ||
+    params.get("patientId") ||   // novo: compat com ?patientId=
+    params.get("id") ||          // compat com ?id=
+    "3335602";
 
   const [data, setData] = useState<PHRData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
