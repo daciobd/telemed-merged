@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 /**
- * /phr/:id — Registro de Saúde Pessoal (Doc24 → Telemed)
+ * /phr/:id — PHR (Doc24 → Telemed) [API-enabled]
  *
- * ✔️ Cards: Dados pessoais, Notas privadas, Parâmetros básicos, Equipe de Saúde,
- *           Alergias, Patologias atuais, Medicação atual, Laboratoriais, Estudos, Vacinas
- * ✔️ Histórico de Eventos (timeline) com "Vídeo Consulta" e link Detalhe
- * ✔️ Rotas: /consulta?patientId=:id  |  voltar para /meus-pacientes
- * ✔️ Mock de dados; pronto para trocar por API
+ * - Busca PHR via GET /api/phr/:id (fallback: /data/phr/:id.json)
+ * - Loading, erro, e botão "Tentar novamente"
+ * - Timeline de eventos com link para /consulta?patientId=:id&evento=:id
+ * - Botões "Iniciar consulta" e "Voltar"
  */
 
 interface Evento {
@@ -25,7 +24,7 @@ interface PHRData {
   cpf?: string;
   idade: number;
   nascimento: string; // ISO
-  genero: "Masculino" | "Feminino" | "Outro";
+  genero: "Masculino" | "Feminino" | "Outro" | string;
   nacionalidade?: string;
   equipe: string[];
   alergias: string[];
@@ -35,131 +34,21 @@ interface PHRData {
   estudos: string[];
   vacinas: string[];
   parametros?: {
-    altura?: number;
-    peso?: number;
-    cintura?: number;
-    pa?: string;
-    imc?: number;
+    altura?: number | null;
+    peso?: number | null;
+    cintura?: number | null;
+    pa?: string | null;
+    imc?: number | null;
   };
   notasPrivadas?: string;
   eventos: Evento[];
 }
 
-const MOCK_PHR: Record<string, PHRData> = {
-  "3335602": {
-    idPersona: "3335602",
-    nomeCompleto: "Dheliciane Da Silva Costa",
-    cpf: "03262894370",
-    idade: 36,
-    nascimento: "1988-09-23",
-    genero: "Feminino",
-    nacionalidade: "Brasil",
-    equipe: ["Carla Nacao Nonato", "Paula Oliveira Amarante", "Lorrany Pereira"],
-    alergias: [],
-    patologias: [],
-    medicacoes: [],
-    laboratoriais: [],
-    estudos: [],
-    vacinas: [],
-    parametros: { altura: undefined, peso: undefined, pa: undefined, imc: undefined, cintura: undefined },
-    notasPrivadas: "",
-    eventos: [
-      { id: "e1", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-08-13T12:36:00Z", profissional: "Dácio Bonoldi Dutra", especialidade: "Psiquiatria" },
-      { id: "e0", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-08-12T10:10:00Z", profissional: "Lorrany Pereira", especialidade: "Psicologia" },
-    ],
-  },
-  "4537263": {
-    idPersona: "4537263", 
-    nomeCompleto: "Hadassa Da Silva Santos Garcia",
-    cpf: "14109089760",
-    idade: 34,
-    nascimento: "1991-08-01",
-    genero: "Feminino",
-    nacionalidade: "Brasil",
-    equipe: ["Dr. João Silva", "Enfª Maria Santos"],
-    alergias: ["Dipirona"],
-    patologias: ["Ansiedade", "Depressão leve"],
-    medicacoes: ["Sertralina 50mg", "Alprazolam 0,25mg"],
-    laboratoriais: ["Hemograma completo (12/2024)", "Glicemia (11/2024)"],
-    estudos: ["Ressonância craniana (10/2024)"],
-    vacinas: ["COVID-19 (bivalente)", "Influenza 2024"],
-    parametros: { altura: 165, peso: 62, pa: "120x80", imc: 22.8, cintura: 75 },
-    notasPrivadas: "Paciente com histórico de ansiedade, acompanhamento psiquiátrico regular.",
-    eventos: [
-      { id: "e2", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-09-15T14:30:00Z", profissional: "Dr. João Silva", especialidade: "Psiquiatria" },
-      { id: "e3", tipo: "EXAME", titulo: "Exames Laboratoriais", data: "2025-09-10T09:00:00Z", profissional: "Lab. Central", especialidade: "Laboratório" },
-    ],
-  },
-  "4849323": {
-    idPersona: "4849323",
-    nomeCompleto: "William Lopes Do Nascimento", 
-    cpf: "02876267179",
-    idade: 27,
-    nascimento: "1997-09-10",
-    genero: "Masculino",
-    nacionalidade: "Brasil",
-    equipe: ["Dra. Ana Costa"],
-    alergias: [],
-    patologias: ["Hipertensão arterial"],
-    medicacoes: ["Losartana 50mg"],
-    laboratoriais: ["Perfil lipídico (08/2024)"],
-    estudos: [],
-    vacinas: ["Hepatite B", "COVID-19"],
-    parametros: { altura: 178, peso: 85, pa: "140x90", imc: 26.8, cintura: 95 },
-    notasPrivadas: "",
-    eventos: [
-      { id: "e4", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-09-05T11:15:00Z", profissional: "Dra. Ana Costa", especialidade: "Cardiologia" },
-    ],
-  },
-  "5150400": {
-    idPersona: "5150400",
-    nomeCompleto: "Erika Carvalho Mendes",
-    cpf: "11892779722", 
-    idade: 38,
-    nascimento: "1987-05-04",
-    genero: "Feminino",
-    nacionalidade: "Brasil",
-    equipe: ["Dr. Carlos Mendes"],
-    alergias: [],
-    patologias: [],
-    medicacoes: [],
-    laboratoriais: ["Check-up completo (07/2024)"],
-    estudos: ["Ecocardiograma (06/2024)"],
-    vacinas: ["Todas em dia"],
-    parametros: { altura: 160, peso: 58, pa: "110x70", imc: 22.7, cintura: 70 },
-    notasPrivadas: "",
-    eventos: [
-      { id: "e5", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-08-20T16:00:00Z", profissional: "Dr. Carlos Mendes", especialidade: "Cardiologia" },
-    ],
-  },
-  "5155665": {
-    idPersona: "5155665",
-    nomeCompleto: "Natalia Da Silva Mello",
-    cpf: "09941565708",
-    idade: 42,
-    nascimento: "1982-12-27",
-    genero: "Feminino", 
-    nacionalidade: "Brasil",
-    equipe: ["Dra. Lucia Pereira"],
-    alergias: [],
-    patologias: ["Diabetes tipo 2"],
-    medicacoes: ["Metformina 850mg"],
-    laboratoriais: ["Glicose jejum (09/2024)", "HbA1c (08/2024)"],
-    estudos: [],
-    vacinas: ["COVID-19", "Influenza 2024"],
-    parametros: { altura: 155, peso: 68, pa: "130x85", imc: 28.3, cintura: 88 },
-    notasPrivadas: "Paciente diabética, controle glicêmico estável.",
-    eventos: [
-      { id: "e6", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-09-12T10:30:00Z", profissional: "Dra. Lucia Pereira", especialidade: "Endocrinologia" },
-    ],
-  },
-};
-
 const Card: React.FC<{ title: string; children?: React.ReactNode; right?: React.ReactNode; tone?: "neutral"|"green"|"red"|"blue" }>=({title,children,right,tone="neutral"})=>{
   const tones: Record<string,string>={
     neutral:"border-slate-200",
     green:"border-emerald-200",
-    red:"border-rose-200", 
+    red:"border-rose-200",
     blue:"border-sky-200",
   };
   return (
@@ -173,9 +62,8 @@ const Card: React.FC<{ title: string; children?: React.ReactNode; right?: React.
   );
 };
 
-export default function PHRDoc24() {
+export default function PHRDoc24API() {
   const params = new URLSearchParams(window.location.search);
-  // Também suportar /phr/:id (usando pathname)
   const pathId = (()=>{
     const m = window.location.pathname.match(/\/phr\/(\w+)/);
     return m?m[1]:null;
@@ -183,39 +71,79 @@ export default function PHRDoc24() {
   const id = pathId || params.get("id") || "3335602";
 
   const [data, setData] = useState<PHRData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(()=>{
-    // Trocar por fetch(`/api/phr/${id}`)
-    setData(MOCK_PHR[id] || null);
-  },[id]);
+  const load = async ()=>{
+    setLoading(true); setError(null);
+    try{
+      // tenta API real
+      const r = await fetch(`/api/phr/${id}`);
+      if(r.ok){
+        const d = await r.json();
+        setData(d);
+        return;
+      }
+      // fallback estático
+      const s = await fetch(`/data/phr/${id}.json`);
+      if(s.ok){
+        const d = await s.json();
+        setData(d);
+        return;
+      }
+      setData(null);
+      setError("PHR não encontrado para este paciente.");
+    } catch(e){
+      setError("Falha ao carregar PHR. Verifique sua conexão.");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if(!data){
+  useEffect(()=>{ load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+
+  if(loading){
     return (
-      <div className="min-h-screen bg-[#f4f6f8] p-6">
-        <div className="text-slate-600">
-          PHR não encontrado para ID: {id}. 
-          <br/>
-          <a className="text-sky-600 underline" href="/meus-pacientes-react.html">← Voltar para Meus Pacientes</a>
-        </div>
+      <div className="min-h-screen bg-[#f4f6f8]">
+        <header className="w-full bg-[#1282db] text-white">
+          <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+            <div className="text-2xl font-bold">doc24</div>
+            <div className="text-sm opacity-90"><a className="underline" href="/meus-pacientes">← Voltar</a></div>
+          </div>
+        </header>
+        <main className="mx-auto max-w-6xl px-6 py-6">
+          <div className="rounded-xl bg-white p-4 shadow-sm">Carregando PHR...</div>
+        </main>
+      </div>
+    );
+  }
+
+  if(error || !data){
+    return (
+      <div className="min-h-screen bg-[#f4f6f8]">
+        <header className="w-full bg-[#1282db] text-white">
+          <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+            <div className="text-2xl font-bold">doc24</div>
+            <div className="text-sm opacity-90"><a className="underline" href="/meus-pacientes">← Voltar</a></div>
+          </div>
+        </header>
+        <main className="mx-auto max-w-6xl px-6 py-6">
+          <div className="mb-3 rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-rose-900">{error || "Erro desconhecido."}</div>
+          <button onClick={load} className="rounded-md bg-[#1282db] px-4 py-2 text-white hover:bg-[#0e6fb9]">Tentar novamente</button>
+        </main>
       </div>
     );
   }
 
   const DetalheEvento = (ev: Evento)=> (
-    <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid={`evento-${ev.id}`}>
+    <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
       <div className="flex items-center justify-between">
-        <div className="text-[13px] font-semibold" data-testid={`evento-titulo-${ev.id}`}>{ev.titulo}</div>
-        <a 
-          href={`/consulta.html?patientId=${data.idPersona}&evento=${ev.id}`} 
-          className="text-[12px] text-sky-600 underline"
-          data-testid={`evento-detalhe-${ev.id}`}>
-          Detalhe
-        </a>
+        <div className="text-[13px] font-semibold">{ev.titulo}</div>
+        <a href={`/consulta?patientId=${data.idPersona}&evento=${ev.id}`} className="text-[12px] text-sky-600 underline">Detalhe</a>
       </div>
-      <div className="mt-1 text-[12px] text-slate-600" data-testid={`evento-especialidade-${ev.id}`}>
-        {ev.especialidade} • {new Date(ev.data).toLocaleString('pt-BR')}
-      </div>
-      <div className="text-[12px] text-slate-600" data-testid={`evento-profissional-${ev.id}`}>{ev.profissional}</div>
+      <div className="mt-1 text-[12px] text-slate-600">{ev.especialidade} • {new Date(ev.data).toLocaleString()}</div>
+      <div className="text-[12px] text-slate-600">{ev.profissional}</div>
     </div>
   );
 
@@ -224,131 +152,105 @@ export default function PHRDoc24() {
       {/* Topbar */}
       <header className="w-full bg-[#1282db] text-white">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold" data-testid="logo-doc24">doc24</div>
+          <div className="text-2xl font-bold">doc24</div>
           <div className="text-sm opacity-90">
-            <a className="underline" href="/meus-pacientes-react.html" data-testid="link-voltar-header">← Voltar</a>
+            <a className="underline" href="/meus-pacientes">← Voltar</a>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800" data-testid="titulo-phr">
-            PHR - {data.nomeCompleto}
-          </h1>
-          <div className="text-sm text-slate-600" data-testid="subtitulo-phr">
-            ID Persona: {data.idPersona}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Coluna 1 */}
           <div className="md:col-span-2 space-y-4">
-            <Card title="Dados pessoais" right={<a className="text-sky-600 text-sm underline" href="#" data-testid="editar-dados-pessoais">Editar</a>}>
+            <Card title="Dados pessoais" right={<a className="text-sky-600 text-sm underline" href="#">Editar</a>}>
               <div className="flex items-start gap-4">
-                <div className="h-16 w-16 rounded bg-slate-200" data-testid="avatar-placeholder" />
+                <div className="h-16 w-16 rounded bg-slate-200" />
                 <div>
-                  <div className="text-base font-semibold" data-testid="nome-completo">{data.nomeCompleto}</div>
-                  <div className="text-sm text-slate-600" data-testid="idade-cpf">{data.idade} anos, CPF {data.cpf || "-"}</div>
-                  <div className="text-sm text-slate-600" data-testid="nascimento">Data de nascimento: {new Date(data.nascimento).toLocaleDateString('pt-BR')}</div>
-                  <div className="text-sm text-slate-600" data-testid="genero-nacionalidade">Gênero: {data.genero} • Nacionalidade: {data.nacionalidade || "-"}</div>
+                  <div className="text-base font-semibold">{data.nomeCompleto}</div>
+                  <div className="text-sm text-slate-600">{data.idade} anos, CPF {data.cpf || "-"}</div>
+                  <div className="text-sm text-slate-600">Data de nascimento: {new Date(data.nascimento).toLocaleDateString()}</div>
+                  <div className="text-sm text-slate-600">Gênero: {data.genero} • Nacionalidade: {data.nacionalidade || "-"}</div>
                 </div>
               </div>
             </Card>
 
-            <Card title="Notas privadas" right={<button className="rounded-md border px-3 py-1 text-sm" data-testid="adicionar-nota">Adicionar</button>}>
+            <Card title="Notas privadas" right={<button className="rounded-md border px-3 py-1 text-sm">Adicionar</button>}>
               {data.notasPrivadas ? (
-                <div data-testid="notas-privadas-conteudo">{data.notasPrivadas}</div>
+                <div>{data.notasPrivadas}</div>
               ) : (
-                <div className="text-slate-500" data-testid="sem-notas">Sem notas registradas</div>
+                <div className="text-slate-500">Sem notas registradas</div>
               )}
             </Card>
 
-            <Card title="Parâmetros básicos" right={<a className="text-sky-600 text-sm underline" href="#" data-testid="editar-parametros">Editar</a>}>
+            <Card title="Parâmetros básicos" right={<a className="text-sky-600 text-sm underline" href="#">Editar</a>}>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                <div data-testid="parametro-altura">Altura: <span className="text-slate-500">{data.parametros?.altura ? `${data.parametros.altura}cm` : "sem dados"}</span></div>
-                <div data-testid="parametro-peso">Peso: <span className="text-slate-500">{data.parametros?.peso ? `${data.parametros.peso}kg` : "sem dados"}</span></div>
-                <div data-testid="parametro-pa">Pressão Arterial: <span className="text-slate-500">{data.parametros?.pa ?? "sem dados"}</span></div>
-                <div data-testid="parametro-cintura">Cintura: <span className="text-slate-500">{data.parametros?.cintura ? `${data.parametros.cintura}cm` : "sem dados"}</span></div>
-                <div data-testid="parametro-imc">I.M.C.: <span className="text-slate-500">{data.parametros?.imc ?? "sem dados"}</span></div>
+                <div>Altura: <span className="text-slate-500">{data.parametros?.altura ?? "sem dados"}</span></div>
+                <div>Peso: <span className="text-slate-500">{data.parametros?.peso ?? "sem dados"}</span></div>
+                <div>Pressão Arterial: <span className="text-slate-500">{data.parametros?.pa ?? "sem dados"}</span></div>
+                <div>Cintura: <span className="text-slate-500">{data.parametros?.cintura ?? "sem dados"}</span></div>
+                <div>I.M.C.: <span className="text-slate-500">{data.parametros?.imc ?? "sem dados"}</span></div>
               </div>
             </Card>
 
             <Card title="Histórico de Eventos">
-              <div className="space-y-3" data-testid="lista-eventos">
+              <div className="space-y-3">
                 {data.eventos.map((ev)=> (
                   <DetalheEvento key={ev.id} {...ev} />
                 ))}
-                {data.eventos.length === 0 && (
-                  <div className="text-slate-500" data-testid="sem-eventos">Sem eventos registrados</div>
-                )}
               </div>
             </Card>
           </div>
 
           {/* Coluna 2 */}
           <div className="space-y-4">
-            <Card title="Equipe de Saúde" tone="green" right={<div className="text-xs text-slate-500" data-testid="contador-equipe">{data.equipe.length} prof.</div>}>
-              {data.equipe.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-equipe">
-                  {data.equipe.map((n)=> <li key={n}>{n}</li>)}
-                </ul>
-              ) : (
-                <div className="text-slate-500" data-testid="sem-equipe">Sem equipe registrada</div>
-              )}
+            <Card title="Equipe de Saúde" tone="green" right={<div className="text-xs text-slate-500">{data.equipe.length} prof.</div>}>
+              <ul className="list-inside list-disc text-sm">
+                {data.equipe.map((n)=> <li key={n}>{n}</li>)}
+              </ul>
             </Card>
 
-            <Card title="Alergias" tone="red" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-alergia">Adicionar</button>}>
+            <Card title="Alergias" tone="red" right={<button className="rounded-md border px-2 py-1 text-xs">Adicionar</button>}>
               {data.alergias.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-alergias">{data.alergias.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-alergias">Sem alergias registradas</div>}
+                <ul className="list-inside list-disc text-sm">{data.alergias.map(a=> <li key={a}>{a}</li>)}</ul>
+              ) : <div className="text-slate-500">Sem alergias registradas</div>}
             </Card>
 
-            <Card title="Patologias Atuais" tone="red" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-patologia">Adicionar</button>}>
+            <Card title="Patologias Atuais" tone="red" right={<button className="rounded-md border px-2 py-1 text-xs">Adicionar</button>}>
               {data.patologias.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-patologias">{data.patologias.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-patologias">Sem patologias registradas</div>}
+                <ul className="list-inside list-disc text-sm">{data.patologias.map(a=> <li key={a}>{a}</li>)}</ul>
+              ) : <div className="text-slate-500">Sem patologias registradas</div>}
             </Card>
 
-            <Card title="Medicação Atual" tone="blue" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-medicacao">Adicionar</button>}>
+            <Card title="Medicação Atual" tone="blue" right={<button className="rounded-md border px-2 py-1 text-xs">Adicionar</button>}>
               {data.medicacoes.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-medicacoes">{data.medicacoes.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-medicacoes">Sem medicações registradas</div>}
+                <ul className="list-inside list-disc text-sm">{data.medicacoes.map(a=> <li key={a}>{a}</li>)}</ul>
+              ) : <div className="text-slate-500">Sem medicações registradas</div>}
             </Card>
 
-            <Card title="Laboratoriais" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-laboratorial">Adicionar</button>}>
+            <Card title="Laboratoriais" right={<button className="rounded-md border px-2 py-1 text-xs">Adicionar</button>}>
               {data.laboratoriais.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-laboratoriais">{data.laboratoriais.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-laboratoriais">Sem laboratoriais registrados</div>}
+                <ul className="list-inside list-disc text-sm">{data.laboratoriais.map(a=> <li key={a}>{a}</li>)}</ul>
+              ) : <div className="text-slate-500">Sem laboratoriais registrados</div>}
             </Card>
 
-            <Card title="Estudos" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-estudo">Adicionar</button>}>
+            <Card title="Estudos" right={<button className="rounded-md border px-2 py-1 text-xs">Adicionar</button>}>
               {data.estudos.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-estudos">{data.estudos.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-estudos">Sem estudos registrados</div>}
+                <ul className="list-inside list-disc text-sm">{data.estudos.map(a=> <li key={a}>{a}</li>)}</ul>
+              ) : <div className="text-slate-500">Sem estudos registrados</div>}
             </Card>
 
-            <Card title="Vacinas" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-vacina">Adicionar</button>}>
+            <Card title="Vacinas" right={<button className="rounded-md border px-2 py-1 text-xs">Adicionar</button>}>
               {data.vacinas.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-vacinas">{data.vacinas.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-vacinas">Sem vacinas registradas</div>}
+                <ul className="list-inside list-disc text-sm">{data.vacinas.map(a=> <li key={a}>{a}</li>)}</ul>
+              ) : <div className="text-slate-500">Sem vacinas registradas</div>}
             </Card>
           </div>
         </div>
 
         <div className="mt-6 flex gap-3">
-          <a 
-            href={`/consulta.html?patientId=${data.idPersona}`} 
-            className="rounded-md bg-[#1282db] px-4 py-2 text-white hover:bg-[#0e6fb9]"
-            data-testid="botao-iniciar-consulta">
-            Iniciar consulta
-          </a>
-          <a 
-            href="/meus-pacientes-react.html" 
-            className="rounded-md border px-4 py-2"
-            data-testid="botao-voltar">
-            Voltar
-          </a>
+          <a href={`/consulta?patientId=${data.idPersona}`} className="rounded-md bg-[#1282db] px-4 py-2 text-white hover:bg-[#0e6fb9]">Iniciar consulta</a>
+          <a href="/meus-pacientes" className="rounded-md border px-4 py-2">Voltar</a>
         </div>
       </main>
     </div>
