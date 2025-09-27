@@ -3,11 +3,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import PHRDoc24 from '@/views/phr/PHRIndex';
 
 function RegistroSaudeRedirect() {
-  const loc = useLocation();
-  const sp = new URLSearchParams(loc.search);
-  const rawId = sp.get("patientId") || sp.get("id") || "";
-  // Limpar ID (compatibilidade com IDs que podem ter formatação)
-  const id = rawId.replace(/\D/g, "");
+  const sp = new URLSearchParams(window.location.search);
+  const id = (sp.get('patientId') || sp.get('id') || '').replace(/\D/g,'');
   return id ? <Navigate to={`/phr/${id}`} replace /> : <Navigate to="/meus-pacientes" replace />;
 }
 

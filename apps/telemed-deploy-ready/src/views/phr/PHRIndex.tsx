@@ -63,10 +63,9 @@ const Card: React.FC<{ title: string; children?: React.ReactNode; right?: React.
 };
 
 export default function PHRDoc24API() {
-  const params = new URLSearchParams(window.location.search);
+  const sp = new URLSearchParams(window.location.search);
   const pathId = (window.location.pathname.match(/\/phr\/(\w+)/) || [])[1];
-  const rawId = pathId || params.get("patientId") || params.get("id") || "3335602";
-  const id = rawId.replace(/\D/g, "");  // Limpa formatação, mantém só dígitos
+  const id = (pathId || sp.get('patientId') || sp.get('id') || '').replace(/\D/g,'') || '3335602';
 
   const [data, setData] = useState<PHRData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
