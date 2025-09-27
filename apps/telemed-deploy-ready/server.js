@@ -26,7 +26,16 @@ const mockPHRData = {
     ]
   },
   '3335602': {
+    idPersona: '3335602',
+    nomeCompleto: 'Dheliciane Da Silva Costa',
+    cpf: '03262894370',
+    idade: 36,
+    nascimento: '1988-09-23',
+    genero: 'Feminino',
     patient: { name: 'Dheliciane Da Silva Costa', age: 36, sex: 'Feminino', phone: '(11) 98765-4321' },
+    eventos: [
+      { id: 'ev1', tipo: 'VIDEO_CONSULTA', titulo: 'Clínica Geral', data: '2025-08-04T12:00:00Z', profissional: 'Dr. A' }
+    ],
     consultations: [
       { date: '2024-08-01', doctor: 'Dr. A', diagnosis: 'Consulta clínica', notes: 'Paciente apresentando bom estado geral' },
       { date: '2024-07-15', doctor: 'Dr. B', diagnosis: 'Acompanhamento de rotina', notes: 'Pressão arterial controlada' }
@@ -41,7 +50,14 @@ const mockPHRData = {
     ]
   },
   '4537263': {
+    idPersona: '4537263',
+    nomeCompleto: 'Hadassa Da Silva Santos Garcia',
+    cpf: '14109089760',
+    idade: 34,
+    nascimento: '1991-07-01',
+    genero: 'Feminino',
     patient: { name: 'Hadassa Da Silva Santos Garcia', age: 33, sex: 'Feminino', phone: '(11) 97654-3210' },
+    eventos: [],
     consultations: [
       { date: '2024-08-05', doctor: 'Dr. C', diagnosis: 'Check-up preventivo', notes: 'Exame clínico sem alterações' },
       { date: '2024-07-22', doctor: 'Dr. A', diagnosis: 'Consulta ginecológica', notes: 'Resultado do papanicolau normal' }
@@ -55,6 +71,48 @@ const mockPHRData = {
       { name: 'Ácido fólico 5mg', frequency: '1x/dia', duration: 'Uso contínuo' },
       { name: 'Ferro quelato 14mg', frequency: '1x/dia após almoço', duration: '6 meses' }
     ]
+  },
+  '4849323': {
+    idPersona: '4849323',
+    nomeCompleto: 'William Lopes Do Nascimento',
+    cpf: '02876267179',
+    idade: 27,
+    nascimento: '1997-09-10',
+    genero: 'Masculino',
+    patient: { name: 'William Lopes Do Nascimento', age: 27, sex: 'Masculino', phone: '(11) 96543-2109' },
+    eventos: [],
+    consultations: [],
+    exams: [],
+    allergies: [],
+    meds: []
+  },
+  '5150400': {
+    idPersona: '5150400',
+    nomeCompleto: 'Erika Carvalho Mendes',
+    cpf: '11892727922',
+    idade: 38,
+    nascimento: '1987-05-04',
+    genero: 'Feminino',
+    patient: { name: 'Erika Carvalho Mendes', age: 38, sex: 'Feminino', phone: '(11) 95432-1098' },
+    eventos: [],
+    consultations: [],
+    exams: [],
+    allergies: [],
+    meds: []
+  },
+  '5155665': {
+    idPersona: '5155665',
+    nomeCompleto: 'Natalia Da Silva Mello',
+    cpf: '09941565708',
+    idade: 42,
+    nascimento: '1982-12-27',
+    genero: 'Feminino',
+    patient: { name: 'Natalia Da Silva Mello', age: 42, sex: 'Feminino', phone: '(11) 94321-0987' },
+    eventos: [],
+    consultations: [],
+    exams: [],
+    allergies: [],
+    meds: []
   }
 };
 
@@ -126,6 +184,33 @@ const server = http.createServer((req, res) => {
 
   // === ROTA PHR ===
   if (req.method === 'GET' && pathname.startsWith('/api/patients/') && pathname.endsWith('/phr')) {
+    const patientId = pathname.split('/')[3];
+    const limit = parseInt(parsedUrl.searchParams.get('limit')) || 20;
+    
+    const phrData = mockPHRData[patientId];
+    if (!phrData) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: 'Patient not found' }));
+      return;
+    }
+    
+    // Simular auditoria
+    console.log(`👁️ PHR viewed for patient ${patientId}`);
+    
+    // Limitar resultados
+    const limitedData = {
+      ...phrData,
+      consultations: phrData.consultations.slice(0, limit),
+      exams: phrData.exams.slice(0, limit)
+    };
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(limitedData));
+    return;
+  }
+
+  // === ROTA PHR DIRETA ===
+  if (req.method === 'GET' && pathname.startsWith('/api/phr/')) {
     const patientId = pathname.split('/')[3];
     const limit = parseInt(parsedUrl.searchParams.get('limit')) || 20;
     
