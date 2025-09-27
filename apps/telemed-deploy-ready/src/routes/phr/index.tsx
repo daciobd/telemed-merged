@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import PHRDoc24 from '@/views/phr/PHRIndex';
+import PHRDoc24 from '../../views/phr/PHRIndex';
 
 function RegistroSaudeRedirect() {
   const sp = new URLSearchParams(window.location.search);
