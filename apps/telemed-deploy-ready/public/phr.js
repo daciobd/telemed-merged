@@ -7,8 +7,14 @@
   title.textContent = `PHR — ${id}`;
 
   async function load() {
-    try { const r = await fetch(`/api/phr/${id}`); if (r.ok) return r.json(); } catch(_){}
-    try { const r = await fetch(`/data/phr/${id}.json`); if (r.ok) return r.json(); } catch(_){}
+    try { 
+      const r = await fetch(`/api/phr/${id}`); 
+      if (r.ok) return r.json(); 
+    } catch(_){}
+    try { 
+      const r = await fetch(`/data/phr/${id}.json`); 
+      if (r.ok) return r.json(); 
+    } catch(_){}
     return null;
   }
 
