@@ -1,0 +1,6 @@
+<!doctype html><meta charset="utf-8">
+<script>
+  const q=new URLSearchParams(location.search);
+  const id=(q.get('patientId')||q.get('id')||'').replace(/\D/g,'');
+  location.replace(id?`/phr.html?id=${id}`:'/meus-pacientes');
+</script>

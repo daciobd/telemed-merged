@@ -1,0 +1,110 @@
+{
+  "idPersona": "5155665",
+  "nomeCompleto": "Natália Catharina Santos",
+  "cpf": "34567890123",
+  "idade": 31,
+  "nascimento": "1993-05-22",
+  "genero": "Feminino", 
+  "contatos": {
+    "telefone": "+55 19 61725-613",
+    "email": "natalla.cathiva@gmail.com"
+  },
+  "endereco": {
+    "cidade": "Campinas",
+    "uf": "SP",
+    "cep": "13010-200"
+  },
+  "parametros": {
+    "altura": "168cm",
+    "peso": "68kg",
+    "pa": "118/78 mmHg",
+    "cintura": "82cm",
+    "imc": "24.1"
+  },
+  "equipe": [
+    "Dr. Rafael Moreira - Clínica Geral",
+    "Dra. Camila Ribeiro - Ginecologista",
+    "Dr. André Santos - Dermatologista"
+  ],
+  "alergias": ["Iodo", "Corantes artificiais"],
+  "patologias": ["Endometriose", "Rosácea"],
+  "medicacoes": [
+    "Dienogeste 2mg - 1x/dia",
+    "Metronidazol gel - aplicação tópica 2x/dia",
+    "Protetor solar FPS 60 - uso contínuo"
+  ],
+  "eventos": [
+    {
+      "id": "ev1",
+      "tipo": "VIDEO_CONSULTA", 
+      "titulo": "Consulta Ginecológica",
+      "data": "2025-08-28T15:30:00Z",
+      "profissional": "Dra. Camila Ribeiro",
+      "especialidade": "Ginecologia"
+    },
+    {
+      "id": "ev2",
+      "tipo": "EXAME",
+      "titulo": "Ultrassom pélvico",
+      "data": "2025-08-24T09:00:00Z",
+      "profissional": "Clínica Mulher",
+      "especialidade": "Ginecologia"
+    }
+  ],
+  "consultas": [
+    {
+      "data": "2025-08-28T15:30:00Z",
+      "especialidade": "Ginecologia",
+      "profissional": "Dra. Camila Ribeiro",
+      "registro": {
+        "queixa": "Controle de endometriose e cólicas menstruais",
+        "doencaAtual": "Paciente com endometriose diagnosticada há 2 anos, em tratamento hormonal. Melhora das dores pélvicas com dienogeste",
+        "hipoteses": ["Endometriose em controle clínico", "Dismenorréia secundária"],
+        "conduta": "Manutenção do tratamento atual, avaliação semestral, orientações sobre fertilidade",
+        "prescricoes": [
+          {"produto": "Dienogeste 2mg", "posologia": "1 comprimido ao dia, uso contínuo"},
+          {"produto": "Buscopan composto", "posologia": "1-2 comprimidos se cólica forte"}
+        ],
+        "encaminhamentos": [
+          {"destino": "Nutrição", "motivo": "Dieta anti-inflamatória"}
+        ]
+      }
+    }
+  ],
+  "laboratoriais": [
+    {
+      "data": "2025-08-20",
+      "exame": "CA-125",
+      "resultado": "Limítrofe",
+      "valores": "42 U/mL (normal < 35)",
+      "laboratorio": "Lab. Femina"
+    },
+    {
+      "data": "2025-08-20",
+      "exame": "Hormônios sexuais",
+      "resultado": "Compatível com supressão hormonal",
+      "valores": "E2: 25 pg/mL, LH: 2.1 UI/L, FSH: 3.5 UI/L",
+      "laboratorio": "Lab. Femina"
+    }
+  ],
+  "estudos": [
+    {
+      "data": "2025-08-24",
+      "tipo": "Ultrassom pélvico transvaginal",
+      "achados": "Útero de dimensões normais, espessamento endometrial 5mm, ovários com folículos de pequenas dimensões",
+      "servico": "Clínica Mulher"
+    },
+    {
+      "data": "2025-06-15",
+      "tipo": "Ressonância magnética de pelve",
+      "achados": "Focos de endometriose em fundo de saco posterior, sem nodulação intestinal",
+      "servico": "Centro de Diagnóstico"
+    }
+  ],
+  "vacinas": [
+    {"vacina": "COVID-19 (4ª dose)", "data": "2025-01-18"},
+    {"vacina": "Influenza", "data": "2025-03-30"},
+    {"vacina": "Hepatite A/B", "data": "2024-07-20"}
+  ],
+  "notasPrivadas": "Boa resposta ao tratamento hormonal. Desejo de gestação no futuro - avaliar interrupção medicamentosa quando apropriado."
+}

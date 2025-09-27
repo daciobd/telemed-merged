@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TeleMed</title>
+
+  <!-- (opcional) uma carinha enquanto o SPA/carregamento acontece -->
+  <style>
+    body{margin:0;font:14px/1.4 system-ui,Segoe UI,Roboto,sans-serif;background:#0b1220;color:#e5e7eb}
+    .boot{max-width:960px;margin:48px auto;padding:0 16px}
+    .muted{opacity:.7}
+  </style>
+
+  <body>
+    <div class="boot">
+      <h1>TeleMed</h1>
+      <p class="muted">Carregando…</p>
+    </div>
+
+    <script>
+      // 1) STUB: evita que scripts quebrem se alguém chamar setHeaderH
+      try { window.setHeaderH ??= function(){}; } catch(_) {}
+
+      // 2) REDIRECT legado /registro-saude?patientId= → /phr.html?id=
+      (function redirectLegacy(){
+        if (location.pathname.includes('/registro-saude')) {
+          const q = new URLSearchParams(location.search);
+          const id = (q.get('patientId') || q.get('id') || '').replace(/\D/g,'');
+          location.replace(id ? `/phr.html?id=${id}` : '/meus-pacientes');
+        }
+      })();
+
+      // 3) HANDLER global: clica em "Ver PHR" (botão/anchor) → /phr.html?id=XXXX
+      document.addEventListener('click', (e) => {
+        const el = e.target.closest('a,button');
+        if (!el) return;
+        if (!/ver\s*phr/i.test((el.textContent || '').trim())) return;
+
+        // Evita a navegação original (se for <a href> antigo)
+        e.preventDefault();
+
+        const tr = el.closest('tr');
+        let id = '';
+
+        // tenta achar a coluna "ID Persona" pela thead
+        const t = tr?.closest('table');
+        if (t?.tHead?.rows?.[0]) {
+          const heads = [...t.tHead.rows[0].cells].map(c => (c.textContent||'').toLowerCase());
+          const idIdx = heads.findIndex(h => /id\s*persona|^id$/.test(h));
+          if (idIdx >= 0) id = (tr?.cells?.[idIdx]?.textContent || '').replace(/\D/g,'');
+        }
+        // fallback: 1ª coluna
+        if (!id) id = (tr?.cells?.[0]?.textContent || '').replace(/\D/g,'');
+
+        if (id) location.href = `/phr.html?id=${id}`;
+      });
+
+      // 4) (opcional) se cair no /, manda para /meus-pacientes
+      if (location.pathname === '/' || location.pathname === '/index.html') {
+        try { history.replaceState(null, '', '/meus-pacientes'); } catch(_) {}
+      }
+    </script>
+  </body>
+</html>
