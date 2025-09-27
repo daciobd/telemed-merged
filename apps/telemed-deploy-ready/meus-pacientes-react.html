@@ -58,6 +58,14 @@
   <!-- Babel standalone para compilar JSX no browser (apenas para prototipagem) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
+  <!-- Evita erro setHeaderH is not defined -->
+  <script>
+    // evita que scripts parem caso alguma parte chame setHeaderH
+    if (typeof window.setHeaderH !== "function") {
+      window.setHeaderH = () => {};
+    }
+  </script>
+  
   <!-- Componente React inline -->
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
