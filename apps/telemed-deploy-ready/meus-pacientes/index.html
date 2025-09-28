@@ -447,7 +447,12 @@
     .categoria-orfas a:hover {
         background: #d1d5db;
     }
-    </style></head>
+    </style>
+
+<style>
+  table tbody tr{ cursor:pointer; }
+  a.btn, button.btn, .btn[role="button"]{ cursor:pointer; }
+</style></head>
 <body>
 <div style="margin: 15px 0; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid #10b981;"><strong style="color: #10b981; display: block; margin-bottom: 5px;">🏥 Acesso Rápido</strong><a href="/medico/" style="color: #10b981; text-decoration: none; font-weight: 600;">Área Médica - Gestão de Pacientes</a></div><header class="header">
 <div class="header-content">
@@ -737,5 +742,44 @@
         window.addEventListener('load', setHeaderH);
         window.addEventListener('resize', setHeaderH);
     </script>
+
+<script>
+(function(){
+  function relink() {
+    document.querySelectorAll('table tbody tr').forEach(tr => {
+      const id = (tr?.cells?.[0]?.textContent || '').replace(/\D/g,'');
+      if (!id) return;
+
+      const btn = [...tr.querySelectorAll('a,button')].find(x =>
+        /ver\s*phr/i.test((x.textContent||'').trim())
+      );
+
+      if (btn) {
+        if (btn.tagName !== 'A') {
+          const a = document.createElement('a');
+          a.className = btn.className;
+          a.innerHTML = btn.innerHTML || 'Ver PHR';
+          a.href = `/phr.html?id=${id}`;
+          a.title = a.href;
+          btn.replaceWith(a);
+        } else {
+          btn.href = `/phr.html?id=${id}`;
+          btn.title = btn.href;
+          btn.onclick = e => e.stopPropagation();
+        }
+        (btn.closest('a') || btn).style.cursor = 'pointer';
+      }
+
+      tr.style.cursor = 'pointer';
+      tr.onclick = (e) => {
+        if (e.target.closest('a,button')) return;
+        location.href = `/phr.html?id=${id}`;
+      };
+    });
+  }
+  relink();
+  new MutationObserver(relink).observe(document.body, { childList:true, subtree:true });
+})();
+</script>
 </body>
 </html>
