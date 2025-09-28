@@ -1,10 +1,11 @@
 :root{--c1:#0ea5e9;--bg:#0b1220;--panel:#0f172a;--b:#1f2937;--txt:#e5e7eb;--muted:#94a3b8}
 *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
 .topbar{background:var(--c1);color:#fff;padding:10px 16px;font-weight:700;display:flex;align-items:center;gap:12px}
-.topbar .back{color:#fff;text-decoration:none;font-weight:600;opacity:.9}
+.topbar .back{color:#fff;text-decoration:none;font-weight:600;opacity:.9;cursor:pointer;transition:opacity 0.2s ease}
+.topbar .back:hover{opacity:1;text-decoration:underline}
 .container{max-width:1100px;margin:16px auto;padding:0 12px}
 .card{background:var(--panel);border:1px solid var(--b);border-radius:12px;margin:12px 0}
-.card .hd{padding:10px 14px;border-bottom:1px solid var(--b);color:#cbd5e1;font-weight:600;background:#111827;border-radius:12px 12px 0 0}
+.card .hd{padding:10px 14px;border-bottom:1px solid var(--b);color:#cbd5e1;font-weight:600;background:#111827;border-radius:12px 12px 0 0;cursor:pointer!important;transition:background-color 0.2s ease!important}
 .card .bd{padding:12px 14px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row{display:flex;gap:8px}
@@ -12,3 +13,6 @@
 .timeline .item{border:1px dashed var(--b);border-radius:10px;padding:10px;margin:8px 0;background:#0b1220}
 .empty{color:var(--muted)}
 .small{font-size:12px;color:var(--muted)}
+a{color:var(--c1);text-decoration:none;cursor:pointer;transition:color 0.2s ease}
+a:hover{color:#38bdf8;text-decoration:underline}
+.hd:hover,.card .hd:hover,div.hd:hover{background-color:#1e293b!important;cursor:pointer!important}
