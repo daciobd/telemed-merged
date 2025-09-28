@@ -266,9 +266,9 @@ const server = http.createServer((req, res) => {
   }
 
   // === ROTAS SPA PHR ===
-  // Serve phr-react.html para rotas PHR e compatibilidade
+  // Serve phr-react.html para rotas PHR e compatibilidade (EXCETO phr.html)
   const urlPath = req.url.split('?')[0];
-  if (urlPath === '/phr' || urlPath.startsWith('/phr/') || urlPath === '/registro-saude') {
+  if ((urlPath === '/phr' || urlPath.startsWith('/phr/') || urlPath === '/registro-saude') && urlPath !== '/phr.html') {
     fs.readFile(path.join(process.cwd(), 'phr-react.html'), (err, content) => {
       if (err) {
         res.writeHead(404);
