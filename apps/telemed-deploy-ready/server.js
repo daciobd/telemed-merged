@@ -236,6 +236,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // === ROTA PHR JSON FILES ===
+  if (req.method === 'GET' && pathname.startsWith('/data/phr/') && pathname.endsWith('.json')) {
+    const patientId = path.basename(pathname, '.json');
+    const jsonFilePath = path.join(process.cwd(), '..', '..', 'public', 'data', 'phr', `${patientId}.json`);
+    
+    fs.readFile(jsonFilePath, (err, content) => {
+      if (err) {
+        console.log(`❌ PHR JSON not found: ${jsonFilePath}`);
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'PHR not found' }));
+        return;
+      }
+      
+      console.log(`📄 PHR JSON served for patient ${patientId}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(content);
+    });
+    return;
+  }
+
   // === ROTA DE EVENTOS (telemetria) ===
   if (req.method === 'POST' && pathname === '/api/events') {
     parseBody(req, (err, body) => {

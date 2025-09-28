@@ -7,14 +7,12 @@
   title.textContent = `PHR — ${id}`;
 
   async function load() {
-    try { 
-      const r = await fetch(`/api/phr/${id}`); 
-      if (r.ok) return r.json(); 
-    } catch(_){}
-    try { 
-      const r = await fetch(`/data/phr/${id}.json`); 
-      if (r.ok) return r.json(); 
-    } catch(_){}
+    // ✅ 1) usa os JSONs ricos agora em public/data/phr
+    try { const r = await fetch(`/data/phr/${id}.json`); if (r.ok) return r.json(); } catch(_){}
+
+    // 2) fallback: API (se quiser manter)
+    try { const r = await fetch(`/api/phr/${id}`); if (r.ok) return r.json(); } catch(_){}
+
     return null;
   }
 

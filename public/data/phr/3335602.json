@@ -1,0 +1,102 @@
+{
+  "idPersona": "3335602",
+  "nomeCompleto": "Dheliciane Da Silva Costa",
+  "cpf": "03262894370",
+  "idade": 36,
+  "nascimento": "1988-09-23",
+  "genero": "Feminino",
+  "contatos": {
+    "telefone": "+55 21 99504-0225",
+    "email": "dhelicanecosta@icloud.com"
+  },
+  "endereco": {
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "22071-030"
+  },
+  "parametros": {
+    "altura": "165cm",
+    "peso": "62kg",
+    "pa": "120/80 mmHg",
+    "cintura": "80cm",
+    "imc": "22.8"
+  },
+  "equipe": [
+    "Dra. Maria Santos - Clínica Geral",
+    "Dr. João Silva - Cardiologista", 
+    "Dra. Ana Costa - Endocrinologista"
+  ],
+  "alergias": ["Penicilina", "Frutos do mar"],
+  "patologias": ["Hipertensão arterial leve"],
+  "medicacoes": [
+    "Losartana 50mg - 1x/dia",
+    "Vitamina D 2000UI - 1x/dia"
+  ],
+  "eventos": [
+    {
+      "id": "ev1",
+      "tipo": "VIDEO_CONSULTA",
+      "titulo": "Consulta Clínica Geral",
+      "data": "2025-08-15T14:30:00Z",
+      "profissional": "Dra. Maria Santos",
+      "especialidade": "Clínica Geral"
+    },
+    {
+      "id": "ev2", 
+      "tipo": "EXAME",
+      "titulo": "Hemograma Completo",
+      "data": "2025-08-10T09:00:00Z",
+      "profissional": "Lab. Central",
+      "especialidade": "Laboratório"
+    }
+  ],
+  "consultas": [
+    {
+      "data": "2025-08-15T14:30:00Z",
+      "especialidade": "Clínica Geral",
+      "profissional": "Dra. Maria Santos",
+      "registro": {
+        "queixa": "Dor de cabeça frequente e cansaço",
+        "doencaAtual": "Paciente relata cefaleia tensional há 2 semanas, associada a estresse no trabalho",
+        "hipoteses": ["Cefaleia tensional", "Síndrome do burnout"],
+        "conduta": "Orientação sobre higiene do sono, técnicas de relaxamento, retorno em 15 dias",
+        "prescricoes": [
+          {"produto": "Dipirona 500mg", "posologia": "1 comprimido de 6/6h se dor"},
+          {"produto": "Complexo B", "posologia": "1 comprimido ao dia"}
+        ],
+        "encaminhamentos": [
+          {"destino": "Psicologia", "motivo": "Manejo do estresse"}
+        ]
+      }
+    }
+  ],
+  "laboratoriais": [
+    {
+      "data": "2025-08-10",
+      "exame": "Hemograma completo",
+      "resultado": "Normal",
+      "valores": "Hb: 13.5 g/dL, Leucócitos: 7200/μL",
+      "laboratorio": "Lab. Central"
+    },
+    {
+      "data": "2025-07-25",
+      "exame": "Glicemia de jejum",
+      "resultado": "Normal", 
+      "valores": "92 mg/dL",
+      "laboratorio": "Lab. Central"
+    }
+  ],
+  "estudos": [
+    {
+      "data": "2025-07-20",
+      "tipo": "Raio-X de tórax",
+      "achados": "Campos pulmonares livres, área cardíaca normal",
+      "servico": "Radiologia São Lucas"
+    }
+  ],
+  "vacinas": [
+    {"vacina": "COVID-19 (4ª dose)", "data": "2025-03-15"},
+    {"vacina": "Influenza", "data": "2025-04-10"}
+  ],
+  "notasPrivadas": "Paciente colaborativa, aderente ao tratamento. Histórico familiar de DM tipo 2."
+}
