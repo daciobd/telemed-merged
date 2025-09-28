@@ -157,7 +157,7 @@ export default function MeusPacientesDoc24() {
   const onlyDigits = (v: unknown) => String(v ?? '').replace(/\D/g,'');
   
   const verPHR = (id: string) => {
-    window.location.href = `/phr/${id}`;
+    window.location.href = `/phr.html?id=${id}`;
   };
 
   const novaAtencao = (id: string) => {
@@ -311,8 +311,8 @@ export default function MeusPacientesDoc24() {
                     <td className="px-5 py-3 align-top">
                       <div className="flex gap-2">
                         <a 
-                          href={`/phr/${onlyDigits(p.idPersona)}`}
-                          title={`/phr/${onlyDigits(p.idPersona)}`}
+                          href={`/phr.html?id=${onlyDigits(p.idPersona)}`}
+                          title={`/phr.html?id=${onlyDigits(p.idPersona)}`}
                           onClick={(e) => e.stopPropagation()}
                           data-testid={`button-ver-phr-${p.idPersona}`}
                           className="rounded-md bg-[#1282db] px-3 py-1.5 text-white hover:bg-[#0e6fb9] inline-block text-center">Ver PHR</a>
