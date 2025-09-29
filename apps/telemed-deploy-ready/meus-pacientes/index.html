@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="/toast.css" rel="stylesheet"/>
 <style>
         :root {
             --primary: #1e40af;
@@ -705,6 +706,7 @@
         function viewPHR(patientId) {
             // Abrir PHR do paciente na nova página dedicada
             console.log(`📋 Abrindo PHR do paciente ${patientId}`);
+            toast.info('Abrindo PHR', `Carregando prontuário do paciente ${patientId}...`);
             
             // ✅ Usar novo formato: /phr.html?id=ID (dados ricos dos JSONs)
             window.open(`/phr.html?id=${patientId}`, '_blank');
@@ -713,6 +715,7 @@
         function newOfflineAttention(patientId) {
             // Simular nova atenção offline
             console.log(`🏥 Iniciando nova atenção offline para paciente ${patientId}`);
+            toast.success('Nova Atenção', `Iniciando atendimento para paciente ${patientId}`);
             
             // Implementar integração com sistema de consulta
             window.open(`/consulta?patientId=${patientId}&mode=offline`, '_blank');
@@ -780,6 +783,29 @@
   relink();
   new MutationObserver(relink).observe(document.body, { childList:true, subtree:true });
 })();
+</script>
+
+<script src="/toast.js"></script>
+<script>
+// Toast de boas-vindas
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    toast.success('👋 Bem-vindo!', 'Sistema de gestão de pacientes carregado com sucesso.');
+  }, 800);
+});
+
+// Toast ao filtrar pacientes
+const filterBtn = document.querySelector('.filter-btn');
+const originalFilterPatients = window.filterPatients;
+window.filterPatients = function() {
+  originalFilterPatients();
+  const visibleRows = document.querySelectorAll('#patients-table tbody tr:not([style*="display: none"])');
+  if (visibleRows.length === 0) {
+    toast.warning('Nenhum resultado', 'Não encontramos pacientes com esses filtros.');
+  } else if (visibleRows.length < document.querySelectorAll('#patients-table tbody tr').length) {
+    toast.info('Filtro aplicado', `${visibleRows.length} paciente(s) encontrado(s).`);
+  }
+};
 </script>
 </body>
 </html>
