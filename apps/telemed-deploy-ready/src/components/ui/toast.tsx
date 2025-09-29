@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -30,17 +30,26 @@ const colors = {
 };
 
 export function ToastComponent({ toast, onClose }: ToastProps) {
+  const [isClosing, setIsClosing] = React.useState(false);
+
   useEffect(() => {
     const duration = toast.duration ?? 5000;
     if (duration > 0) {
-      const timer = setTimeout(() => onClose(toast.id), duration);
+      const timer = setTimeout(() => handleClose(), duration);
       return () => clearTimeout(timer);
     }
-  }, [toast.id, toast.duration, onClose]);
+  }, [toast.id, toast.duration]);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => onClose(toast.id), 300); // Match animation duration
+  };
 
   return (
     <div
-      className={`toast-item ${colors[toast.type]} border backdrop-blur-md rounded-lg p-4 shadow-lg min-w-[300px] max-w-[420px] animate-slide-in`}
+      className={`toast-item ${colors[toast.type]} border backdrop-blur-md rounded-lg p-4 shadow-lg min-w-[300px] max-w-[420px] ${
+        isClosing ? 'animate-slide-out' : 'animate-slide-in'
+      }`}
       role="alert"
     >
       <div className="flex items-start gap-3">
@@ -52,7 +61,7 @@ export function ToastComponent({ toast, onClose }: ToastProps) {
           )}
         </div>
         <button
-          onClick={() => onClose(toast.id)}
+          onClick={handleClose}
           className="flex-shrink-0 text-white/60 hover:text-white transition-colors ml-2"
           aria-label="Fechar notificação"
         >
