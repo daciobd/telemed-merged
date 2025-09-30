@@ -1,42 +1,35 @@
-// lib/ai.js - Lógica OpenAI para Dr. AI Assistant
+// lib/ai.js - Lógica OpenAI para Dr. AI Assistant com validação JSON
 import OpenAI from "openai";
+import { buildSystemPrompt, buildUserMessage } from "./prompt.js";
+import { AiResponseSchema, AiResponseSchemaFallback } from "./schema.js";
 
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 export const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 15000);
 
-export const SYSTEM_PROMPT = `Você é um assistente de orientações médicas do projeto Telemed.
-FUNÇÃO: Ajudar pacientes a esclarecer dúvidas sobre orientações JÁ FORNECIDAS pelo médico na última consulta.
-
-REGRAS IMPORTANTES:
-1. SOMENTE responda com base nas orientações registradas que foram fornecidas
-2. Se a pergunta não puder ser respondida com as informações disponíveis, diga: "Essa questão precisa ser esclarecida com o médico. Posso encaminhar?" e marque outOfScope=true
-3. Se o paciente relatar sintomas NOVOS/PIORA ou sinais de emergência (dor no peito, falta de ar, sangramento intenso, confusão mental, reação alérgica grave, ideação suicida), diga para procurar atendimento imediato e marque emergency=true
-4. Sempre comece com: "Com base nas orientações do Dr/Dra [NOME] em [DATA]..." quando houver esses dados
-5. Use linguagem simples, empática, sem jargões médicos complexos
-6. Seja conciso e objetivo nas respostas
-7. Sempre reforce que não substitui consulta médica`;
-
 export function detectEmergency(question) {
   return /dor no peito|falta de ar|sangramento|confus[aã]o|alergia grave|su[ií]cid|emerg[eê]ncia/i.test(question);
 }
 
-export async function askModel({ question, orientationsText, doctorName, consultDate }) {
-  const preface = (doctorName && consultDate)
-    ? `Com base nas orientações do ${doctorName} em ${consultDate}:\n\n`
-    : "";
+export async function askModelJSON({ question, orientationsText, doctorName, consultDate, specialty }) {
+  // Construir contexto seguro
+  const contextoSeguro = buildContextoSeguro({ orientationsText, doctorName, consultDate, specialty });
 
-  // Guardrail simples: se não há orientações, marca out-of-scope direto
+  // Guardrail: sem orientações = fora de escopo
   if (!orientationsText?.trim()) {
     return { 
-      answer: "Não localizei orientações registradas na sua última consulta. Posso encaminhar para o médico?", 
-      flags: { outOfScope: true } 
+      tipo: "fora_escopo",
+      mensagem: "Não localizei orientações registradas na sua última consulta. Posso encaminhar para o médico?",
+      metadados: { medico: doctorName || "", data_consulta: consultDate || "" }
     };
   }
 
+  const systemPrompt = buildSystemPrompt(contextoSeguro);
+  const userMessage = buildUserMessage(question);
+
   const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: `ORIENTAÇÕES DA ÚLTIMA CONSULTA:\n${orientationsText}\n\nPERGUNTA DO PACIENTE:\n${question}` }
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userMessage }
   ];
 
   const controller = new AbortController();
@@ -46,7 +39,8 @@ export async function askModel({ question, orientationsText, doctorName, consult
     const completion = await openai.chat.completions.create(
       { 
         model: OPENAI_MODEL, 
-        temperature: 0.2, 
+        temperature: 0.2,
+        response_format: { type: "json_object" },
         messages 
       },
       { signal: controller.signal }
@@ -54,23 +48,68 @@ export async function askModel({ question, orientationsText, doctorName, consult
 
     const raw = completion.choices?.[0]?.message?.content?.trim() || "";
 
-    // Heurística extra: se o modelo não citou o contexto (muito vago), força outOfScope
-    const outOfScope = !/orienta(ç|c)[aã]o|dose|hor[aá]rio|retornar|exame|repouso|dieta/i.test(raw);
+    // Tentar parsear JSON
+    let parsed;
+    try {
+      // Extrair primeiro bloco JSON se vier texto extra
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const candidate = jsonMatch ? jsonMatch[0] : raw;
+      parsed = JSON.parse(candidate);
+    } catch (parseError) {
+      console.error("❌ AI retornou conteúdo não-JSON:", raw);
+      return { ...AiResponseSchemaFallback };
+    }
 
-    return { 
-      answer: preface + raw, 
-      flags: { outOfScope } 
-    };
+    // Validar com Zod
+    const result = AiResponseSchema.safeParse(parsed);
+    if (!result.success) {
+      const issues = result.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ");
+      console.error("❌ Resposta fora do schema:", issues);
+      return { ...AiResponseSchemaFallback };
+    }
+
+    return result.data;
   } catch (error) {
     if (error.name === 'AbortError') {
       console.error('⏱️ OpenAI request timeout');
       return {
-        answer: "Desculpe, houve um problema ao processar sua pergunta. Por favor, tente novamente.",
-        flags: { outOfScope: true }
+        tipo: "erro",
+        mensagem: "Desculpe, houve um problema ao processar sua pergunta. Por favor, tente novamente.",
+        metadados: { medico: doctorName || "", data_consulta: consultDate || "" }
       };
     }
-    throw error;
+    console.error("❌ Erro na chamada OpenAI:", error);
+    return { ...AiResponseSchemaFallback };
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+function buildContextoSeguro({ orientationsText, doctorName, consultDate, specialty }) {
+  const daysSince = consultDate ? calculateDaysSince(consultDate) : null;
+  
+  return `
+INFORMAÇÕES DO MÉDICO:
+- Nome: ${doctorName || "Não informado"}
+- Especialidade: ${specialty || "Não informada"}
+- Data da última consulta: ${consultDate || "Não informada"}${daysSince ? ` (${daysSince} dias atrás)` : ""}
+
+ORIENTAÇÕES REGISTRADAS NA CONSULTA:
+${orientationsText}
+
+DATA DE RETORNO: Verificar com o paciente se há retorno agendado
+`.trim();
+}
+
+function calculateDaysSince(dateStr) {
+  try {
+    const [day, month, year] = dateStr.split('/');
+    const consultDateObj = new Date(year, month - 1, day);
+    const now = new Date();
+    const diffTime = Math.abs(now - consultDateObj);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  } catch {
+    return null;
   }
 }

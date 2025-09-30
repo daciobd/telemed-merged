@@ -29,6 +29,7 @@ function getBody(req) {
 /**
  * Handler para /api/ai/answers
  * Processa perguntas usando OpenAI + RAG com Postgres
+ * Retorna JSON estruturado validado com Zod
  */
 async function handleAnswers(req, res) {
   try {
@@ -36,11 +37,15 @@ async function handleAnswers(req, res) {
     const { question, patientId = 1 } = body;
     
     if (!question) {
-      return sendJSON(res, 400, { error: "question é obrigatório" });
+      return sendJSON(res, 400, { 
+        tipo: "erro",
+        mensagem: "Pergunta é obrigatória",
+        metadados: { medico: "", data_consulta: "" }
+      });
     }
 
     // Importações dinâmicas para ES modules
-    const { askModel, detectEmergency } = await import('../lib/ai.js');
+    const { askModelJSON, detectEmergency } = await import('../lib/ai.js');
     const { getLastEncounterWithOrientations } = await import('../lib/db.js');
 
     // Buscar contexto da última consulta
@@ -48,8 +53,9 @@ async function handleAnswers(req, res) {
     
     if (!context) {
       return sendJSON(res, 200, { 
-        answer: "Não encontrei sua última consulta no sistema. Posso encaminhar ao médico?", 
-        flags: { outOfScope: true } 
+        tipo: "fora_escopo",
+        mensagem: "Não encontrei sua última consulta no sistema. Posso encaminhar ao médico?",
+        metadados: { medico: "", data_consulta: "" }
       });
     }
 
@@ -58,28 +64,34 @@ async function handleAnswers(req, res) {
       .map(o => `- ${o.orientation_type || "geral"}: ${o.content}`)
       .join("\n");
 
-    // Gerar resposta com OpenAI
-    const { answer, flags } = await askModel({
+    const doctorName = "Dr. Silva";
+    const consultDate = new Date(encounter.date).toLocaleDateString("pt-BR");
+
+    // Gerar resposta estruturada com OpenAI + Validação Zod
+    const response = await askModelJSON({
       question,
       orientationsText,
-      doctorName: "Dr. Silva",
-      consultDate: new Date(encounter.date).toLocaleDateString("pt-BR"),
+      doctorName,
+      consultDate,
+      specialty: "Clínica Geral"
     });
 
-    // Detectar emergências adicionalmente
+    // Detectar emergências adicionalmente (override se necessário)
     const emergency = detectEmergency(question);
+    if (emergency && response.tipo !== "escala_emergencia") {
+      response.tipo = "escala_emergencia";
+      response.mensagem = `ATENÇÃO: Detectei sinais de possível emergência. ${response.mensagem}`;
+    }
 
-    console.log(`🤖 Dr. AI Answer: "${question}" -> ${answer.substring(0, 50)}...`);
+    console.log(`🤖 Dr. AI Answer [${response.tipo}]: "${question}" -> ${response.mensagem.substring(0, 50)}...`);
 
-    return sendJSON(res, 200, { 
-      answer, 
-      flags: { ...flags, emergency } 
-    });
+    return sendJSON(res, 200, response);
   } catch (error) {
     console.error('❌ Error in handleAnswers:', error);
     return sendJSON(res, 500, { 
-      error: "Erro ao processar pergunta",
-      answer: "Desculpe, houve um problema ao processar sua pergunta. Por favor, tente novamente."
+      tipo: "erro",
+      mensagem: "Desculpe, houve um problema ao processar sua pergunta. Por favor, tente novamente.",
+      metadados: { medico: "", data_consulta: "" }
     });
   }
 }
