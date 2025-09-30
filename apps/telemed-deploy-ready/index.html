@@ -291,5 +291,44 @@
     if(!isFull || devOn) applyLocks();
   })();
   </script>
+
+  <!-- Bypass à prova de balas para o botão Demo de Toasts -->
+  <script>
+  (function() {
+    // Aguarda um tick para garantir que execute depois do applyLocks
+    setTimeout(() => {
+      const TOUR_URL = "/toast-demo.html?autodemo=1";
+      
+      // Função de navegação forçada
+      const forceNav = (url) => {
+        try {
+          const u = new URL(url, location.origin);
+          window.location.assign(u.toString());
+        } catch {
+          window.location.assign(url);
+        }
+      };
+
+      // Pega o botão pelo seletor específico
+      const btnDemo = document.querySelector('a[href*="toast-demo"]');
+      
+      if (btnDemo) {
+        // Remove a classe tm-locked se existir
+        btnDemo.classList.remove('tm-locked');
+        btnDemo.removeAttribute('aria-disabled');
+        btnDemo.style.cursor = 'pointer';
+        btnDemo.style.opacity = '1';
+        
+        // Registra handler em CAPTURE com maior prioridade
+        btnDemo.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          forceNav(TOUR_URL);
+        }, { capture: true });
+      }
+    }, 100);
+  })();
+  </script>
 </body>
 </html>
