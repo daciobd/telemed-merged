@@ -52,3 +52,95 @@ A plataforma é construída como um monorepo contendo cinco microsserviços Dock
 -   **Shadcn/ui + Radix UI**: Componentes de UI para o frontend.
 -   **Redis**: Key Value Store para cache/filas de chat.
 -   **Datadog**: Monitoramento e observabilidade.
+
+## 📦 Kit Modular Dr. AI - Componentes TypeScript
+
+### Visão Geral
+Arquitetura modular e reutilizável do Assistente Dr. AI, com componentes separados, hook customizado e API stubs prontos para integração TypeScript/React.
+
+### Estrutura de Arquivos
+**Localização**: `/src/components/telemed-ai/`
+
+```
+telemed-ai/
+├── api.ts                    # Stubs de API (answers, tts, stt, auditLog)
+├── hooks/
+│   └── use-telemed-ai.ts     # Hook com lógica de estado e guardrails
+├── ConsentGate.tsx           # Gate de consentimento LGPD
+├── MessageBubble.tsx         # Componente de mensagem (dark mode)
+├── EmergencyCTA.tsx          # CTA de emergência sticky
+├── OutOfScopeDialog.tsx      # Modal fora do escopo
+├── TelemedAIInterface.tsx    # Interface principal completa
+└── index.ts                  # Barrel exports
+```
+
+### Como Usar
+
+**Import completo do barrel**:
+```typescript
+import { TelemedAIInterface } from "@/components/telemed-ai";
+```
+
+**Imports individuais**:
+```typescript
+import { 
+  ConsentGate, 
+  MessageBubble,
+  EmergencyCTA,
+  useTelemedAI 
+} from "@/components/telemed-ai";
+```
+
+**Usar o hook isoladamente**:
+```typescript
+const doctorInfo = {
+  name: "Dr. Roberto Silva",
+  specialty: "Cardiologia",
+  lastConsult: "25/09/2025",
+  nextConsult: "25/10/2025"
+};
+
+const { 
+  messages, 
+  inputText,
+  setInputText,
+  send, 
+  typing,
+  showOutOfScope,
+  setShowOutOfScope 
+} = useTelemedAI(doctorInfo);
+```
+
+### Substituir API Stubs
+
+Para integrar com backend real, edite `/src/components/telemed-ai/api.ts`:
+
+```typescript
+// Trocar stub por HTTP real
+export async function answers(question: string): Promise<AnswerPayload> {
+  const res = await fetch("/api/ai/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question })
+  });
+  return res.json();
+}
+```
+
+### Funcionalidades do Kit
+
+- ✅ **Consent Gate LGPD**: Checkbox obrigatório com disclaimer
+- ✅ **Audit Logging**: Sistema de telemetria completo
+- ✅ **Scope Detection**: Regex identifica perguntas fora do escopo
+- ✅ **Emergency Escalation**: Fluxo dedicado para urgências
+- ✅ **Dark Mode**: Suporte completo com classes `dark:`
+- ✅ **Cooldown Anti-spam**: 1.5s entre mensagens
+- ✅ **Quick Questions**: 4 perguntas pré-definidas
+
+### Páginas Demo
+
+- **Versão HTML/CDN**: `/dr-ai-assistant.html` - Interface standalone com React via CDN
+- **Documentação Modular**: `/dr-ai-modular.html` - Guia de uso dos componentes
+
+### Navegação
+- **Homepage**: Botão "📦 Kit Modular Dr. AI" (`data-testid="button-dr-ai-modular"`)

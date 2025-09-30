@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
-import MessageBubble from "@/components/telemed-ai/MessageBubble";
-import EmergencyCTA from "@/components/telemed-ai/EmergencyCTA";
-import OutOfScopeDialog from "@/components/telemed-ai/OutOfScopeDialog";
-import ConsentGate from "@/components/telemed-ai/ConsentGate";
-import { useTelemedAI } from "@/components/telemed-ai/hooks/use-telemed-ai";
+import MessageBubble from "./MessageBubble";
+import EmergencyCTA from "./EmergencyCTA";
+import OutOfScopeDialog from "./OutOfScopeDialog";
+import ConsentGate from "./ConsentGate";
+import { useTelemedAI } from "./hooks/use-telemed-ai";
 
 export default function TelemedAIInterface() {
   const [currentScreen, setCurrentScreen] = useState<"gate" | "home" | "chat" | "emergency">("gate");

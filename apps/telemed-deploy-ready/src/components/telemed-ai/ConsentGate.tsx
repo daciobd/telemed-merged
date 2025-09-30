@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldQuestion } from "lucide-react";
-import { auditLog } from "@/components/telemed-ai/api";
+import { auditLog } from "./api";
 
 export default function ConsentGate({ onAccepted }: { onAccepted: () => void }) {
   const [checked, setChecked] = useState(false);

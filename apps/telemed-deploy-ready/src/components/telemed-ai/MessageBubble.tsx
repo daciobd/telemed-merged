@@ -1,4 +1,4 @@
-import type { Message } from "@/components/telemed-ai/hooks/use-telemed-ai";
+import type { Message } from "./hooks/use-telemed-ai";
 
 export default function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";

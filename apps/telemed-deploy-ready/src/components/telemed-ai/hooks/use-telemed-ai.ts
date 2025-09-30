@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { answers, auditLog } from "@/components/telemed-ai/api";
+import { answers, auditLog } from "../api";
 
 export type Role = "ai" | "user";
 export interface Message { role: Role; text: string; time: string }
