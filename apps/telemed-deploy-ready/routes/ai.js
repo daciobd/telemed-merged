@@ -40,8 +40,8 @@ async function handleAnswers(req, res) {
     }
 
     // Importações dinâmicas para ES modules
-    const { askModel, detectEmergency } = await import('./lib/ai.js');
-    const { getLastEncounterWithOrientations } = await import('./lib/db.js');
+    const { askModel, detectEmergency } = await import('../lib/ai.js');
+    const { getLastEncounterWithOrientations } = await import('../lib/db.js');
 
     // Buscar contexto da última consulta
     const context = await getLastEncounterWithOrientations(patientId);
