@@ -9,20 +9,39 @@ function sendJSON(res, status, data) {
 }
 
 /**
+ * Helper para obter corpo da requisição
+ */
+function getBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+/**
  * Handler para /api/ai/answers
  * Processa perguntas usando OpenAI + RAG com Postgres
  */
-export async function handleAnswers(req, res, body) {
+async function handleAnswers(req, res) {
   try {
-    const { question, patientId = 1 } = JSON.parse(body || "{}");
+    const body = await getBody(req);
+    const { question, patientId = 1 } = body;
     
     if (!question) {
       return sendJSON(res, 400, { error: "question é obrigatório" });
     }
 
-    // Importações dinâmicas para evitar problemas com ES modules
-    const { askModel, detectEmergency } = await import('../lib/ai.js');
-    const { getLastEncounterWithOrientations } = await import('../lib/db.js');
+    // Importações dinâmicas para ES modules
+    const { askModel, detectEmergency } = await import('./lib/ai.js');
+    const { getLastEncounterWithOrientations } = await import('./lib/db.js');
 
     // Buscar contexto da última consulta
     const context = await getLastEncounterWithOrientations(patientId);
@@ -69,9 +88,10 @@ export async function handleAnswers(req, res, body) {
  * Handler para /api/ai/tts
  * Text-to-Speech (stub - trocar por provedor real)
  */
-export async function handleTTS(req, res, body) {
+async function handleTTS(req, res) {
   try {
-    const { text } = JSON.parse(body || "{}");
+    const body = await getBody(req);
+    const { text } = body;
     
     if (!text) {
       return sendJSON(res, 400, { error: "text é obrigatório" });
@@ -95,10 +115,10 @@ export async function handleTTS(req, res, body) {
  * Handler para /api/ai/stt
  * Speech-to-Text (stub - trocar por provedor real)
  */
-export async function handleSTT(req, res, body) {
+async function handleSTT(req, res) {
   try {
     // TODO: Integrar com provedor STT real (Whisper, Google, Azure)
-    await Promise.resolve(); // Evitar warning de unused parameter
+    await getBody(req); // Ler body mesmo que não use
     
     console.log(`🎤 Dr. AI STT: Audio received`);
     
@@ -115,9 +135,9 @@ export async function handleSTT(req, res, body) {
  * Handler para /api/ai/escalations
  * Registra escalação para atendimento médico
  */
-export async function handleEscalations(req, res, body) {
+async function handleEscalations(req, res) {
   try {
-    const payload = JSON.parse(body || "{}");
+    const payload = await getBody(req);
     
     console.log(`🚨 Dr. AI Escalation: ${JSON.stringify(payload)}`);
     
@@ -137,9 +157,9 @@ export async function handleEscalations(req, res, body) {
  * Handler para /api/ai/audit
  * Registra eventos de auditoria/telemetria
  */
-export async function handleAudit(req, res, body) {
+async function handleAudit(req, res) {
   try {
-    const payload = JSON.parse(body || "{}");
+    const payload = await getBody(req);
     
     console.log(`🔒 Dr. AI Audit: ${JSON.stringify(payload)}`);
     
@@ -154,3 +174,11 @@ export async function handleAudit(req, res, body) {
     return sendJSON(res, 500, { error: "Erro ao registrar auditoria" });
   }
 }
+
+module.exports = {
+  handleAnswers,
+  handleTTS,
+  handleSTT,
+  handleEscalations,
+  handleAudit
+};
