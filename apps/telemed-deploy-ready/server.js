@@ -272,6 +272,101 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // === ROTAS DR. AI ASSISTANT ===
+  
+  // Rota para respostas do assistente
+  if (req.method === 'POST' && pathname === '/api/ai/answer') {
+    parseBody(req, (err, body) => {
+      if (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'Invalid JSON' }));
+        return;
+      }
+      
+      const { question } = body;
+      
+      // Simular delay de processamento
+      setTimeout(() => {
+        let answer = '';
+        let flags = {};
+        
+        // Detectar emergências
+        if (/emerg[eê]ncia|dor no peito|falta de ar|sangramento|confus[aã]o/i.test(question)) {
+          answer = "Percebo possível sinal de emergência. Preciso encaminhar você para atendimento médico. É urgente?";
+          flags.emergency = true;
+        }
+        // Perguntas sobre medicamentos
+        else if (/medicamento|rem[eé]dio/i.test(question)) {
+          answer = "Com base nas orientações do Dr. Silva em 25/09/2025:\n\nVocê deve tomar Losartana 50mg, 1 comprimido pela MANHÃ, todos os dias.\n\nRecomendação: tomar sempre no mesmo horário, após o café da manhã, com um copo de água.\n\nFicou claro? Tem mais alguma dúvida sobre as orientações da consulta?";
+        }
+        // Perguntas sobre exercícios
+        else if (/exerc[ií]cio/i.test(question)) {
+          answer = "Com base nas orientações do Dr. Silva em 25/09/2025:\n\nVocê pode fazer caminhadas leves de 20-30 minutos, 3x por semana. Evite exercícios intensos por enquanto.\n\nSe sentir falta de ar ou cansaço excessivo, pare e descanse.\n\nTem mais alguma dúvida sobre as orientações?";
+        }
+        // Fora do escopo
+        else {
+          answer = "Entendi sua pergunta. Vou verificar nas orientações registradas pelo Dr. Silva... Pode reformular sua dúvida de outra forma para eu entender melhor?";
+          flags.outOfScope = true;
+        }
+        
+        console.log(`🤖 Dr. AI: Question received - "${question}"`);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ answer, flags }));
+      }, 650);
+    });
+    return;
+  }
+
+  // Rota para auditoria (telemetria do Dr. AI)
+  if (req.method === 'POST' && pathname === '/api/ai/audit') {
+    parseBody(req, (err, body) => {
+      if (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false }));
+        return;
+      }
+      
+      console.log(`🔒 Dr. AI Audit: ${JSON.stringify(body)}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true }));
+    });
+    return;
+  }
+
+  // Rota para TTS (Text-to-Speech) - stub por enquanto
+  if (req.method === 'POST' && pathname === '/api/ai/tts') {
+    parseBody(req, (err, body) => {
+      if (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false }));
+        return;
+      }
+      
+      console.log(`🔊 Dr. AI TTS: "${body.text}"`);
+      
+      // Retornar data URI de áudio fake
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        audioUrl: `data:audio/mpeg;base64,AUDIO_STUB_${Date.now()}` 
+      }));
+    });
+    return;
+  }
+
+  // Rota para STT (Speech-to-Text) - stub por enquanto
+  if (req.method === 'POST' && pathname === '/api/ai/stt') {
+    // Para STT, esperamos multipart/form-data com arquivo de áudio
+    // Por enquanto, retornar transcrição fake
+    console.log(`🎤 Dr. AI STT: Audio received`);
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      transcript: "Transcrição simulada do áudio" 
+    }));
+    return;
+  }
+
   // Health check endpoint for Render observability
   if (req.url === '/api/health' || req.url === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'application/json' });

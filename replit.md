@@ -56,7 +56,13 @@ A plataforma é construída como um monorepo contendo cinco microsserviços Dock
 ## 📦 Kit Modular Dr. AI - Componentes TypeScript
 
 ### Visão Geral
-Arquitetura modular e reutilizável do Assistente Dr. AI, com componentes separados, hook customizado e API stubs prontos para integração TypeScript/React.
+Arquitetura modular e reutilizável do Assistente Dr. AI, com componentes separados, hook customizado e **integração completa com o servidor HTTP**.
+
+### ⚠️ Arquitetura do Projeto
+**IMPORTANTE**: Este projeto usa **servidor HTTP nativo Node.js** (não Next.js, não Express framework).
+- **Frontend**: HTML estático + React via CDN (ou build Vite futuro)
+- **Backend**: `apps/telemed-deploy-ready/server.js` - Servidor HTTP simples
+- **NÃO usa**: Next.js API routes, `app/api/` directory, ou padrões Next.js
 
 ### Estrutura de Arquivos
 **Localização**: `/src/components/telemed-ai/`
@@ -111,21 +117,22 @@ const {
 } = useTelemedAI(doctorInfo);
 ```
 
-### Substituir API Stubs
+### ✅ API Integrada com Servidor
 
-Para integrar com backend real, edite `/src/components/telemed-ai/api.ts`:
+As APIs já estão **totalmente integradas** com o servidor HTTP! 
 
-```typescript
-// Trocar stub por HTTP real
-export async function answers(question: string): Promise<AnswerPayload> {
-  const res = await fetch("/api/ai/answer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question })
-  });
-  return res.json();
-}
-```
+**Rotas Disponíveis** (em `server.js`):
+- `POST /api/ai/answer` - Envia pergunta, recebe resposta com flags (emergency, outOfScope)
+- `POST /api/ai/audit` - Log de auditoria/telemetria
+- `POST /api/ai/tts` - Text-to-Speech (retorna data URI)
+- `POST /api/ai/stt` - Speech-to-Text (recebe áudio, retorna transcrição)
+
+**Arquivo `api.ts`**: Já configurado para usar `fetch()` e chamar as rotas acima.
+
+**Para substituir com backend real**:
+1. Edite as rotas em `apps/telemed-deploy-ready/server.js`
+2. Adicione lógica de IA real (OpenAI, etc.)
+3. Conecte com banco de dados PostgreSQL conforme necessário
 
 ### Funcionalidades do Kit
 
