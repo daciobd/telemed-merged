@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assistente Dr. AI • TeleMed</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='12' width='64' height='64' fill='%231e40af'/%3E%3Ctext x='32' y='42' font-family='Inter,Arial' font-size='36' text-anchor='middle' fill='white'%3ETM%3C/text%3E%3C/svg%3E" />
+  
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" crossorigin href="/assets/index-BixFYIh2.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f3f4f6;
+    }
+    
+    .ai-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-center;
+      padding: 1rem;
+    }
+    
+    .ai-card {
+      width: 100%;
+      max-width: 28rem;
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      height: 700px;
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div id="dr-ai-root">
+    <!-- Loading skeleton -->
+    <div class="ai-container">
+      <div class="ai-card">
+        <div class="bg-blue-600 text-white p-6 animate-pulse">
+          <div class="h-8 bg-blue-700 rounded w-2/3 mb-2"></div>
+          <div class="h-4 bg-blue-700 rounded w-1/2"></div>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="h-24 bg-gray-200 rounded animate-pulse"></div>
+          <div class="h-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- React e dependências -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Lucide Icons (inline minimal) -->
+  <script>
+    // Simplified icon components
+    const icons = {
+      MessageCircle: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
+      ),
+      Clock: () => React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
+        React.createElement('polyline', { points: '12 6 12 12 16 14' })
+      ),
+      User: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('path', { d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }),
+        React.createElement('circle', { cx: 12, cy: 7, r: 4 })
+      ),
+      AlertCircle: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
+        React.createElement('line', { x1: 12, y1: 8, x2: 12, y2: 12 }),
+        React.createElement('line', { x1: 12, y1: 16, x2: 12.01, y2: 16 })
+      ),
+      Phone: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('path', { d: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' })
+      ),
+      Send: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('line', { x1: 22, y1: 2, x2: 11, y2: 13 }),
+        React.createElement('polygon', { points: '22 2 15 22 11 13 2 9 22 2' })
+      ),
+      Mic: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('path', { d: 'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z' }),
+        React.createElement('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }),
+        React.createElement('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
+        React.createElement('line', { x1: 8, y1: 23, x2: 16, y2: 23 })
+      ),
+      ShieldQuestion: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+        React.createElement('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10' }),
+        React.createElement('path', { d: 'M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3' }),
+        React.createElement('line', { x1: 12, y1: 17, x2: 12.01, y2: 17 })
+      )
+    };
+  </script>
+  
+  <!-- Componente React Dr. AI -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+    const { MessageCircle, Clock, User, AlertCircle, Phone, Send, Mic, ShieldQuestion } = icons;
+    
+    const nowHM = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const isInScope = (t) => /medicamento|rem[eé]dio|exerc[ií]cio|retornar|diagn[oó]stico|exame|dose|hor[aá]rio/i.test(t);
+    
+    function auditLog(payload) {
+      console.log("[audit]", payload);
+    }
+
+    function DrAIAssistant() {
+      const [currentScreen, setCurrentScreen] = useState("gate");
+      const [consented, setConsented] = useState(false);
+      const [consentChecked, setConsentChecked] = useState(false);
+      const [messages, setMessages] = useState([{
+        role: "ai",
+        text: "Olá! Sou o assistente do Dr. Silva. Estou aqui para esclarecer dúvidas sobre as orientações da sua última consulta (25/09/2025). Como posso ajudar?",
+        time: "14:23"
+      }]);
+      const [inputText, setInputText] = useState("");
+      const [cooldown, setCooldown] = useState(false);
+      const [showOutOfScope, setShowOutOfScope] = useState(false);
+      const [typing, setTyping] = useState(false);
+      
+      const doctorInfo = useMemo(() => ({
+        name: "Dr. Roberto Silva",
+        specialty: "Cardiologia",
+        lastConsult: "25/09/2025",
+        nextConsult: "25/10/2025"
+      }), []);
+      
+      const quickQuestions = ["Como tomar meu medicamento?", "Posso fazer exercícios?", "Quando devo retornar?", "O que significa meu diagnóstico?"];
+      
+      const goChatAndSend = (q) => {
+        setCurrentScreen("chat");
+        setTimeout(() => sendMessage(q), 0);
+      };
+      
+      const sendMessage = (text) => {
+        const trimmed = text.trim();
+        if (!trimmed || cooldown) return;
+        if (trimmed.length > 500) return;
+        
+        const ts = nowHM();
+        setMessages(prev => [...prev, { role: "user", text: trimmed, time: ts }]);
+        setInputText("");
+        setCooldown(true);
+        setTyping(true);
+        
+        auditLog({ type: "question", text: trimmed, ts: new Date().toISOString() });
+        
+        const inScope = isInScope(trimmed);
+        if (!inScope) setShowOutOfScope(true);
+        
+        setTimeout(() => {
+          let response = "";
+          if (/medicamento|rem[eé]dio/i.test(trimmed)) {
+            response = "Com base nas orientações do Dr. Silva em 25/09/2025:\n\nVocê deve tomar Losartana 50mg, 1 comprimido pela MANHÃ, todos os dias.\n\nRecomendação: tomar sempre no mesmo horário, após o café da manhã, com um copo de água.";
+          } else if (/exerc[ií]cio/i.test(trimmed)) {
+            response = "Com base nas orientações do Dr. Silva em 25/09/2025:\n\nVocê pode fazer caminhadas leves de 20-30 minutos, 3x por semana. Evite exercícios intensos.\n\nSe sentir falta de ar, pare e descanse.";
+          } else {
+            response = "Entendi sua pergunta. Vou verificar nas orientações do Dr. Silva... Pode reformular de outra forma?";
+          }
+          
+          setMessages(prev => [...prev, { role: "ai", text: response, time: nowHM() }]);
+          setTyping(false);
+          auditLog({ type: "answer", text: response, ts: new Date().toISOString() });
+          setTimeout(() => setCooldown(false), 1800);
+        }, 900);
+      };
+      
+      if (currentScreen === "gate" && !consented) {
+        return (
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <ShieldQuestion />
+              <span>Consentimento para usar o Assistente de IA</span>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="font-semibold text-amber-900 mb-2">Importante</p>
+              <p className="text-sm text-amber-800">
+                Este assistente <strong>apenas repete e esclarece</strong> orientações já registradas na sua última consulta.
+                Ele <strong>não substitui consulta médica</strong> e <strong>não avalia sintomas novos</strong>.
+              </p>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="consent-check"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="consent-check" className="text-sm leading-6">
+                Li e concordo com o uso da IA para esclarecer orientações já dadas pelo meu médico.
+              </label>
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => window.history.back()} className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { setConsented(true); setCurrentScreen("home"); }}
+                disabled={!consentChecked}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700"
+              >
+                Concordo e continuar
+              </button>
+            </div>
+          </div>
+        );
+      }
+      
+      if (currentScreen === "home") {
+        return (
+          <div className="flex flex-col h-full">
+            <div className="bg-blue-600 text-white p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h1 className="text-2xl font-bold">Assistente Telemed</h1>
+                  <p className="text-blue-100 text-sm mt-1">Tire dúvidas sobre suas orientações</p>
+                </div>
+                <MessageCircle />
+              </div>
+              <div className="bg-blue-700 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-blue-500 rounded-full p-2"><User /></div>
+                  <div>
+                    <p className="font-semibold">{doctorInfo.name}</p>
+                    <p className="text-sm text-blue-200">{doctorInfo.specialty}</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <div className="flex items-center gap-1"><Clock /><span>Última: {doctorInfo.lastConsult}</span></div>
+                  <div className="flex items-center gap-1"><Clock /><span>Próxima: {doctorInfo.nextConsult}</span></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-amber-50 border-l-4 border-amber-400 p-4 m-4 rounded">
+              <div className="flex gap-3">
+                <AlertCircle className="flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-semibold text-amber-900 mb-1">Este é um assistente de IA</p>
+                  <p className="text-amber-800">Posso esclarecer dúvidas sobre orientações já dadas pelo seu médico. Não substituo consulta médica.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="px-4 pb-4">
+              <p className="text-sm font-semibold text-gray-700 mb-3">Perguntas frequentes:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {quickQuestions.map(q => (
+                  <button
+                    key={q}
+                    onClick={() => goChatAndSend(q)}
+                    className="border border-gray-300 rounded-lg p-3 text-left text-sm hover:border-blue-500 hover:bg-blue-50"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mt-auto p-4 space-y-2">
+              <button onClick={() => setCurrentScreen("chat")} className="w-full bg-blue-600 text-white rounded-lg py-3 font-semibold hover:bg-blue-700 flex items-center justify-center gap-2">
+                <MessageCircle /> Iniciar Conversa
+              </button>
+              <button onClick={() => setCurrentScreen("emergency")} className="w-full bg-red-600 text-white rounded-lg py-3 font-semibold hover:bg-red-700 flex items-center justify-center gap-2">
+                <Phone /> Preciso Falar com Médico
+              </button>
+            </div>
+          </div>
+        );
+      }
+      
+      if (currentScreen === "chat") {
+        return (
+          <div className="flex flex-col h-full">
+            <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setCurrentScreen("home")} className="hover:bg-blue-700 rounded px-2 py-1">
+                  ←
+                </button>
+                <div>
+                  <p className="font-semibold">Assistente IA</p>
+                  <p className="text-xs text-blue-200">Orientações de {doctorInfo.lastConsult}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+              {messages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200'
+                  }`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                    <p className={`text-[11px] mt-1 ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>{msg.time}</p>
+                  </div>
+                </div>
+              ))}
+              {typing && <div className="text-sm text-gray-500">Assistente está digitando...</div>}
+            </div>
+            
+            <div className="bg-amber-50 border-t border-amber-200 px-4 py-2">
+              <p className="text-xs text-amber-800 flex items-center gap-2">
+                <AlertCircle /> Sintomas novos? Clique em "Falar com Médico"
+              </p>
+            </div>
+            
+            <div className="bg-white border-t border-gray-200 p-4 sticky bottom-0">
+              <form onSubmit={(e) => { e.preventDefault(); sendMessage(inputText); }} className="flex gap-2">
+                <button type="button" className="bg-gray-100 rounded-full p-3 hover:bg-gray-200">
+                  <Mic />
+                </button>
+                <input
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder="Digite sua dúvida..."
+                  className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={cooldown}
+                />
+                <button type="submit" disabled={cooldown || !inputText.trim()} className="bg-blue-600 rounded-full p-3 hover:bg-blue-700 disabled:opacity-50">
+                  <Send />
+                </button>
+              </form>
+              <button onClick={() => setCurrentScreen("emergency")} className="w-full mt-2 text-red-600 text-sm font-semibold hover:underline">
+                ⚠️ Preciso de atendimento médico
+              </button>
+            </div>
+            
+            {showOutOfScope && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" onClick={() => setShowOutOfScope(false)}>
+                <div className="bg-white rounded-lg p-6 max-w-md" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="font-bold text-lg mb-2">Pergunta fora do escopo</h3>
+                  <p className="text-gray-600 mb-4">Sua pergunta parece não estar coberta pelas orientações. Encaminhar para o médico?</p>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={() => setShowOutOfScope(false)} className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                      Continuar no chat
+                    </button>
+                    <button onClick={() => { setShowOutOfScope(false); setCurrentScreen("emergency"); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                      Encaminhar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+      
+      if (currentScreen === "emergency") {
+        return (
+          <div className="flex flex-col h-full p-6">
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <div className="bg-red-100 rounded-full p-6 mb-6">
+                <Phone className="h-12 w-12 text-red-600" style={{ width: 48, height: 48 }} />
+              </div>
+              <h2 className="text-2xl font-bold mb-4">Encaminhando para Atendimento</h2>
+              <p className="text-gray-600 mb-6 max-w-md">Vou conectar você com a equipe médica. Enquanto isso, responda:</p>
+              
+              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6 w-full max-w-md">
+                <p className="font-semibold text-red-900 mb-3">É uma emergência?</p>
+                <p className="text-sm text-red-800 mb-4">(Dor no peito, falta de ar, sangramento intenso)</p>
+                <div className="space-y-2">
+                  <button className="w-full bg-red-600 text-white rounded-lg py-3 font-semibold hover:bg-red-700">Sim - É Urgente</button>
+                  <button className="w-full bg-white border-2 border-red-600 text-red-600 rounded-lg py-3 font-semibold hover:bg-red-50">Não - Posso Aguardar</button>
+                </div>
+              </div>
+              
+              <button onClick={() => setCurrentScreen("home")} className="text-gray-600 hover:text-gray-900">← Voltar</button>
+            </div>
+            
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+              <p className="text-sm text-blue-900">
+                <strong>Lembre-se:</strong> Em caso de emergência grave, ligue 192 (SAMU) ou vá ao pronto-socorro.
+              </p>
+            </div>
+          </div>
+        );
+      }
+      
+      return null;
+    }
+    
+    // Mount component
+    const root = ReactDOM.createRoot(document.getElementById('dr-ai-root'));
+    root.render(
+      <div className="ai-container">
+        <div className="ai-card">
+          <DrAIAssistant />
+        </div>
+      </div>
+    );
+  </script>
+</body>
+</html>
