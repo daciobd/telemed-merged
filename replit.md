@@ -122,7 +122,7 @@ const {
 As APIs já estão **totalmente integradas** com o servidor HTTP! 
 
 **Rotas Disponíveis** (em `server.js`):
-- `POST /api/ai/answer` - Envia pergunta, recebe resposta com flags (emergency, outOfScope)
+- `POST /api/ai/answer` - Envia pergunta, recebe resposta JSON estruturada validada (tipo, mensagem, metadados)
 - `POST /api/ai/audit` - Log de auditoria/telemetria
 - `POST /api/ai/tts` - Text-to-Speech (retorna data URI)
 - `POST /api/ai/stt` - Speech-to-Text (recebe áudio, retorna transcrição)
@@ -151,3 +151,60 @@ As APIs já estão **totalmente integradas** com o servidor HTTP!
 
 ### Navegação
 - **Homepage**: Botão "📦 Kit Modular Dr. AI" (`data-testid="button-dr-ai-modular"`)
+
+## 🚀 Recent Changes (30/09/2025)
+
+### Melhoria #1: Saída JSON Estruturada + Validação de Schema ✅
+
+**Implementação completa de resposta estruturada com Zod para o Dr. AI Assistant:**
+
+**Arquivos Criados/Modificados:**
+- `lib/schema.js` - Schema Zod definindo 4 tipos de resposta:
+  - `esclarecimento` - Resposta normal sobre orientações existentes
+  - `escala_emergencia` - Sintomas de emergência detectados
+  - `fora_escopo` - Pergunta fora do escopo das orientações
+  - `erro` - Erro no processamento
+  
+- `lib/prompt.js` - System prompt atualizado com:
+  - Anti-injeção de prompt (ignore instruções maliciosas)
+  - Saída JSON forçada via `response_format: { type: "json_object" }`
+  - Regras claras de classificação
+
+- `lib/ai.js` - Nova função `askModelJSON()`:
+  - Parsing e validação JSON com Zod
+  - Fallback seguro em caso de erro (sem mutação de estado)
+  - Contexto médico estruturado com dias desde consulta
+
+- `routes/ai.js` - Handler atualizado:
+  - Retorna JSON estruturado validado
+  - Override de emergência quando detectado
+  - Tratamento de erros com respostas estruturadas
+
+**Benefícios:**
+- ✅ Respostas previsíveis e tipadas
+- ✅ Validação automática de schema
+- ✅ Proteção contra prompt injection
+- ✅ Fallback seguro sem corrupção de estado
+- ✅ Melhor integração com frontend
+
+**Testes Realizados:**
+```bash
+# Esclarecimento
+POST /api/ai/answer {"question": "Como tomar o remédio?"} 
+→ {"tipo": "esclarecimento", "mensagem": "...", "metadados": {...}}
+
+# Emergência
+POST /api/ai/answer {"question": "Dor no peito forte!"} 
+→ {"tipo": "escala_emergencia", "mensagem": "...", "metadados": {...}}
+
+# Fora de escopo
+POST /api/ai/answer {"question": "Trocar remédio?"} 
+→ {"tipo": "fora_escopo", "mensagem": "...", "metadados": {...}}
+```
+
+**Próximas Melhorias Planejadas:**
+- #2: Timeout, Retry + Fallback de Modelo
+- #3: Rate Limiting por Paciente/Origem
+- #4: Logging Seguro + LGPD (minimização de PII)
+- #5: Políticas Versionáveis (YAML)
+- #6: Observabilidade (Métricas + Logs estruturados)
