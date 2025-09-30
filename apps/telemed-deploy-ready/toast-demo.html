@@ -204,6 +204,17 @@ toast.info('Informação', 'Processo iniciado.');
   <script src="/toast.js"></script>
   <script src="/tour.js"></script>
   <script>
+    // === DEBUG: Verificar carregamento ===
+    console.log('📍 toast-demo.html: Scripts loaded');
+    setTimeout(() => {
+      console.log('📍 Tour globals check:', {
+        tourNext: typeof window.tourNext,
+        tourPrev: typeof window.tourPrev,
+        tourEnd: typeof window.tourEnd,
+        autodemo: new URL(location.href).searchParams.get('autodemo')
+      });
+    }, 1000);
+    
     // Exemplos básicos
     function showSuccess() {
       toast.success('Operação concluída!', 'Tudo funcionou perfeitamente.');
@@ -248,12 +259,17 @@ toast.info('Informação', 'Processo iniciado.');
       setTimeout(() => toast.info('Quarta notificação', 'Sistema atualizado.'), 1500);
     }
 
-    // Toast de boas-vindas
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        toast.success('👋 Bem-vindo à Demo!', 'Teste os diferentes tipos de notificações.');
-      }, 500);
-    });
+    // Toast de boas-vindas (apenas se NÃO for autodemo)
+    const url = new URL(location.href);
+    const isAutodemo = url.searchParams.get('autodemo') === '1';
+    
+    if (!isAutodemo) {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          toast.success('👋 Bem-vindo à Demo!', 'Teste os diferentes tipos de notificações.');
+        }, 500);
+      });
+    }
   </script>
 </body>
 </html>
