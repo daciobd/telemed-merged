@@ -1,0 +1,34 @@
+# consultation_age_policy.yaml
+# Política de idade máxima de consulta por especialidade
+# Define quantos dias após a consulta o Dr. AI ainda pode esclarecer dúvidas
+
+max_days_since_consultation:
+  # Especialidades que requerem acompanhamento mais frequente
+  cardiologia: 60
+  psiquiatria: 30
+  neurologia: 45
+  oncologia: 30
+  endocrinologia: 60
+  
+  # Especialidades cirúrgicas (pós-operatório)
+  cirurgia_geral: 45
+  ortopedia: 60
+  
+  # Especialidades clínicas gerais
+  clinica_geral: 90
+  medicina_interna: 90
+  pediatria: 60
+  geriatria: 60
+  
+  # Especialidades ambulatoriais
+  dermatologia: 120
+  oftalmologia: 90
+  otorrinolaringologia: 90
+  
+  # Valor padrão para especialidades não listadas
+  default: 90
+
+# Mensagens customizadas por tempo
+messages:
+  warning_near_limit: "Sua última consulta foi há {days} dias. Considere agendar um retorno em breve."
+  expired: "Sua consulta foi há {days} dias (limite: {limit} dias para {specialty}). Por segurança, você precisa agendar uma nova consulta para atualizar suas orientações."
