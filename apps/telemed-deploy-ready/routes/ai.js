@@ -3,6 +3,7 @@
 // Configuração de rate limiting
 const RL_PATIENT_PER_MIN = Number(process.env.RL_PATIENT_PER_MIN || 12); // req/min por paciente
 const RL_IP_PER_MIN = Number(process.env.RL_IP_PER_MIN || 60);          // req/min por IP
+const REDIS_URL = process.env.REDIS_URL; // Opcional: habilita limiter distribuído
 
 let limiter = null;
 
@@ -55,20 +56,29 @@ async function handleAnswers(req, res) {
     const { getLastEncounterWithOrientations } = await import('../lib/db.js');
     const { auditInteraction } = await import('../util/audit.js');
     
-    // Inicializar limiter se ainda não foi
+    // Inicializar limiter se ainda não foi (Redis se disponível, senão in-memory)
     if (!limiter) {
-      const { makeRateLimiter } = await import('../util/rate-limit.js');
-      limiter = makeRateLimiter({ 
-        perMinuteByPatient: RL_PATIENT_PER_MIN, 
-        perMinuteByIp: RL_IP_PER_MIN 
-      });
+      if (REDIS_URL) {
+        const { makeRedisRateLimiter } = await import('../util/redis-rate-limit.js');
+        limiter = makeRedisRateLimiter({ 
+          url: REDIS_URL,
+          perMinuteByPatient: RL_PATIENT_PER_MIN, 
+          perMinuteByIp: RL_IP_PER_MIN 
+        });
+      } else {
+        const { makeRateLimiter } = await import('../util/rate-limit.js');
+        limiter = makeRateLimiter({ 
+          perMinuteByPatient: RL_PATIENT_PER_MIN, 
+          perMinuteByIp: RL_IP_PER_MIN 
+        });
+      }
     }
 
     // IP real (suporta proxies)
     const ip = (req.headers["x-forwarded-for"] || "").toString().split(",")[0].trim() || req.socket.remoteAddress || "";
 
     // Gate de rate limit
-    const rl = limiter.allow({ patientId, ip });
+    const rl = await limiter.allow({ patientId, ip });
     if (!rl.ok) {
       res.setHeader("Retry-After", String(rl.retryAfterSec));
       return sendJSON(res, 429, { 
