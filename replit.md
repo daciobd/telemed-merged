@@ -34,12 +34,17 @@ A plataforma é construída como um monorepo contendo cinco microsserviços Dock
 **Infraestrutura e Deploys:**
 -   **Deploy**: Render (5 serviços configurados via `render.yaml`).
 -   **Banco de Dados**: PostgreSQL no Render.
--   **Monitoramento**: Health checks.
+-   **Monitoramento**: Health checks, Prometheus `/metrics` endpoint.
 -   **Documentação API**: OpenAPI 3.1 Specification com suporte a WebSocket.
--   **Testes**: Playwright Smoke Tests para 6 cenários críticos.
+-   **Testes**: Playwright Smoke Tests para 6 cenários críticos, k6 load testing (steady + spike scenarios).
 -   **Infraestrutura como Código**: `render.yaml` para Preview Environments, Environment Groups, Services (Web, Worker, Cron Jobs, Key Value), Health Checks e Scaling.
 -   **Segurança**: Segredos centralizados, TLS automático, proteção DDoS, Custom Domain.
--   **Operações**: Cron Jobs (cleanup, backups), Key Value Store (Redis), PostgreSQL Backups, Observabilidade (Datadog/Metrics Streams).
+-   **Operações**: Cron Jobs (cleanup, backups), Key Value Store (Redis), PostgreSQL Backups.
+-   **Observabilidade**: 
+    - Prometheus metrics (9 customizadas + Node.js defaults)
+    - Grafana dashboard pronto (`observability/grafana-telemed-dr-ai-dashboard.json`)
+    - 6 painéis: Latência p50/p90/p99, Chamadas/min, Fallback, Rate Limit, Schema Invalid, Escalações
+    - k6 load testing script com cenários steady (30 VUs) e spike (200 VUs)
 
 **Kit Modular Dr. AI:**
 -   **Arquitetura**: Modular e reutilizável com componentes TypeScript, hook customizado e integração com servidor HTTP nativo Node.js.

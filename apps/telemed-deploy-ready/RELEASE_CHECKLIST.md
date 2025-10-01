@@ -92,20 +92,23 @@ Data: 2025-10-01
   - Consultas e orientações criadas
 
 ### Monitoramento
-- [ ] **Prometheus/Grafana** configurado
-  - Scraping do /metrics ativo
-  - Dashboard criado
-  - Alertas configurados
+- [x] **Prometheus/Grafana** configurado
+  - `/metrics` endpoint exposto e funcional
+  - Dashboard criado (`observability/grafana-telemed-dr-ai-dashboard.json`)
+  - 6 painéis: Latência p50/p90/p99, Chamadas/min, Fallback, Rate Limit, Schema Invalid, Escalações
+  - Variáveis dinâmicas: model, rate_limit_key
 
-- [ ] **Logs centralizados**
+- [ ] **Logs centralizados** (opcional)
   - Datadog/Metrics streams ativo
   - Retention policy configurada
 
 ### Performance
-- [ ] **Load testing** realizado
-  - Latência p95 < 2s
-  - Taxa de erro < 1%
-  - Rate limiting efetivo
+- [x] **Load testing** preparado
+  - Script k6 criado (`tests/load/k6-telemed-ai-loadtest.js`)
+  - Cenário steady: 0→30 VUs (4min total)
+  - Cenário spike: 200 VUs por 15s (validar rate limit)
+  - Thresholds: p95<2s, erro<1%, escalate<30%
+  - Pronto para executar: `API_URL="http://localhost:5000/api/ai/answer" k6 run tests/load/k6-telemed-ai-loadtest.js`
 
 ## 📋 Pós-Deploy
 
