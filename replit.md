@@ -202,9 +202,101 @@ POST /api/ai/answer {"question": "Trocar remédio?"}
 → {"tipo": "fora_escopo", "mensagem": "...", "metadados": {...}}
 ```
 
+---
+
+### Melhoria #2: Timeout, Retry + Fallback de Modelo ✅
+
+**Implementação de resiliência para chamadas OpenAI:**
+
+**Arquivos Criados/Modificados:**
+- `util/retry.js` - Funções utilitárias:
+  - `retry()` - Retry exponencial configurável (default: 2 tentativas, backoff 250ms)
+  - `withTimeout()` - Wrapper de timeout usando Promise.race()
+
+- `lib/ai.js` - Atualizado com retry e fallback:
+  - Timeout configurável (OPENAI_TIMEOUT_MS = 15000ms)
+  - Retry exponencial com até N tentativas (OPENAI_MAX_RETRIES = 2)
+  - Fallback automático para modelo secundário se primário falhar
+  - Fallback em caso de resposta vazia ou JSON inválido
+
+**Variáveis de Ambiente:**
+```bash
+OPENAI_MODEL=gpt-4o-mini              # Modelo primário
+OPENAI_FALLBACK_MODEL=gpt-4o-mini     # Modelo fallback
+OPENAI_TIMEOUT_MS=15000               # Timeout em ms
+OPENAI_MAX_RETRIES=2                  # Número de tentativas
+```
+
+**Fluxo de Execução:**
+1. Tenta modelo primário com retry exponencial
+2. Se falhar/timeout/JSON inválido → tenta modelo fallback
+3. Se ambos falharem → retorna fallback seguro (tipo: "erro")
+
+**Benefícios:**
+- ✅ Resiliência contra timeouts e falhas transitórias
+- ✅ Fallback automático entre modelos
+- ✅ Backoff exponencial evita sobrecarga
+- ✅ Degradação graciosa com mensagens de erro adequadas
+
+---
+
+### Melhoria #4: Logging Seguro + LGPD ✅
+
+**Implementação de auditoria LGPD-compliant com redação de PII:**
+
+**Arquivos Criados/Modificados:**
+- `util/safe-log.js` - Sistema de logging seguro:
+  - Redação automática de PII (email, telefone, CPF, RG)
+  - Pseudonimização de IDs de paciente com HMAC SHA-256
+  - Amostragem configurável de logs
+  - Truncamento de logs grandes (>2000 chars)
+  - Níveis de log (error, warn, info, debug)
+
+- `util/audit.js` - Sistema de auditoria:
+  - Registro de interações com IA
+  - Flags de escalação e emergência
+  - Pseudonimização automática de pacientId
+  - Logs com redação de PII em perguntas/respostas
+
+- `routes/ai.js` - Integração de auditoria:
+  - Chamada automática após cada resposta
+  - Registro de encounterId, patientId, flags
+
+**Variáveis de Ambiente:**
+```bash
+LOG_LEVEL=info              # error|warn|info|debug
+LOG_PII=false              # true = não redige (NUNCA em prod)
+LOG_SAMPLE_RATE=1          # 1=100%, 0.1=10%
+PSEUDONYM_SALT=secret-salt # Salt para pseudonimização
+```
+
+**Exemplo de Log Seguro:**
+```
+[info] {"pid":"7ee0a289fc37896b","flags":{"escalation":false,"emergency":false}} ai_interaction
+```
+
+**Benefícios:**
+- ✅ LGPD-compliant: redação automática de dados sensíveis
+- ✅ Pseudonimização: IDs hasheados com salt secreto
+- ✅ Rastreabilidade: auditoria de todas interações
+- ✅ Controle granular: níveis de log e amostragem
+- ✅ Performance: truncamento e sampling inteligente
+
+**Testes Realizados:**
+```bash
+# Log normal (esclarecimento)
+[info] {"pid":"7ee0a289fc37896b","flags":{"escalation":false,"emergency":false}} ai_interaction
+
+# Log emergência
+[info] {"pid":"7ee0a289fc37896b","flags":{"escalation":false,"emergency":true}} ai_interaction
+
+# Log fora de escopo
+[info] {"pid":"7ee0a289fc37896b","flags":{"escalation":true,"emergency":false}} ai_interaction
+```
+
+---
+
 **Próximas Melhorias Planejadas:**
-- #2: Timeout, Retry + Fallback de Modelo
 - #3: Rate Limiting por Paciente/Origem
-- #4: Logging Seguro + LGPD (minimização de PII)
 - #5: Políticas Versionáveis (YAML)
 - #6: Observabilidade (Métricas + Logs estruturados)
