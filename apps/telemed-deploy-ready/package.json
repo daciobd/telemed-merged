@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "echo 'Static frontend - no build needed'",
-    "start": "node server.js"
+    "build": "tsc -p tsconfig.json",
+    "start": "node ./dist/server.js",
+    "test": "vitest run --reporter=dot --passWithNoTests",
+    "lint": "eslint . --ext .ts,.js --max-warnings=0",
+    "dev": "node ./dist/server.js"
   },
   "engines": {
     "node": ">=20.0.0"
