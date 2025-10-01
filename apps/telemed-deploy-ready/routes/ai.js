@@ -1,4 +1,4 @@
-// routes/ai.js - Handlers para rotas do Dr. AI Assistant
+// routes/ai.js - Handlers para rotas do Dr. AI Assistant com Auditoria LGPD
 
 /**
  * Helper para enviar resposta JSON
@@ -47,6 +47,7 @@ async function handleAnswers(req, res) {
     // Importações dinâmicas para ES modules
     const { askModelJSON, detectEmergency } = await import('../lib/ai.js');
     const { getLastEncounterWithOrientations } = await import('../lib/db.js');
+    const { auditInteraction } = await import('../util/audit.js');
 
     // Buscar contexto da última consulta
     const context = await getLastEncounterWithOrientations(patientId);
@@ -82,6 +83,16 @@ async function handleAnswers(req, res) {
       response.tipo = "escala_emergencia";
       response.mensagem = `ATENÇÃO: Detectei sinais de possível emergência. ${response.mensagem}`;
     }
+
+    // Auditoria LGPD-compliant com redação de PII
+    await auditInteraction({
+      encounterId: encounter.id,
+      patientId,
+      question,
+      answer: response.mensagem,
+      escalation: response.tipo === "fora_escopo",
+      emergency: response.tipo === "escala_emergencia"
+    });
 
     console.log(`🤖 Dr. AI Answer [${response.tipo}]: "${question}" -> ${response.mensagem.substring(0, 50)}...`);
 
