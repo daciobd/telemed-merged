@@ -296,7 +296,67 @@ PSEUDONYM_SALT=secret-salt # Salt para pseudonimização
 
 ---
 
+### Melhoria #3: Rate Limiting por Paciente/IP ✅
+
+**Implementação de proteção contra abuso com sliding window:**
+
+**Arquivos Criados/Modificados:**
+- `util/rate-limit.js` - Sistema de rate limiting:
+  - Algoritmo de janela deslizante (sliding window)
+  - Limite configurável por paciente (default: 12 req/min)
+  - Limite configurável por IP (default: 60 req/min)
+  - Limpeza automática de janelas antigas
+  - Cálculo de tempo de espera (Retry-After)
+
+- `routes/ai.js` - Integração de rate limiting:
+  - Gate de verificação antes de processar requisição
+  - Retorna HTTP 429 quando limite excedido
+  - Header `Retry-After` com segundos de espera
+  - Suporte a X-Forwarded-For para proxies
+
+**Variáveis de Ambiente:**
+```bash
+RL_PATIENT_PER_MIN=12  # Requisições por minuto por paciente
+RL_IP_PER_MIN=60       # Requisições por minuto por IP
+```
+
+**Exemplo de Resposta (429):**
+```bash
+HTTP/1.1 429 Too Many Requests
+Retry-After: 23
+Content-Type: application/json
+
+{
+  "tipo": "erro",
+  "mensagem": "Muitas requisições. Tente novamente em 23 segundos.",
+  "metadados": {"medico": "", "data_consulta": ""},
+  "retryAfterSec": 23
+}
+```
+
+**Benefícios:**
+- ✅ Proteção contra spam e abuso
+- ✅ Sliding window: precisão em controle de taxa
+- ✅ Isolamento por paciente: um usuário não afeta outros
+- ✅ Suporte a proxies: detecta IP real via X-Forwarded-For
+- ✅ Cliente amigável: indica tempo de espera exato
+- ✅ In-memory: sem dependência de Redis (adequado para single-instance)
+
+**Testes Realizados:**
+```bash
+# 12 requisições aceitas
+Req 1-12: HTTP 200
+
+# A partir da 13ª: bloqueio
+Req 13-15: HTTP 429 (Retry-After: 23)
+
+# Pacientes diferentes não se afetam
+Paciente 1: bloqueado
+Paciente 2: aceito normalmente
+```
+
+---
+
 **Próximas Melhorias Planejadas:**
-- #3: Rate Limiting por Paciente/Origem
 - #5: Políticas Versionáveis (YAML)
 - #6: Observabilidade (Métricas + Logs estruturados)
