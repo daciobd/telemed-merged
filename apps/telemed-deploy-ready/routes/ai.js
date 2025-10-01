@@ -1,4 +1,10 @@
-// routes/ai.js - Handlers para rotas do Dr. AI Assistant com Auditoria LGPD
+// routes/ai.js - Handlers para rotas do Dr. AI Assistant com Auditoria LGPD + Rate Limiting
+
+// Configuração de rate limiting
+const RL_PATIENT_PER_MIN = Number(process.env.RL_PATIENT_PER_MIN || 12); // req/min por paciente
+const RL_IP_PER_MIN = Number(process.env.RL_IP_PER_MIN || 60);          // req/min por IP
+
+let limiter = null;
 
 /**
  * Helper para enviar resposta JSON
@@ -29,7 +35,7 @@ function getBody(req) {
 /**
  * Handler para /api/ai/answers
  * Processa perguntas usando OpenAI + RAG com Postgres
- * Retorna JSON estruturado validado com Zod
+ * Retorna JSON estruturado validado com Zod + Rate Limiting
  */
 async function handleAnswers(req, res) {
   try {
@@ -48,6 +54,30 @@ async function handleAnswers(req, res) {
     const { askModelJSON, detectEmergency } = await import('../lib/ai.js');
     const { getLastEncounterWithOrientations } = await import('../lib/db.js');
     const { auditInteraction } = await import('../util/audit.js');
+    
+    // Inicializar limiter se ainda não foi
+    if (!limiter) {
+      const { makeRateLimiter } = await import('../util/rate-limit.js');
+      limiter = makeRateLimiter({ 
+        perMinuteByPatient: RL_PATIENT_PER_MIN, 
+        perMinuteByIp: RL_IP_PER_MIN 
+      });
+    }
+
+    // IP real (suporta proxies)
+    const ip = (req.headers["x-forwarded-for"] || "").toString().split(",")[0].trim() || req.socket.remoteAddress || "";
+
+    // Gate de rate limit
+    const rl = limiter.allow({ patientId, ip });
+    if (!rl.ok) {
+      res.setHeader("Retry-After", String(rl.retryAfterSec));
+      return sendJSON(res, 429, { 
+        tipo: "erro",
+        mensagem: `Muitas requisições. Tente novamente em ${rl.retryAfterSec} segundos.`,
+        metadados: { medico: "", data_consulta: "" },
+        retryAfterSec: rl.retryAfterSec 
+      });
+    }
 
     // Buscar contexto da última consulta
     const context = await getLastEncounterWithOrientations(patientId);
