@@ -306,6 +306,21 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // === ROTAS DE DEMONSTRAÇÃO ===
+  const demoHandlers = require('./routes/demo.js');
+  
+  // Seed de dados de demonstração
+  if (req.method === 'POST' && pathname === '/demo/seed') {
+    demoHandlers.handleDemoSeed(req, res);
+    return;
+  }
+  
+  // Spike de carga para demonstração
+  if (req.method === 'POST' && pathname === '/demo/spike') {
+    demoHandlers.handleDemoSpike(req, res);
+    return;
+  }
+
   // Prometheus metrics endpoint
   if (req.method === 'GET' && pathname === '/metrics') {
     const metricsHandlers = require('./routes/metrics.js');

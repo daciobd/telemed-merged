@@ -50,6 +50,10 @@ A plataforma é construída como um monorepo contendo cinco microsserviços Dock
 -   **Arquitetura**: Modular e reutilizável com componentes TypeScript, hook customizado e integração com servidor HTTP nativo Node.js.
 -   **Funcionalidades**: Consent Gate LGPD, Audit Logging, Scope Detection, Emergency Escalation, Dark Mode, Cooldown Anti-spam, Quick Questions.
 -   **API Integrada**: Rotas `/api/ai/answer`, `/api/ai/audit`, `/api/ai/tts`, `/api/ai/stt` configuradas para `fetch()`.
+-   **Rotas de Demonstração**: 
+    - `/demo/seed` (POST): Cria dados de teste (pacientes com consultas recentes/expiradas)
+    - `/demo/spike` (POST): Spike de carga controlado para validar rate limiting e observabilidade
+    - Documentação completa em `DEMO_GUIDE.md`
 -   **Robustez**: 
     - Saída JSON estruturada e validada com Zod
     - Timeout (15s) + Retry (2x) + Fallback model (OpenAI)
@@ -59,7 +63,7 @@ A plataforma é construída como um monorepo contendo cinco microsserviços Dock
     - Política de idade de consulta por especialidade (30-120 dias conforme especialidade)
     - Normalização linguística (remove acentos para matching consistente)
     - Observabilidade Prometheus: 9 métricas customizadas (/metrics endpoint)
-    - Banco: PostgreSQL com UUID, JSONB, índices otimizados, RLS preparado
+    - Banco: PostgreSQL com UUID, JSONB, índices otimizados, RLS preparado, migration para coluna specialty
     - CI/CD: Secret scan, security audit, linter, E2E tests (Playwright)
 
 ## External Dependencies

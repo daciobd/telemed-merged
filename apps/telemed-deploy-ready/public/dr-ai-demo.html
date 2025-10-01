@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Telemed – Dr. AI Demo Interativo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin:0; background:#f9fafb; }
+    .wrap { display:grid; grid-template-columns: 1.2fr 1fr; height:100vh; }
+    header { padding:14px 18px; border-bottom:1px solid #e5e7eb; display:flex; gap:12px; align-items:center; background:#fff; }
+    .badge { padding:4px 8px; border-radius:999px; font-size:12px; background:#eff6ff; color:#1e40af; font-weight:500; }
+    .stage { padding:16px; border-bottom:1px dashed #e5e7eb; background:#fff; margin-bottom:8px; }
+    .json { background:#0e1116; color:#c7e1ff; padding:12px; border-radius:8px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; font-size:13px; overflow-x:auto; }
+    .ok { color:#059669; font-weight:600; }
+    .warn { color:#d97706; font-weight:600; }
+    .err { color:#dc2626; font-weight:600; }
+    button { padding:10px 16px; border-radius:8px; border:0; box-shadow:0 1px 2px rgba(0,0,0,.08); cursor:pointer; font-weight:500; transition:all .2s; }
+    button:hover { transform:translateY(-1px); box-shadow:0 2px 4px rgba(0,0,0,.12); }
+    button.primary { background:#1c64f2; color:#fff; }
+    button.ghost { background:#f3f4f6; color:#374151; }
+    button:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+    iframe { width:100%; height:100%; border:0; }
+    .pill { display:inline-flex; gap:6px; align-items:center; margin-right:8px; padding:4px 12px; border-radius:12px; background:#f3f4f6; font-size:14px; }
+    #left { overflow-y:auto; padding:12px; }
+    h3 { margin:8px 0; color:#111827; font-size:16px; }
+    .emergency-banner { background:#fee2e2; border:2px solid #dc2626; color:#7f1d1d; padding:12px; border-radius:8px; margin:8px 0; font-weight:600; }
+    .loading { display:inline-block; width:12px; height:12px; border:2px solid #1c64f2; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>🩺 Apresentação Interativa – Dr. AI</strong>
+    <span class="badge">JSON + Zod</span>
+    <span class="badge">Anti-injeção</span>
+    <span class="badge">Rate Limit Dual-mode</span>
+    <span class="badge">Políticas YAML</span>
+    <span class="badge">LGPD</span>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button id="btnPlay" class="primary">▶ Iniciar Demo</button>
+      <button id="btnSpike" class="ghost">⚡ Spike de Carga</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main id="left">
+      <div id="log"></div>
+      <div id="out" class="stage" style="display:none;">
+        <h3>📋 Resposta da IA:</h3>
+        <div id="jsonOutput"></div>
+      </div>
+    </main>
+    <aside style="background:#fff; border-left:1px solid #e5e7eb;">
+      <div style="padding:16px; border-bottom:1px solid #e5e7eb;">
+        <h3 style="margin:0;">📊 Métricas Prometheus (Grafana)</h3>
+        <p style="margin:4px 0 0; font-size:13px; color:#6b7280;">Atualizando em tempo real</p>
+      </div>
+      <!-- Substitua pela URL do seu Grafana -->
+      <iframe id="grafana" src="" title="Grafana Dashboard"></iframe>
+    </aside>
+  </div>
+
+<script>
+const API = location.origin;
+const GRAFANA_URL = (new URLSearchParams(location.search).get("grafana") || "").trim();
+
+const logEl = document.getElementById('log');
+const outEl = document.getElementById('out');
+const jsonOutput = document.getElementById('jsonOutput');
+const btnPlay = document.getElementById('btnPlay');
+const btnSpike = document.getElementById('btnSpike');
+const grafana = document.getElementById('grafana');
+
+if (GRAFANA_URL) {
+  grafana.src = GRAFANA_URL;
+} else {
+  grafana.parentElement.innerHTML = '<div style="padding:20px; text-align:center; color:#6b7280;"><p>Grafana não configurado</p><p style="font-size:12px;">Adicione ?grafana=URL_DO_SEU_GRAFANA na URL</p></div>';
+}
+
+function line(html) { 
+  const d = document.createElement('div'); 
+  d.className = 'stage';
+  d.innerHTML = html; 
+  logEl.appendChild(d);
+  d.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function showJSON(obj) {
+  outEl.style.display = 'block';
+  jsonOutput.innerHTML = '<div class="json">' + JSON.stringify(obj, null, 2) + '</div>';
+  outEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function post(url, body) {
+  const r = await fetch(url, {
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify(body || {})
+  });
+  return r.json();
+}
+
+function wait(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Sequência de demonstração em 6 atos
+const steps = [
+  { 
+    title: '🔧 Seed de Dados de Demonstração', 
+    run: async (ctx) => {
+      line('<div class="pill"><span class="loading"></span> Criando pacientes e consultas...</div>');
+      const r = await post(`${API}/demo/seed`, {});
+      ctx.pRecent = r.patients.recent;
+      ctx.pExpired = r.patients.expired;
+      line(`<div class="pill ok">✅ Seed Concluído</div> Paciente com consulta recente (ID: ${ctx.pRecent}) e consulta expirada (ID: ${ctx.pExpired}) criados.`);
+    }
+  },
+  { 
+    title: '✅ Ato 1: Esclarecimento Baseado na Última Consulta', 
+    run: async (ctx) => {
+      line('<div class="pill"><span class="loading"></span> Perguntando sobre medicamento...</div>');
+      const r = await post(`${API}/api/ai/answer`, { 
+        patientId: ctx.pRecent, 
+        question: "Como devo tomar meu remédio conforme a última consulta?" 
+      });
+      showJSON(r);
+      line(`<span class="ok">✓ tipo:</span> <strong>${r.tipo}</strong> – <em>Esperado: esclarecimento</em><br>A IA consultou as orientações da última consulta e respondeu corretamente.`);
+    }
+  },
+  { 
+    title: '⚠️ Ato 2: Fora de Escopo (Medicamento Não Prescrito)', 
+    run: async (ctx) => {
+      line('<div class="pill"><span class="loading"></span> Testando guardrail de fora de escopo...</div>');
+      const r = await post(`${API}/api/ai/answer`, { 
+        patientId: ctx.pRecent, 
+        question: "Posso tomar dipirona junto?" 
+      });
+      showJSON(r);
+      line(`<span class="warn">⚠ guardrail ativado:</span> <strong>${r.tipo}</strong> – <em>Esperado: fora_escopo</em><br>Sistema detectou pergunta fora do escopo das orientações existentes.`);
+    }
+  },
+  { 
+    title: '🚨 Ato 3: Sintoma Novo → Escalação', 
+    run: async (ctx) => {
+      line('<div class="pill"><span class="loading"></span> Testando detecção de sintoma novo...</div>');
+      const r = await post(`${API}/api/ai/answer`, { 
+        patientId: ctx.pRecent, 
+        question: "Comecei a sentir tontura agora à noite" 
+      });
+      showJSON(r);
+      line(`<span class="warn">🚨 sintoma novo detectado:</span> <strong>${r.tipo}</strong> – <em>Esperado: escala_emergencia</em><br>Sistema identificou sintoma novo e acionou escalação médica.`);
+    }
+  },
+  { 
+    title: '🔴 Ato 4: Emergência → Escalação Imediata', 
+    run: async (ctx) => {
+      line('<div class="pill"><span class="loading"></span> Testando detecção de emergência...</div>');
+      const r = await post(`${API}/api/ai/answer`, { 
+        patientId: ctx.pRecent, 
+        question: "Estou com dor no peito forte e falta de ar" 
+      });
+      showJSON(r);
+      line(`<div class="emergency-banner">🚨 EMERGÊNCIA DETECTADA: ${r.tipo}</div><span class="err">Palavras-chave de emergência identificadas:</span> "dor no peito", "falta de ar"<br><strong>Ação:</strong> Escalação imediata para equipe médica.`);
+    }
+  },
+  { 
+    title: '📅 Ato 5: Consulta Expirada (Política por Especialidade)', 
+    run: async (ctx) => {
+      line('<div class="pill"><span class="loading"></span> Testando política de idade de consulta...</div>');
+      const r = await post(`${API}/api/ai/answer`, { 
+        patientId: ctx.pExpired, 
+        question: "Pode relembrar as orientações?" 
+      });
+      showJSON(r);
+      line(`<span class="warn">📅 consulta expirada:</span> <strong>${r.tipo}</strong><br>Psiquiatria: limite de 30 dias. Consulta tem 100 dias.<br><strong>Mensagem:</strong> ${r.mensagem?.substring(0, 120)}...`);
+    }
+  },
+];
+
+async function play() {
+  btnPlay.disabled = true;
+  btnPlay.innerHTML = '⏳ Executando...';
+  logEl.innerHTML = '';
+  outEl.style.display = 'none';
+  
+  const ctx = {};
+  
+  for (let i = 0; i < steps.length; i++) {
+    line(`<h3>${steps[i].title}</h3>`);
+    await steps[i].run(ctx);
+    await wait(1500); // Delay para visualização
+  }
+  
+  line(`<h3>✔ Demonstração Concluída</h3><p><strong>Verifique no painel ao lado:</strong></p><ul style="margin:8px 0; padding-left:20px;"><li>Latência p50/p90/p99 das chamadas</li><li>Tentativas e uso de fallback</li><li>Rate limit blocks</li><li>Respostas fora do schema</li><li>Escalações por tipo</li></ul>`);
+  
+  btnPlay.disabled = false;
+  btnPlay.innerHTML = '▶ Executar Novamente';
+}
+
+btnPlay.addEventListener('click', play);
+
+btnSpike.addEventListener('click', async () => {
+  btnSpike.disabled = true;
+  const seconds = 12;
+  const rps = 60;
+  
+  line(`<div class="pill">⚡ Iniciando spike de carga...</div>`);
+  const res = await post(`${API}/demo/spike`, { seconds, rps, patientId: 'rate-limit-test' });
+  line(`<div class="pill ok">✅ ${res.message}</div><p>Abra o painel <strong>"Top 5 Rate Limit Blocks"</strong> no Grafana para ver as métricas subirem em tempo real. Rate limiting dual-mode (Redis + in-memory) em ação!</p>`);
+  
+  setTimeout(() => {
+    btnSpike.disabled = false;
+  }, (seconds + 2) * 1000);
+});
+
+// Auto-play se vier ?autoplay=1
+if (new URLSearchParams(location.search).get('autoplay') === '1') {
+  setTimeout(play, 500);
+}
+</script>
+</body>
+</html>
