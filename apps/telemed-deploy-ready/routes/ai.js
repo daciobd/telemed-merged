@@ -80,8 +80,10 @@ async function handleAnswers(req, res) {
     const ip = (req.headers["x-forwarded-for"] || "").toString().split(",")[0].trim() || req.socket.remoteAddress || "";
 
     // Gate de rate limit
+    const { rateLimitBlocks } = await import('../util/metrics.js');
     const rl = await limiter.allow({ patientId, ip });
     if (!rl.ok) {
+      rateLimitBlocks.inc({ key_type: rl.reason || "unknown" });
       res.setHeader("Retry-After", String(rl.retryAfterSec));
       return sendJSON(res, 429, { 
         tipo: "erro",
@@ -92,11 +94,15 @@ async function handleAnswers(req, res) {
     }
 
     // VALIDAÇÃO DE SEGURANÇA: Verificar pergunta antes de processar
+    const { safetyValidations, escalations } = await import('../util/metrics.js');
     const validation = safetyValidator.validateQuestion(question);
     
     if (!validation.safe) {
+      safetyValidations.inc({ type: validation.type, triggered: "true" });
+      
       // Emergência detectada
       if (validation.type === 'emergency') {
+        escalations.inc({ tipo: "escala_emergencia" });
         return sendJSON(res, 200, {
           tipo: "escala_emergencia",
           mensagem: `ATENÇÃO: Detectei sinais de possível emergência médica (${validation.keyword}). Vou te conectar com a equipe médica AGORA. Por favor, aguarde.`,
@@ -107,6 +113,7 @@ async function handleAnswers(req, res) {
       
       // Sintoma novo detectado
       if (validation.type === 'new_symptom') {
+        escalations.inc({ tipo: "escala_emergencia" });
         return sendJSON(res, 200, {
           tipo: "escala_emergencia",
           mensagem: `Percebo que você está relatando algo novo (${validation.keyword}). Preciso encaminhar você para avaliação médica. Vou conectar você com a equipe agora.`,
@@ -117,6 +124,7 @@ async function handleAnswers(req, res) {
       
       // Fora de escopo
       if (validation.type === 'out_of_scope') {
+        escalations.inc({ tipo: "fora_escopo" });
         return sendJSON(res, 200, {
           tipo: "fora_escopo",
           mensagem: `Essa questão (${validation.keyword}) está fora do meu escopo de esclarecer orientações existentes. Posso agendar um contato com seu médico para discutir isso?`,
@@ -124,6 +132,8 @@ async function handleAnswers(req, res) {
           out_of_scope_keyword: validation.keyword
         });
       }
+    } else {
+      safetyValidations.inc({ type: "none", triggered: "false" });
     }
 
     // Buscar contexto da última consulta
@@ -190,6 +200,29 @@ async function handleAnswers(req, res) {
       answer: response.mensagem,
       escalation: response.tipo === "fora_escopo",
       emergency: response.tipo === "escala_emergencia"
+    });
+
+    // LOGGING SEGURO: Salvar com truncamento + hash
+    const { safeStore } = await import('../util/log-safe.js');
+    const { saveAiInteraction } = await import('../lib/db.js');
+    
+    const { truncated: qTrunc, digest: qHash } = safeStore(question, 500);
+    const { truncated: rTrunc, digest: rHash } = safeStore(response.mensagem, 500);
+    
+    await saveAiInteraction({
+      patientId,
+      encounterId: encounter.id,
+      questionTrunc: qTrunc,
+      questionHash: qHash,
+      responseTrunc: rTrunc,
+      responseHash: rHash,
+      escalationTriggered: response.tipo === "escala_emergencia" || response.tipo === "fora_escopo",
+      escalationReason: response.tipo !== "esclarecimento" ? response.tipo : null,
+      metadata: {
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        version: "v1",
+        specialty: specialty
+      }
     });
 
     console.log(`🤖 Dr. AI Answer [${response.tipo}]: "${question}" -> ${response.mensagem.substring(0, 50)}...`);

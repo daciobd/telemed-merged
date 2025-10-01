@@ -1,9 +1,10 @@
-// lib/ai.js - Lógica OpenAI para Dr. AI Assistant com validação JSON + Retry + Fallback + Deny-list
+// lib/ai.js - Lógica OpenAI para Dr. AI Assistant com validação JSON + Retry + Fallback + Deny-list + Metrics
 import OpenAI from "openai";
 import { buildSystemPrompt, buildUserMessage } from "./prompt.js";
 import { AiResponseSchema, AiResponseSchemaFallback } from "./schema.js";
 import { retry, withTimeout } from "../util/retry.js";
 import { safetyValidator } from "../util/safety-validator.js";
+import { aiLatency, aiAttempts, aiFallbackUsed, schemaInvalid, denyListHits } from "../util/metrics.js";
 
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -50,6 +51,7 @@ function parseAndValidate(raw) {
       safetyValidator.validateResponse(result.data.mensagem);
     } catch (denyError) {
       console.error("🚫 Resposta bloqueada por deny-list:", denyError.message);
+      denyListHits.inc(); // Métrica
       return null; // Força fallback
     }
     
@@ -82,7 +84,14 @@ export async function askModelJSON({ question, orientationsText, doctorName, con
   ];
 
   try {
+    const startTime = Date.now();
+    let attemptCount = 0;
+    let usedFallback = false;
+    
     // 1) Tentar modelo primário com retry
+    aiAttempts.inc({ model: OPENAI_MODEL, fallback: "false", success: "pending" });
+    attemptCount++;
+    
     let raw = await retry(() => callModel(OPENAI_MODEL, messages), { 
       retries: OPENAI_MAX_RETRIES, 
       baseMs: 300 
@@ -93,6 +102,12 @@ export async function askModelJSON({ question, orientationsText, doctorName, con
     // 2) Se falhou, tentar modelo fallback (se diferente do primário)
     if (!validated && OPENAI_FALLBACK_MODEL !== OPENAI_MODEL) {
       console.warn(`⚠️ Fallback para modelo ${OPENAI_FALLBACK_MODEL}`);
+      aiFallbackUsed.inc();
+      usedFallback = true;
+      
+      aiAttempts.inc({ model: OPENAI_FALLBACK_MODEL, fallback: "true", success: "pending" });
+      attemptCount++;
+      
       raw = await retry(() => callModel(OPENAI_FALLBACK_MODEL, messages), { 
         retries: OPENAI_MAX_RETRIES, 
         baseMs: 300 
@@ -100,11 +115,27 @@ export async function askModelJSON({ question, orientationsText, doctorName, con
       validated = parseAndValidate(raw);
     }
     
+    // Medir latência
+    const latency = Date.now() - startTime;
+    aiLatency.observe({
+      model: usedFallback ? OPENAI_FALLBACK_MODEL : OPENAI_MODEL,
+      attempt: String(attemptCount),
+      fallback: String(usedFallback)
+    }, latency);
+    
     // 3) Se ainda falhou, retornar fallback seguro
     if (!validated) {
       console.error("❌ Todos os modelos falharam ou retornaram JSON inválido");
+      schemaInvalid.inc();
+      aiAttempts.inc({ model: "fallback_schema", fallback: "true", success: "false" });
       return { ...AiResponseSchemaFallback };
     }
+    
+    aiAttempts.inc({ 
+      model: usedFallback ? OPENAI_FALLBACK_MODEL : OPENAI_MODEL, 
+      fallback: String(usedFallback), 
+      success: "true" 
+    });
     
     return validated;
   } catch (error) {

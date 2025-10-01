@@ -306,6 +306,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Prometheus metrics endpoint
+  if (req.method === 'GET' && pathname === '/metrics') {
+    const metricsHandlers = require('./routes/metrics.js');
+    metricsHandlers.handleMetrics(req, res);
+    return;
+  }
+
   // Health check endpoint for Render observability
   if (req.url === '/api/health' || req.url === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
