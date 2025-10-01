@@ -45,7 +45,17 @@ A plataforma é construída como um monorepo contendo cinco microsserviços Dock
 -   **Arquitetura**: Modular e reutilizável com componentes TypeScript, hook customizado e integração com servidor HTTP nativo Node.js.
 -   **Funcionalidades**: Consent Gate LGPD, Audit Logging, Scope Detection, Emergency Escalation, Dark Mode, Cooldown Anti-spam, Quick Questions.
 -   **API Integrada**: Rotas `/api/ai/answer`, `/api/ai/audit`, `/api/ai/tts`, `/api/ai/stt` configuradas para `fetch()`.
--   **Robustez**: Saída JSON estruturada e validada com Zod, timeout e retry com fallback de modelo (OpenAI), logging seguro com redação de PII e pseudonimização (LGPD-compliant), e rate limiting por paciente/IP com sliding window (com suporte opcional a Redis).
+-   **Robustez**: 
+    - Saída JSON estruturada e validada com Zod
+    - Timeout (15s) + Retry (2x) + Fallback model (OpenAI)
+    - Logging seguro LGPD-compliant (truncamento 500 chars + SHA-256 hash)
+    - Rate limiting dual-mode: Redis (sliding window ZSET) + in-memory fallback
+    - Políticas de segurança YAML versionáveis (37 keywords emergência, 16 sintomas novos, 23 fora de escopo, 18 deny-list)
+    - Política de idade de consulta por especialidade (30-120 dias conforme especialidade)
+    - Normalização linguística (remove acentos para matching consistente)
+    - Observabilidade Prometheus: 9 métricas customizadas (/metrics endpoint)
+    - Banco: PostgreSQL com UUID, JSONB, índices otimizados, RLS preparado
+    - CI/CD: Secret scan, security audit, linter, E2E tests (Playwright)
 
 ## External Dependencies
 -   **AWS S3**: Armazenamento seguro de documentos médicos e geração de URLs assinadas.

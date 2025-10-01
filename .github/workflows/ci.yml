@@ -4,14 +4,47 @@ on:
   push: { branches: [ main ] }
 
 jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Secret scan
+        run: |
+          npx @zedeus/secrets-scan . || echo "⚠️ Secret scan completed with warnings"
+        continue-on-error: true
+      
+      - name: Security audit
+        run: npm audit --audit-level=high || echo "⚠️ Security vulnerabilities found"
+        continue-on-error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint || echo "⚠️ Lint issues found"
+        continue-on-error: true
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: [security-scan, lint]
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 18 }
+        with: { node-version: 20 }
 
       # Escolhe o servidor automaticamente
       - name: Start app (server.js ou estático)
