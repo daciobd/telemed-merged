@@ -55,6 +55,8 @@ async function handleAnswers(req, res) {
     const { askModelJSON, detectEmergency } = await import('../lib/ai.js');
     const { getLastEncounterWithOrientations } = await import('../lib/db.js');
     const { auditInteraction } = await import('../util/audit.js');
+    const { safetyValidator } = await import('../util/safety-validator.js');
+    const { consultationPolicy } = await import('../util/consultation-policy.js');
     
     // Inicializar limiter se ainda não foi (Redis se disponível, senão in-memory)
     if (!limiter) {
@@ -89,6 +91,41 @@ async function handleAnswers(req, res) {
       });
     }
 
+    // VALIDAÇÃO DE SEGURANÇA: Verificar pergunta antes de processar
+    const validation = safetyValidator.validateQuestion(question);
+    
+    if (!validation.safe) {
+      // Emergência detectada
+      if (validation.type === 'emergency') {
+        return sendJSON(res, 200, {
+          tipo: "escala_emergencia",
+          mensagem: `ATENÇÃO: Detectei sinais de possível emergência médica (${validation.keyword}). Vou te conectar com a equipe médica AGORA. Por favor, aguarde.`,
+          metadados: { medico: "", data_consulta: "" },
+          emergency_keyword: validation.keyword
+        });
+      }
+      
+      // Sintoma novo detectado
+      if (validation.type === 'new_symptom') {
+        return sendJSON(res, 200, {
+          tipo: "escala_emergencia",
+          mensagem: `Percebo que você está relatando algo novo (${validation.keyword}). Preciso encaminhar você para avaliação médica. Vou conectar você com a equipe agora.`,
+          metadados: { medico: "", data_consulta: "" },
+          new_symptom_keyword: validation.keyword
+        });
+      }
+      
+      // Fora de escopo
+      if (validation.type === 'out_of_scope') {
+        return sendJSON(res, 200, {
+          tipo: "fora_escopo",
+          mensagem: `Essa questão (${validation.keyword}) está fora do meu escopo de esclarecer orientações existentes. Posso agendar um contato com seu médico para discutir isso?`,
+          metadados: { medico: "", data_consulta: "" },
+          out_of_scope_keyword: validation.keyword
+        });
+      }
+    }
+
     // Buscar contexto da última consulta
     const context = await getLastEncounterWithOrientations(patientId);
     
@@ -107,14 +144,35 @@ async function handleAnswers(req, res) {
 
     const doctorName = "Dr. Silva";
     const consultDate = new Date(encounter.date).toLocaleDateString("pt-BR");
+    const specialty = encounter.specialty || "Clínica Geral";
+    
+    // VALIDAÇÃO DE POLÍTICA: Verificar idade da consulta por especialidade
+    const consultDateObj = new Date(encounter.date);
+    const daysSince = Math.floor((Date.now() - consultDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const ageValidation = consultationPolicy.validateConsultationAge(daysSince, specialty);
+    
+    if (!ageValidation.valid) {
+      return sendJSON(res, 200, {
+        tipo: "fora_escopo",
+        mensagem: ageValidation.message,
+        metadados: {
+          medico: doctorName,
+          data_consulta: consultDate,
+          especialidade: specialty,
+          dias_desde_consulta: daysSince,
+          limite_dias: ageValidation.limit
+        }
+      });
+    }
 
-    // Gerar resposta estruturada com OpenAI + Validação Zod
+    // Gerar resposta estruturada com OpenAI + Validação Zod + Deny-list
     const response = await askModelJSON({
       question,
       orientationsText,
       doctorName,
       consultDate,
-      specialty: "Clínica Geral"
+      specialty
     });
 
     // Detectar emergências adicionalmente (override se necessário)
