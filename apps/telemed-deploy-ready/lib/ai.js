@@ -1,8 +1,9 @@
-// lib/ai.js - Lógica OpenAI para Dr. AI Assistant com validação JSON + Retry + Fallback
+// lib/ai.js - Lógica OpenAI para Dr. AI Assistant com validação JSON + Retry + Fallback + Deny-list
 import OpenAI from "openai";
 import { buildSystemPrompt, buildUserMessage } from "./prompt.js";
 import { AiResponseSchema, AiResponseSchemaFallback } from "./schema.js";
 import { retry, withTimeout } from "../util/retry.js";
+import { safetyValidator } from "../util/safety-validator.js";
 
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -42,6 +43,14 @@ function parseAndValidate(raw) {
       const issues = result.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ");
       console.error("❌ Resposta fora do schema:", issues);
       return null;
+    }
+    
+    // DENY-LIST: Validar contra frases proibidas (última linha de defesa)
+    try {
+      safetyValidator.validateResponse(result.data.mensagem);
+    } catch (denyError) {
+      console.error("🚫 Resposta bloqueada por deny-list:", denyError.message);
+      return null; // Força fallback
     }
     
     return result.data;
