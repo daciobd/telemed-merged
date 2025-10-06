@@ -85,8 +85,6 @@ Usar `/generate/notify` para WhatsApp/e-mail com link do PDF.
 
 ## O que já vem pronto
 
-- **Endpoints**: `/generate/prescription`, `/generate/attestation`, `/generate/notify`
-- **Templates**: Handlebars para receita e atestado  
-- **Hook Receita Certa**: `sendToReceitaCerta()` pronto para integração
-- **Tipos TypeScript**: `ConsultationSummary`, `PrescriptionItem`, etc.
+
 - **CORS configurado**: Para integração com frontend TeleMed
+- 
