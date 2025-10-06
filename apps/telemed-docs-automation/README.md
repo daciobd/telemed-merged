@@ -1,6 +1,6 @@
 # Telemed Docs Automation (MVP)
 
-Módulo mínimo para **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
+Módulo mínimo para PODER **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
 
 ## Rodando no Replit / local
 1. Crie um Repl Node.js (ou Nix) e cole os arquivos.
@@ -85,8 +85,6 @@ Usar `/generate/notify` para WhatsApp/e-mail com link do PDF.
 
 ## O que já vem pronto
 
-- **Endpoints**: `/generate/prescription`, `/generate/attestation`, `/generate/notify`
-- **Templates**: Handlebars para receita e atestado  
-- **Hook Receita Certa**: `sendToReceitaCerta()` pronto para integração
-- **Tipos TypeScript**: `ConsultationSummary`, `PrescriptionItem`, etc.
+
 - **CORS configurado**: Para integração com frontend TeleMed
+- 
