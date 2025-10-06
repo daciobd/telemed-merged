@@ -86,6 +86,37 @@
       .btn{animation: pop .25s ease both}
       @keyframes pop{from{transform:scale(.98); opacity:0} to{transform:scale(1); opacity:1}}
     }
+
+    /* Estilos para seções e cards de demonstração */
+    .tm-section{
+      margin-top:48px; padding:24px 0;
+    }
+    .tm-section-title{
+      font-size:28px; font-weight:800; margin:0 0 8px; color:var(--text);
+    }
+    .tm-grid{
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:20px; margin-top:20px;
+    }
+    .tm-card{
+      display:block; text-decoration:none; background:var(--card); border:1px solid rgba(255,255,255,.06);
+      border-radius:16px; padding:24px; transition: transform .2s ease, box-shadow .2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    }
+    .tm-card:hover{
+      transform:translateY(-4px); box-shadow: 0 8px 24px rgba(77,163,255,.2);
+    }
+    .tm-card-icon{
+      font-size:40px; margin-bottom:16px;
+    }
+    .tm-card h3{
+      font-size:18px; font-weight:700; margin:0 0 8px; color:var(--text);
+    }
+    .tm-card p{
+      font-size:14px; color:var(--muted); margin:0 0 16px; line-height:1.5;
+    }
+    .tm-card .tm-cta{
+      display:inline-block; font-size:14px; font-weight:600; color:var(--accent);
+    }
   </style>
   <script src="/js/feature-flags.js" integrity="sha384-JGQ8tZep6h1EgdRvdrxP1Cr21q8cF4syP8yW6sScr2ihS5+dag9Dx7T8JXL0ZOGV" crossorigin="anonymous"></script>
   <script src="/js/audit-logger.js" integrity="sha384-foJDXv2dglOU7f/y+Zw/9ToZauWO3GRaP4h5UWBS8B39us76noGPN7kSl2n0c/ZI" crossorigin="anonymous"></script>
@@ -154,6 +185,51 @@
       </aside>
     </main>
 
+    <!-- Seção: Entradas do Sistema -->
+    <section class="tm-section">
+      <h2 class="tm-section-title">Entradas do Sistema</h2>
+      <p class="muted" style="margin-bottom:20px">Acesse diretamente as demonstrações de paciente ou médico</p>
+      <div style="display:flex; gap:16px; flex-wrap:wrap">
+        <a id="btn-sys-paciente" href="demo-paciente.html" class="btn" data-testid="button-patient-entry">Entrar como Paciente →</a>
+        <a id="btn-sys-medico" href="demo-medico.html" class="btn ghost" data-testid="button-doctor-entry">Entrar como Médico →</a>
+      </div>
+    </section>
+
+    <!-- Seção: Demonstrações Dr. AI -->
+    <section class="tm-section">
+      <h2 class="tm-section-title">Demonstrações Dr. AI</h2>
+      <p class="muted" style="margin-bottom:20px">Explore as funcionalidades do assistente médico inteligente</p>
+      <div class="tm-grid">
+        <a id="card-paciente" href="public/minhas-consultas-demo.html" class="tm-card" data-testid="card-patient-demo">
+          <div class="tm-card-icon">👤</div>
+          <h3>Começar pelo Paciente</h3>
+          <p>Veja o fluxo completo de uma consulta do ponto de vista do paciente</p>
+          <span class="tm-cta">Abrir →</span>
+        </a>
+        
+        <a id="card-chat" href="dr-ai-assistant.html" class="tm-card" data-testid="card-chat-demo">
+          <div class="tm-card-icon">💬</div>
+          <h3>Assistente Dr. AI</h3>
+          <p>Chat inteligente com IA para triagem e orientação médica</p>
+          <span class="tm-cta">Abrir →</span>
+        </a>
+        
+        <a id="card-kit" href="public/dr-ai-demo-intro.html" class="tm-card" data-testid="card-kit-demo">
+          <div class="tm-card-icon">🧰</div>
+          <h3>Kit Modular Dr. AI</h3>
+          <p>Ferramentas modulares de IA para diferentes cenários médicos</p>
+          <span class="tm-cta">Abrir →</span>
+        </a>
+        
+        <a id="card-toasts" href="public/admin-telemetry.html" class="tm-card" data-testid="card-telemetry-demo">
+          <div class="tm-card-icon">📊</div>
+          <h3>Alertas & Telemetria</h3>
+          <p>Sistema de notificações e monitoramento em tempo real</p>
+          <span class="tm-cta">Abrir →</span>
+        </a>
+      </div>
+    </section>
+
     <footer class="container" style="padding-left:0; padding-right:0">
       <div>Obrigado por construir o TeleMed conosco. <span class="muted">Versão de testes — feedbacks são bem‑vindos.</span></div>
       <div style="margin-top:8px" class="muted">
@@ -201,8 +277,8 @@
   (function(){
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
-    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico' ];
-    const allowIds = [ 'tm-cta-demo', 'go' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
+    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant' ];
+    const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {
       'Conheça o Dr. AI': 'Área ainda em desenvolvimento. Nesta demonstração, priorizamos a conexão médico–paciente.',
