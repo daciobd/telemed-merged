@@ -1,6 +1,6 @@
 # Telemed Docs Automation (MVP)
 
-Módulo mínimo para **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
+Módulo mínimo para PODER **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
 
 ## Rodando no Replit / local
 1. Crie um Repl Node.js (ou Nix) e cole os arquivos.
