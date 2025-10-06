@@ -1,0 +1,19 @@
+diff --git a/apps/telemed-docs-automation/README.md b/apps/telemed-docs-automation/README.md
+index 082fa11..8ce2526 100644
+--- a/apps/telemed-docs-automation/README.md
++++ b/apps/telemed-docs-automation/README.md
+@@ -1,6 +1,6 @@
+ # Telemed Docs Automation (MVP)
+ 
+-Módulo mínimo para **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
++Módulo mínimo para PODER **gerar automaticamente receitas e atestados** a partir de um **resumo da consulta** e **CID sugerido**. 
+ 
+ ## Rodando no Replit / local
+ 1. Crie um Repl Node.js (ou Nix) e cole os arquivos.
+@@ -89,4 +89,4 @@ Usar `/generate/notify` para WhatsApp/e-mail com link do PDF.
+ - **Templates**: Handlebars para receita e atestado  
+ - **Hook Receita Certa**: `sendToReceitaCerta()` pronto para integração
+ - **Tipos TypeScript**: `ConsultationSummary`, `PrescriptionItem`, etc.
+-- **CORS configurado**: Para integração com frontend TeleMed
+\ No newline at end of file
++- **CORS configurado**: Para integração com frontend TeleMed
