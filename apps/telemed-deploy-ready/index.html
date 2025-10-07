@@ -431,10 +431,20 @@
           href: cta.getAttribute('href')
         });
         
-        // Adicionar listener de teste para ver se o click passa
+        // Listener CAPTURE (primeiro a rodar) para interceptar TUDO
         cta.addEventListener('click', (e) => {
-          console.log('🔥 CLICK DETECTADO no CTA:', cta.id, 'navegando para:', cta.getAttribute('href'));
-        }, false); // false = bubbling (depois do capture)
+          console.log('🔥🔥🔥 CLICK CAPTURADO (CAPTURE PHASE) no:', cta.id);
+          console.log('   → href atual:', cta.getAttribute('href'));
+          console.log('   → defaultPrevented:', e.defaultPrevented);
+          console.log('   → target:', e.target.id || e.target.className || e.target.tagName);
+          
+          // NÃO fazer preventDefault - deixar navegação acontecer
+        }, true); // true = CAPTURE phase (antes de tudo)
+        
+        // Listener BUBBLE (último a rodar)
+        cta.addEventListener('click', (e) => {
+          console.log('✅ CLICK PASSANDO (BUBBLE PHASE) - navegação deve acontecer agora');
+        }, false);
       });
     }
   })();
