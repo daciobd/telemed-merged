@@ -77,7 +77,8 @@
     @media (max-width: 780px){ .split{grid-template-columns:1fr} }
 
     footer{margin-top:36px; padding:18px 0; color:var(--muted); font-size:14px}
-    footer a{color:var(--accent)}
+    footer a,.footer-link{color:var(--accent)}
+    .footer-link{background:none;border:none;cursor:pointer;font:inherit;padding:0;text-decoration:underline}
 
     .illus{aspect-ratio: 4/3; border-radius:22px; border:1px dashed rgba(255,255,255,.18); display:grid; place-items:center; color:var(--muted)}
 
@@ -125,7 +126,7 @@
 <body>
   <div class="container">
     <header>
-      <a class="brand" href="#" aria-label="TeleMed Consulta">
+      <a class="brand" href="/" aria-label="TeleMed Consulta">
         <div class="logo" aria-hidden="true">Tm</div>
         <strong class="brand-title">TeleMed Consulta</strong>
       </a>
@@ -233,7 +234,7 @@
     <footer class="container" style="padding-left:0; padding-right:0">
       <div>Obrigado por construir o TeleMed conosco. <span class="muted">Versão de testes — feedbacks são bem‑vindos.</span></div>
       <div style="margin-top:8px" class="muted">
-        <a href="#">Contato</a> · <a href="#">Suporte</a> · <a href="#">Termos</a>
+        <button type="button" class="footer-link">Contato</button> · <button type="button" class="footer-link">Suporte</button> · <button type="button" class="footer-link">Termos</button>
       </div>
     </footer>
   </div>
