@@ -376,7 +376,13 @@
     function applyLocks(){
       const clickables = Array.from(document.querySelectorAll('a, button'));
       clickables.forEach(el => {
-        if(isAllowed(el)) return; // whitelisted
+        if(isAllowed(el)) {
+          // Debug: confirmar que CTAs médicos estão permitidos
+          if(el.id && el.id.startsWith('cta-med-')) {
+            console.log('✅ CTA médico permitido:', el.id, el.getAttribute('href'));
+          }
+          return; // whitelisted
+        }
         // travar por texto conhecido ou por padrão, desde que não seja navegação principal
         const href = (el.getAttribute('href')||'').trim();
         const likelyPrimaryNav = href==='#' || href==='' || href.startsWith('#');
@@ -398,7 +404,12 @@
       }
     });
 
-    if(!isFull || devOn) applyLocks();
+    console.log('🔒 Lock system:', { isFull, devOn, willApplyLocks: !isFull || devOn });
+    if(!isFull || devOn) {
+      applyLocks();
+      console.log('🔒 Locks aplicados. CTAs médicos na whitelist:', 
+        document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').length);
+    }
   })();
   </script>
 </body>
