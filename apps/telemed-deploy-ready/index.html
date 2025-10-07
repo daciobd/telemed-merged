@@ -118,6 +118,15 @@
     .tm-card .tm-cta{
       display:inline-block; font-size:14px; font-weight:600; color:var(--accent);
     }
+    .tile{
+      display:inline-flex; align-items:center; gap:8px; padding:12px 20px; border-radius:12px;
+      background:var(--card); border:1px solid rgba(255,255,255,.06); text-decoration:none;
+      color:var(--text); font-weight:600; transition: transform .2s ease, box-shadow .2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .tile:hover{
+      transform:translateY(-2px); box-shadow: 0 4px 16px rgba(77,163,255,.15);
+    }
   </style>
   <script src="/js/feature-flags.js" integrity="sha384-JGQ8tZep6h1EgdRvdrxP1Cr21q8cF4syP8yW6sScr2ihS5+dag9Dx7T8JXL0ZOGV" crossorigin="anonymous"></script>
   <script src="/js/audit-logger.js" integrity="sha384-foJDXv2dglOU7f/y+Zw/9ToZauWO3GRaP4h5UWBS8B39us76noGPN7kSl2n0c/ZI" crossorigin="anonymous"></script>
@@ -231,6 +240,17 @@
       </div>
     </section>
 
+    <!-- Seção: Área do Médico (Piloto) -->
+    <section class="tm-section">
+      <h2 class="tm-section-title">Área do Médico (Piloto)</h2>
+      <p class="muted" style="margin-bottom:20px">Acesso rápido às ferramentas médicas do sistema</p>
+      <div style="display:flex; gap:16px; flex-wrap:wrap">
+        <a class="tile" id="cta-med-dashboard" href="/public/dashboard-piloto.html" data-cta="med_dashboard">🗂️ Painel (toasts demo)</a>
+        <a class="tile" id="cta-med-kit" href="/public/kit-modular.html" data-cta="med_kit">🧩 Kit Modular</a>
+        <a class="tile" id="cta-med-dr-ai" href="/public/dr-ai-demo.html" data-cta="med_dr_ai">🤖 Assistente Dr. AI</a>
+      </div>
+    </section>
+
     <footer class="container" style="padding-left:0; padding-right:0">
       <div>Obrigado por construir o TeleMed conosco. <span class="muted">Versão de testes — feedbacks são bem‑vindos.</span></div>
       <div style="margin-top:8px" class="muted">
@@ -300,7 +320,7 @@
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
     const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
-    const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
+    const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico', 'cta-med-dashboard', 'cta-med-kit', 'cta-med-dr-ai' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {
       'Conheça o Dr. AI': 'Área ainda em desenvolvimento. Nesta demonstração, priorizamos a conexão médico–paciente.',
