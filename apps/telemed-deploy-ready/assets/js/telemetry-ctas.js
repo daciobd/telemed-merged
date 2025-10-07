@@ -15,13 +15,13 @@
         // Só bloqueia se NÃO houver link real
         if (!isRealLink) {
           e.preventDefault();
+          console.log('🚫 CTA bloqueado (sem href real):', name);
           return;
         }
 
-        // Deixa o navegador navegar para o href real
-        // (pequeno setTimeout para não competir com logs)
-        e.preventDefault();
-        setTimeout(() => { window.location.assign(href); }, 0);
+        // Se é link real, DEIXA O NAVEGADOR FAZER O TRABALHO DELE
+        // Não faz preventDefault() - deixa a navegação acontecer naturalmente
+        console.log('✅ CTA navegando para:', href);
       }, false);
     });
   }
