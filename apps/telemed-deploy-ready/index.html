@@ -317,6 +317,7 @@
   </style>
 
   <script>
+  // Lock System v4 - Proteção dupla contra travamento de CTAs permitidos
   (function(){
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
@@ -359,7 +360,13 @@
     }
 
     function lock(el){
+      // NUNCA travar elementos que estão na whitelist
+      if(isAllowed(el)) {
+        console.log('⚠️ Tentativa de travar elemento permitido bloqueada:', el.id || el.textContent?.substring(0,30));
+        return;
+      }
       if(el.classList.contains('tm-locked')) return;
+      
       // Decide mensagem institucional
       const defaultMsg = 'Disponível em breve — nesta demonstração priorizamos o fluxo médico–paciente.';
       const text = (el.textContent||'').trim();
@@ -376,12 +383,18 @@
     function applyLocks(){
       const clickables = Array.from(document.querySelectorAll('a, button'));
       clickables.forEach(el => {
+        // PRIMEIRO: verificar se está permitido
         if(isAllowed(el)) {
           // Debug: confirmar que CTAs médicos estão permitidos
           if(el.id && el.id.startsWith('cta-med-')) {
-            console.log('✅ CTA médico permitido:', el.id, el.getAttribute('href'));
+            console.log('✅ CTA médico LIBERADO (não será travado):', el.id, el.getAttribute('href'));
           }
-          return; // whitelisted
+          // IMPORTANTE: Remover qualquer lock anterior se existir
+          el.classList.remove('tm-locked');
+          el.removeAttribute('aria-disabled');
+          el.removeAttribute('data-lock-msg');
+          el.removeAttribute('title');
+          return; // whitelisted - NÃO aplica lock
         }
         // travar por texto conhecido ou por padrão, desde que não seja navegação principal
         const href = (el.getAttribute('href')||'').trim();
