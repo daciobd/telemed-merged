@@ -422,6 +422,20 @@
       applyLocks();
       console.log('🔒 Locks aplicados. CTAs médicos na whitelist:', 
         document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').length);
+      
+      // DEBUG: Testar se CTAs realmente funcionam
+      document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').forEach(cta => {
+        console.log('🧪 Estado do CTA:', cta.id, {
+          locked: cta.classList.contains('tm-locked'),
+          disabled: cta.hasAttribute('aria-disabled'),
+          href: cta.getAttribute('href')
+        });
+        
+        // Adicionar listener de teste para ver se o click passa
+        cta.addEventListener('click', (e) => {
+          console.log('🔥 CLICK DETECTADO no CTA:', cta.id, 'navegando para:', cta.getAttribute('href'));
+        }, false); // false = bubbling (depois do capture)
+      });
     }
   })();
   </script>
