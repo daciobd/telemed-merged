@@ -17,6 +17,50 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Auth API endpoints
+  if (req.url.startsWith('/api/auth/')) {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      res.setHeader('Content-Type', 'application/json');
+      
+      if (req.url === '/api/auth/login' && req.method === 'POST') {
+        try {
+          const { id, password, role } = JSON.parse(body);
+          if (!id || !password || !role) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ ok: false, error: 'missing_fields' }));
+            return;
+          }
+          const user = { id, role, name: role === 'medico' ? 'Dr(a). Teste' : 'Paciente Teste' };
+          const token = Buffer.from(JSON.stringify({ sub: id, role, exp: Date.now() + 24*60*60*1000 })).toString('base64');
+          res.writeHead(200);
+          res.end(JSON.stringify({ ok: true, token, user }));
+        } catch (e) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ ok: false, error: 'invalid_json' }));
+        }
+        return;
+      }
+      
+      if (req.url === '/api/auth/logout' && req.method === 'POST') {
+        res.writeHead(200);
+        res.end(JSON.stringify({ ok: true }));
+        return;
+      }
+      
+      if (req.url === '/api/auth/me' && req.method === 'GET') {
+        res.writeHead(200);
+        res.end(JSON.stringify({ ok: true, user: null }));
+        return;
+      }
+      
+      res.writeHead(404);
+      res.end(JSON.stringify({ ok: false, error: 'not_found' }));
+    });
+    return;
+  }
+
 
   // Sanitize the URL and prevent directory traversal
   let requestPath = req.url === '/' ? '/index.html' : req.url;

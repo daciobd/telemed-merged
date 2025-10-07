@@ -253,6 +253,27 @@
     </div>
   </div>
 
+  <!-- Definir URLs do sistema para os botões de login -->
+  <script>
+    window.__SYS_PATIENT_URL__ = 'auth/login.html?role=paciente';
+    window.__SYS_MEDIC_URL__   = 'auth/login.html?role=medico';
+  </script>
+
+  <!-- Configurar botões do sistema -->
+  <script>
+  (function(){
+    const btnPac = document.getElementById('btn-sys-paciente');
+    const btnMed = document.getElementById('btn-sys-medico');
+    if (!btnPac || !btnMed) return;
+    
+    // Atualizar hrefs com as URLs definidas
+    btnPac.href = window.__SYS_PATIENT_URL__ || 'auth/login.html?role=paciente';
+    btnMed.href = window.__SYS_MEDIC_URL__ || 'auth/login.html?role=medico';
+    
+    console.log('✅ Botões do sistema configurados para login');
+  })();
+  </script>
+
   <style>
     /* Banner superior discreto */
     .tm-demo-banner{ position:sticky; top:0; z-index:50; backdrop-filter:saturate(1.2) blur(6px); background:rgba(255,255,255,.7); border-bottom:1px solid rgba(0,0,0,.06); }
@@ -278,7 +299,7 @@
   (function(){
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
-    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant' ];
+    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
     const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {

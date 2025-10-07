@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Médico — TeleMed (Piloto)</title>
+<style>
+  body{font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto;background:#0b1220;color:#e5e7eb;margin:0}
+  .bar{display:flex;justify-content:space-between;align-items:center;background:#0f172a;border-bottom:1px solid rgba(148,163,184,.22);padding:10px 16px}
+  .btn{appearance:none;border:1px solid rgba(148,163,184,.28);background:#111827;color:#fff;padding:8px 12px;border-radius:10px;font-weight:800;text-decoration:none}
+  .btn.primary{background:#60a5fa;color:#0b1220;border-color:transparent}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .cards{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px;margin-top:16px}
+  .card{background:#0f172a;border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:14px}
+  @media(max-width:900px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div>🩺 <b id="uname">Médico</b> — TeleMed</div>
+    <div>
+      <a class="btn" href="../index.html">Página inicial</a>
+      <button class="btn" id="logout">Sair</button>
+    </div>
+  </div>
+  <div class="wrap">
+    <h2>Área do Médico (Piloto)</h2>
+    <div class="cards">
+      <a class="card btn primary" href="../public/admin-telemetry.html">📊 Painel (toasts demo)</a>
+      <a class="card btn" href="../public/dr-ai-demo-intro.html">🧩 Kit Modular</a>
+      <a class="card btn" href="../dr-ai-assistant.html">🤖 Assistente Dr. AI</a>
+    </div>
+  </div>
+  <script src="../js/auth.js"></script>
+  <script>
+    TeleMedAuth.requireAuth('medico');
+    const u = TeleMedAuth.getUser(); if (u) document.getElementById('uname').textContent = u.name || u.id;
+    document.getElementById('logout').onclick = ()=>{ TeleMedAuth.logout(); location.href = '../index.html'; };
+  </script>
+</body>
+</html>

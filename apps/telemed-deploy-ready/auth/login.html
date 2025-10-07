@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Login — TeleMed (Piloto)</title>
+  <style>
+    body{font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto;background:#0b1220;color:#e5e7eb;margin:0}
+    .wrap{max-width:420px;margin:8vh auto;padding:20px}
+    .card{background:#0f172a;border:1px solid rgba(148,163,184,.22);border-radius:14px;padding:18px;box-shadow:0 12px 24px rgba(2,6,23,.35)}
+    h1{font-size:1.35rem;margin:0 0 10px}
+    .row{display:grid;gap:8px;margin:10px 0}
+    label{color:#94a3b8}
+    input,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(148,163,184,.28);background:#0b1220;color:#e5e7eb}
+    .btn{appearance:none;border:0;background:#60a5fa;color:#0b1220;font-weight:800;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .muted{color:#94a3b8;font-size:.95rem}
+    .err{color:#ef4444;margin-top:8px;min-height:1.2em}
+    .top-link{display:block;margin-bottom:8px;color:#93c5fd;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="top-link" href="../index.html">← Voltar à página inicial</a>
+    <div class="card">
+      <h1>Entrar no TeleMed (Piloto)</h1>
+      <p class="muted">Use seu <b>ID</b> (e-mail/CPF/CRM) e senha definidos no cadastro. Para este piloto, o login aceita credenciais fictícias.</p>
+      <div class="row">
+        <label for="role">Entrar como</label>
+        <select id="role">
+          <option value="paciente">Paciente</option>
+          <option value="medico">Médico</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="id">ID (e-mail/CPF/CRM)</label>
+        <input id="id" autocomplete="username" placeholder="ex.: paciente@teste.com"/>
+      </div>
+      <div class="row">
+        <label for="pw">Senha</label>
+        <input id="pw" type="password" autocomplete="current-password" placeholder="••••••"/>
+      </div>
+      <div class="row">
+        <button class="btn" id="btn">Entrar</button>
+        <div class="err" id="err"></div>
+        <div class="muted">Ambiente de testes — não use dados reais.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script>
+  // Pré-seleciona papel via ?role=paciente|medico
+  const q = new URLSearchParams(location.search);
+  const r = q.get('role'); if (r) document.getElementById('role').value = r;
+
+  document.getElementById('btn').onclick = async () => {
+    const role = document.getElementById('role').value;
+    const id   = document.getElementById('id').value.trim();
+    const pw   = document.getElementById('pw').value;
+    const err  = document.getElementById('err'); err.textContent = '';
+
+    if(!id || !pw){ err.textContent = 'Informe ID e senha.'; return; }
+
+    try{
+      // tenta backend; se indisponível, usa mock local
+      const res = await TeleMedAuth.login({ id, password: pw, role });
+      if(!res.ok) throw new Error(res.error || 'Falha no login');
+
+      // redireciona
+      if (role === 'medico') location.href = '../app/medico.html';
+      else                   location.href = '../app/paciente.html';
+    }catch(e){ err.textContent = e.message; }
+  };
+  </script>
+</body>
+</html>
