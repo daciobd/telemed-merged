@@ -200,6 +200,25 @@
         `Se EMERGÊNCIA, reforce orientação 192/SAMU e sinais de alarme.`
       ].join(' ');
     }
+
+    // Suporte a parâmetros de URL para pré-configurar perfil, regras e canais
+    (function(){
+      const p = new URLSearchParams(location.search);
+      const pf = p.get('perfil');            // paciente | medico
+      const rs = (p.get('rules')||'').split(',').filter(Boolean); // ex: febre,pa_emerg
+      const ch = (p.get('channels')||'app').split(','); // ex: app,email
+      if(pf){ const r = document.querySelector(`input[name="perfil"][value="${pf}"]`); r && (r.checked = true); }
+      if(rs.length){ 
+        rs.forEach(k=>{ 
+          const cb = document.querySelector(`.regra[value="${k}"]`); 
+          cb && (cb.checked=true); 
+        }); 
+      }
+      ['app','email','sms'].forEach(k=>{
+        const id = 'canal_'+k; const on = ch.includes(k);
+        const el = document.getElementById(id); if(el) el.checked = on;
+      });
+    })();
   </script>
 </body>
 </html>
