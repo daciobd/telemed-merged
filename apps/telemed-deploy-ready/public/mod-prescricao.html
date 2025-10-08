@@ -7,30 +7,34 @@
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
     .container{max-width:920px;margin:36px auto;padding:16px}
-    .muted{color:var(--muted)}
-    .stack>*{margin:10px 0}
-    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .subtitle{color:var(--muted)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px}
+    ul{margin:8px 0 0 18px}
   </style>
 </head>
 <body>
-  <div class="container stack">
+  <div class="container">
     <h1>💊 Módulo de Prescrição (demo)</h1>
-    <p class="muted">Assistente e ferramentas para elaboração de receitas médicas (demonstração).</p>
-
+    <div class="subtitle">Receitas rápidas e consistentes, com validação inteligente.</div>
     <div class="actions">
-      <a class="btn" href="/public/prescricao-demo.html" data-cta="prescricao_gerar_demo" aria-label="Abrir Gerador de Receita (demo)" data-testid="button-gerar-receita">Gerar Receita (demo)</a>
-      <a class="btn" href="/dr-ai.html?ctx=prescricao&from=kit" data-cta="prescricao_open_dr_ai" aria-label="Abrir Dr. AI em contexto de prescrição" data-testid="button-open-dr-ai">Abrir Dr. AI (prescrição)</a>
+      <a href="/public/prescricao-demo.html" class="btn" data-cta="presc_open_demo" data-testid="button-gerar-receita">Gerar Receita (demo)</a>
+      <a href="/dr-ai.html?ctx=prescricao" class="btn" data-cta="presc_open_ai" data-testid="button-open-dr-ai">Abrir Dr. AI (prescrição)</a>
     </div>
-
-    <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
+    <div class="card">
+      <strong>Destaques</strong>
+      <ul>
+        <li>Templates prontos (ex.: analgésico adulto) com 3–4 cliques.</li>
+        <li>Pré-visualização e PDF imediatos.</li>
+        <li>Validação com Dr. AI no contexto da prescrição (interações/ajustes).</li>
+      </ul>
+    </div>
+    <p style="margin-top:12px"><a class="muted" href="/public/kit-modular.html" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
-
   <script>
     window.__BUILD='pilot-r1';
-    window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-prescricao.html'}});
-    document.querySelectorAll('[data-cta]').forEach(el=>{
-      el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
-    });
+    try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-prescricao.html'}});}catch(e){}
+    document.querySelectorAll('[data-cta]').forEach(el=>el.addEventListener('click',()=>{try{window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}})}catch(e){}}));
   </script>
 </body>
 </html>

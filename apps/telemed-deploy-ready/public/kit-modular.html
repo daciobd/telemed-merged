@@ -6,48 +6,43 @@
   <title>Kit Modular Dr. AI — TeleMed (demo)</title>
   <link rel="stylesheet" href="/assets/css/base.css">
   <style>
-    .container{max-width:840px;margin:40px auto;padding:20px}
+    .container{max-width:960px;margin:36px auto;padding:16px}
+    .hero h1{margin:0 0 4px 0}
+    .subtitle{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:820px){.grid{grid-template-columns:1fr 1fr}}
+    .tile{display:block;border:1px solid rgba(0,0,0,.06);background:#f6f9ff;border-radius:18px;padding:16px 18px;text-decoration:none;color:inherit}
+    .tile:hover{box-shadow:0 6px 24px rgba(16,24,40,.08);background:#f3f7ff}
+    .tile strong{display:block;margin-bottom:6px}
     .muted{color:var(--muted)}
-    .stack>*{margin:8px 0}
-    .tile{display:block;background:#f1f5f9;padding:16px;border-radius:8px;margin:12px 0;text-decoration:none;color:inherit;transition:all 0.2s}
-    .tile:hover{background:#e2e8f0;transform:translateY(-2px)}
-    .tile strong{display:block;margin-bottom:4px;color:#1e293b}
-    ul{list-style:none;padding:0}
+    .back{display:inline-block;margin-top:16px}
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🧰 Kit Modular Dr. AI (demo)</h1>
-    <p class="muted">Ferramentas modulares de IA para diferentes cenários médicos</p>
-    
-    <ul class="stack">
-      <li>
-        <a class="tile" href="/public/mod-triagem.html" data-cta="kit_mod_triagem" aria-label="Abrir módulo de triagem" data-testid="link-mod-triagem">
-          🧾 <strong>Módulo de Triagem</strong><br/>
-          <span class="muted">Sistema inteligente para classificação inicial de pacientes</span>
-        </a>
-      </li>
-      <li>
-        <a class="tile" href="/public/mod-prescricao.html" data-cta="kit_mod_prescricao" aria-label="Abrir módulo de prescrição" data-testid="link-mod-prescricao">
-          💊 <strong>Módulo de Prescrição</strong><br/>
-          <span class="muted">Assistente para elaboração de receitas médicas</span>
-        </a>
-      </li>
-      <li>
-        <a class="tile" href="/public/mod-analise.html" data-cta="kit_mod_analise" aria-label="Abrir módulo de análise" data-testid="link-mod-analise">
-          🧪 <strong>Módulo de Análise</strong><br/>
-          <span class="muted">Análise de exames e resultados laboratoriais</span>
-        </a>
-      </li>
-      <li>
-        <a class="tile" href="/public/mod-alertas.html" data-cta="kit_mod_alertas" aria-label="Abrir módulo de alertas" data-testid="link-mod-alertas">
-          ⚠️ <strong>Módulo de Alertas</strong><br/>
-          <span class="muted">Notificações inteligentes para médicos e pacientes</span>
-        </a>
-      </li>
-    </ul>
-    
-    <p class="muted"><a href="/" data-testid="link-home">← Voltar para a home</a></p>
+    <div class="hero">
+      <h1>💼 Kit Modular Dr. AI (demo)</h1>
+      <div class="subtitle">Ferramentas modulares de IA para diferentes cenários médicos</div>
+    </div>
+    <div class="grid" style="margin-top:14px">
+      <a class="tile" href="/public/mod-triagem.html" data-cta="kit_mod_triagem" aria-label="Abrir módulo de triagem" data-testid="link-mod-triagem">
+        <strong>🩺 Módulo de Triagem</strong>
+        <span class="muted">Classificação inicial de pacientes com checklist de alerta.</span>
+      </a>
+      <a class="tile" href="/public/mod-prescricao.html" data-cta="kit_mod_prescricao" aria-label="Abrir módulo de prescrição" data-testid="link-mod-prescricao">
+        <strong>💊 Módulo de Prescrição</strong>
+        <span class="muted">Receitas rápidas e consistentes, com validação no Dr. AI.</span>
+      </a>
+      <a class="tile" href="/public/mod-analise.html" data-cta="kit_mod_analise" aria-label="Abrir módulo de análise" data-testid="link-mod-analise">
+        <strong>🧪 Módulo de Análise</strong>
+        <span class="muted">Tabela com <em>flags</em> e gráfico a partir de CSV simples.</span>
+      </a>
+      <a class="tile" href="/public/mod-alertas.html" data-cta="kit_mod_alertas" aria-label="Abrir módulo de alertas" data-testid="link-mod-alertas">
+        <strong>⚠️ Módulo de Alertas</strong>
+        <span class="muted">Notificações priorizadas (info/atenção/emergência) e políticas.</span>
+      </a>
+    </div>
+    <a class="back muted" href="/index.html" data-testid="link-home">← Voltar para a home</a>
   </div>
   <script>
     window.__BUILD='pilot-r1';

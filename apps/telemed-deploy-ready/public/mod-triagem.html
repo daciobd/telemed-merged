@@ -7,26 +7,33 @@
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
     .container{max-width:920px;margin:36px auto;padding:16px}
-    .muted{color:var(--muted)} .stack>*{margin:8px 0}
+    .subtitle{color:var(--muted)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px}
+    ul{margin:8px 0 0 18px}
   </style>
 </head>
 <body>
-  <div class="container stack">
+  <div class="container">
     <h1>🩺 Módulo de Triagem (demo)</h1>
-    <p class="muted">Classificação inicial de pacientes (exemplo demonstrativo).</p>
-
-    <a class="btn" href="/dr-ai.html" data-cta="triagem_open_dr_ai" data-testid="button-open-dr-ai">Abrir Assistente Dr. AI</a>
-    <a class="btn" href="/public/cadastro-paciente.html" data-cta="triagem_cadastro" data-testid="button-cadastro">Ir para cadastro do paciente</a>
-
-    <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
+    <div class="subtitle">Classificação inicial com sinais de alerta e direcionamento de especialidade.</div>
+    <div class="actions">
+      <a href="/dr-ai.html?ctx=triagem" class="btn" data-cta="triagem_open_ai" data-testid="button-open-dr-ai">Abrir Assistente Dr. AI para triagem</a>
+    </div>
+    <div class="card">
+      <strong>Checklist de triagem</strong>
+      <ul>
+        <li>Coleta de sintomas + idade/gênero.</li>
+        <li>Sinais de alerta (febre alta, rigidez de nuca, dor torácica, confusão, etc.).</li>
+        <li>Encaminhamento inicial (especialidade/urgência).</li>
+      </ul>
+    </div>
+    <p style="margin-top:12px"><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
-
   <script>
     window.__BUILD='pilot-r1';
-    (window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-triagem.html'}}));
-    document.querySelectorAll('[data-cta]').forEach(el=>{
-      el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
-    });
+    try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-triagem.html'}});}catch(e){}
+    document.querySelectorAll('[data-cta]').forEach(el=>el.addEventListener('click',()=>{try{window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}})}catch(e){}}));
   </script>
 </body>
 </html>

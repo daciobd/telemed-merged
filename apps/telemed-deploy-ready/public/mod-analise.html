@@ -8,19 +8,22 @@
   <style>
     .container{max-width:920px;margin:36px auto;padding:16px}
     .muted{color:var(--muted)} .stack>*{margin:8px 0}
-    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px}
   </style>
 </head>
 <body>
   <div class="container stack">
     <h1>🧪 Módulo de Análise (demo)</h1>
-    <p class="muted">Análise de exames e resultados laboratoriais (exemplo). Cole um CSV simples e gere tabela com <em>flags</em> e gráfico.</p>
-
+    <p class="muted">Análise de exames e resultados laboratoriais. Cole um CSV simples e gere tabela com <em>flags</em> e gráfico.</p>
     <div class="actions">
       <a class="btn" href="/public/analise-exames-demo.html" data-cta="analise_exames_demo" aria-label="Abrir análise de exames (demo)" data-testid="button-analise-exames">Analisar exames (demo)</a>
       <a class="btn" href="/dr-ai.html?ctx=analise" data-cta="analise_open_dr_ai" aria-label="Abrir Dr. AI em contexto de análise" data-testid="button-open-dr-ai">Abrir Dr. AI (análise)</a>
     </div>
-
+    <div class="card">
+      <strong>Como funciona</strong>
+      <p>Você cola o CSV do laboratório e o sistema marca valores alterados e desenha a tendência de glicemia. Em caso de dúvida, abra o Dr. AI com a pergunta já montada.</p>
+    </div>
     <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
   <script>

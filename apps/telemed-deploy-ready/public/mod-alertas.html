@@ -9,19 +9,27 @@
     .container{max-width:920px;margin:36px auto;padding:16px}
     .muted{color:var(--muted)}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px}
+    ul{margin:8px 0 0 18px}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>⚠️ Módulo de Alertas (demo)</h1>
-    <p class="muted">Regras de notificação para médicos/pacientes. Simule eventos clínicos e veja o feed de alertas.</p>
-
+    <p class="muted">Regras de notificação para médicos/pacientes, com priorização por gravidade.</p>
     <div class="actions">
       <a class="btn" href="/public/alertas-demo.html" data-cta="alertas_demo_open" aria-label="Abrir simulação de alertas" data-testid="button-simular-alertas">Simular alertas (demo)</a>
       <a class="btn" href="/dr-ai.html?ctx=alertas" data-cta="alertas_open_dr_ai" aria-label="Abrir Dr. AI em contexto de alertas" data-testid="button-open-dr-ai">Perguntar ao Dr. AI (alertas)</a>
       <a class="btn" href="/dashboard-piloto.html" data-cta="alertas_open_dash" aria-label="Abrir dashboard de telemetria" data-testid="button-dashboard">Ver telemetria</a>
     </div>
-
+    <div class="card">
+      <strong>Regras incluídas no demo</strong>
+      <ul>
+        <li>PA crítica (≥ 180/120), Hipoglicemia, Febre alta.</li>
+        <li>Fora de escopo (triagem vermelha) e Consulta expirada.</li>
+        <li>Adesão: dose esquecida.</li>
+      </ul>
+    </div>
     <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
   <script>
