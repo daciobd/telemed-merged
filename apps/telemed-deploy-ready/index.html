@@ -434,9 +434,17 @@
         // Listener CAPTURE (primeiro a rodar) para interceptar TUDO
         cta.addEventListener('click', (e) => {
           console.log('🔥🔥🔥 CLICK CAPTURADO (CAPTURE PHASE) no:', cta.id);
-          console.log('   → href atual:', cta.getAttribute('href'));
+          console.log('   → href NO MOMENTO DO CLICK:', cta.getAttribute('href'));
           console.log('   → defaultPrevented:', e.defaultPrevented);
           console.log('   → target:', e.target.id || e.target.className || e.target.tagName);
+          
+          // Verificar se href mudou após 1ms
+          setTimeout(() => {
+            console.log('   → href DEPOIS de 1ms:', cta.getAttribute('href'));
+            if (e.defaultPrevented) {
+              console.log('   ⚠️ NAVEGAÇÃO BLOQUEADA - defaultPrevented = true');
+            }
+          }, 1);
           
           // NÃO fazer preventDefault - deixar navegação acontecer
         }, true); // true = CAPTURE phase (antes de tudo)
