@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gerar Receita (demo) — TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:920px;margin:36px auto;padding:16px}
+    form{display:grid;gap:12px;max-width:680px}
+    label{font-weight:600}
+    input,textarea,select{width:100%}
+    .card{background:#f3f7fb;border-radius:12px;padding:16px}
+    .muted{color:var(--muted)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:720px){.row{grid-template-columns:1fr}}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .preview{white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧾 Gerar Receita (demo)</h1>
+    <p class="muted">Preencha os campos para simular a geração de uma receita. Nenhum dado real é armazenado.</p>
+
+    <form id="rxForm" aria-label="Formulário de receita">
+      <div class="row">
+        <div>
+          <label for="paciente">Paciente</label>
+          <input id="paciente" required placeholder="Nome do paciente" data-testid="input-paciente" />
+        </div>
+        <div>
+          <label for="crm">Médico</label>
+          <input id="crm" required placeholder="Dra. Ana (CRM 12345-SP)" data-testid="input-medico" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="med">Medicamento</label>
+          <input id="med" required placeholder="Ex.: Dipirona 500 mg" data-testid="input-medicamento" />
+        </div>
+        <div>
+          <label for="dose">Dose</label>
+          <input id="dose" required placeholder="Ex.: 1 comprimido" data-testid="input-dose" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="pos">Posologia</label>
+          <input id="pos" required placeholder="Ex.: a cada 8 horas" data-testid="input-posologia" />
+        </div>
+        <div>
+          <label for="dur">Duração</label>
+          <input id="dur" required placeholder="Ex.: por 5 dias" data-testid="input-duracao" />
+        </div>
+      </div>
+
+      <div>
+        <label for="obs">Observações (opcional)</label>
+        <textarea id="obs" rows="3" placeholder="Orientações adicionais" data-testid="input-observacoes"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn" type="submit" data-cta="rx_demo_gerar" data-testid="button-gerar">Gerar receita (preview)</button>
+        <button class="btn" type="button" id="btnPrint" data-cta="rx_demo_print" data-testid="button-print">Imprimir / Salvar PDF</button>
+        <a class="btn" href="/dr-ai.html?ctx=prescricao&from=rx_demo" data-cta="rx_demo_open_dr_ai" data-testid="button-open-dr-ai">Abrir Dr. AI</a>
+      </div>
+    </form>
+
+    <div id="preview" class="card" style="display:none;margin-top:16px" aria-live="polite" data-testid="preview-receita">
+      <h3>Pré-visualização</h3>
+      <div class="preview" id="previewText"></div>
+      <p class="muted" style="margin-top:8px">Este é um documento <strong>de demonstração</strong> e não possui validade clínica.</p>
+    </div>
+
+    <p style="margin-top:18px"><a href="/public/mod-prescricao.html" class="muted" data-testid="link-back">← Voltar ao Módulo de Prescrição</a></p>
+  </div>
+
+  <script>
+    // Telemetria
+    window.__BUILD='pilot-r1';
+    try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/prescricao-demo.html'}});}catch(e){}
+
+    document.querySelectorAll('[data-cta]').forEach(el=>{
+      el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
+    });
+
+    // Lógica simples de preview
+    const form = document.getElementById('rxForm');
+    const pv = document.getElementById('preview');
+    const pvText = document.getElementById('previewText');
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const v = id => document.getElementById(id).value.trim();
+      const txt =
+`Receita (DEMO)
+Paciente: ${v('paciente')}
+Médico: ${v('crm')}
+
+Medicamento: ${v('med')}
+Dose: ${v('dose')}
+Posologia: ${v('pos')}
+Duração: ${v('dur')}
+
+Observações: ${v('obs') || '—'}
+
+Emitido em: ${new Date().toLocaleString('pt-BR')}
+`;
+      pvText.textContent = txt;
+      pv.style.display = 'block';
+    });
+
+    document.getElementById('btnPrint').addEventListener('click', ()=>{
+      try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_demo_print'}});}catch(e){}
+      window.print();
+    });
+  </script>
+</body>
+</html>

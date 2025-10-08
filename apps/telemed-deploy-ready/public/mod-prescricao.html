@@ -5,21 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Módulo de Prescrição — TeleMed (demo)</title>
   <link rel="stylesheet" href="/assets/css/base.css" />
-  <style>.container{max-width:920px;margin:36px auto;padding:16px}.muted{color:var(--muted)} .stack>*{margin:8px 0}</style>
+  <style>
+    .container{max-width:920px;margin:36px auto;padding:16px}
+    .muted{color:var(--muted)}
+    .stack>*{margin:10px 0}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+  </style>
 </head>
 <body>
   <div class="container stack">
     <h1>💊 Módulo de Prescrição (demo)</h1>
-    <p class="muted">Assistente para elaboração de receitas médicas (exemplo).</p>
+    <p class="muted">Assistente e ferramentas para elaboração de receitas médicas (demonstração).</p>
 
-    <a class="btn" href="/dr-ai.html" data-cta="prescricao_open_dr_ai" data-testid="button-open-dr-ai">Abrir Assistente Dr. AI</a>
-    <a class="btn" href="/dashboard-piloto.html" data-cta="prescricao_dashboard" data-testid="button-dashboard">Ver dashboard piloto</a>
+    <div class="actions">
+      <a class="btn" href="/public/prescricao-demo.html" data-cta="prescricao_gerar_demo" aria-label="Abrir Gerador de Receita (demo)" data-testid="button-gerar-receita">Gerar Receita (demo)</a>
+      <a class="btn" href="/dr-ai.html?ctx=prescricao&from=kit" data-cta="prescricao_open_dr_ai" aria-label="Abrir Dr. AI em contexto de prescrição" data-testid="button-open-dr-ai">Abrir Dr. AI (prescrição)</a>
+    </div>
 
     <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
+
   <script>
     window.__BUILD='pilot-r1';
-    (window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-prescricao.html'}}));
+    window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-prescricao.html'}});
     document.querySelectorAll('[data-cta]').forEach(el=>{
       el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
     });
