@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assistente Dr. AI — TeleMed (demo)</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <style>
+    .container{max-width:840px;margin:40px auto;padding:20px}
+    .muted{color:var(--muted)}
+    .demo-box{background:#f1f5f9;padding:20px;border-radius:12px;margin:20px 0}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 Assistente Dr. AI (demo)</h1>
+    <p class="muted">Chat inteligente com IA para triagem e orientação médica</p>
+    
+    <div class="demo-box">
+      <h3>Demonstração do Assistente</h3>
+      <p>O assistente Dr. AI ajuda pacientes e médicos com:</p>
+      <ul>
+        <li>Triagem inicial de sintomas</li>
+        <li>Orientações médicas básicas</li>
+        <li>Agendamento de consultas</li>
+        <li>Acompanhamento pós-consulta</li>
+      </ul>
+    </div>
+    
+    <p class="muted"><a href="/">← Voltar para a home</a></p>
+  </div>
+  <script>
+    window.__BUILD='pilot-r1';
+    try {
+      window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/dr-ai-demo.html'}});
+    } catch(e) {}
+  </script>
+</body>
+</html>

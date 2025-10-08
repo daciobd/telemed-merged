@@ -200,7 +200,7 @@
       <h2 class="tm-section-title">Entradas do Sistema</h2>
       <p class="muted" style="margin-bottom:20px">Acesse diretamente as demonstrações de paciente ou médico</p>
       <div style="display:flex; gap:16px; flex-wrap:wrap">
-        <a id="btn-sys-paciente" href="demo-paciente.html" class="btn" data-testid="button-patient-entry">Entrar como Paciente →</a>
+        <a id="btn-sys-paciente" href="/public/cadastro-paciente.html" class="btn" data-cta="patient_enter" data-testid="button-patient-entry">Entrar como Paciente →</a>
         <a id="btn-sys-medico" href="demo-medico.html" class="btn ghost" data-testid="button-doctor-entry">Entrar como Médico →</a>
       </div>
     </section>
@@ -210,28 +210,28 @@
       <h2 class="tm-section-title">Demonstrações Dr. AI</h2>
       <p class="muted" style="margin-bottom:20px">Explore as funcionalidades do assistente médico inteligente</p>
       <div class="tm-grid">
-        <a id="card-paciente" href="public/minhas-consultas-demo.html" class="tm-card" data-testid="card-patient-demo">
+        <a id="card-paciente" href="/public/cadastro-paciente.html" class="tm-card" data-cta="start_patient" data-testid="card-patient-demo">
           <div class="tm-card-icon">👤</div>
           <h3>Começar pelo Paciente</h3>
           <p>Veja o fluxo completo de uma consulta do ponto de vista do paciente</p>
           <span class="tm-cta">Abrir →</span>
         </a>
         
-        <a id="card-chat" href="dr-ai-assistant.html" class="tm-card" data-testid="card-chat-demo">
+        <a id="card-chat" href="/public/dr-ai-demo.html" class="tm-card" data-cta="dr_ai_big" data-testid="card-chat-demo">
           <div class="tm-card-icon">💬</div>
           <h3>Assistente Dr. AI</h3>
           <p>Chat inteligente com IA para triagem e orientação médica</p>
           <span class="tm-cta">Abrir →</span>
         </a>
         
-        <a id="card-kit" href="public/dr-ai-demo-intro.html" class="tm-card" data-testid="card-kit-demo">
+        <a id="card-kit" href="/public/kit-modular.html" class="tm-card" data-cta="kit_modular_big" data-testid="card-kit-demo">
           <div class="tm-card-icon">🧰</div>
           <h3>Kit Modular Dr. AI</h3>
           <p>Ferramentas modulares de IA para diferentes cenários médicos</p>
           <span class="tm-cta">Abrir →</span>
         </a>
         
-        <a id="card-toasts" href="public/admin-telemetry.html" class="tm-card" data-testid="card-telemetry-demo">
+        <a id="card-toasts" href="/dashboard-piloto.html" class="tm-card" data-cta="alerts_telemetry" data-testid="card-telemetry-demo">
           <div class="tm-card-icon">📊</div>
           <h3>Alertas & Telemetria</h3>
           <p>Sistema de notificações e monitoramento em tempo real</p>
@@ -263,7 +263,7 @@
   <script src="/js/consent-manager.js" integrity="sha384-wbtbzGd6bxqCvh5TIaOjrEu9S7Cv+0TxDHB0omfMuy00VmNYK1ufmvk+FwogmV3t" crossorigin="anonymous"></script>
   <script src="/js/webrtc-metrics.js" integrity="sha384-6C8nL1L8EPHcwV2guHnf0ZQwpL1xSOx6jV+W0Q7lKbYDT4OTg72sh4vFQCy7xKec" crossorigin="anonymous"></script>
   <script src="/js/prewarm.js" integrity="sha384-roqs9QoffllRtPyCCfiFai1ecwBEM4ZeYYSlXcsXm8sqIkDdvT3IwTRpW2RSMF39" crossorigin="anonymous"></script>
-  <script src="/assets/js/telemetry-ctas.js?v=3"></script>
+  <script src="/assets/js/telemetry-ctas.js?v=4"></script>
 
   <!-- Adaptador de Demo para a Landing Bonita (não quebra o design) -->
   <!-- Barra discreta explicando o fluxo + CTA principal -->
@@ -321,7 +321,7 @@
   (function(){
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
-    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
+    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', '/public/', '/dashboard', '/preview/', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
     const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico', 'cta-med-dashboard', 'cta-med-kit', 'cta-med-dr-ai' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {
@@ -422,38 +422,6 @@
       applyLocks();
       console.log('🔒 Locks aplicados. CTAs médicos na whitelist:', 
         document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').length);
-      
-      // DEBUG: Testar se CTAs realmente funcionam
-      document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').forEach(cta => {
-        console.log('🧪 Estado do CTA:', cta.id, {
-          locked: cta.classList.contains('tm-locked'),
-          disabled: cta.hasAttribute('aria-disabled'),
-          href: cta.getAttribute('href')
-        });
-        
-        // Listener CAPTURE (primeiro a rodar) para interceptar TUDO
-        cta.addEventListener('click', (e) => {
-          console.log('🔥🔥🔥 CLICK CAPTURADO (CAPTURE PHASE) no:', cta.id);
-          console.log('   → href NO MOMENTO DO CLICK:', cta.getAttribute('href'));
-          console.log('   → defaultPrevented:', e.defaultPrevented);
-          console.log('   → target:', e.target.id || e.target.className || e.target.tagName);
-          
-          // Verificar se href mudou após 1ms
-          setTimeout(() => {
-            console.log('   → href DEPOIS de 1ms:', cta.getAttribute('href'));
-            if (e.defaultPrevented) {
-              console.log('   ⚠️ NAVEGAÇÃO BLOQUEADA - defaultPrevented = true');
-            }
-          }, 1);
-          
-          // NÃO fazer preventDefault - deixar navegação acontecer
-        }, true); // true = CAPTURE phase (antes de tudo)
-        
-        // Listener BUBBLE (último a rodar)
-        cta.addEventListener('click', (e) => {
-          console.log('✅ CLICK PASSANDO (BUBBLE PHASE) - navegação deve acontecer agora');
-        }, false);
-      });
     }
   })();
   </script>

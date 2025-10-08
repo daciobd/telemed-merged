@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cadastro do Paciente — TeleMed (demo)</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <style>
+    .container{max-width:840px;margin:40px auto;padding:20px}
+    .muted{color:var(--muted)}
+    .btn{display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;margin-top:16px}
+    .btn:hover{background:#1d4ed8}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cadastro do Paciente (demo)</h1>
+    <p class="muted">Preencha seus dados básicos para iniciar sua jornada no TeleMed.</p>
+    <p>
+      <a class="btn" id="go-form" href="/cadastro.html" data-cta="patient_form" data-testid="button-go-form">Abrir formulário</a>
+    </p>
+    <p class="muted">Dúvidas? <a href="/public/dr-ai-demo.html">Converse com o Assistente Dr. AI</a>.</p>
+    <p class="muted"><a href="/">← Voltar para a home</a></p>
+  </div>
+  <script>
+    window.__BUILD='pilot-r1';
+    try {
+      window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/cadastro-paciente.html'}});
+    } catch(e) {}
+  </script>
+</body>
+</html>

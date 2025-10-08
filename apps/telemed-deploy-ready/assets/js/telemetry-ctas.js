@@ -1,7 +1,7 @@
-// Não atrapalhar a navegação quando o link é real
+// Não atrapalhar navegação quando houver href real
 (function() {
   function setupCTATelemetry() {
-    document.querySelectorAll('a.tile,button.tile').forEach(el => {
+    document.querySelectorAll('a.tile,a.tm-card,a.chip,button.tile,button.tm-card,button.chip').forEach(el => {
       const name = el.dataset.cta || el.id || 'cta';
       el.addEventListener('click', (e) => {
         const href = el.getAttribute('href');
@@ -19,8 +19,10 @@
           return;
         }
 
-        // Se é link real, DEIXA O NAVEGADOR FAZER O TRABALHO DELE
-        // Não faz preventDefault() - deixa a navegação acontecer naturalmente
+        // Se é link real, previne navegação padrão e usa window.location.assign
+        // para garantir que telemetria seja enviada
+        e.preventDefault();
+        setTimeout(() => { window.location.assign(href); }, 0);
         console.log('✅ CTA navegando para:', href);
       }, false);
     });

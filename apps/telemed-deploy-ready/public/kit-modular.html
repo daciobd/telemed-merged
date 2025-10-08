@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kit Modular Dr. AI — TeleMed (demo)</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <style>
+    .container{max-width:840px;margin:40px auto;padding:20px}
+    .muted{color:var(--muted)}
+    .module{background:#f1f5f9;padding:16px;border-radius:8px;margin:12px 0}
+    .module h4{margin:0 0 8px;color:#1e293b}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧰 Kit Modular Dr. AI (demo)</h1>
+    <p class="muted">Ferramentas modulares de IA para diferentes cenários médicos</p>
+    
+    <div class="module">
+      <h4>📋 Módulo de Triagem</h4>
+      <p>Sistema inteligente para classificação inicial de pacientes</p>
+    </div>
+    
+    <div class="module">
+      <h4>💊 Módulo de Prescrição</h4>
+      <p>Assistente para elaboração de receitas médicas</p>
+    </div>
+    
+    <div class="module">
+      <h4>📊 Módulo de Análise</h4>
+      <p>Análise de exames e resultados laboratoriais</p>
+    </div>
+    
+    <div class="module">
+      <h4>🔔 Módulo de Alertas</h4>
+      <p>Notificações inteligentes para médicos e pacientes</p>
+    </div>
+    
+    <p class="muted"><a href="/">← Voltar para a home</a></p>
+  </div>
+  <script>
+    window.__BUILD='pilot-r1';
+    try {
+      window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/kit-modular.html'}});
+    } catch(e) {}
+  </script>
+</body>
+</html>
