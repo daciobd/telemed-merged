@@ -6,32 +6,39 @@
   <title>Simulador de Alertas (demo) — TeleMed</title>
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
-    .container{max-width:980px;margin:36px auto;padding:16px}
+    .container{max-width:1080px;margin:36px auto;padding:16px}
+    .subtitle{color:var(--muted);margin-bottom:16px}
     .muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
-    fieldset{border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:12px}
-    legend{font-weight:700}
+    fieldset{border:1px solid rgba(0,0,0,.08);background:#f8fafc;border-radius:12px;padding:16px}
+    legend{font-weight:700;color:#1e293b;padding:0 8px}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
-    .feed{display:grid;gap:12px}
-    .alert{border-radius:12px;padding:12px;border:1px solid rgba(0,0,0,.08);background:#f8fafc}
-    .sev-info{border-left:6px solid #2563eb}
+    .feed{display:grid;gap:12px;min-height:200px}
+    .alert{border-radius:12px;padding:14px;border:1px solid rgba(0,0,0,.08);background:#fff}
+    .sev-info{border-left:6px solid #2563eb;background:#eff6ff}
     .sev-attn{border-left:6px solid #d97706;background:#fff8ed}
     .sev-emer{border-left:6px solid #b91c1c;background:#fff1f2}
-    .meta{font-size:12px;color:var(--muted)}
-    .tag{background:#eef2ff;border-radius:999px;padding:2px 10px;font-size:12px;margin-left:6px}
-    .btn-link{background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
+    .meta{font-size:12px;color:var(--muted);margin:4px 0}
+    .tag{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:999px;padding:2px 10px;font-size:11px;margin-left:6px;font-weight:600}
+    .btn-link{background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;padding:4px 0}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:12px;margin-bottom:16px}
+    label{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🔔 Simulador de Alertas (demo)</h1>
-    <p class="muted">Dispare situações clínicas comuns e veja o feed de alertas com severidade, ações sugeridas e integração com o Dr. AI.</p>
+    <div class="subtitle">Dispare situações clínicas comuns e veja o feed de alertas com <strong>severidade</strong>, <strong>ações sugeridas</strong> e integração com o Dr. AI.</div>
+
+    <div class="info-box">
+      <strong>💡 Como funciona:</strong> Selecione o perfil (Paciente/Médico), marque as regras de alerta que deseja testar e clique em "Disparar selecionados". Os alertas aparecerão no feed à direita com cores por severidade.
+    </div>
 
     <div class="grid">
       <section>
         <fieldset>
-          <legend>Perfil & Canal</legend>
+          <legend>👤 Perfil & Canal de Notificação</legend>
           <div class="actions">
             <label data-testid="radio-paciente"><input type="radio" name="perfil" value="paciente" checked /> Paciente</label>
             <label data-testid="radio-medico"><input type="radio" name="perfil" value="medico" /> Médico</label>
@@ -44,26 +51,26 @@
         </fieldset>
 
         <fieldset style="margin-top:12px">
-          <legend>Regras rápidas (demo)</legend>
-          <div class="actions" style="flex-direction:column;align-items:flex-start">
-            <label data-testid="checkbox-febre"><input type="checkbox" class="regra" value="febre" /> Febre alta &gt; 38.5 °C (atendimento nas últimas 24–48h)</label>
-            <label data-testid="checkbox-pa"><input type="checkbox" class="regra" value="pa_emerg" /> PA &gt;= 180/120 mmHg (emergência)</label>
-            <label data-testid="checkbox-hipoglic"><input type="checkbox" class="regra" value="hipoglic" /> Glicemia &lt; 60 mg/dL (hipoglicemia)</label>
-            <label data-testid="checkbox-dose"><input type="checkbox" class="regra" value="dose_perdida" /> Esquecimento de dose (adesão)</label>
-            <label data-testid="checkbox-consulta"><input type="checkbox" class="regra" value="consulta_expirada" /> Consulta expirada (sem retorno em 30 dias)</label>
-            <label data-testid="checkbox-fora"><input type="checkbox" class="regra" value="fora_escopo" /> Fora de escopo (ex.: dor torácica súbita)</label>
+          <legend>⚙️ Regras Clínicas (demo)</legend>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label data-testid="checkbox-febre"><input type="checkbox" class="regra" value="febre" /> 🌡️ Febre alta &gt; 38.5 °C</label>
+            <label data-testid="checkbox-pa"><input type="checkbox" class="regra" value="pa_emerg" /> 🚨 PA &gt;= 180/120 mmHg (emergência)</label>
+            <label data-testid="checkbox-hipoglic"><input type="checkbox" class="regra" value="hipoglic" /> 🩸 Glicemia &lt; 60 mg/dL (hipoglicemia)</label>
+            <label data-testid="checkbox-dose"><input type="checkbox" class="regra" value="dose_perdida" /> 💊 Esquecimento de dose</label>
+            <label data-testid="checkbox-consulta"><input type="checkbox" class="regra" value="consulta_expirada" /> 📅 Consulta expirada (sem retorno em 30 dias)</label>
+            <label data-testid="checkbox-fora"><input type="checkbox" class="regra" value="fora_escopo" /> ⚠️ Fora de escopo (ex.: dor torácica súbita)</label>
           </div>
-          <div class="actions">
-            <button class="btn" id="btnDisparar" data-cta="alerts_demo_trigger" data-testid="button-disparar">Disparar selecionados</button>
-            <button class="btn" id="btnExemplo" data-cta="alerts_demo_example" data-testid="button-exemplo">Disparar exemplo</button>
-            <a class="btn" href="/dashboard-piloto.html" data-cta="alerts_demo_dash" data-testid="button-telemetria">Ver telemetria</a>
+          <div class="actions" style="margin-top:12px">
+            <button class="btn" id="btnDisparar" data-cta="alerts_demo_trigger" data-testid="button-disparar">⚡ Disparar selecionados</button>
+            <button class="btn" id="btnExemplo" data-cta="alerts_demo_example" data-testid="button-exemplo">📥 Disparar exemplo</button>
+            <a class="btn" href="/dashboard-piloto.html" data-cta="alerts_demo_dash" data-testid="button-telemetria">📊 Ver telemetria</a>
           </div>
         </fieldset>
       </section>
 
       <section>
-        <fieldset style="height:100%">
-          <legend>Feed de alertas</legend>
+        <fieldset style="height:100%;min-height:400px">
+          <legend>📬 Feed de Alertas</legend>
           <div id="feed" class="feed" aria-live="polite" aria-busy="false" data-testid="feed-alertas"></div>
         </fieldset>
       </section>
@@ -128,29 +135,29 @@
       consulta_expirada(){
         return {
           titulo:'Consulta expirada',
-          msg:'Sem retorno em 30 dias (sugestão de reagendamento).',
-          sev:'info',
-          acao:'Propor agenda de follow-up e fechamento de ciclo.',
-          politica:'consulta_expirada=ATIVA.'
+          msg:'Paciente sem retorno em 30 dias. Risco de descontinuidade.',
+          sev:'attn',
+          acao:'Sugerir reagendamento via app ou telefone.',
+          politica:'engajamento=MÉDIO.'
         };
       },
       fora_escopo(){
         return {
-          titulo:'Fora de escopo — triagem vermelha',
-          msg:'Sintoma de alto risco (ex.: dor torácica súbita).',
+          titulo:'Fora de escopo',
+          msg:'Sintoma potencialmente grave (ex.: dor torácica súbita).',
           sev:'emer',
-          acao:'Direcionar a serviço de emergência (192) imediatamente.',
+          acao:'Encaminhar imediatamente para emergência presencial.',
           politica:'fora_escopo=SIM.'
         };
       }
     };
 
-    // Disparo de alertas
     document.getElementById('btnDisparar').addEventListener('click', ()=>{
-      const marcadas = Array.from(document.querySelectorAll('.regra:checked')).map(r=>r.value);
-      if(!marcadas.length) return;
-      marcadas.forEach(key=>pushAlert(key));
+      const sel = Array.from(document.querySelectorAll('.regra:checked')).map(c=>c.value);
+      if(!sel.length) return alert('Marque pelo menos uma regra.');
+      sel.forEach(pushAlert);
     });
+
     document.getElementById('btnExemplo').addEventListener('click', ()=>{
       ['dose_perdida','febre','pa_emerg'].forEach(k=>pushAlert(k));
     });
@@ -161,28 +168,27 @@
       const canaisSel = Object.entries(canais()).filter(([_,v])=>v).map(([k])=>k.toUpperCase()).join(', ') || 'APP';
       const ts = new Date().toLocaleString('pt-BR');
       const cls = r.sev==='emer'?'sev-emer':(r.sev==='attn'?'sev-attn':'sev-info');
+      const sevLabel = r.sev==='emer'?'EMER':(r.sev==='attn'?'ATTN':'INFO');
 
       const el = document.createElement('div');
       el.className = `alert ${cls}`;
       el.innerHTML = `
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
-          <div>
+          <div style="flex:1">
             <strong>${r.titulo}</strong>
-            <span class="tag">${r.sev.toUpperCase()}</span>
+            <span class="tag">${sevLabel}</span>
             <div class="meta">Perfil: ${perfil().toUpperCase()} · Canais: ${canaisSel} · ${ts}</div>
             <p style="margin:8px 0">${r.msg}</p>
-            <p class="muted">Ação sugerida: ${r.acao}</p>
-            <p class="muted">Políticas (demo): ${r.politica}</p>
+            <p class="muted" style="font-size:13px">Ação sugerida: ${r.acao}</p>
+            <p class="muted" style="font-size:13px">Políticas (demo): ${r.politica}</p>
           </div>
           <div>
-            <button class="btn-link" aria-label="Explicar alerta no Dr. AI" data-ai="${key}">Explicar com Dr. AI</button>
+            <button class="btn-link" aria-label="Explicar alerta no Dr. AI" data-ai="${key}">🤖 Explicar com Dr. AI</button>
           </div>
         </div>
       `;
-      // topo do feed
       feed.prepend(el);
 
-      // wire do botão AI
       const b = el.querySelector('[data-ai]');
       b.addEventListener('click', ()=>{
         const pergunta = buildQuestion(perfil(), r);
@@ -204,9 +210,9 @@
     // Suporte a parâmetros de URL para pré-configurar perfil, regras e canais
     (function(){
       const p = new URLSearchParams(location.search);
-      const pf = p.get('perfil');            // paciente | medico
-      const rs = (p.get('rules')||'').split(',').filter(Boolean); // ex: febre,pa_emerg
-      const ch = (p.get('channels')||'app').split(','); // ex: app,email
+      const pf = p.get('perfil');
+      const rs = (p.get('rules')||'').split(',').filter(Boolean);
+      const ch = (p.get('channels')||'app').split(',');
       if(pf){ const r = document.querySelector(`input[name="perfil"][value="${pf}"]`); r && (r.checked = true); }
       if(rs.length){ 
         rs.forEach(k=>{ 

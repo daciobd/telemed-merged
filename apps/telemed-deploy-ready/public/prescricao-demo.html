@@ -7,25 +7,31 @@
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
     .container{max-width:920px;margin:36px auto;padding:16px}
+    .subtitle{color:var(--muted);margin-bottom:16px}
     form{display:grid;gap:12px;max-width:680px}
-    label{font-weight:600}
-    input,textarea,select{width:100%}
-    .card{background:#f3f7fb;border-radius:12px;padding:16px}
+    label{font-weight:600;display:block;margin-bottom:4px}
+    input,textarea,select{width:100%;padding:10px;border:1px solid rgba(0,0,0,.12);border-radius:8px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px;margin-top:16px}
     .muted{color:var(--muted)}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:720px){.row{grid-template-columns:1fr}}
-    .actions,.templates{display:flex;gap:12px;flex-wrap:wrap}
-    .preview{white-space:pre-wrap}
+    .actions,.templates{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+    .preview{white-space:pre-wrap;font-family:monospace;font-size:14px}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:12px;margin:12px 0}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🧾 Gerar Receita (demo)</h1>
-    <p class="muted">Preencha os campos para simular a geração de uma receita. Nenhum dado real é armazenado.</p>
+    <div class="subtitle">Preencha os campos para simular a geração de uma receita médica. Nenhum dado real é armazenado.</div>
+
+    <div class="info-box">
+      <strong>Templates rápidos:</strong> Use os botões abaixo para preencher automaticamente com exemplos comuns.
+    </div>
 
     <div class="templates" aria-label="Modelos rápidos">
-      <button class="btn" type="button" data-tpl="analgesico_adulto" data-testid="button-tpl-analgesico">Usar template: Analgésico adulto</button>
-      <button class="btn" type="button" data-tpl="antitermico_ped" data-testid="button-tpl-antitermico">Usar template: Antitérmico pediátrico</button>
+      <button class="btn" type="button" data-tpl="analgesico_adulto" data-testid="button-tpl-analgesico">💊 Analgésico adulto</button>
+      <button class="btn" type="button" data-tpl="antitermico_ped" data-testid="button-tpl-antitermico">🧒 Antitérmico pediátrico</button>
     </div>
 
     <form id="rxForm" aria-label="Formulário de receita">
@@ -68,16 +74,16 @@
       </div>
 
       <div class="actions">
-        <button class="btn" type="submit" data-cta="rx_demo_gerar" data-testid="button-gerar">Gerar receita (preview)</button>
-        <button class="btn" type="button" id="btnPrint" data-cta="rx_demo_print" data-testid="button-print">Imprimir / Salvar PDF</button>
-        <button class="btn" type="button" id="btnAskAI" data-cta="rx_demo_ask_ai" data-testid="button-ask-ai">Validar com Dr. AI</button>
+        <button class="btn" type="submit" data-cta="rx_demo_gerar" data-testid="button-gerar">📋 Gerar receita (preview)</button>
+        <button class="btn" type="button" id="btnPrint" data-cta="rx_demo_print" data-testid="button-print">🖨️ Imprimir / Salvar PDF</button>
+        <button class="btn" type="button" id="btnAskAI" data-cta="rx_demo_ask_ai" data-testid="button-ask-ai">🤖 Validar com Dr. AI</button>
       </div>
     </form>
 
-    <div id="preview" class="card" style="display:none;margin-top:16px" aria-live="polite" data-testid="preview-receita">
-      <h3>Pré-visualização</h3>
+    <div id="preview" class="card" style="display:none" aria-live="polite" data-testid="preview-receita">
+      <h3>Pré-visualização da Receita</h3>
       <div class="preview" id="previewText"></div>
-      <p class="muted" style="margin-top:8px">Este é um documento <strong>de demonstração</strong> e não possui validade clínica.</p>
+      <p class="muted" style="margin-top:12px;font-size:13px">⚠️ Este é um documento <strong>de demonstração</strong> e não possui validade clínica ou jurídica.</p>
     </div>
 
     <p style="margin-top:18px"><a href="/public/mod-prescricao.html" class="muted" data-testid="link-back">← Voltar ao Módulo de Prescrição</a></p>
@@ -125,46 +131,52 @@
       b.addEventListener('click',()=>applyTpl(b.dataset.tpl));
     });
 
-    // 3) Preview e impressão
-    const form = document.getElementById('rxForm');
-    const pv = document.getElementById('preview');
-    const pvText = document.getElementById('previewText');
-    form.addEventListener('submit', (e)=>{
+    // 3) Submit: gerar preview
+    document.getElementById('rxForm').addEventListener('submit', (e)=>{
       e.preventDefault();
-      const txt =
-`Receita (DEMO)
-Paciente: ${v('paciente')}
-Médico: ${v('crm')}
-
-Medicamento: ${v('med')}
-Dose: ${v('dose')}
-Posologia: ${v('pos')}
-Duração: ${v('dur')}
-
-Observações: ${v('obs') || '—'}
-
-Emitido em: ${new Date().toLocaleString('pt-BR')}
-`;
-      pvText.textContent = txt;
-      pv.style.display = 'block';
+      const p = v('paciente'), m = v('med'), ds = v('dose'), ps = v('pos'), dr = v('dur'), ob = v('obs'), cr = v('crm');
+      if(!p||!m||!ds||!ps||!dr||!cr) return alert('Preencha os campos obrigatórios.');
+      const txt = [
+        '─────────────────────────────────────',
+        '         RECEITA MÉDICA (DEMO)       ',
+        '─────────────────────────────────────',
+        '',
+        'Paciente: '+p,
+        'Médico: '+cr,
+        'Data: '+ new Date().toLocaleDateString('pt-BR'),
+        '',
+        '─── Prescrição ───',
+        '',
+        'Medicamento: '+m,
+        'Dose: '+ds,
+        'Posologia: '+ps,
+        'Duração: '+dr,
+        '',
+        ob ? ('Observações: '+ob) : '',
+        '',
+        '─────────────────────────────────────',
+        '   ⚠️ DEMO – SEM VALIDADE CLÍNICA',
+        '─────────────────────────────────────',
+      ].filter(Boolean).join('\n');
+      document.getElementById('previewText').textContent = txt;
+      document.getElementById('preview').style.display = 'block';
     });
 
-    document.getElementById('btnPrint').addEventListener('click', ()=>{
-      try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_demo_print'}});}catch(e){}
-      window.print();
-    });
+    // 4) Imprimir
+    document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
 
-    // 4) Validar com Dr. AI (abre o Dr. AI com a pergunta pronta no campo de texto)
+    // 5) Validar com Dr. AI
     document.getElementById('btnAskAI').addEventListener('click', ()=>{
-      const question = [
-        `Paciente: ${v('paciente')} | Profissional: ${v('crm')}`,
-        `Quero prescrever ${v('med')}, ${v('dose')}, ${v('pos')}, ${v('dur')}.`,
-        `Há contraindicações, interações ou ajustes de dose a considerar?`,
-        `Responda de forma objetiva para revisão médica.`
-      ].join(' ');
-      const url = `/dr-ai.html?ctx=prescricao&q=${encodeURIComponent(question)}`;
-      try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_demo_open_dr_ai_with_ctx'}});}catch(e){}
-      location.href = url;
+      const p = v('paciente'), m = v('med'), ds = v('dose'), ps = v('pos'), dr = v('dur'), cr = v('crm');
+      if(!p||!m||!ds||!ps||!dr||!cr) return alert('Preencha todos os campos antes de validar.');
+      const pergunta = [
+        `Paciente: ${p}`,
+        `Profissional: ${cr}`,
+        `Quero prescrever ${m}, ${ds}, ${ps}, ${dr}.`,
+        'Há contraindicações, interações medicamentosas ou ajustes de dose a considerar?',
+        'Por favor, seja objetivo e liste pontos de atenção clínica.'
+      ].join(' | ');
+      location.href = '/dr-ai.html?ctx=prescricao&q='+encodeURIComponent(pergunta);
     });
   </script>
 </body>

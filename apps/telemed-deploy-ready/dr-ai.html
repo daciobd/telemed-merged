@@ -13,27 +13,76 @@
   <meta property="og:description" content="Análise inteligente de sintomas para direcionamento médico preciso" />
   
   <link rel="icon" href="/assets/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
   <script src="/js/config.js"></script>
+  
+  <style>
+    body{margin:0;background:#f8fafc;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .header{background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:50}
+    .header-inner{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:64px}
+    .brand{font-size:20px;font-weight:700;color:#1e293b;text-decoration:none}
+    .beta-badge{background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600}
+    .nav{display:flex;gap:24px;align-items:center}
+    .nav a{color:#64748b;text-decoration:none;font-weight:500}
+    .container{max-width:800px;margin:40px auto;padding:0 16px}
+    .hero{text-align:center;margin-bottom:48px}
+    .hero h1{font-size:36px;font-weight:800;color:#1e293b;margin:0 0 16px;line-height:1.1}
+    .hero .subtitle{font-size:18px;color:#64748b;margin:0 0 8px;line-height:1.5}
+    .hero .muted{font-size:14px;color:#94a3b8;margin:0}
+    .chip{background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;margin-left:8px}
+    .card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:32px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);margin-bottom:32px}
+    .consent-banner{background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:16px;margin-bottom:32px;display:none}
+    .consent-inner{display:flex;align-items:start;gap:12px}
+    .consent-icon{font-size:20px}
+    .consent-title{margin:0 0 8px;font-size:16px;font-weight:600;color:#92400e}
+    .consent-text{margin:0 0 12px;font-size:14px;color:#92400e;line-height:1.4}
+    .consent-actions{display:flex;gap:12px;flex-wrap:wrap}
+    .form-group{margin-bottom:24px}
+    .form-label{display:block;margin-bottom:8px;font-weight:500;color:#374151}
+    .form-input,textarea,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
+    textarea{min-height:120px;resize:vertical;line-height:1.5}
+    .char-counter{font-size:12px;color:#6b7280;margin-top:4px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .checkbox-card{display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb}
+    .checkbox-card:hover{background:#f3f4f6}
+    .btn-primary{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.3);transition:all 0.2s}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(59,130,246,0.4)}
+    .btn-primary:disabled{opacity:0.6;cursor:not-allowed}
+    .info-box{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:24px;margin-top:32px}
+    .info-title{margin:0 0 16px;font-size:18px;font-weight:600;color:#1e293b;text-align:center}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+    .feature-item{text-align:center}
+    .feature-icon{font-size:32px;margin-bottom:8px}
+    .feature-title{margin:0 0 8px;font-size:14px;font-weight:600;color:#374151}
+    .feature-desc{margin:0;font-size:12px;color:#64748b;line-height:1.4}
+    .validation-box{margin-top:24px;padding:16px;background:#dbeafe;border-radius:8px;text-align:center}
+    .validation-text{margin:0;font-size:13px;color:#1e40af;font-weight:500}
+    .footer{background:#1e293b;color:#94a3b8;margin-top:80px;padding:40px 0}
+    .footer-inner{max-width:1200px;margin:0 auto;padding:0 16px;text-align:center}
+    .footer p{margin:0;font-size:14px}
+    .footer p:last-child{margin-top:8px;font-size:12px}
+    @media (max-width:768px){
+      .grid-3{grid-template-columns:1fr}
+      .nav{display:none}
+    }
+  </style>
 </head>
-<body style="margin:0;background:#f8fafc;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+<body>
 
 <!-- Navigation Header -->
-<header style="background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:50">
-  <div style="max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:64px">
+<header class="header">
+  <div class="header-inner">
     <div style="display:flex;align-items:center;gap:16px">
-      <a href="/" style="font-size:20px;font-weight:700;color:#1e293b;text-decoration:none">
-        🩺 TeleMed
-      </a>
-      <span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600">
-        DR. AI BETA
-      </span>
+      <a href="/" class="brand">🩺 TeleMed</a>
+      <span class="beta-badge">DR. AI BETA</span>
     </div>
     
-    <nav style="display:flex;gap:24px;align-items:center">
-      <a href="/dashboard-medico.html" style="color:#64748b;text-decoration:none;font-weight:500">Dashboard</a>
-      <a href="/agenda.html" style="color:#64748b;text-decoration:none;font-weight:500">Agenda</a>
-      <a href="/phr.html" style="color:#64748b;text-decoration:none;font-weight:500">PHR</a>
-      <button id="btn-help" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:500">
+    <nav class="nav">
+      <a href="/dashboard-medico.html">Dashboard</a>
+      <a href="/agenda.html">Agenda</a>
+      <a href="/phr.html">PHR</a>
+      <button id="btn-help" class="btn" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:500">
         Como funciona?
       </button>
     </nav>
@@ -41,105 +90,64 @@
 </header>
 
 <!-- Main Content -->
-<main style="max-width:800px;margin:40px auto;padding:0 16px">
+<main class="container">
   
   <!-- Hero Section -->
-  <div style="text-align:center;margin-bottom:48px">
-    <h1 style="font-size:36px;font-weight:800;color:#1e293b;margin:0 0 16px;line-height:1.1">
-      🤖 Dr. AI
-    </h1>
-    <p style="font-size:18px;color:#64748b;margin:0 0 8px;line-height:1.5">
-      Triagem médica inteligente para direcionamento de especialidade
-    </p>
-    <p style="font-size:14px;color:#94a3b8;margin:0">
-      ⚡ Análise em menos de 30 segundos • 🎯 85%+ de precisão validada • 🔒 100% seguro e privado
-    </p>
+  <div class="hero">
+    <h1>🤖 Dr. AI</h1>
+    <p class="subtitle">Triagem médica inteligente para direcionamento de especialidade</p>
+    <p class="muted">⚡ Análise em menos de 30 segundos • 🎯 85%+ de precisão validada • 🔒 100% seguro e privado</p>
   </div>
 
   <!-- LGPD Consent Banner -->
-  <div id="consent-banner" style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:16px;margin-bottom:32px;display:none">
-    <div style="display:flex;align-items:start;gap:12px">
-      <div style="font-size:20px">🔒</div>
+  <div id="consent-banner" class="consent-banner">
+    <div class="consent-inner">
+      <div class="consent-icon">🔒</div>
       <div style="flex:1">
-        <h3 style="margin:0 0 8px;font-size:16px;font-weight:600;color:#92400e">
-          Consentimento para Triagem Automatizada
-        </h3>
-        <p style="margin:0 0 12px;font-size:14px;color:#92400e;line-height:1.4">
+        <h3 class="consent-title">Consentimento para Triagem Automatizada</h3>
+        <p class="consent-text">
           O Dr. AI utiliza inteligência artificial para analisar seus sintomas e sugerir a especialidade médica mais adequada. 
           <strong>Nenhum dado pessoal é armazenado permanentemente</strong> e a análise é feita localmente com máxima privacidade.
         </p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <button id="btn-consent-accept" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:500;cursor:pointer">
-            Concordo • Prosseguir
-          </button>
-          <button id="btn-consent-decline" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:8px 16px;border-radius:8px;font-weight:500;cursor:pointer">
-            Não aceito
-          </button>
-          <a href="#" id="link-privacy" style="color:#059669;text-decoration:none;padding:8px 0;font-size:13px">
-            📋 Saiba mais sobre privacidade
-          </a>
+        <div class="consent-actions">
+          <button id="btn-consent-accept" class="btn" style="background:#16a34a;color:#fff">Concordo • Prosseguir</button>
+          <button id="btn-consent-decline" class="btn" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db">Não aceito</button>
+          <a href="#" id="link-privacy" style="color:#059669;text-decoration:none;padding:8px 0;font-size:13px">📋 Saiba mais sobre privacidade</a>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Triage Form -->
-  <form id="triage-form" style="background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:32px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);margin-bottom:32px;display:none">
+  <form id="triage-form" class="card" style="display:none">
     
-    <div style="margin-bottom:24px">
-      <h2 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1e293b">
-        📝 Descreva seus sintomas
-      </h2>
-      <p style="margin:0;color:#64748b;font-size:14px">
-        Seja o mais específico possível. Ex: "dor de cabeça há 3 dias, pior com luz, com náusea"
-      </p>
+    <div class="form-group">
+      <h2 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1e293b">📝 Descreva seus sintomas</h2>
+      <p style="margin:0;color:#64748b;font-size:14px">Seja o mais específico possível. Ex: "dor de cabeça há 3 dias, pior com luz, com náusea"</p>
     </div>
 
     <!-- Symptoms Input -->
-    <div style="margin-bottom:24px">
-      <label for="symptoms" style="display:block;margin-bottom:8px;font-weight:500;color:#374151">
-        Sintomas principais *
-      </label>
+    <div class="form-group">
+      <label for="symptoms" class="form-label">Sintomas principais *</label>
       <textarea 
         id="symptoms" 
         name="symptoms" 
         required
         placeholder="Descreva seus sintomas com detalhes: quando começaram, como são, o que piora/melhora..."
-        style="width:100%;min-height:120px;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;line-height:1.5;resize:vertical"
         data-testid="input-symptoms"
       ></textarea>
-      <div style="font-size:12px;color:#6b7280;margin-top:4px">
-        <span id="char-count">0</span>/500 caracteres
-      </div>
+      <div class="char-counter"><span id="char-count">0</span>/500 caracteres</div>
     </div>
 
     <!-- Patient Info -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px">
+    <div class="grid-3">
       <div>
-        <label for="age" style="display:block;margin-bottom:6px;font-weight:500;color:#374151">
-          Idade
-        </label>
-        <input 
-          type="number" 
-          id="age" 
-          name="age" 
-          min="0" 
-          max="120"
-          placeholder="35"
-          style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px"
-          data-testid="input-age"
-        />
+        <label for="age" class="form-label">Idade</label>
+        <input type="number" id="age" name="age" min="0" max="120" placeholder="35" class="form-input" data-testid="input-age" />
       </div>
       <div>
-        <label for="gender" style="display:block;margin-bottom:6px;font-weight:500;color:#374151">
-          Gênero
-        </label>
-        <select 
-          id="gender" 
-          name="gender"
-          style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px"
-          data-testid="select-gender"
-        >
+        <label for="gender" class="form-label">Gênero</label>
+        <select id="gender" name="gender" class="form-input" data-testid="select-gender">
           <option value="">Selecionar</option>
           <option value="feminino">Feminino</option>
           <option value="masculino">Masculino</option>
@@ -148,56 +156,38 @@
         </select>
       </div>
       <div>
-        <label for="patient-name" style="display:block;margin-bottom:6px;font-weight:500;color:#374151">
-          Nome (opcional)
-        </label>
-        <input 
-          type="text" 
-          id="patient-name" 
-          name="patient-name" 
-          placeholder="Seu nome"
-          style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px"
-          data-testid="input-name"
-        />
+        <label for="patient-name" class="form-label">Nome (opcional)</label>
+        <input type="text" id="patient-name" name="patient-name" placeholder="Seu nome" class="form-input" data-testid="input-name" />
       </div>
     </div>
 
     <!-- Red Flags Checklist -->
-    <div style="margin-bottom:24px">
-      <h3 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1e293b">
-        ⚠️ Verificação de sinais de alerta
-      </h3>
-      <p style="margin:0 0 16px;color:#64748b;font-size:14px">
-        Marque se apresenta algum dos sintomas abaixo:
-      </p>
+    <div class="form-group">
+      <h3 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#1e293b">⚠️ Verificação de sinais de alerta</h3>
+      <p style="margin:0 0 16px;color:#64748b;font-size:14px">Marque se apresenta algum dos sintomas abaixo:</p>
       
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb">
+      <div class="grid-2">
+        <label class="checkbox-card">
           <input type="checkbox" id="red-flag-fever" name="red-flags" value="febre_alta" data-testid="checkbox-fever" />
           <span style="font-size:14px">Febre alta (>38.5°C)</span>
         </label>
-        
-        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb">
+        <label class="checkbox-card">
           <input type="checkbox" id="red-flag-neck" name="red-flags" value="rigidez_nuca" data-testid="checkbox-neck" />
           <span style="font-size:14px">Rigidez na nuca</span>
         </label>
-        
-        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb">
+        <label class="checkbox-card">
           <input type="checkbox" id="red-flag-chest" name="red-flags" value="dor_toracica_tipica" data-testid="checkbox-chest" />
           <span style="font-size:14px">Dor no peito intensa</span>
         </label>
-        
-        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb">
+        <label class="checkbox-card">
           <input type="checkbox" id="red-flag-breath" name="red-flags" value="dispneia_severa" data-testid="checkbox-breath" />
           <span style="font-size:14px">Falta de ar severa</span>
         </label>
-        
-        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb">
+        <label class="checkbox-card">
           <input type="checkbox" id="red-flag-neuro" name="red-flags" value="deficit_neurologico" data-testid="checkbox-neuro" />
           <span style="font-size:14px">Perda de força/sensibilidade</span>
         </label>
-        
-        <label style="display:flex;align-items:center;gap:8px;padding:12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb">
+        <label class="checkbox-card">
           <input type="checkbox" id="red-flag-consciousness" name="red-flags" value="alteracao_consciencia" data-testid="checkbox-consciousness" />
           <span style="font-size:14px">Confusão/alteração consciência</span>
         </label>
@@ -206,83 +196,58 @@
 
     <!-- Submit Button -->
     <div style="text-align:center;margin-top:32px">
-      <button 
-        type="submit" 
-        id="btn-analyze"
-        style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.3);transition:all 0.2s"
-        data-testid="button-analyze"
-      >
+      <button type="submit" id="btn-analyze" class="btn-primary" data-testid="button-analyze">
         <span id="btn-text">🤖 Analisar com Dr. AI</span>
         <div id="btn-loader" style="display:none">⏳ Analisando...</div>
       </button>
-      <p style="margin:16px 0 0;font-size:12px;color:#94a3b8">
-        A análise leva cerca de 5-10 segundos
-      </p>
+      <p style="margin:16px 0 0;font-size:12px;color:#94a3b8">A análise leva cerca de 5-10 segundos</p>
     </div>
   </form>
 
   <!-- Results Container -->
-  <div id="medical-summary-root" style="min-height:200px">
-    <!-- Medical summary will be rendered here -->
-  </div>
+  <div id="medical-summary-root" style="min-height:200px"></div>
 
   <!-- Feature Info -->
-  <div id="feature-info" style="background:#f1f5f9;border-radius:12px;padding:24px;margin-top:32px">
-    <h3 style="margin:0 0 16px;font-size:18px;font-weight:600;color:#1e293b;text-align:center">
-      ⚡ Como funciona o Dr. AI
-    </h3>
+  <div id="feature-info" class="info-box">
+    <h3 class="info-title">⚡ Como funciona o Dr. AI</h3>
     
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px">
-      <div style="text-align:center">
-        <div style="font-size:32px;margin-bottom:8px">📝</div>
-        <h4 style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151">1. Descreva sintomas</h4>
-        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.4">
-          Conte detalhes dos sintomas, quando começaram e características
-        </p>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-icon">📝</div>
+        <h4 class="feature-title">1. Descreva sintomas</h4>
+        <p class="feature-desc">Conte detalhes dos sintomas, quando começaram e características</p>
       </div>
       
-      <div style="text-align:center">
-        <div style="font-size:32px;margin-bottom:8px">🤖</div>
-        <h4 style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151">2. IA analisa padrões</h4>
-        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.4">
-          Algoritmos médicos identificam especialidade mais adequada
-        </p>
+      <div class="feature-item">
+        <div class="feature-icon">🤖</div>
+        <h4 class="feature-title">2. IA analisa padrões</h4>
+        <p class="feature-desc">Algoritmos médicos identificam especialidade mais adequada</p>
       </div>
       
-      <div style="text-align:center">
-        <div style="font-size:32px;margin-bottom:8px">🎯</div>
-        <h4 style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151">3. Sugestão precisa</h4>
-        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.4">
-          Recomendação de especialidade com nível de confiança
-        </p>
+      <div class="feature-item">
+        <div class="feature-icon">🎯</div>
+        <h4 class="feature-title">3. Sugestão precisa</h4>
+        <p class="feature-desc">Recomendação de especialidade com nível de confiança</p>
       </div>
       
-      <div style="text-align:center">
-        <div style="font-size:32px;margin-bottom:8px">📅</div>
-        <h4 style="margin:0 0 8px;font-size:14px;font-weight:600;color:#374151">4. Agendamento direto</h4>
-        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.4">
-          Link direto para agendar consulta com especialista sugerido
-        </p>
+      <div class="feature-item">
+        <div class="feature-icon">📅</div>
+        <h4 class="feature-title">4. Agendamento direto</h4>
+        <p class="feature-desc">Link direto para agendar consulta com especialista sugerido</p>
       </div>
     </div>
 
-    <div style="margin-top:24px;padding:16px;background:#dbeafe;border-radius:8px;text-align:center">
-      <p style="margin:0;font-size:13px;color:#1e40af;font-weight:500">
-        <strong>🏥 Validado por médicos:</strong> 85% de precisão comprovada • Mais de 500 triagens realizadas
-      </p>
+    <div class="validation-box">
+      <p class="validation-text"><strong>🏥 Validado por médicos:</strong> 85% de precisão comprovada • Mais de 500 triagens realizadas</p>
     </div>
   </div>
 </main>
 
 <!-- Footer -->
-<footer style="background:#1e293b;color:#94a3b8;margin-top:80px;padding:40px 0">
-  <div style="max-width:1200px;margin:0 auto;padding:0 16px;text-align:center">
-    <p style="margin:0 0 8px;font-size:14px">
-      🤖 Dr. AI é uma ferramenta de triagem médica automatizada
-    </p>
-    <p style="margin:0;font-size:12px">
-      <strong>Atenção:</strong> Este sistema não substitui consulta médica presencial. Em emergências, procure atendimento imediato.
-    </p>
+<footer class="footer">
+  <div class="footer-inner">
+    <p>🤖 Dr. AI é uma ferramenta de triagem médica automatizada</p>
+    <p><strong>Atenção:</strong> Este sistema não substitui consulta médica presencial. Em emergências, procure atendimento imediato.</p>
   </div>
 </footer>
 
@@ -291,7 +256,6 @@
 <script type="module">
   import { renderMedicalSummary, analyzeSymptomsWithDrAI } from '/js/medical-summary.js';
 
-  // DOM Elements
   const consentBanner = document.getElementById('consent-banner');
   const triageForm = document.getElementById('triage-form');
   const featureInfo = document.getElementById('feature-info');
@@ -303,7 +267,6 @@
   const symptomsInput = document.getElementById('symptoms');
   const charCount = document.getElementById('char-count');
 
-  // Check consent status
   const hasConsent = localStorage.getItem('dr-ai-consent') === 'accepted';
   
   if (hasConsent) {
@@ -312,13 +275,10 @@
     showConsentBanner();
   }
 
-  // Consent handling
   btnConsentAccept.onclick = () => {
     localStorage.setItem('dr-ai-consent', 'accepted');
     localStorage.setItem('dr-ai-consent-date', new Date().toISOString());
     showTriageForm();
-    
-    // Track consent
     trackEvent('dr_ai_consent_accepted');
   };
 
@@ -327,19 +287,16 @@
     window.location.href = '/';
   };
 
-  // Character counter
   symptomsInput.oninput = () => {
     const length = symptomsInput.value.length;
     charCount.textContent = length;
     charCount.style.color = length > 450 ? '#ef4444' : '#6b7280';
   };
 
-  // Help button
   document.getElementById('btn-help').onclick = () => {
     alert('Dr. AI utiliza algoritmos médicos para analisar sintomas e sugerir a especialidade mais adequada. A análise é feita localmente com total privacidade. Precisão validada: 85%+ por médicos especialistas.');
   };
 
-  // Form submission
   triageForm.onsubmit = async (e) => {
     e.preventDefault();
     
@@ -350,17 +307,14 @@
       return;
     }
 
-    // Show loading state
     btnText.style.display = 'none';
     btnLoader.style.display = 'inline';
     btnAnalyze.disabled = true;
 
     try {
-      // Collect form data
       const formData = new FormData(triageForm);
       const redFlags = {};
       
-      // Process red flags checkboxes
       formData.getAll('red-flags').forEach(flag => {
         redFlags[flag] = true;
       });
@@ -377,17 +331,13 @@
         }
       };
 
-      // Call Dr. AI API
       const result = await analyzeSymptomsWithDrAI(analysisData);
 
-      // Hide form and feature info, show results
       triageForm.style.display = 'none';
       featureInfo.style.display = 'none';
       
-      // Render medical summary
       renderMedicalSummary(result, 'medical-summary-root');
       
-      // Scroll to results
       document.getElementById('medical-summary-root').scrollIntoView({ 
         behavior: 'smooth', 
         block: 'start' 
@@ -397,14 +347,12 @@
       console.error('Analysis error:', error);
       alert('Erro na análise. Verifique sua conexão e tente novamente.');
     } finally {
-      // Reset button state
       btnText.style.display = 'inline';
       btnLoader.style.display = 'none';
       btnAnalyze.disabled = false;
     }
   };
 
-  // Helper functions
   function showConsentBanner() {
     consentBanner.style.display = 'block';
     triageForm.style.display = 'none';
@@ -434,21 +382,19 @@
     }
   }
 
-  // Track page visit
   trackEvent('dr_ai_page_visit');
 </script>
 
-<!-- Make medical-summary available globally -->
 <script src="/js/medical-summary.js"></script>
 
-<!-- Widget de Suporte/Ajuda (Sprint Pack 02 - Módulo D) -->
+<!-- Widget de Suporte/Ajuda -->
 <style>
-  #tm-help{ position:fixed; right:16px; bottom:16px; z-index:70 }
-  #tm-help .btn-help{ height:46px; width:46px; border-radius:50%; border:none; background:#2563eb; color:#fff; cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,.35) }
-  #tm-help .panel{ position:absolute; right:0; bottom:56px; width:min(320px, 92vw); background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.35); display:none }
-  #tm-help .panel.show{ display:block }
-  #tm-help .help-row{ display:flex; gap:8px; padding:10px; border-bottom:1px solid rgba(255,255,255,.08) }
-  #tm-help a, #tm-help button.link{ color:#9fb3ff; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline }
+  #tm-help{position:fixed;right:16px;bottom:16px;z-index:70}
+  #tm-help .btn-help{height:46px;width:46px;border-radius:50%;border:none;background:#2563eb;color:#fff;cursor:pointer;box-shadow:0 10px 25px rgba(0,0,0,.35)}
+  #tm-help .panel{position:absolute;right:0;bottom:56px;width:min(320px,92vw);background:#0f172a;color:#eaf0ff;border:1px solid rgba(255,255,255,.1);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.35);display:none}
+  #tm-help .panel.show{display:block}
+  #tm-help .help-row{display:flex;gap:8px;padding:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+  #tm-help a,#tm-help button.link{color:#9fb3ff;background:none;border:none;padding:0;cursor:pointer;text-decoration:underline}
 </style>
 <div id="tm-help">
   <button class="btn-help" title="Ajuda" data-testid="button-help">?</button>
@@ -506,16 +452,13 @@
     const p = new URLSearchParams(location.search);
     const q = p.get('q');
     const ctx = p.get('ctx');
-    // Preenche o primeiro textarea da página (campo de sintomas/pergunta)
     const ta = document.querySelector('textarea');
     if(q && ta){ ta.value = q; ta.focus(); }
-    // Badge de contexto
     if(ctx){
       const h1 = document.querySelector('h1');
       if(h1){
         const badge = document.createElement('span');
         badge.textContent = 'Contexto: ' + ctx;
-        badge.style.marginLeft = '8px';
         badge.className = 'chip';
         h1.after(badge);
       }

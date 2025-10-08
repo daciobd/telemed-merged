@@ -7,53 +7,59 @@
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
     .container{max-width:980px;margin:36px auto;padding:16px}
+    .subtitle{color:var(--muted);margin-bottom:16px}
     .muted{color:var(--muted)}
     .stack>*{margin:10px 0}
-    textarea{width:100%;min-height:140px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid rgba(0,0,0,.08)}
+    textarea{width:100%;min-height:140px;padding:12px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-family:monospace;font-size:13px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:10px 8px;border-bottom:1px solid rgba(0,0,0,.08);text-align:left}
+    th{background:#f8fafc;font-weight:600}
     .flag-ok{color:#1a7f37;font-weight:600}
     .flag-alt{color:#b42318;font-weight:700}
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{background:#eef2ff;border-radius:999px;padding:2px 10px;font-size:12px}
-    .actions{display:flex;gap:12px;flex-wrap:wrap}
-    canvas{width:100%;max-width:720px;height:180px;border:1px dashed rgba(0,0,0,.08);border-radius:10px}
-    .card{background:#f3f7fb;border-radius:12px;padding:16px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    .chip{background:#eef2ff;border:1px solid rgba(37,99,235,.15);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:500}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+    canvas{width:100%;max-width:720px;height:200px;border:1px solid rgba(0,0,0,.08);border-radius:10px;margin-top:12px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px;margin-top:16px}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:12px;margin:12px 0}
   </style>
 </head>
 <body>
   <div class="container stack">
     <h1>📊 Análise de Exames (demo)</h1>
-    <p class="muted">Cole um CSV simples e gere rapidamente uma tabela com <strong>flags</strong> e um gráfico de tendência da <em>Glicemia</em>. Nenhum dado real é armazenado.</p>
+    <div class="subtitle">Cole um CSV simples e gere rapidamente uma tabela com <strong>flags automáticos</strong> e um gráfico de tendência da <em>Glicemia</em>. Nenhum dado real é armazenado.</div>
+
+    <div class="info-box">
+      <strong>💡 Dica:</strong> Clique em "Carregar exemplo" para ver o formato CSV esperado e testar a análise automaticamente.
+    </div>
 
     <details class="card">
-      <summary><strong>Formato esperado (CSV)</strong></summary>
-      <pre class="muted" style="white-space:pre-wrap;margin-top:8px">
-Data,Exame,Valor,Unidade
+      <summary style="cursor:pointer"><strong>📋 Formato esperado (CSV)</strong></summary>
+      <pre class="muted" style="white-space:pre-wrap;margin-top:8px;font-size:13px">Data,Exame,Valor,Unidade
 2025-09-20,Glicemia,112,mg/dL
 2025-10-05,Glicemia,132,mg/dL
 2025-10-05,Hemoglobina,12.1,g/dL
-2025-10-05,Creatinina,1.4,mg/dL
-      </pre>
+2025-10-05,Creatinina,1.4,mg/dL</pre>
     </details>
 
     <div class="actions">
-      <button class="btn" id="btnExemplo" data-cta="analise_demo_exemplo" data-testid="button-exemplo">Carregar exemplo</button>
-      <button class="btn" id="btnProcessar" data-cta="analise_demo_processar" data-testid="button-processar">Processar</button>
-      <button class="btn" id="btnPrint" data-cta="analise_demo_print" data-testid="button-print">Imprimir / Salvar PDF</button>
-      <a class="btn" id="btnAskAI" href="#" data-cta="analise_demo_ask_ai" data-testid="button-ask-ai">Conferir com Dr. AI</a>
+      <button class="btn" id="btnExemplo" data-cta="analise_demo_exemplo" data-testid="button-exemplo">📥 Carregar exemplo</button>
+      <button class="btn" id="btnProcessar" data-cta="analise_demo_processar" data-testid="button-processar">⚡ Processar</button>
+      <button class="btn" id="btnPrint" data-cta="analise_demo_print" data-testid="button-print">🖨️ Imprimir / Salvar PDF</button>
+      <a class="btn" id="btnAskAI" href="#" data-cta="analise_demo_ask_ai" data-testid="button-ask-ai">🤖 Conferir com Dr. AI</a>
     </div>
 
     <textarea id="inputCSV" aria-label="Área para colar CSV de exames" placeholder="Cole aqui seu CSV de exames..." data-testid="input-csv"></textarea>
 
     <div id="outResumo" class="chips" aria-live="polite"></div>
+    
     <div id="outTabela" class="card" style="display:none" data-testid="output-tabela">
-      <h3>Resultados</h3>
+      <h3>Resultados dos Exames</h3>
       <table aria-label="Tabela de resultados com flags">
         <thead><tr><th>Data</th><th>Exame</th><th>Valor</th><th>Unidade</th><th>Referência*</th><th>Status</th></tr></thead>
         <tbody id="tblBody"></tbody>
       </table>
-      <p class="muted" style="margin-top:8px">* Referências aproximadas (demo). Avaliação clínica obrigatória.</p>
+      <p class="muted" style="margin-top:12px;font-size:13px">* Referências aproximadas (demo). Avaliação clínica obrigatória.</p>
     </div>
 
     <div id="outGrafico" class="card" style="display:none" data-testid="output-grafico">
@@ -96,7 +102,6 @@ Data,Exame,Valor,Unidade
         return {ref:'≥126 (diabetes)', flag:'ALTERADO'};
       },
       'Hemoglobina': (v)=> {
-        // intervalo geral aproximado (demo). Na prática, considerar sexo/idade.
         if (v < 12.0) return {ref:'12–17 g/dL (aprox.)', flag:'BAIXO'};
         if (v > 17.0) return {ref:'12–17 g/dL (aprox.)', flag:'ALTO'};
         return {ref:'12–17 g/dL (aprox.)', flag:'OK'};
@@ -123,119 +128,84 @@ Data,Exame,Valor,Unidade
     }
 
     function processar(){
-      const rows = parseCSV(csvArea.value || '');
+      const txt = csvArea.value;
+      if(!txt.trim()){ alert('Cole um CSV antes de processar.'); return; }
+      const rows = parseCSV(txt);
+      if(!rows.length){ alert('Nenhum dado válido encontrado.'); return; }
+
       tblBody.innerHTML = '';
       outResumo.innerHTML = '';
-      outTabela.style.display = rows.length ? 'block' : 'none';
-      outGrafico.style.display = 'none';
+      const alterados = [];
 
-      let altered = [];
-      let glicemiaSeries = [];
-
-      for (const r of rows){
+      rows.forEach(r=>{
         const fn = refRanges[r.exame];
-        let ref='—', flag='—';
-        if (fn && r.valor!=null){
-          const res = fn(r.valor);
-          ref = res.ref; flag = res.flag;
-        }
+        const res = fn ? fn(r.valor) : {ref:'N/A', flag:'N/A'};
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${r.data}</td>
-          <td>${r.exame}</td>
-          <td>${r.valor ?? '—'}</td>
-          <td>${r.unidade}</td>
-          <td>${ref}</td>
-          <td class="${flag==='OK'?'flag-ok':'flag-alt'}">${flag}</td>`;
+        const flagClass = res.flag==='OK'?'flag-ok':'flag-alt';
+        tr.innerHTML = `<td>${r.data}</td><td>${r.exame}</td><td>${r.valor}</td><td>${r.unidade}</td><td>${res.ref}</td><td class="${flagClass}">${res.flag}</td>`;
         tblBody.appendChild(tr);
 
-        if (flag !== 'OK' && flag!=='—'){
-          altered.push(`${r.exame}: ${r.valor} ${r.unidade} (${flag})`);
+        if(res.flag!=='OK' && res.flag!=='N/A'){
+          alterados.push(`${r.exame}: ${r.valor} ${r.unidade} (${res.flag})`);
         }
-        if (r.exame==='Glicemia' && r.valor!=null){
-          glicemiaSeries.push({date:r.data, value:r.valor});
-        }
-      }
+      });
 
-      // chips de resumo
-      if (altered.length){
-        altered.forEach(t=>{
-          const chip = document.createElement('span');
-          chip.className='chip';
-          chip.textContent = t;
+      outTabela.style.display = 'block';
+
+      if(alterados.length){
+        alterados.forEach(a=>{
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.textContent = a;
           outResumo.appendChild(chip);
         });
-      }else if (rows.length){
-        const ok = document.createElement('span');
-        ok.className='chip';
-        ok.textContent='Sem alterações relevantes (revisar clinicamente)';
-        outResumo.appendChild(ok);
       }
 
-      // gráfico de glicemia (se houver série)
-      if (glicemiaSeries.length){
+      const glicRows = rows.filter(r=>r.exame==='Glicemia').sort((a,b)=>new Date(a.data)-new Date(b.data));
+      if(glicRows.length){
         outGrafico.style.display = 'block';
-        drawLineChart('chart', glicemiaSeries);
+        drawChart(glicRows);
       }
 
-      // montar pergunta para o Dr. AI
-      const pergunta = buildQuestion(rows, altered);
-      const url = '/dr-ai.html?ctx=analise&q='+encodeURIComponent(pergunta);
-      const ask = document.getElementById('btnAskAI');
-      ask.href = url;
+      document.getElementById('btnAskAI').href = '/dr-ai.html?ctx=analise&q='+encodeURIComponent(buildQuestion(rows, alterados));
     }
 
-    function buildQuestion(rows, altered){
-      const exames = rows.map(r=>`${r.exame} ${r.valor??'?'} ${r.unidade} (${r.data})`).join('; ');
-      const alertas = altered.length ? `Alterações: ${altered.join('; ')}.` : 'Sem flags automáticas; confirmar clinicamente.';
-      return [
-        `Analisar exames laboratoriais do paciente.`,
-        alertas,
-        `Resultados: ${exames}`,
-        `Comente possíveis diagnósticos diferenciais, necessidade de repetir exames/jejum,`,
-        `e orientações ao paciente. Seja objetivo.`
-      ].join(' ');
+    function buildQuestion(rows, alterados){
+      const resumo = alterados.length ? `Alterações: ${alterados.join('; ')}.` : 'Todos os valores dentro do esperado.';
+      const todosExames = rows.map(r=>`${r.exame}: ${r.valor} ${r.unidade}`).join(', ');
+      return `Analisar exames laboratoriais do paciente. ${resumo} Resultados: ${todosExames}. Comente possíveis diagnósticos diferenciais, necessidade de repetir exames/jejum, e orientações ao paciente. Seja objetivo.`;
     }
 
-    // desenho simples de linha (sem libs)
-    function drawLineChart(canvasId, series){
-      // ordenar por data
-      series = series.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
-      const c = document.getElementById(canvasId);
-      const ctx = c.getContext('2d');
-      const W = c.width = c.clientWidth;
-      const H = c.height = c.clientHeight;
-      const pad = 30;
-      const xs = series.map(s=>new Date(s.date).getTime());
-      const ys = series.map(s=>s.value);
-      const minX = Math.min(...xs), maxX = Math.max(...xs);
-      const minY = Math.min(...ys), maxY = Math.max(...ys);
-      const xScale = (t)=> pad + ( (t-minX)/(maxX-minX || 1) ) * (W-2*pad);
-      const yScale = (v)=> H-pad - ( (v-minY)/(maxY-minY || 1) ) * (H-2*pad);
+    function drawChart(data){
+      const canvas = document.getElementById('chart');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.offsetWidth;
+      const h = canvas.height = canvas.offsetHeight;
+      ctx.clearRect(0,0,w,h);
 
-      // fundo
-      ctx.clearRect(0,0,W,H);
-      ctx.strokeStyle = 'rgba(0,0,0,.2)';
-      ctx.beginPath(); // eixos
-      ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+      const vals = data.map(d=>d.valor);
+      const min = Math.min(...vals)-10;
+      const max = Math.max(...vals)+10;
+      const step = w / (data.length-1||1);
 
-      // linha
       ctx.strokeStyle = '#2563eb';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      series.forEach((p,i)=>{
-        const x = xScale(new Date(p.date).getTime());
-        const y = yScale(p.value);
+      data.forEach((d,i)=>{
+        const x = i*step;
+        const y = h - ((d.valor - min)/(max-min))*h;
         if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
       });
       ctx.stroke();
 
-      // pontos
       ctx.fillStyle = '#2563eb';
-      series.forEach(p=>{
-        const x = xScale(new Date(p.date).getTime());
-        const y = yScale(p.value);
-        ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+      data.forEach((d,i)=>{
+        const x = i*step;
+        const y = h - ((d.valor - min)/(max-min))*h;
+        ctx.beginPath();
+        ctx.arc(x,y,4,0,2*Math.PI);
+        ctx.fill();
+        ctx.fillText(`${d.valor}`, x+6, y-6);
       });
     }
   </script>
