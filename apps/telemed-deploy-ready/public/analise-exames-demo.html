@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Análise de Exames (demo) — TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:980px;margin:36px auto;padding:16px}
+    .muted{color:var(--muted)}
+    .stack>*{margin:10px 0}
+    textarea{width:100%;min-height:140px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid rgba(0,0,0,.08)}
+    .flag-ok{color:#1a7f37;font-weight:600}
+    .flag-alt{color:#b42318;font-weight:700}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:#eef2ff;border-radius:999px;padding:2px 10px;font-size:12px}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    canvas{width:100%;max-width:720px;height:180px;border:1px dashed rgba(0,0,0,.08);border-radius:10px}
+    .card{background:#f3f7fb;border-radius:12px;padding:16px}
+  </style>
+</head>
+<body>
+  <div class="container stack">
+    <h1>📊 Análise de Exames (demo)</h1>
+    <p class="muted">Cole um CSV simples e gere rapidamente uma tabela com <strong>flags</strong> e um gráfico de tendência da <em>Glicemia</em>. Nenhum dado real é armazenado.</p>
+
+    <details class="card">
+      <summary><strong>Formato esperado (CSV)</strong></summary>
+      <pre class="muted" style="white-space:pre-wrap;margin-top:8px">
+Data,Exame,Valor,Unidade
+2025-09-20,Glicemia,112,mg/dL
+2025-10-05,Glicemia,132,mg/dL
+2025-10-05,Hemoglobina,12.1,g/dL
+2025-10-05,Creatinina,1.4,mg/dL
+      </pre>
+    </details>
+
+    <div class="actions">
+      <button class="btn" id="btnExemplo" data-cta="analise_demo_exemplo" data-testid="button-exemplo">Carregar exemplo</button>
+      <button class="btn" id="btnProcessar" data-cta="analise_demo_processar" data-testid="button-processar">Processar</button>
+      <button class="btn" id="btnPrint" data-cta="analise_demo_print" data-testid="button-print">Imprimir / Salvar PDF</button>
+      <a class="btn" id="btnAskAI" href="#" data-cta="analise_demo_ask_ai" data-testid="button-ask-ai">Conferir com Dr. AI</a>
+    </div>
+
+    <textarea id="inputCSV" aria-label="Área para colar CSV de exames" placeholder="Cole aqui seu CSV de exames..." data-testid="input-csv"></textarea>
+
+    <div id="outResumo" class="chips" aria-live="polite"></div>
+    <div id="outTabela" class="card" style="display:none" data-testid="output-tabela">
+      <h3>Resultados</h3>
+      <table aria-label="Tabela de resultados com flags">
+        <thead><tr><th>Data</th><th>Exame</th><th>Valor</th><th>Unidade</th><th>Referência*</th><th>Status</th></tr></thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+      <p class="muted" style="margin-top:8px">* Referências aproximadas (demo). Avaliação clínica obrigatória.</p>
+    </div>
+
+    <div id="outGrafico" class="card" style="display:none" data-testid="output-grafico">
+      <h3>Tendência — Glicemia</h3>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <p><a href="/public/mod-analise.html" class="muted" data-testid="link-back">← Voltar ao Módulo de Análise</a></p>
+  </div>
+
+  <script>
+    // Telemetria
+    window.__BUILD='pilot-r1';
+    try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/analise-exames-demo.html'}});}catch(e){}
+    document.querySelectorAll('[data-cta]').forEach(el=>{
+      el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
+    });
+
+    const csvArea = document.getElementById('inputCSV');
+    const tblBody = document.getElementById('tblBody');
+    const outTabela = document.getElementById('outTabela');
+    const outGrafico = document.getElementById('outGrafico');
+    const outResumo = document.getElementById('outResumo');
+
+    document.getElementById('btnExemplo').addEventListener('click', ()=>{
+      csvArea.value = `Data,Exame,Valor,Unidade
+2025-09-20,Glicemia,112,mg/dL
+2025-10-05,Glicemia,132,mg/dL
+2025-10-05,Hemoglobina,12.1,g/dL
+2025-10-05,Creatinina,1.4,mg/dL`;
+    });
+
+    document.getElementById('btnProcessar').addEventListener('click', processar);
+    document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
+
+    const refRanges = {
+      'Glicemia': (v)=> {
+        if (v < 100) return {ref:'<100', flag:'OK'};
+        if (v >=100 && v <=125) return {ref:'100–125 (pré-diabetes)', flag:'ALTERADO'};
+        return {ref:'≥126 (diabetes)', flag:'ALTERADO'};
+      },
+      'Hemoglobina': (v)=> {
+        // intervalo geral aproximado (demo). Na prática, considerar sexo/idade.
+        if (v < 12.0) return {ref:'12–17 g/dL (aprox.)', flag:'BAIXO'};
+        if (v > 17.0) return {ref:'12–17 g/dL (aprox.)', flag:'ALTO'};
+        return {ref:'12–17 g/dL (aprox.)', flag:'OK'};
+      },
+      'Creatinina': (v)=> {
+        if (v < 0.6) return {ref:'0.6–1.3 mg/dL (aprox.)', flag:'BAIXO'};
+        if (v > 1.3) return {ref:'0.6–1.3 mg/dL (aprox.)', flag:'ALTO'};
+        return {ref:'0.6–1.3 mg/dL (aprox.)', flag:'OK'};
+      }
+    };
+
+    function parseCSV(txt){
+      const lines = txt.trim().split(/\r?\n/);
+      if (!lines.length) return [];
+      const rows = [];
+      for (let i=1;i<lines.length;i++){
+        const parts = lines[i].split(',');
+        if (parts.length < 4) continue;
+        const [data, exame, valor, unidade] = parts.map(s=>s.trim());
+        const v = Number(valor.replace(',','.'));
+        rows.push({data, exame, valor: isNaN(v)? null : v, unidade});
+      }
+      return rows;
+    }
+
+    function processar(){
+      const rows = parseCSV(csvArea.value || '');
+      tblBody.innerHTML = '';
+      outResumo.innerHTML = '';
+      outTabela.style.display = rows.length ? 'block' : 'none';
+      outGrafico.style.display = 'none';
+
+      let altered = [];
+      let glicemiaSeries = [];
+
+      for (const r of rows){
+        const fn = refRanges[r.exame];
+        let ref='—', flag='—';
+        if (fn && r.valor!=null){
+          const res = fn(r.valor);
+          ref = res.ref; flag = res.flag;
+        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.data}</td>
+          <td>${r.exame}</td>
+          <td>${r.valor ?? '—'}</td>
+          <td>${r.unidade}</td>
+          <td>${ref}</td>
+          <td class="${flag==='OK'?'flag-ok':'flag-alt'}">${flag}</td>`;
+        tblBody.appendChild(tr);
+
+        if (flag !== 'OK' && flag!=='—'){
+          altered.push(`${r.exame}: ${r.valor} ${r.unidade} (${flag})`);
+        }
+        if (r.exame==='Glicemia' && r.valor!=null){
+          glicemiaSeries.push({date:r.data, value:r.valor});
+        }
+      }
+
+      // chips de resumo
+      if (altered.length){
+        altered.forEach(t=>{
+          const chip = document.createElement('span');
+          chip.className='chip';
+          chip.textContent = t;
+          outResumo.appendChild(chip);
+        });
+      }else if (rows.length){
+        const ok = document.createElement('span');
+        ok.className='chip';
+        ok.textContent='Sem alterações relevantes (revisar clinicamente)';
+        outResumo.appendChild(ok);
+      }
+
+      // gráfico de glicemia (se houver série)
+      if (glicemiaSeries.length){
+        outGrafico.style.display = 'block';
+        drawLineChart('chart', glicemiaSeries);
+      }
+
+      // montar pergunta para o Dr. AI
+      const pergunta = buildQuestion(rows, altered);
+      const url = '/dr-ai.html?ctx=analise&q='+encodeURIComponent(pergunta);
+      const ask = document.getElementById('btnAskAI');
+      ask.href = url;
+    }
+
+    function buildQuestion(rows, altered){
+      const exames = rows.map(r=>`${r.exame} ${r.valor??'?'} ${r.unidade} (${r.data})`).join('; ');
+      const alertas = altered.length ? `Alterações: ${altered.join('; ')}.` : 'Sem flags automáticas; confirmar clinicamente.';
+      return [
+        `Analisar exames laboratoriais do paciente.`,
+        alertas,
+        `Resultados: ${exames}`,
+        `Comente possíveis diagnósticos diferenciais, necessidade de repetir exames/jejum,`,
+        `e orientações ao paciente. Seja objetivo.`
+      ].join(' ');
+    }
+
+    // desenho simples de linha (sem libs)
+    function drawLineChart(canvasId, series){
+      // ordenar por data
+      series = series.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
+      const c = document.getElementById(canvasId);
+      const ctx = c.getContext('2d');
+      const W = c.width = c.clientWidth;
+      const H = c.height = c.clientHeight;
+      const pad = 30;
+      const xs = series.map(s=>new Date(s.date).getTime());
+      const ys = series.map(s=>s.value);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const xScale = (t)=> pad + ( (t-minX)/(maxX-minX || 1) ) * (W-2*pad);
+      const yScale = (v)=> H-pad - ( (v-minY)/(maxY-minY || 1) ) * (H-2*pad);
+
+      // fundo
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle = 'rgba(0,0,0,.2)';
+      ctx.beginPath(); // eixos
+      ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+
+      // linha
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      series.forEach((p,i)=>{
+        const x = xScale(new Date(p.date).getTime());
+        const y = yScale(p.value);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      // pontos
+      ctx.fillStyle = '#2563eb';
+      series.forEach(p=>{
+        const x = xScale(new Date(p.date).getTime());
+        const y = yScale(p.value);
+        ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+      });
+    }
+  </script>
+</body>
+</html>

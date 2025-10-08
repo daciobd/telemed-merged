@@ -5,21 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Módulo de Análise — TeleMed (demo)</title>
   <link rel="stylesheet" href="/assets/css/base.css" />
-  <style>.container{max-width:920px;margin:36px auto;padding:16px}.muted{color:var(--muted)} .stack>*{margin:8px 0}</style>
+  <style>
+    .container{max-width:920px;margin:36px auto;padding:16px}
+    .muted{color:var(--muted)} .stack>*{margin:8px 0}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+  </style>
 </head>
 <body>
   <div class="container stack">
     <h1>🧪 Módulo de Análise (demo)</h1>
-    <p class="muted">Análise de exames e resultados laboratoriais (exemplo).</p>
+    <p class="muted">Análise de exames e resultados laboratoriais (exemplo). Cole um CSV simples e gere tabela com <em>flags</em> e gráfico.</p>
 
-    <a class="btn" href="/dashboard-piloto.html" data-cta="analise_dashboard" data-testid="button-dashboard">Abrir métricas</a>
-    <a class="btn" href="/dr-ai.html" data-cta="analise_open_dr_ai" data-testid="button-open-dr-ai">Conversar com Dr. AI</a>
+    <div class="actions">
+      <a class="btn" href="/public/analise-exames-demo.html" data-cta="analise_exames_demo" aria-label="Abrir análise de exames (demo)" data-testid="button-analise-exames">Analisar exames (demo)</a>
+      <a class="btn" href="/dr-ai.html?ctx=analise" data-cta="analise_open_dr_ai" aria-label="Abrir Dr. AI em contexto de análise" data-testid="button-open-dr-ai">Abrir Dr. AI (análise)</a>
+    </div>
 
     <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
   <script>
     window.__BUILD='pilot-r1';
-    (window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-analise.html'}}));
+    try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-analise.html'}});}catch(e){}
     document.querySelectorAll('[data-cta]').forEach(el=>{
       el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
     });
