@@ -14,7 +14,7 @@
     .muted{color:var(--muted)}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:720px){.row{grid-template-columns:1fr}}
-    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .actions,.templates{display:flex;gap:12px;flex-wrap:wrap}
     .preview{white-space:pre-wrap}
   </style>
 </head>
@@ -22,6 +22,11 @@
   <div class="container">
     <h1>🧾 Gerar Receita (demo)</h1>
     <p class="muted">Preencha os campos para simular a geração de uma receita. Nenhum dado real é armazenado.</p>
+
+    <div class="templates" aria-label="Modelos rápidos">
+      <button class="btn" type="button" data-tpl="analgesico_adulto" data-testid="button-tpl-analgesico">Usar template: Analgésico adulto</button>
+      <button class="btn" type="button" data-tpl="antitermico_ped" data-testid="button-tpl-antitermico">Usar template: Antitérmico pediátrico</button>
+    </div>
 
     <form id="rxForm" aria-label="Formulário de receita">
       <div class="row">
@@ -65,7 +70,7 @@
       <div class="actions">
         <button class="btn" type="submit" data-cta="rx_demo_gerar" data-testid="button-gerar">Gerar receita (preview)</button>
         <button class="btn" type="button" id="btnPrint" data-cta="rx_demo_print" data-testid="button-print">Imprimir / Salvar PDF</button>
-        <a class="btn" href="/dr-ai.html?ctx=prescricao&from=rx_demo" data-cta="rx_demo_open_dr_ai" data-testid="button-open-dr-ai">Abrir Dr. AI</a>
+        <button class="btn" type="button" id="btnAskAI" data-cta="rx_demo_ask_ai" data-testid="button-ask-ai">Validar com Dr. AI</button>
       </div>
     </form>
 
@@ -79,21 +84,53 @@
   </div>
 
   <script>
-    // Telemetria
+    // Telemetria básica
     window.__BUILD='pilot-r1';
     try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/prescricao-demo.html'}});}catch(e){}
-
     document.querySelectorAll('[data-cta]').forEach(el=>{
       el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
     });
 
-    // Lógica simples de preview
+    const v = id => document.getElementById(id).value.trim();
+    const set = (id,val)=>{ if(val!=null) document.getElementById(id).value = val; };
+
+    // 1) Pré-preencher por query string (ex.: ?paciente=Joao&med=Dipirona%20500mg&dose=1%20comp&pos=8h&dur=5%20dias&obs=tomar%20apos%20refeicoes&crm=Dra.%20Ana)
+    (()=>{
+      const p = new URLSearchParams(location.search);
+      const keys = ['paciente','crm','med','dose','pos','dur','obs'];
+      let touched = false;
+      keys.forEach(k=>{ if(p.get(k)){ set(k, decodeURIComponent(p.get(k))); touched = true; }});
+      if(touched){ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_prefill_from_url'}});}catch(e){} }
+    })();
+
+    // 2) Templates rápidos
+    const applyTpl = (tpl)=>{
+      if(tpl==='analgesico_adulto'){
+        set('med','Dipirona 500 mg');
+        set('dose','1 comprimido');
+        set('pos','a cada 8 horas');
+        set('dur','por 5 dias');
+        set('obs','Tomar após as refeições. Hidratação adequada.');
+      }
+      if(tpl==='antitermico_ped'){
+        set('med','Paracetamol 160 mg/5 mL');
+        set('dose','10 mg/kg/dose');
+        set('pos','a cada 6 horas se febre/dor');
+        set('dur','por 3 dias');
+        set('obs','Usar seringa dosadora. Não ultrapassar 75 mg/kg/dia.');
+      }
+      try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_tpl_'+tpl}});}catch(e){}
+    };
+    document.querySelectorAll('[data-tpl]').forEach(b=>{
+      b.addEventListener('click',()=>applyTpl(b.dataset.tpl));
+    });
+
+    // 3) Preview e impressão
     const form = document.getElementById('rxForm');
     const pv = document.getElementById('preview');
     const pvText = document.getElementById('previewText');
     form.addEventListener('submit', (e)=>{
       e.preventDefault();
-      const v = id => document.getElementById(id).value.trim();
       const txt =
 `Receita (DEMO)
 Paciente: ${v('paciente')}
@@ -115,6 +152,19 @@ Emitido em: ${new Date().toLocaleString('pt-BR')}
     document.getElementById('btnPrint').addEventListener('click', ()=>{
       try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_demo_print'}});}catch(e){}
       window.print();
+    });
+
+    // 4) Validar com Dr. AI (abre o Dr. AI com a pergunta pronta no campo de texto)
+    document.getElementById('btnAskAI').addEventListener('click', ()=>{
+      const question = [
+        `Paciente: ${v('paciente')} | Profissional: ${v('crm')}`,
+        `Quero prescrever ${v('med')}, ${v('dose')}, ${v('pos')}, ${v('dur')}.`,
+        `Há contraindicações, interações ou ajustes de dose a considerar?`,
+        `Responda de forma objetiva para revisão médica.`
+      ].join(' ');
+      const url = `/dr-ai.html?ctx=prescricao&q=${encodeURIComponent(question)}`;
+      try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:'rx_demo_open_dr_ai_with_ctx'}});}catch(e){}
+      location.href = url;
     });
   </script>
 </body>

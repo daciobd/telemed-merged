@@ -500,5 +500,29 @@
 })();
 </script>
 
+<script>
+(function(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const q = p.get('q');
+    const ctx = p.get('ctx');
+    // Preenche o primeiro textarea da página (campo de sintomas/pergunta)
+    const ta = document.querySelector('textarea');
+    if(q && ta){ ta.value = q; ta.focus(); }
+    // Badge de contexto
+    if(ctx){
+      const h1 = document.querySelector('h1');
+      if(h1){
+        const badge = document.createElement('span');
+        badge.textContent = 'Contexto: ' + ctx;
+        badge.style.marginLeft = '8px';
+        badge.className = 'chip';
+        h1.after(badge);
+      }
+    }
+  }catch(e){}
+})();
+</script>
+
 </body>
 </html>
