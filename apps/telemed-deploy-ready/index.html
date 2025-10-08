@@ -127,6 +127,11 @@
     .tile:hover{
       transform:translateY(-2px); box-shadow: 0 4px 16px rgba(77,163,255,.15);
     }
+    /* Banner demo prescrição 90s */
+    .demo-prescricao-90s{display:block;border:1px dashed rgba(255,255,255,.28);border-radius:16px;padding:14px 16px;margin:10px 0;
+      text-decoration:none}
+    .demo-prescricao-90s strong{display:block;font-size:18px}
+    .demo-prescricao-90s .muted{color:var(--muted)}
   </style>
   <script src="/js/feature-flags.js" integrity="sha384-JGQ8tZep6h1EgdRvdrxP1Cr21q8cF4syP8yW6sScr2ihS5+dag9Dx7T8JXL0ZOGV" crossorigin="anonymous"></script>
   <script src="/js/audit-logger.js" integrity="sha384-foJDXv2dglOU7f/y+Zw/9ToZauWO3GRaP4h5UWBS8B39us76noGPN7kSl2n0c/ZI" crossorigin="anonymous"></script>
@@ -141,6 +146,14 @@
       </a>
       <span class="chip" aria-label="Estado do projeto">Programa de Testes</span>
     </header>
+
+    <!-- ⚡ Banner: Demo Prescrição em 90s -->
+    <a class="demo-prescricao-90s" id="demo-prescricao-90s"
+       href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es"
+       data-cta="demo_prescricao_90s" aria-label="Abrir demo de prescrição em 90 segundos" data-testid="banner-prescricao-90s">
+      ⚡ <strong>Demo: Prescrição em 90s</strong>
+      <span class="muted">Dipirona 500 mg já pré-preenchida. Clique para revisar, validar no Dr. AI e imprimir.</span>
+    </a>
 
     <main class="hero">
       <section>
@@ -322,7 +335,7 @@
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
     const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', '/public/', '/dashboard', '/preview/', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
-    const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico', 'cta-med-dashboard', 'cta-med-kit', 'cta-med-dr-ai' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
+    const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico', 'cta-med-dashboard', 'cta-med-kit', 'cta-med-dr-ai', 'demo-prescricao-90s' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {
       'Conheça o Dr. AI': 'Área ainda em desenvolvimento. Nesta demonstração, priorizamos a conexão médico–paciente.',
