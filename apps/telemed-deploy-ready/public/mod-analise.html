@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Módulo de Análise — TeleMed (demo)</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>.container{max-width:920px;margin:36px auto;padding:16px}.muted{color:var(--muted)} .stack>*{margin:8px 0}</style>
+</head>
+<body>
+  <div class="container stack">
+    <h1>🧪 Módulo de Análise (demo)</h1>
+    <p class="muted">Análise de exames e resultados laboratoriais (exemplo).</p>
+
+    <a class="btn" href="/dashboard-piloto.html" data-cta="analise_dashboard" data-testid="button-dashboard">Abrir métricas</a>
+    <a class="btn" href="/public/dr-ai-demo.html" data-cta="analise_open_dr_ai" data-testid="button-open-dr-ai">Conversar com Dr. AI</a>
+
+    <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
+  </div>
+  <script>
+    window.__BUILD='pilot-r1';
+    (window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-analise.html'}}));
+    document.querySelectorAll('[data-cta]').forEach(el=>{
+      el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
+    });
+  </script>
+</body>
+</html>

@@ -8,8 +8,11 @@
   <style>
     .container{max-width:840px;margin:40px auto;padding:20px}
     .muted{color:var(--muted)}
-    .module{background:#f1f5f9;padding:16px;border-radius:8px;margin:12px 0}
-    .module h4{margin:0 0 8px;color:#1e293b}
+    .stack>*{margin:8px 0}
+    .tile{display:block;background:#f1f5f9;padding:16px;border-radius:8px;margin:12px 0;text-decoration:none;color:inherit;transition:all 0.2s}
+    .tile:hover{background:#e2e8f0;transform:translateY(-2px)}
+    .tile strong{display:block;margin-bottom:4px;color:#1e293b}
+    ul{list-style:none;padding:0}
   </style>
 </head>
 <body>
@@ -17,33 +20,41 @@
     <h1>🧰 Kit Modular Dr. AI (demo)</h1>
     <p class="muted">Ferramentas modulares de IA para diferentes cenários médicos</p>
     
-    <div class="module">
-      <h4>📋 Módulo de Triagem</h4>
-      <p>Sistema inteligente para classificação inicial de pacientes</p>
-    </div>
+    <ul class="stack">
+      <li>
+        <a class="tile" href="/public/mod-triagem.html" data-cta="kit_mod_triagem" aria-label="Abrir módulo de triagem" data-testid="link-mod-triagem">
+          🧾 <strong>Módulo de Triagem</strong><br/>
+          <span class="muted">Sistema inteligente para classificação inicial de pacientes</span>
+        </a>
+      </li>
+      <li>
+        <a class="tile" href="/public/mod-prescricao.html" data-cta="kit_mod_prescricao" aria-label="Abrir módulo de prescrição" data-testid="link-mod-prescricao">
+          💊 <strong>Módulo de Prescrição</strong><br/>
+          <span class="muted">Assistente para elaboração de receitas médicas</span>
+        </a>
+      </li>
+      <li>
+        <a class="tile" href="/public/mod-analise.html" data-cta="kit_mod_analise" aria-label="Abrir módulo de análise" data-testid="link-mod-analise">
+          🧪 <strong>Módulo de Análise</strong><br/>
+          <span class="muted">Análise de exames e resultados laboratoriais</span>
+        </a>
+      </li>
+      <li>
+        <a class="tile" href="/public/mod-alertas.html" data-cta="kit_mod_alertas" aria-label="Abrir módulo de alertas" data-testid="link-mod-alertas">
+          ⚠️ <strong>Módulo de Alertas</strong><br/>
+          <span class="muted">Notificações inteligentes para médicos e pacientes</span>
+        </a>
+      </li>
+    </ul>
     
-    <div class="module">
-      <h4>💊 Módulo de Prescrição</h4>
-      <p>Assistente para elaboração de receitas médicas</p>
-    </div>
-    
-    <div class="module">
-      <h4>📊 Módulo de Análise</h4>
-      <p>Análise de exames e resultados laboratoriais</p>
-    </div>
-    
-    <div class="module">
-      <h4>🔔 Módulo de Alertas</h4>
-      <p>Notificações inteligentes para médicos e pacientes</p>
-    </div>
-    
-    <p class="muted"><a href="/">← Voltar para a home</a></p>
+    <p class="muted"><a href="/" data-testid="link-home">← Voltar para a home</a></p>
   </div>
   <script>
     window.__BUILD='pilot-r1';
-    try {
-      window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/kit-modular.html'}});
-    } catch(e) {}
+    (window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/kit-modular.html'}}));
+    document.querySelectorAll('[data-cta]').forEach(el=>{
+      el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
+    });
   </script>
 </body>
 </html>
