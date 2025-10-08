@@ -3,23 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Módulo de Alertas — TeleMed (demo)</title>
+  <title>Módulo de Alertas (demo)</title>
   <link rel="stylesheet" href="/assets/css/base.css" />
-  <style>.container{max-width:920px;margin:36px auto;padding:16px}.muted{color:var(--muted)} .stack>*{margin:8px 0}</style>
+  <style>
+    .container{max-width:920px;margin:36px auto;padding:16px}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+  </style>
 </head>
 <body>
-  <div class="container stack">
+  <div class="container">
     <h1>⚠️ Módulo de Alertas (demo)</h1>
-    <p class="muted">Notificações inteligentes para médicos e pacientes (exemplo).</p>
+    <p class="muted">Regras de notificação para médicos/pacientes. Simule eventos clínicos e veja o feed de alertas.</p>
 
-    <a class="btn" href="/dashboard-piloto.html" data-cta="alertas_dashboard" data-testid="button-dashboard">Ver telemetria</a>
-    <a class="btn" href="/dr-ai.html" data-cta="alertas_open_dr_ai" data-testid="button-open-dr-ai">Perguntar ao Dr. AI</a>
+    <div class="actions">
+      <a class="btn" href="/public/alertas-demo.html" data-cta="alertas_demo_open" aria-label="Abrir simulação de alertas" data-testid="button-simular-alertas">Simular alertas (demo)</a>
+      <a class="btn" href="/dr-ai.html?ctx=alertas" data-cta="alertas_open_dr_ai" aria-label="Abrir Dr. AI em contexto de alertas" data-testid="button-open-dr-ai">Perguntar ao Dr. AI (alertas)</a>
+      <a class="btn" href="/dashboard-piloto.html" data-cta="alertas_open_dash" aria-label="Abrir dashboard de telemetria" data-testid="button-dashboard">Ver telemetria</a>
+    </div>
 
     <p><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </div>
   <script>
     window.__BUILD='pilot-r1';
-    (window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-alertas.html'}}));
+    try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-alertas.html'}});}catch(e){}
     document.querySelectorAll('[data-cta]').forEach(el=>{
       el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
     });
