@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Como funciona — Médico (demo) | TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:920px;margin:36px auto;padding:16px}
+    .subtitle{color:var(--muted);margin-bottom:16px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:24px;margin:16px 0}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:16px;margin:16px 0}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+    ol,ul{line-height:1.8}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👨‍⚕️ Como funciona — Médico (demo)</h1>
+    <div class="subtitle">Conheça o fluxo completo do médico na plataforma TeleMed</div>
+
+    <div class="info-box">
+      <strong>💡 Bem-vindo ao TeleMed</strong>
+      <p style="margin:8px 0 0">Esta demonstração mostra como médicos podem aproveitar intervalos de agenda, atender pacientes de forma flexível e usar IA em tempo real.</p>
+    </div>
+
+    <div class="card">
+      <h2>📋 Passo a passo do médico</h2>
+      <ol>
+        <li><strong>Cadastro:</strong> Complete seu perfil profissional com CRM, especialidades e disponibilidade.</li>
+        <li><strong>Configuração de agenda:</strong> Defina horários livres para atendimento e valores sugeridos.</li>
+        <li><strong>Receber propostas:</strong> Pacientes fazem propostas de valor e você decide se aceita.</li>
+        <li><strong>Atendimento:</strong> Use consultório virtual com suporte de IA (Dr. AI) e protocolos clínicos.</li>
+        <li><strong>Ferramentas:</strong> Prescrição digital, análise de exames, alertas clínicos e muito mais.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>🎯 Diferenciais para o médico</h2>
+      <ul>
+        <li>✅ Aproveite intervalos entre consultas presenciais</li>
+        <li>✅ Modelo flexível: você decide o preço mínimo que aceita</li>
+        <li>✅ Consultório virtual para fidelizar pacientes</li>
+        <li>✅ Suporte de IA em tempo real (Dr. AI + MedicalDesk Advance)</li>
+        <li>✅ Kit modular: prescrição, análise, alertas, triagem</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="/public/cadastro-medico.html" data-cta="med_flow_cadastro" data-testid="button-cadastro">Fazer cadastro de médico</a>
+      <a class="btn" href="/public/medico-demo.html" data-cta="med_flow_demo" data-testid="button-demo">Ir para Demo Médico</a>
+      <a class="btn btn-secondary" href="/public/medico-login.html" data-cta="med_flow_login" data-testid="button-login">Já tenho cadastro</a>
+    </div>
+
+    <!-- mover o Hub para Avançado (evita confusão) -->
+    <details style="margin-top:12px">
+      <summary class="muted" style="cursor:pointer">Opções avançadas (visão técnica)</summary>
+      <p style="margin-top:8px"><a href="/public/hub-integracao.html" data-cta="med_flow_hub">Hub de Integração (para desenvolvedores)</a></p>
+    </details>
+
+    <p style="margin-top:24px"><a href="/" class="muted" data-testid="link-home">← Voltar para página inicial</a></p>
+  </div>
+
+  <script>
+    try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/como-funciona-medico.html'}});}catch(e){}
+    document.querySelectorAll('[data-cta]').forEach(el=>{
+      el.addEventListener('click',()=>{ try{
+        window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
+      }catch(e){} });
+    });
+  </script>
+</body>
+</html>

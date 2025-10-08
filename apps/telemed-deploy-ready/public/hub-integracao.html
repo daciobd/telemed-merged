@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hub de Integração (dev) | TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:920px;margin:36px auto;padding:16px}
+    .subtitle{color:var(--muted);margin-bottom:16px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:24px;margin:16px 0}
+    .warning-box{background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:16px;margin:16px 0}
+    .code-box{background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;font-family:monospace;font-size:13px;overflow-x:auto}
+    .muted{color:var(--muted)}
+    pre{margin:0;white-space:pre-wrap}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+    .api-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:16px}
+    .api-card h3{margin:0 0 8px;font-size:16px}
+    .api-card p{margin:0;font-size:14px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔌 Hub de Integração (desenvolvedor)</h1>
+    <div class="subtitle">Visão técnica das APIs e integrações do TeleMed</div>
+
+    <div class="warning-box">
+      <strong>⚠️ Área técnica:</strong> Esta página é destinada a desenvolvedores que desejam integrar sistemas externos com o TeleMed. Se você é médico e deseja usar a plataforma, <a href="/public/medico-demo.html">volte para o Demo Médico</a>.
+    </div>
+
+    <div class="card">
+      <h2>📡 APIs Disponíveis</h2>
+      <div class="grid">
+        <div class="api-card">
+          <h3>🤖 Dr. AI API</h3>
+          <p>Endpoint: <code>/api/dr-ai/analyze</code></p>
+          <p>Análise de sintomas e sugestão de especialidade</p>
+        </div>
+
+        <div class="api-card">
+          <h3>🧾 Prescrição API</h3>
+          <p>Endpoint: <code>/api/prescription/generate</code></p>
+          <p>Geração de receitas médicas digitais</p>
+        </div>
+
+        <div class="api-card">
+          <h3>📊 Análise API</h3>
+          <p>Endpoint: <code>/api/analysis/process</code></p>
+          <p>Processamento de exames laboratoriais</p>
+        </div>
+
+        <div class="api-card">
+          <h3>🔔 Alertas API</h3>
+          <p>Endpoint: <code>/api/alerts/trigger</code></p>
+          <p>Sistema de notificações clínicas</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🔑 Autenticação</h2>
+      <p class="muted">Exemplo de requisição autenticada:</p>
+      <div class="code-box">
+        <pre>curl -X POST https://telemed.app/api/dr-ai/analyze \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symptoms": "dor de cabeça há 3 dias",
+    "patient_age": 35,
+    "patient_gender": "feminino"
+  }'</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📚 Documentação Completa</h2>
+      <ul>
+        <li><a href="#">📖 Guia de início rápido</a></li>
+        <li><a href="#">🔐 Gerenciar API keys</a></li>
+        <li><a href="#">📝 Referência de endpoints</a></li>
+        <li><a href="#">💡 Exemplos de código</a></li>
+        <li><a href="#">🐛 Troubleshooting</a></li>
+      </ul>
+    </div>
+
+    <p style="margin-top:24px">
+      <a href="/public/como-funciona-medico.html" class="muted" data-testid="link-back">← Voltar</a>
+    </p>
+  </div>
+
+  <script>
+    try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/hub-integracao.html'}});}catch(e){}
+  </script>
+</body>
+</html>

@@ -227,7 +227,7 @@
       <p class="muted" style="margin-bottom:20px">Acesse diretamente as demonstrações de paciente ou médico</p>
       <div style="display:flex; gap:16px; flex-wrap:wrap">
         <a id="btn-sys-paciente" href="/public/cadastro-paciente.html" class="btn" data-cta="patient_enter" data-testid="button-patient-entry">Entrar como Paciente →</a>
-        <a id="btn-sys-medico" href="demo-medico.html" class="btn ghost" data-testid="button-doctor-entry">Entrar como Médico →</a>
+        <a id="btn-sys-medico" href="/public/como-funciona-medico.html" class="btn ghost" data-testid="button-doctor-entry">Entrar como Médico →</a>
       </div>
     </section>
 
@@ -450,6 +450,18 @@
         document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').length);
     }
   })();
+  </script>
+
+  <!-- Smooth scroll para âncoras -->
+  <script>
+    try{window.__BUILD='pilot-r1';}catch(e){}
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click',e=>{
+        const el=document.querySelector(a.getAttribute('href')); if(!el) return;
+        e.preventDefault(); el.scrollIntoView({behavior:'smooth',block:'start'});
+        try{window.Telemetry?.event?.({event_name:'cta_click',meta:{name:'anchor_'+a.getAttribute('href')}});}catch(e){}
+      });
+    });
   </script>
 </body>
 </html>

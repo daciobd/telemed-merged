@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo Médico | TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:1100px;margin:36px auto;padding:16px}
+    .hero{text-align:center;margin-bottom:32px}
+    .hero h1{font-size:32px;font-weight:800;margin:0 0 8px}
+    .subtitle{color:var(--muted);font-size:18px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:24px;margin:16px 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    .tool-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:20px;text-decoration:none;display:block;transition:transform .2s,box-shadow .2s}
+    .tool-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    .tool-icon{font-size:36px;margin-bottom:12px}
+    .tool-card h3{margin:0 0 8px;font-size:18px;font-weight:700}
+    .tool-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:16px;margin:16px 0}
+    .muted{color:var(--muted)}
+    .btn-group{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>👨‍⚕️ Demo do Médico</h1>
+      <p class="subtitle">Explore as ferramentas e funcionalidades para profissionais de saúde</p>
+    </div>
+
+    <div class="info-box">
+      <strong>✨ Bem-vindo!</strong> Esta é a área de demonstração para médicos. Todas as ferramentas abaixo são funcionais e integradas com o Dr. AI.
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 16px">🧰 Kit Modular de Ferramentas</h2>
+      <div class="grid">
+        <a href="/public/mod-triagem.html" class="tool-card" data-cta="med_demo_triagem" data-testid="card-triagem">
+          <div class="tool-icon">🎯</div>
+          <h3>Triagem Inteligente</h3>
+          <p>Dr. AI analisa sintomas e sugere especialidade adequada</p>
+        </a>
+
+        <a href="/public/mod-prescricao.html" class="tool-card" data-cta="med_demo_prescricao" data-testid="card-prescricao">
+          <div class="tool-icon">🧾</div>
+          <h3>Prescrição Digital</h3>
+          <p>Gere receitas com validação de IA e templates prontos</p>
+        </a>
+
+        <a href="/public/mod-analise.html" class="tool-card" data-cta="med_demo_analise" data-testid="card-analise">
+          <div class="tool-icon">📊</div>
+          <h3>Análise de Exames</h3>
+          <p>Processe resultados com flags automáticos e gráficos</p>
+        </a>
+
+        <a href="/public/mod-alertas.html" class="tool-card" data-cta="med_demo_alertas" data-testid="card-alertas">
+          <div class="tool-icon">🔔</div>
+          <h3>Alertas Clínicos</h3>
+          <p>Sistema inteligente de notificações por severidade</p>
+        </a>
+
+        <a href="/dr-ai.html" class="tool-card" data-cta="med_demo_dr_ai" data-testid="card-dr-ai">
+          <div class="tool-icon">🤖</div>
+          <h3>Assistente Dr. AI</h3>
+          <p>Chat médico com IA para suporte em tempo real</p>
+        </a>
+
+        <a href="/dashboard-piloto.html" class="tool-card" data-cta="med_demo_dashboard" data-testid="card-dashboard">
+          <div class="tool-icon">📈</div>
+          <h3>Dashboard & Telemetria</h3>
+          <p>Acompanhe métricas e eventos do sistema</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 12px">⚡ Ações Rápidas</h2>
+      <div class="btn-group">
+        <a href="/public/prescricao-demo.html" class="btn" data-cta="med_demo_rx_rapida" data-testid="button-receita">💊 Receita Rápida</a>
+        <a href="/public/kit-modular.html" class="btn" data-cta="med_demo_kit" data-testid="button-kit">🧩 Ver Kit Completo</a>
+        <a href="/public/como-funciona-medico.html" class="btn btn-secondary" data-cta="med_demo_ajuda" data-testid="button-ajuda">❓ Como funciona</a>
+      </div>
+    </div>
+
+    <p style="margin-top:24px;text-align:center">
+      <a href="/" class="muted" data-testid="link-home">← Voltar para página inicial</a>
+    </p>
+  </div>
+
+  <script>
+    try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/medico-demo.html'}});}catch(e){}
+    document.querySelectorAll('[data-cta]').forEach(el=>{
+      el.addEventListener('click',()=>{ try{
+        window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
+      }catch(e){} });
+    });
+  </script>
+</body>
+</html>

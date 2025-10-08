@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Login do Médico (demo) — TeleMed</title>
+<link rel="stylesheet" href="/assets/css/base.css"/>
+<style>
+  .container{max-width:480px;margin:48px auto;padding:16px}
+  .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:24px}
+  .stack>*{margin:10px 0}
+  label{display:block;font-weight:600;margin-bottom:4px}
+  input{width:100%;padding:10px;border:1px solid rgba(0,0,0,.14);border-radius:10px}
+  .muted{color:var(--muted)}
+  .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:12px;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="container stack">
+  <h1>👨‍⚕️ Login do Médico (demo)</h1>
+  
+  <div class="info-box">
+    <strong>💡 Demonstração:</strong> Não valida credenciais reais. Ao clicar em Entrar você será redirecionado ao Demo do Médico.
+  </div>
+
+  <div class="card stack">
+    <div>
+      <label for="email">E-mail</label>
+      <input id="email" type="email" placeholder="nome@exemplo.com" autocomplete="username" data-testid="input-email"/>
+    </div>
+    <div>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" placeholder="••••••••" autocomplete="current-password" data-testid="input-senha"/>
+    </div>
+    <button class="btn" id="btnEntrar" data-cta="med_login_entrar" data-testid="button-entrar">Entrar</button>
+    
+    <div style="text-align:center;margin-top:8px">
+      <a href="/public/cadastro-medico.html" class="muted" style="font-size:14px" data-testid="link-cadastro">Ainda não tenho cadastro</a>
+    </div>
+  </div>
+
+  <p><a class="muted" href="/public/como-funciona-medico.html" data-testid="link-back">← Voltar</a></p>
+</div>
+<script>
+  window.__BUILD='pilot-r1';
+  try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/medico-login.html'}});}catch(e){}
+  document.getElementById('btnEntrar').addEventListener('click',()=>{
+    try{window.Telemetry?.event?.({event_name:'cta_click',meta:{name:'med_login_entrar'}});}catch(e){}
+    window.location.href='/public/medico-demo.html';
+  });
+</script>
+</body>
+</html>
