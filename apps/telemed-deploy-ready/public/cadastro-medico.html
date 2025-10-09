@@ -97,19 +97,77 @@
   </div>
 
   <script>
-    try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/cadastro-medico.html'}});}catch(e){}
-    document.querySelectorAll('[data-cta]').forEach(el=>el.addEventListener('click',()=>{try{
-      window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
-    }catch(e){}}));
+    document.addEventListener('DOMContentLoaded', function(){
+      // Telemetria page view
+      try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/cadastro-medico.html'}});}catch(e){}
+      
+      // Telemetria CTAs (checagem segura)
+      document.querySelectorAll('[data-cta]').forEach(el=>{
+        if(el) el.addEventListener('click',()=>{try{
+          window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
+        }catch(e){}});
+      });
 
-    document.getElementById('formCadastro').addEventListener('submit', (e) => {
-      e.preventDefault();
-      alert('✅ Cadastro simulado com sucesso! Redirecionando para o Demo do Médico...');
-      setTimeout(() => {
-        window.location.href = '/public/medico-demo.html';
-      }, 1000);
+      // Form submit (checagem segura)
+      const form = document.getElementById('formCadastro');
+      if(form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          alert('✅ Cadastro simulado com sucesso! Redirecionando para o Demo do Médico...');
+          setTimeout(() => {
+            window.location.href = '/public/medico-demo.html';
+          }, 1000);
+        });
+      }
+
+      // Container de ações
+      const actions =
+        document.querySelector('.actions')
+        || document.querySelector('form')
+        || document.querySelector('main')
+        || document.body;
+
+      // Garante botões existem (evita duplicação)
+      const ensureBtn = (label, href, cta, secondary=false) => {
+        const exists = [...document.querySelectorAll('a,button')]
+          .some(el => (el.textContent||'').trim().toLowerCase() === label.toLowerCase());
+        if (exists) return;
+
+        const a = document.createElement('a');
+        a.className = 'btn' + (secondary ? ' btn-secondary' : '');
+        a.textContent = label;
+        a.href = href;
+        a.dataset.cta = cta;
+        a.dataset.testid = 'button-' + cta.replace(/^med_cad_/, '');
+        a.addEventListener('click', ()=> {
+          try { window.Telemetry?.event?.({event_name:'cta_click',meta:{name:cta}}); } catch(e) {}
+        });
+        actions.appendChild(a);
+      };
+
+      // Garante os dois botões principais
+      ensureBtn('Ir para Demo Médico', '/public/medico-demo.html', 'med_cad_ir_demo', false);
+      ensureBtn('Já tenho cadastro', '/public/medico-login.html', 'med_cad_login', true);
+
+      // Move/esconde o "Hub" para Opções avançadas
+      const hubLink = [...document.querySelectorAll('a')]
+        .find(a => /hub/i.test(a.textContent||''));
+      if (hubLink) {
+        let det = document.getElementById('opcoes-avancadas');
+        if (!det) {
+          det = document.createElement('details');
+          det.id = 'opcoes-avancadas';
+          const sum = document.createElement('summary');
+          sum.textContent = 'Opções avançadas (para equipes técnicas)';
+          sum.className = 'muted';
+          det.appendChild(sum);
+          actions.parentNode.insertBefore(det, actions.nextSibling);
+        }
+        const p = document.createElement('p');
+        p.appendChild(hubLink);
+        det.appendChild(p);
+      }
     });
   </script>
-  <script src="/assets/js/fix-medico-flow.js"></script>
 </body>
 </html>
