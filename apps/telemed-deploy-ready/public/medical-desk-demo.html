@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MedicalDesk Advanced (demo) | TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:860px;margin:48px auto;padding:16px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:32px;text-align:center}
+    .icon{font-size:64px;margin-bottom:16px}
+    h1{margin:0 0 12px;font-size:28px;font-weight:800}
+    .muted{color:var(--muted);line-height:1.6}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:16px;margin:24px 0;text-align:left}
+    ul{text-align:left;line-height:1.8}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="icon">🩺</div>
+      <h1>MedicalDesk Advanced</h1>
+      <p class="muted">Plataforma de protocolos clínicos e suporte à decisão médica</p>
+      
+      <div class="info-box">
+        <strong>📚 Recursos disponíveis:</strong>
+        <ul>
+          <li>Protocolos clínicos atualizados (guidelines internacionais)</li>
+          <li>Base de conhecimento médico validada</li>
+          <li>Calculadoras clínicas (risco cardiovascular, dosagem, etc.)</li>
+          <li>Algoritmos diagnósticos e árvores de decisão</li>
+          <li>Interações medicamentosas</li>
+        </ul>
+      </div>
+
+      <p class="muted">
+        <strong>Status:</strong> Demo stub local. Integração real pode ser plugada aqui.<br>
+        Esta janela simula a abertura do MedicalDesk Advanced durante a consulta.
+      </p>
+      
+      <button onclick="window.close()" class="btn" data-testid="button-fechar">Fechar janela</button>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(location.search);
+    const pid = urlParams.get('pid');
+    if(pid) console.log('📋 MedicalDesk aberto para paciente:', pid);
+    try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/medical-desk-demo.html',patient_id:pid}});}catch(e){}
+  </script>
+</body>
+</html>

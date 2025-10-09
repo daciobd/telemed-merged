@@ -238,5 +238,39 @@
 
   })();
   </script>
+
+  <!-- ROUTER SAFE-LINKS (nome do paciente, info e iniciar consulta) -->
+  <script>
+  (function(){
+    function getPid(el){
+      return el.dataset.patientId
+          || el.getAttribute('data-patient-id')
+          || el.closest('[data-patient-id]')?.dataset.patientId
+          || '';
+    }
+    
+    // Nome do paciente e "Informações do paciente" → PHR
+    document.querySelectorAll('[data-route="patient-name"],[data-route="patient-info"]').forEach(el=>{
+      el.addEventListener('click',(e)=>{
+        e.preventDefault();
+        const id = getPid(e.currentTarget);
+        const url = '/phr.html' + (id?('?patient='+encodeURIComponent(id)):'');
+        location.href = url;
+      });
+    });
+    
+    // Iniciar consulta (câmera verde) → sala de consulta
+    document.querySelectorAll('[data-route="start-consult"], .btn-start-consult').forEach(el=>{
+      el.addEventListener('click',(e)=>{
+        e.preventDefault();
+        const id = getPid(e.currentTarget);
+        const url = '/consulta/index.html?role=medico'
+                  + (id?('&pid='+encodeURIComponent(id)):'')
+                  + '&room=auto';
+        location.href = url;
+      });
+    });
+  })();
+  </script>
 </body>
 </html>

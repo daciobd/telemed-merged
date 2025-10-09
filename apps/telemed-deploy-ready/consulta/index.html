@@ -263,11 +263,11 @@
         <span class="state wait" id="state"><span class="dot"></span> Aguardando</span>
         <span class="pill" id="elapsed">18m 19s</span>
         <button class="btn primary" id="btn-start">Iniciar Consulta</button>
-        <button class="btn ghost" id="btn-mda" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
-        <button class="btn ghost" id="btn-rc" data-testid="button-open-receita-certa">📋 Abrir ReceitaCerta</button>
-        <button class="btn ghost" id="btn-back">Voltar</button>
+        <button class="btn ghost" id="btn-mda" data-action="open-medical-desk" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
+        <button class="btn ghost" id="btn-rc" data-action="open-receita-certa" data-testid="button-open-receita-certa">📋 Abrir ReceitaCerta</button>
+        <button class="btn ghost" id="btn-back" data-action="go-back">Voltar</button>
         <button class="btn ghost" id="btn-form">Formulário</button>
-        <button class="btn ghost" id="btn-narrow">Faixa ↓/↑</button>
+        <button class="btn ghost" id="btn-narrow" data-action="toggle-faixa">Faixa ↓/↑</button>
         <button class="btn ghost" id="btn-evaluate-quick" data-testid="button-evaluate-quick">📝 Avaliação</button>
         <button class="btn ghost" id="btn-exit">Sair</button>
         <div class="control blue notif" title="Notificações" id="btn-bell">🔔<span class="dot" id="bellDot" style="display:none">1</span></div>
@@ -1073,6 +1073,40 @@ document.getElementById('btn-evaluate-quick')?.addEventListener('click', () => {
   <!-- Scripts para funcionalidade de receitas -->
   <script src="../js/config.js"></script>
   <script src="../js/prescription-generator.js"></script>
+
+  <!-- ACTIONS: top-bar -->
+  <script>
+  (function(){
+    const qs = new URLSearchParams(location.search);
+    const pid = qs.get('pid') || qs.get('patientId') || '';
+    
+    // Medical Desk (stub local)
+    document.querySelector('[data-action="open-medical-desk"]')?.addEventListener('click',()=>{
+      const url = '/public/medical-desk-demo.html' + (pid?('?pid='+encodeURIComponent(pid)):'');
+      window.open(url, '_blank', 'noopener');
+    });
+    
+    // Receita Certa (stub local)
+    document.querySelector('[data-action="open-receita-certa"]')?.addEventListener('click',()=>{
+      const url = '/public/receita-certa-demo.html' + (pid?('?pid='+encodeURIComponent(pid)):'');
+      window.open(url, '_blank', 'noopener');
+    });
+    
+    // Voltar
+    document.querySelector('[data-action="go-back"]')?.addEventListener('click',()=>{
+      if (document.referrer) history.back(); 
+      else location.href='/public/medico-demo.html';
+    });
+    
+    // Faixa de notas (abre/fecha)
+    document.querySelector('[data-action="toggle-faixa"]')?.addEventListener('click',()=>{
+      const el = document.querySelector('.soap-notes') || document.getElementById('faixa-notas');
+      if(!el) return;
+      el.toggleAttribute('data-open');
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  })();
+  </script>
 </body>
 </html>
 

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Receita Certa (demo) | TeleMed</title>
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <style>
+    .container{max-width:860px;margin:48px auto;padding:16px}
+    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:32px;text-align:center}
+    .icon{font-size:64px;margin-bottom:16px}
+    h1{margin:0 0 12px;font-size:28px;font-weight:800}
+    .muted{color:var(--muted);line-height:1.6}
+    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:16px;margin:24px 0;text-align:left}
+    ul{text-align:left;line-height:1.8}
+    .rx-preview{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:20px;margin:20px 0;text-align:left;font-family:monospace;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="icon">💊</div>
+      <h1>Receita Certa</h1>
+      <p class="muted">Sistema de prescrição digital com validação e assinatura eletrônica</p>
+      
+      <div class="rx-preview">
+        <strong>📝 Preview da Receita:</strong><br><br>
+        Paciente: <span id="patientName">Não especificado</span><br>
+        Data: <span id="rxDate"></span><br>
+        <br>
+        <em>Medicamentos prescritos aparecerão aqui...</em>
+      </div>
+
+      <div class="info-box">
+        <strong>🔐 Funcionalidades:</strong>
+        <ul>
+          <li>Prescrição digital com assinatura eletrônica (ICP-Brasil)</li>
+          <li>Validação de interações medicamentosas</li>
+          <li>Templates de receitas comuns</li>
+          <li>Histórico de prescrições do paciente</li>
+          <li>Integração com farmácias parceiras</li>
+        </ul>
+      </div>
+
+      <p class="muted">
+        <strong>Status:</strong> Demo stub local. Integração real com sistema de prescrição pode ser configurada.<br>
+        Esta janela simula a visualização/assinatura de receitas durante a consulta.
+      </p>
+      
+      <button onclick="window.close()" class="btn" data-testid="button-fechar">Fechar janela</button>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(location.search);
+    const pid = urlParams.get('pid');
+    
+    document.getElementById('rxDate').textContent = new Date().toLocaleDateString('pt-BR');
+    
+    if(pid) {
+      console.log('💊 ReceitaCerta aberto para paciente:', pid);
+      document.getElementById('patientName').textContent = `ID: ${pid}`;
+    }
+    
+    try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/receita-certa-demo.html',patient_id:pid}});}catch(e){}
+  </script>
+</body>
+</html>
