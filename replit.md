@@ -105,6 +105,67 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
     description: "Monitorar lentidão do gerador de PDF/IO."
 ```
 
+## 🔧 **JavaScript Error Fixes - Correções Permanentes**
+
+### ✅ **Problema: "Cannot read properties of null (reading 'addEventListener')"**
+
+**Causa Raiz Identificada:**
+- Arquivo `js/consent-banner.js` chamava addEventListener em elementos null (linhas 177-179)
+- Método `attachEvents()` não verificava se elementos existiam antes de adicionar event listeners
+- ConsentBanner retorna early quando consentimento já existe, deixando elementos undefined
+
+**Correção Aplicada (consent-banner.js):**
+```javascript
+// ❌ ANTES (causava erro):
+attachEvents() {
+  const acceptBtn = document.getElementById('consent-accept');
+  acceptBtn.addEventListener('click', () => this.acceptConsent());
+}
+
+// ✅ AGORA (com proteção):
+attachEvents() {
+  const acceptBtn = document.getElementById('consent-accept');
+  if (acceptBtn) acceptBtn.addEventListener('click', () => this.acceptConsent());
+}
+```
+
+### ✅ **Cadastro Médico - Estrutura HTML Permanente**
+
+**Markup Blindado (public/cadastro-medico.html):**
+```html
+<form id="form-cadastro-medico" data-form="cadastro-medico" class="card">
+  ...
+  <div class="actions-row" id="actions" data-actions>
+    <button type="submit">Salvar cadastro</button>
+    <button type="reset">Limpar</button>
+    <a href="/public/medico-demo.html">Ir para Demo Médico</a>
+    <a href="/public/medico-login.html">Já tenho cadastro</a>
+  </div>
+</form>
+```
+
+**JavaScript com Fallbacks Múltiplos:**
+- ✅ Seletores múltiplos para form: `#form-cadastro-medico` → `form[data-form="cadastro-medico"]` → `main form` → `form`
+- ✅ Seletores múltiplos para actions: `[data-actions]` → `#actions` → `.actions-row` → `.form-actions`
+- ✅ Auto-criação de container de ações se não encontrado
+- ✅ Função `ensure()` para garantir botões sem duplicação
+- ✅ DOMContentLoaded wrapper completo
+- ✅ Null checks antes de todo addEventListener
+
+**Arquivos Corrigidos:**
+1. `js/consent-banner.js` (linhas 180-182) - Adicionadas proteções if()
+2. `public/cadastro-medico.html`:
+   - Linha 34: Form com IDs e data-attributes corretos
+   - Linha 91: Container actions com ID e data-attribute
+   - Linhas 102-197: JavaScript blindado com fallbacks
+
+**Validação E2E:**
+- ✅ Zero erros JavaScript no console
+- ✅ Todos os botões visíveis (Salvar, Limpar, Ir para Demo, Já tenho cadastro)
+- ✅ Formulário funciona corretamente: preencher → submit → alert → redirect
+- ✅ Navegação completa: Landing → Como funciona → Cadastro → Demo
+- ✅ Teste Playwright passou com sucesso
+
 ## 🚀 **STATUS PRODUÇÃO - GO/NO-GO APROVADO**
 
 ### ✅ **Checklist Produção Completo**
