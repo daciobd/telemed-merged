@@ -174,9 +174,9 @@ class ConsentBanner {
     const detailsBtn = document.getElementById('consent-details');
     const closeBtn = document.getElementById('consent-close');
     
-    acceptBtn.addEventListener('click', () => this.acceptConsent());
-    detailsBtn.addEventListener('click', () => this.showDetails());
-    closeBtn.addEventListener('click', () => this.closeBanner());
+    if (acceptBtn) acceptBtn.addEventListener('click', () => this.acceptConsent());
+    if (detailsBtn) detailsBtn.addEventListener('click', () => this.showDetails());
+    if (closeBtn) closeBtn.addEventListener('click', () => this.closeBanner());
   }
 
   acceptConsent() {
