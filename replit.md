@@ -157,7 +157,8 @@ attachEvents() {
 2. `public/cadastro-medico.html`:
    - Linha 34: Form com IDs e data-attributes corretos
    - Linha 91: Container actions com ID e data-attribute
-   - Linhas 102-197: JavaScript blindado com fallbacks
+   - Linhas 104-112: Helper on() seguro para addEventListener
+   - Linhas 129, 139: Substituídas todas as chamadas diretas por on()
 
 **Validação E2E:**
 - ✅ Zero erros JavaScript no console

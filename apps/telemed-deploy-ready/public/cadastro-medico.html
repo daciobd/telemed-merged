@@ -98,6 +98,16 @@
 
   <script defer>
     document.addEventListener('DOMContentLoaded', () => {
+      // Helper seguro para addEventListener
+      const on = (selOrEl, type, handler, opts) => {
+        const el = typeof selOrEl === 'string' ? document.querySelector(selOrEl) : selOrEl;
+        if (!el) { 
+          console.warn('Elemento não encontrado:', selOrEl); 
+          return; 
+        }
+        el.addEventListener(type, handler, opts);
+      };
+
       const byId = (id) => document.getElementById(id);
 
       // Telemetria page view
@@ -112,27 +122,22 @@
         document.querySelector('main form') ||
         document.querySelector('form');
 
-      if (form) {
-        form.addEventListener('submit', (e) => {
-          e.preventDefault();
-          alert('✅ Cadastro simulado com sucesso! Redirecionando para o Demo do Médico...');
-          setTimeout(() => {
-            location.href = '/public/medico-demo.html';
-          }, 1000);
-        });
-      } else {
-        console.warn('Form não encontrado.');
-      }
+      // Form submit usando helper on()
+      on(form, 'submit', (e) => {
+        e.preventDefault();
+        alert('✅ Cadastro simulado com sucesso! Redirecionando para o Demo do Médico...');
+        setTimeout(() => {
+          location.href = '/public/medico-demo.html';
+        }, 1000);
+      });
 
-      // Telemetria CTAs (checagem segura)
+      // Telemetria CTAs usando helper on()
       document.querySelectorAll('[data-cta]').forEach(el => {
-        if (el) {
-          el.addEventListener('click', () => {
-            try {
-              window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
-            } catch(e) {}
-          });
-        }
+        on(el, 'click', () => {
+          try {
+            window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
+          } catch(e) {}
+        });
       });
 
       // Encontrar container de ações com múltiplos seletores
