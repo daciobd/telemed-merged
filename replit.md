@@ -166,6 +166,19 @@ attachEvents() {
 - ✅ Navegação completa: Landing → Como funciona → Cadastro → Demo
 - ✅ Teste Playwright passou com sucesso
 
+### ✅ **Correção Adicional: SRI Integrity Attributes**
+
+**Problema:** Atributos integrity em index.html causavam bloqueio de scripts após modificações
+**Solução:** Removidos atributos `integrity` e `crossorigin` para ambiente de desenvolvimento
+
+**Arquivos Corrigidos:**
+3. `index.html` (linhas 144-146) - Removidos SRI attributes de:
+   - `/js/feature-flags.js`
+   - `/js/audit-logger.js`
+   - `/js/consent-banner.js`
+
+**Nota:** Em produção, SRI deve ser reativado com hashes corretos para segurança de CDN.
+
 ## 🚀 **STATUS PRODUÇÃO - GO/NO-GO APROVADO**
 
 ### ✅ **Checklist Produção Completo**
