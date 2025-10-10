@@ -82,7 +82,7 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
    ```
    FEATURE_MEDICALDESK=true
    MEDICALDESK_URL=https://seu-medicaldesk.exemplo.com
-   JWT_SECRET=coloque_uma_chave_forte_aqui
+   JWT_SECRET=YOUR_STRONG_RANDOM_SECRET_HERE
    ```
 
 4. **UI Integration:**
