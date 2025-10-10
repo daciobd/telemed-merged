@@ -55,6 +55,45 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 
 ## Recent Updates (Oct 10, 2025)
 
+### 🎨 Sistema de Temas Dark/Light Implementado
+
+**Funcionalidade:** Toggle completo entre temas escuro e claro com persistência
+
+**Implementação:**
+1. **Variáveis CSS Light Mode** em `/assets/css/base.css`:
+   - Background: `#f1f5f9` (azul-cinza claro)
+   - Painéis: `#ffffff` (branco)
+   - Texto: `#0f172a` (azul escuro)
+   - Sombras suaves para light mode
+   - Info boxes e badges adaptados
+
+2. **Toggle Button:**
+   - Botão fixo superior direito (circular)
+   - Ícones: 🌙 (dark→light) e ☀️ (light→dark)
+   - Animação suave no hover
+   - Acessível (aria-label)
+
+3. **Persistência:**
+   - LocalStorage: `telemed-theme` ('light' ou 'dark')
+   - Persiste entre reloads
+   - Persiste ao navegar entre páginas
+   - Tema dark é padrão
+
+4. **Páginas Atualizadas:**
+   - ✅ `/public/medico-login.html` - Toggle funcional
+   - ✅ `/public/medico-demo.html` - Toggle funcional
+   - ✅ `/public/mod-triagem.html` - Toggle funcional
+
+**Validação:**
+- ✅ Teste E2E Playwright confirmou funcionamento
+- ✅ Toggle funciona em todas as páginas
+- ✅ Tema persiste após reload
+- ✅ Tema persiste ao navegar
+- ✅ Ícones trocam corretamente
+- ✅ CSS variables atualizam
+
+---
+
 ### ✨ Tema TeleMed Dark Profissional Aplicado
 
 **Problema:** Páginas com estilo básico (fundo branco) em vez do tema profissional TeleMed
