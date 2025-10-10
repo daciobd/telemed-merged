@@ -307,13 +307,13 @@ document.querySelector("#btnForgot")?.addEventListener("click", () => {
     espEl.innerHTML = '<option value="">Selecione…</option>' + ESPECIALIDADES.map(s => `<option>${s}</option>`).join('');
 
     const digits = s => (s||'').replace(/\D/g,'');
-    crmEl.addEventListener('input', ()=>{
+    crmEl?.addEventListener('input', ()=>{
       let d = digits(crmEl.value);
       if (d.length>8) d = d.slice(0,8);
       crmEl.value = d;
       autoLoad();
     });
-    ufEl.addEventListener('change', autoLoad);
+    ufEl?.addEventListener('change', autoLoad);
 
     function setHint(msg){
       hintEl.textContent = msg || '';
@@ -351,12 +351,12 @@ document.querySelector("#btnForgot")?.addEventListener("click", () => {
       }
     }
 
-    $('#btn-clear').addEventListener('click', ()=>{
-      [crmEl, ufEl, nomeEl, espEl, telEl, emEl, obsEl].forEach(el=> el.value = '');
+    $('#btn-clear')?.addEventListener('click', ()=>{
+      [crmEl, ufEl, nomeEl, espEl, telEl, emEl, obsEl].forEach(el=> { if(el) el.value = ''; });
       setHint('');
     });
 
-    $('#btn-save-legacy').addEventListener('click', async ()=>{ // handler antigo desabilitado
+    $('#btn-save-legacy')?.addEventListener('click', async ()=>{ // handler antigo desabilitado
       const crm = crmEl.value.trim();
       const uf  = ufEl.value.trim();
       if (!uf){ setHint('Selecione a UF.'); return; }
@@ -386,9 +386,9 @@ document.querySelector("#btnForgot")?.addEventListener("click", () => {
       window.location.href = `/demo.html?physicianId=${encodeURIComponent(id)}`;
     });
 
-    $('#btn-demo').addEventListener('click', ()=>{
-      const crm = crmEl.value.trim();
-      const uf  = ufEl.value.trim();
+    $('#btn-demo')?.addEventListener('click', ()=>{
+      const crm = crmEl?.value?.trim() || '';
+      const uf  = ufEl?.value?.trim() || '';
       const id  = (crm && uf) ? `${uf}-${crm}` : '';
       window.location.href = `/demo.html${id ? `?physicianId=${encodeURIComponent(id)}`:''}`;
     });
