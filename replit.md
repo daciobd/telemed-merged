@@ -80,6 +80,7 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
    - Tema dark é padrão
 
 4. **Páginas Atualizadas:**
+   - ✅ `/index.html` (homepage) - Toggle funcional com whitelist no lock system
    - ✅ `/public/medico-login.html` - Toggle funcional
    - ✅ `/public/medico-demo.html` - Toggle funcional
    - ✅ `/public/mod-triagem.html` - Toggle funcional

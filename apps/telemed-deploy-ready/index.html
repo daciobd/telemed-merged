@@ -16,11 +16,7 @@
       --ring: rgba(77,163,255,.5);
       --ok: #39d98a;
     }
-    @media (prefers-color-scheme: light){
-      :root{
-        --bg:#f6f7fb; --card:#ffffff; --text:#17203b; --muted:#4b5a7d; --accent:#1c7bff; --accent-strong:#0d66e0; --ring:rgba(28,123,255,.25); --ok:#16a34a;
-      }
-    }
+    /* Removido prefers-color-scheme - usar apenas toggle manual */
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -137,12 +133,35 @@
       text-decoration:none}
     .demo-alertas strong{display:block;font-size:18px}
     .demo-alertas .muted{color:var(--muted)}
+    
+    /* Theme Toggle Button */
+    .theme-toggle{
+      position:fixed; top:24px; right:24px; width:48px; height:48px; border-radius:50%;
+      border:1px solid rgba(255,255,255,.15); background:var(--card); color:var(--text);
+      font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all .3s ease; box-shadow:0 4px 12px rgba(0,0,0,.2); z-index:1000;
+    }
+    .theme-toggle:hover{transform:scale(1.1); box-shadow:0 6px 16px rgba(77,163,255,.3)}
+    .theme-toggle .dark-icon{display:none}
+    .theme-toggle .light-icon{display:block}
+    :root.light-mode .theme-toggle .dark-icon{display:block}
+    :root.light-mode .theme-toggle .light-icon{display:none}
+    
+    /* Light mode overrides */
+    :root.light-mode{
+      --bg:#f6f7fb; --card:#ffffff; --text:#17203b; --muted:#4b5a7d; 
+      --accent:#1c7bff; --accent-strong:#0d66e0; --ring:rgba(28,123,255,.25); --ok:#16a34a;
+    }
   </style>
   <script src="/js/feature-flags.js"></script>
   <script src="/js/audit-logger.js"></script>
   <script src="/js/consent-banner.js"></script>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <header>
       <a class="brand" href="/" aria-label="TeleMed Consulta">
@@ -349,6 +368,7 @@
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
     const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', '/public/', '/dashboard', '/preview/', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
     const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'btn-sys-paciente', 'btn-sys-medico', 'cta-med-dashboard', 'cta-med-kit', 'cta-med-dr-ai', 'demo-prescricao-90s', 'demo-alertas' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
+    const allowClasses = [ 'theme-toggle' ]; // classes permitidas (ex: botão de tema)
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {
       'Conheça o Dr. AI': 'Área ainda em desenvolvimento. Nesta demonstração, priorizamos a conexão médico–paciente.',
@@ -372,6 +392,7 @@
     function isAllowed(el){
       if(isFull || devOn) return true; // tudo liberado
       if(allowIds.includes(el.id)) return true;
+      if(allowClasses.some(cls => el.classList.contains(cls))) return true; // verificar classes
       if(el.hasAttribute('data-allow-demo')) return true;
       const href = (el.getAttribute('href')||'').trim();
       if(href && allowHrefsStartsWith.some(p=> href.startsWith(p))) return true;
@@ -463,6 +484,22 @@
       });
     });
   </script>
+  
+  <!-- Theme Toggle Script -->
+  <script>
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
+  </script>
+  
   <script src="/assets/js/fix-medico-flow.js"></script>
 </body>
 </html>
