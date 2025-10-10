@@ -169,6 +169,15 @@
           <div style="background: rgba(255,255,255,.02); padding: 16px; border-radius: 12px;">
             <h4 style="margin: 0 0 8px; font-size: 16px;">MedicalDesk Advance</h4>
             <p style="margin: 0; color: var(--muted); font-size: 14px;">Protocolos clínicos e suporte diagnóstico em tempo real</p>
+            <button 
+              class="btn" 
+              data-open-medicaldesk 
+              data-patient-id="paciente-demo-123" 
+              data-doctor-id="medico-demo-456"
+              data-testid="button-open-medicaldesk"
+              style="margin-top: 12px; font-size: 14px; padding: 10px 14px;">
+              🏥 Abrir MedicalDesk
+            </button>
           </div>
           <div style="background: rgba(255,255,255,.02); padding: 16px; border-radius: 12px;">
             <h4 style="margin: 0 0 8px; font-size: 16px;">ReceitaCerta</h4>
@@ -219,5 +228,8 @@
       });
     })();
   </script>
+
+  <!-- MedicalDesk Launcher -->
+  <script src="/js/medical-desk-launch.js" defer></script>
 </body>
 </html>

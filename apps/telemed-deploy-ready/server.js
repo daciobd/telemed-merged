@@ -129,15 +129,6 @@ app.use(express.static(process.cwd(), {
   index: 'index.html'
 }));
 
-// SPA fallback for client-side routing
-app.get('*', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'index.html'), (err) => {
-    if (err) {
-      res.status(404).send('Not Found');
-    }
-  });
-});
-
 const port = process.env.PORT || 5000;
 app.listen(port, '0.0.0.0', () => {
   console.log(`🩺 TeleMed server running on port ${port}`);
