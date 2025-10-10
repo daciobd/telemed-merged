@@ -263,7 +263,7 @@
         <span class="state wait" id="state"><span class="dot"></span> Aguardando</span>
         <span class="pill" id="elapsed">18m 19s</span>
         <button class="btn primary" id="btn-start">Iniciar Consulta</button>
-        <button class="btn ghost" id="btn-mda" data-action="open-medical-desk" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
+        <button class="btn ghost" id="btn-mda" data-open-medicaldesk data-patient-id="pid-consulta" data-doctor-id="doc-consulta" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
         <button class="btn ghost" id="btn-rc" data-action="open-receita-certa" data-testid="button-open-receita-certa">📋 Abrir ReceitaCerta</button>
         <button class="btn ghost" id="btn-back" data-action="go-back">Voltar</button>
         <button class="btn ghost" id="btn-form">Formulário</button>
@@ -1080,11 +1080,7 @@ document.getElementById('btn-evaluate-quick')?.addEventListener('click', () => {
     const qs = new URLSearchParams(location.search);
     const pid = qs.get('pid') || qs.get('patientId') || '';
     
-    // Medical Desk (stub local)
-    document.querySelector('[data-action="open-medical-desk"]')?.addEventListener('click',()=>{
-      const url = '/public/medical-desk-demo.html' + (pid?('?pid='+encodeURIComponent(pid)):'');
-      window.open(url, '_blank', 'noopener');
-    });
+    // Medical Desk - Agora gerenciado por medical-desk-launch.js (com fallback automático)
     
     // Receita Certa (stub local)
     document.querySelector('[data-action="open-receita-certa"]')?.addEventListener('click',()=>{
@@ -1108,6 +1104,9 @@ document.getElementById('btn-evaluate-quick')?.addEventListener('click', () => {
   })();
   </script>
   <script src="/assets/js/fix-medico-flow.js"></script>
+  
+  <!-- MedicalDesk Launcher -->
+  <script src="/js/medical-desk-launch.js" defer></script>
 </body>
 </html>
 
