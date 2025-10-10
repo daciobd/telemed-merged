@@ -11,14 +11,18 @@
     .subtitle{color:var(--muted)}
     .grid{display:grid;grid-template-columns:1fr;gap:14px}
     @media(min-width:820px){.grid{grid-template-columns:1fr 1fr}}
-    .tile{display:block;border:1px solid rgba(0,0,0,.06);background:#f6f9ff;border-radius:18px;padding:16px 18px;text-decoration:none;color:inherit}
-    .tile:hover{box-shadow:0 6px 24px rgba(16,24,40,.08);background:#f3f7ff}
+    .tile{display:block;border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;text-decoration:none;color:var(--text)}
+    .tile:hover{box-shadow:0 6px 24px rgba(14,165,233,.15);border-color:var(--primary)}
     .tile strong{display:block;margin-bottom:6px}
     .muted{color:var(--muted)}
     .back{display:inline-block;margin-top:16px}
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <div class="hero">
       <h1>💼 Kit Modular Dr. AI (demo)</h1>
@@ -50,6 +54,20 @@
     document.querySelectorAll('[data-cta]').forEach(el=>{
       el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
     });
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
   </script>
 </body>
 </html>

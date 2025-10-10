@@ -9,10 +9,14 @@
     .container{max-width:920px;margin:36px auto;padding:16px}
     .muted{color:var(--muted)} .stack>*{margin:8px 0}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
-    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container stack">
     <h1>🧪 Módulo de Análise (demo)</h1>
     <p class="muted">Análise de exames e resultados laboratoriais. Cole um CSV simples e gere tabela com <em>flags</em> e gráfico.</p>
@@ -32,6 +36,20 @@
     document.querySelectorAll('[data-cta]').forEach(el=>{
       el.addEventListener('click',()=>{ try{ window.Telemetry?.event?.({event_name:'cta_click', meta:{name:el.dataset.cta}});}catch(e){} });
     });
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
   </script>
 </body>
 </html>
