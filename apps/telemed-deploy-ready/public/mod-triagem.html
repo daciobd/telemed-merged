@@ -6,21 +6,20 @@
   <title>Módulo de Triagem — TeleMed (demo)</title>
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
-    .container{max-width:920px;margin:36px auto;padding:16px}
-    .subtitle{color:var(--muted)}
+    .subtitle{color:var(--muted);margin-bottom:16px}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0}
-    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px}
-    ul{margin:8px 0 0 18px}
+    .checklist-box{background:#0f1f3a;border:1px solid var(--border);border-radius:12px;padding:16px}
+    ul{margin:8px 0 0 18px;color:var(--text)}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🩺 Módulo de Triagem (demo)</h1>
+  <main class="card" style="max-width:920px;margin:36px auto">
+    <h1><span class="logo">🩺</span> Módulo de Triagem (demo)</h1>
     <div class="subtitle">Classificação inicial com sinais de alerta e direcionamento de especialidade.</div>
     <div class="actions">
       <a href="/dr-ai.html?ctx=triagem" class="btn" data-cta="triagem_open_ai" data-testid="button-open-dr-ai">Abrir Assistente Dr. AI para triagem</a>
     </div>
-    <div class="card">
+    <div class="checklist-box">
       <strong>Checklist de triagem</strong>
       <ul>
         <li>Coleta de sintomas + idade/gênero.</li>
@@ -29,7 +28,7 @@
       </ul>
     </div>
     <p style="margin-top:12px"><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
-  </div>
+  </main>
   <script>
     window.__BUILD='pilot-r1';
     try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-triagem.html'}});}catch(e){}

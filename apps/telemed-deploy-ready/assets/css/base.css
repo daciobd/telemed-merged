@@ -1,0 +1,329 @@
+/* TeleMed - Estilo Base Profissional */
+
+:root {
+  /* Cores principais - Tema Dark Profissional */
+  --bg: #0b1220;
+  --panel: #0f172a;
+  --muted: #94a3b8;
+  --text: #e2e8f0;
+  --primary: #0ea5e9;
+  --primary-2: #0284c7;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --input: #0b1220;
+  --border: #1e293b;
+  --radius: 14px;
+  
+  /* Cores adicionais */
+  --secondary: #6366f1;
+  --accent: #10b981;
+  --info: #3b82f6;
+}
+
+/* Reset e Base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 16px;
+  min-height: 100vh;
+}
+
+/* Container */
+.container {
+  width: min(980px, 100%);
+  margin: 0 auto;
+}
+
+/* Card */
+.card, main.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 26px 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Typography */
+h1 {
+  margin: 0 0 18px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+}
+
+h2 {
+  font-size: 22px;
+  margin: 20px 0 12px;
+  color: var(--text);
+}
+
+h3 {
+  font-size: 18px;
+  margin: 16px 0 8px;
+  color: var(--text);
+}
+
+p {
+  margin: 12px 0;
+}
+
+.muted, p.muted {
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+/* Logo e Badge */
+.logo {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--accent);
+  color: white;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #0b1530;
+  border: 1px solid var(--border);
+  color: #cbd5e1;
+  font-size: 12.5px;
+}
+
+/* Info Box */
+.info-box {
+  background: #1e3a5f;
+  border: 1px solid #2563eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  color: #bfdbfe;
+}
+
+.info-box strong {
+  color: #93c5fd;
+}
+
+/* Forms */
+label {
+  display: block;
+  margin: 8px 2px 6px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+input, textarea, select {
+  width: 100%;
+  background: var(--input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  transition: 0.15s border, 0.15s box-shadow;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+}
+
+input::placeholder, textarea::placeholder {
+  color: #64748b;
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+select {
+  cursor: pointer;
+}
+
+/* Buttons */
+.btn, button.btn, a.btn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: #0b1530;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  display: inline-block;
+  transition: 0.15s filter;
+}
+
+.btn:hover, button.btn:hover, a.btn:hover {
+  filter: brightness(1.15);
+}
+
+.btn.primary, .btn-primary {
+  background: linear-gradient(180deg, var(--primary), var(--primary-2));
+  border-color: #065f92;
+  color: white;
+}
+
+.btn.secondary, .btn-secondary {
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  border-color: #3730a3;
+  color: white;
+}
+
+.btn.ok, .btn.success, .btn-success {
+  background: linear-gradient(180deg, #22c55e, #16a34a);
+  border-color: #15803d;
+  color: white;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn.outline {
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn.active {
+  background: linear-gradient(180deg, var(--primary), var(--primary-2));
+  border-color: #065f92;
+  color: white;
+}
+
+/* Layouts */
+.row, .actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.row .spacer {
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 860px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stack > * {
+  margin: 10px 0;
+}
+
+/* Links */
+.links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.links a {
+  color: #93c5fd;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+a.muted {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+a.muted:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* Mensagens */
+.hint {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #2a0e12;
+  border: 1px solid #7f1d1d;
+  color: #fecaca;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* Utility */
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mt-3 { margin-top: 24px; }
+
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }
+.mb-3 { margin-bottom: 24px; }
+
+/* Responsivo */
+@media (max-width: 720px) {
+  body {
+    padding: 16px 12px;
+  }
+  
+  .card, main.card {
+    padding: 20px 16px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+}

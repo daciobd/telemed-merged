@@ -53,6 +53,40 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **Playwright**: Ferramenta para testes de ponta a ponta.
 -   **Swagger/OpenAPI**: Para documentação da API.
 
+## Recent Updates (Oct 10, 2025)
+
+### ✨ Tema TeleMed Dark Profissional Aplicado
+
+**Problema:** Páginas com estilo básico (fundo branco) em vez do tema profissional TeleMed
+
+**Solução Implementada:**
+1. **Criado `/assets/css/base.css`** - Arquivo de estilos base com tema dark profissional:
+   - Background dark blue (#0b1220)
+   - Painéis dark (#0f172a, #0f1f3a)
+   - Texto claro (#e2e8f0)
+   - Cores primárias: Sky blue (#0ea5e9)
+   - Tipografia profissional system-ui
+
+2. **Páginas Atualizadas:**
+   - ✅ `/public/medico-login.html` - Tema dark aplicado
+   - ✅ `/public/medico-demo.html` - Cards dark, visual consistente
+   - ✅ `/public/mod-triagem.html` - Interface profissional dark
+
+3. **Componentes Estilizados:**
+   - Logo com span.logo (ícone centralizado)
+   - Cards e painéis dark (#0f1f3a)
+   - Botões com gradientes (primary, secondary, success)
+   - Info boxes com tema dark (#1e3a5f)
+   - Links e textos muted (#94a3b8)
+
+**Validação:**
+- ✅ Teste E2E confirmou tema dark em todas as 3 páginas
+- ✅ Background: #0b1220 (dark blue)
+- ✅ Painéis: #0f172a e #0f1f3a
+- ✅ Visual profissional e consistente
+
+---
+
 ## Recent Bug Fixes (Oct 10, 2025)
 
 ### ❌ Bug: "Cannot read properties of null (reading 'addEventListener')"
