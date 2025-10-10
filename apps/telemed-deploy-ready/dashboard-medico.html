@@ -58,6 +58,14 @@
             <option value="next48">Próx. 48h</option>
           </select>
         </label>
+        <button 
+          class="btn primary" 
+          data-open-medicaldesk 
+          data-patient-id="dashboard-access" 
+          data-doctor-id="dashboard-doctor"
+          data-testid="button-open-medicaldesk-dashboard">
+          🏥 MedicalDesk
+        </button>
         <button id="btn-refresh" class="btn">Atualizar</button>
       </div>
     </div>
@@ -392,6 +400,9 @@
   }
 })();
 </script>
+
+<!-- MedicalDesk Launcher -->
+<script src="/js/medical-desk-launch.js" defer></script>
 
 </body>
 </html>
