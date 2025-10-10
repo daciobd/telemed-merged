@@ -123,6 +123,29 @@ if (FEAT_MD && MD_BASE) {
   }));
 }
 
+// ==== Dr. AI Endpoints (DEMO mode) ====
+
+// Demo AI handler - responde tanto GET quanto POST
+const demoAiHandler = (req, res) => {
+  const q =
+    (req.body && (req.body.question || req.body.q)) ||
+    req.query.q ||
+    'pergunta de teste';
+
+  res.json({
+    ok: true,
+    answer: `Resposta DEMO para: "${q}".\n(IA simulada localmente)`,
+    traceId: String(Date.now())
+  });
+};
+
+// Aceita GET/POST em /api/ai/answer e /api/ai/ask
+app.all('/api/ai/answer', demoAiHandler);
+app.all('/api/ai/ask', demoAiHandler);
+
+// Health check opcional para Dr. AI
+app.get('/api/ai/health', (_, res) => res.json({ ok: true, service: 'dr-ai-demo' }));
+
 // Static file serving
 app.use(express.static(process.cwd(), {
   extensions: ['html'],

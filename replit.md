@@ -200,6 +200,56 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 
 ---
 
+## Recent Updates (Oct 10, 2025)
+
+### 🤖 Dr. AI Endpoints Corrigidos - PRODUÇÃO PRONTA ✅
+
+**Status:** ✅ Endpoints criados e funcionando
+
+**Problema Identificado:**
+- UI do Dr. AI chamava `/api/ai/answer` (GET) mas endpoint não existia
+- Erro no console: "Cannot GET /api/ai/answer"
+- Sistema de triagem médica com IA ficava quebrado
+
+**Solução Implementada:**
+1. **3 Endpoints Dr. AI criados** em `server.js`:
+   - `GET/POST /api/ai/answer` - Responde perguntas médicas (DEMO)
+   - `GET/POST /api/ai/ask` - Alias alternativo
+   - `GET /api/ai/health` - Health check da IA
+
+2. **Handler Unificado:**
+   ```javascript
+   // Aceita query string (?q=...) ou body JSON ({question:...})
+   // Responde com: {ok:true, answer:"...", traceId:"..."}
+   ```
+
+3. **Modo DEMO:**
+   - Respostas simuladas localmente
+   - Sem dependência de API externa (OpenAI, etc)
+   - Perfeito para desenvolvimento e testes
+
+**Validação (Oct 10, 2025):**
+- ✅ GET `/api/ai/health` → `{"ok":true,"service":"dr-ai-demo"}`
+- ✅ GET `/api/ai/answer?q=teste` → Retorna resposta demo
+- ✅ POST `/api/ai/ask` com JSON → Retorna resposta demo
+- ✅ POST `/api/ai/answer` com JSON → Retorna resposta demo
+
+**Exemplos de Uso:**
+```bash
+# Health check
+curl http://localhost:5000/api/ai/health
+
+# GET com query string
+curl "http://localhost:5000/api/ai/answer?q=sintomas+de+gripe"
+
+# POST com JSON
+curl -X POST http://localhost:5000/api/ai/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Como tratar hipertensão?"}'
+```
+
+---
+
 ## Recent Bug Fixes (Oct 10, 2025)
 
 ### ❌ Bug: "Cannot read properties of null (reading 'addEventListener')"
