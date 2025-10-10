@@ -1,150 +1,148 @@
-const http = require('http');
-const https = require('https');
-const fs = require('fs');
+const express = require('express');
 const path = require('path');
-const { URLSearchParams } = require('url');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+const jwt = require('jsonwebtoken');
 
-const server = http.createServer((req, res) => {
-  // Health check endpoint for Render observability
-  if (req.url === '/api/health' || req.url === '/healthz') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      ok: true, 
-      service: 'telemed-frontend',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    }));
-    return;
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Environment variables for MedicalDesk
+const FEAT_MD = String(process.env.FEATURE_MEDICALDESK || 'false').toLowerCase() === 'true';
+const MD_BASE = process.env.MEDICALDESK_URL || '';
+const JWT_SECRET = process.env.JWT_SECRET || 'telemed-dev-secret-2025';
+
+// Health check endpoint for Render observability
+app.get(['/api/health', '/healthz'], (req, res) => {
+  res.json({ 
+    ok: true, 
+    service: 'telemed-frontend',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Auth API endpoints (existing)
+app.post('/api/auth/login', (req, res) => {
+  const { id, password, role } = req.body;
+  
+  if (!id || !password || !role) {
+    return res.status(400).json({ ok: false, error: 'missing_fields' });
   }
+  
+  const user = { id, role, name: role === 'medico' ? 'Dr(a). Teste' : 'Paciente Teste' };
+  const token = Buffer.from(JSON.stringify({ 
+    sub: id, 
+    role, 
+    exp: Date.now() + 24*60*60*1000 
+  })).toString('base64');
+  
+  res.json({ ok: true, token, user });
+});
 
-  // Auth API endpoints
-  if (req.url.startsWith('/api/auth/')) {
-    let body = '';
-    req.on('data', chunk => { body += chunk.toString(); });
-    req.on('end', () => {
-      res.setHeader('Content-Type', 'application/json');
-      
-      if (req.url === '/api/auth/login' && req.method === 'POST') {
-        try {
-          const { id, password, role } = JSON.parse(body);
-          if (!id || !password || !role) {
-            res.writeHead(400);
-            res.end(JSON.stringify({ ok: false, error: 'missing_fields' }));
-            return;
-          }
-          const user = { id, role, name: role === 'medico' ? 'Dr(a). Teste' : 'Paciente Teste' };
-          const token = Buffer.from(JSON.stringify({ sub: id, role, exp: Date.now() + 24*60*60*1000 })).toString('base64');
-          res.writeHead(200);
-          res.end(JSON.stringify({ ok: true, token, user }));
-        } catch (e) {
-          res.writeHead(400);
-          res.end(JSON.stringify({ ok: false, error: 'invalid_json' }));
-        }
-        return;
-      }
-      
-      if (req.url === '/api/auth/logout' && req.method === 'POST') {
-        res.writeHead(200);
-        res.end(JSON.stringify({ ok: true }));
-        return;
-      }
-      
-      if (req.url === '/api/auth/me' && req.method === 'GET') {
-        res.writeHead(200);
-        res.end(JSON.stringify({ ok: true, user: null }));
-        return;
-      }
-      
-      res.writeHead(404);
-      res.end(JSON.stringify({ ok: false, error: 'not_found' }));
+app.post('/api/auth/logout', (req, res) => {
+  res.json({ ok: true });
+});
+
+app.get('/api/auth/me', (req, res) => {
+  res.json({ ok: true, user: null });
+});
+
+// ==== MedicalDesk Integration Endpoints ====
+
+// (a) Feature flag endpoint
+app.get('/api/medicaldesk/feature', (req, res) => {
+  res.json({
+    feature: FEAT_MD,
+    hasBase: !!MD_BASE
+  });
+});
+
+// (b) Create JWT session and return launch URL
+app.post('/api/medicaldesk/session', (req, res) => {
+  try {
+    if (!FEAT_MD || !MD_BASE) {
+      return res.status(503).json({ 
+        ok: false, 
+        error: 'MedicalDesk desabilitado' 
+      });
+    }
+
+    const { patientId, doctorId } = req.body || {};
+    if (!patientId || !doctorId) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'patientId e doctorId são obrigatórios' 
+      });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      { 
+        sub: String(doctorId), 
+        patientId: String(patientId), 
+        role: 'doctor' 
+      },
+      JWT_SECRET,
+      { expiresIn: '15m', issuer: 'telemed' }
+    );
+
+    // Launch URL via proxy (no CORS)
+    const launchUrl = `/medicaldesk/app?token=${encodeURIComponent(token)}`;
+    
+    return res.json({ ok: true, launchUrl });
+  } catch (e) {
+    console.error('[medicaldesk/session] erro', e);
+    return res.status(500).json({ 
+      ok: false, 
+      error: 'Falha ao criar sessão' 
     });
-    return;
   }
+});
 
+// (c) Proxy to real MedicalDesk service (avoids CORS)
+if (FEAT_MD && MD_BASE) {
+  app.use('/medicaldesk', createProxyMiddleware({
+    target: MD_BASE,
+    changeOrigin: true,
+    secure: true,
+    logLevel: 'warn',
+    pathRewrite: { '^/medicaldesk': '' }, // /medicaldesk/app -> /app
+    onProxyReq: (proxyReq) => {
+      proxyReq.setHeader('X-From-TeleMed', 'true');
+    },
+    onError: (err, req, res) => {
+      console.error('[MedicalDesk Proxy Error]', err.message);
+      res.status(502).json({ 
+        ok: false, 
+        error: 'Serviço MedicalDesk indisponível' 
+      });
+    }
+  }));
+}
 
-  // Sanitize the URL and prevent directory traversal
-  let requestPath = req.url === '/' ? '/index.html' : req.url;
-  
-  // Remove query parameters and fragments
-  requestPath = requestPath.split('?')[0].split('#')[0];
-  
-  // Strip leading slashes and normalize to prevent directory traversal
-  const cleanPath = requestPath.replace(/^\/+/, '').replace(/^(\.\.[\/\\])+/, '');
-  const normalizedPath = path.normalize(cleanPath);
-  
-  // Resolve the file path within the current working directory
-  const root = process.cwd();
-  const filePath = path.resolve(root, normalizedPath);
-  
-  // Ensure the file is within the current directory using proper path resolution
-  if (!filePath.startsWith(path.resolve(root) + path.sep) && filePath !== path.resolve(root)) {
-    res.writeHead(403);
-    res.end('Forbidden');
-    return;
-  }
-  
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeTypes = {
-    '.html': 'text/html',
-    '.js': 'text/javascript',
-    '.css': 'text/css',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
-    '.webp': 'image/webp'
-  };
-  
-  const contentType = mimeTypes[ext] || 'application/octet-stream';
-  
-  fs.readFile(filePath, (err, content) => {
+// Static file serving
+app.use(express.static(process.cwd(), {
+  extensions: ['html'],
+  index: 'index.html'
+}));
+
+// SPA fallback for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'index.html'), (err) => {
     if (err) {
-      if (err.code === 'ENOENT') {
-        // Try serving index.html for SPA routing
-        fs.readFile(path.join(process.cwd(), 'index.html'), (indexErr, indexContent) => {
-          if (indexErr) {
-            res.writeHead(404);
-            res.end('404 Not Found');
-          } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(indexContent, 'utf-8');
-          }
-        });
-      } else if (err.code === 'EISDIR') {
-        // If it's a directory, try to serve index.html from that directory
-        const directoryIndex = path.join(filePath, 'index.html');
-        fs.readFile(directoryIndex, (dirErr, dirContent) => {
-          if (dirErr) {
-            // Fall back to SPA routing with root index.html
-            fs.readFile(path.join(process.cwd(), 'index.html'), (spaErr, spaContent) => {
-              if (spaErr) {
-                res.writeHead(404);
-                res.end('404 Not Found');
-              } else {
-                res.writeHead(200, { 'Content-Type': 'text/html' });
-                res.end(spaContent, 'utf-8');
-              }
-            });
-          } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(dirContent, 'utf-8');
-          }
-        });
-      } else {
-        res.writeHead(500);
-        res.end('Server Error');
-      }
-    } else {
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content, 'utf-8');
+      res.status(404).send('Not Found');
     }
   });
 });
 
-const port = process.env.PORT || 3000;
-server.listen(port, '0.0.0.0', () => {
-  console.log(`Telemed frontend server running on port ${port}`);
+const port = process.env.PORT || 5000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🩺 TeleMed server running on port ${port}`);
+  console.log(`📊 MedicalDesk feature: ${FEAT_MD ? 'ENABLED' : 'DISABLED'}`);
+  if (FEAT_MD && MD_BASE) {
+    console.log(`🔗 MedicalDesk proxy: ${MD_BASE}`);
+  }
 });
