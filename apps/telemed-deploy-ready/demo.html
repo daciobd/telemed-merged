@@ -35,6 +35,7 @@
     .card.success a:hover{text-decoration:underline}
     .card.success code{background:#e0f2fe;color:#0369a1;padding:2px 4px;border-radius:4px}
   </style>
+  <link rel="stylesheet" href="/assets/css/base.css">
 </head>
 <body>
   <header class="hero">
@@ -787,6 +788,25 @@
     </script>
     <!-- ========= [TELEMED] Fim do Card ========= -->
 
+  </script>
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <span class="dark-icon">🌙</span>
+    <span class="light-icon">☀️</span>
+  </button>
+
+  <script>
+    // Theme toggle script
+    (function() {
+      const savedTheme = localStorage.getItem('telemed-theme') || 'dark';
+      if (savedTheme === 'light') document.documentElement.classList.add('light-mode');
+      
+      document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+        const isLight = document.documentElement.classList.toggle('light-mode');
+        localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+      });
+    })();
   </script>
 </body>
 </html>

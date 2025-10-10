@@ -56,6 +56,7 @@
     .back-link a{color:#93c5fd; text-decoration:none; font-weight:600}
     .back-link a:hover{text-decoration:underline}
   </style>
+  <link rel="stylesheet" href="/assets/css/base.css">
 </head>
 <body>
   <div class="container">
@@ -119,5 +120,24 @@
       <a href="/example-integration.html" data-testid="link-hub">← Voltar ao Hub</a>
     </div>
   </div>
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <span class="dark-icon">🌙</span>
+    <span class="light-icon">☀️</span>
+  </button>
+
+  <script>
+    // Theme toggle script
+    (function() {
+      const savedTheme = localStorage.getItem('telemed-theme') || 'dark';
+      if (savedTheme === 'light') document.documentElement.classList.add('light-mode');
+      
+      document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+        const isLight = document.documentElement.classList.toggle('light-mode');
+        localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+      });
+    })();
+  </script>
 </body>
 </html>

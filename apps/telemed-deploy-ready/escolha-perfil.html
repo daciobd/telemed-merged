@@ -135,6 +135,7 @@
     .ghost-link { pointer-events: auto; color: var(--muted); text-decoration: none; border: 1px solid color-mix(in oklab, var(--muted), black 40%); padding: 8px 12px; border-radius: 12px; backdrop-filter: blur(6px); background: rgba(15,23,48,.4); }
     .ghost-link:focus { outline: none; box-shadow: 0 0 0 6px var(--ring); }
   </style>
+  <link rel="stylesheet" href="/assets/css/base.css">
 </head>
 <body>
   <!-- Barra superior opcional: voltar à Landing bonita -->
@@ -177,6 +178,12 @@
     <p class="disclaimer">Dica: esta página não exibe links técnicos (Hub, Logs, Integrações) para evitar confusão durante os testes.</p>
   </main>
 
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <span class="dark-icon">🌙</span>
+    <span class="light-icon">☀️</span>
+  </button>
+
   <!-- Script pequeno para "+ acessibilidade" via teclado (focus ring melhorado em mouse/teclado) -->
   <script>
     (function() {
@@ -188,6 +195,17 @@
       }
       window.addEventListener('mousedown', function(){ usingMouse = true; setOutline(); });
       window.addEventListener('keydown', function(e){ if (e.key === 'Tab') { usingMouse = false; setOutline(); } });
+    })();
+
+    // Theme toggle script
+    (function() {
+      const savedTheme = localStorage.getItem('telemed-theme') || 'dark';
+      if (savedTheme === 'light') document.documentElement.classList.add('light-mode');
+      
+      document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+        const isLight = document.documentElement.classList.toggle('light-mode');
+        localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+      });
     })();
   </script>
 </body>
