@@ -10,7 +10,7 @@
     .subtitle{color:var(--muted);margin-bottom:16px}
     form{display:grid;gap:12px;max-width:680px}
     label{font-weight:600;display:block;margin-bottom:4px}
-    input,textarea,select{width:100%;padding:10px;border:1px solid rgba(0,0,0,.12);border-radius:8px}
+    input,textarea,select{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:16px}
     .muted{color:var(--muted)}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -21,6 +21,10 @@
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <h1>🧾 Gerar Receita (demo)</h1>
     <div class="subtitle">Preencha os campos para simular a geração de uma receita médica. Nenhum dado real é armazenado.</div>
@@ -178,6 +182,20 @@
       ].join(' | ');
       location.href = '/dr-ai.html?ctx=prescricao&q='+encodeURIComponent(pergunta);
     });
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
   </script>
 </body>
 </html>

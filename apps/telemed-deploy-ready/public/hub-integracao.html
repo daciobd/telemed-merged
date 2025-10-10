@@ -8,18 +8,22 @@
   <style>
     .container{max-width:920px;margin:36px auto;padding:16px}
     .subtitle{color:var(--muted);margin-bottom:16px}
-    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:24px;margin:16px 0}
-    .warning-box{background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:16px;margin:16px 0}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;margin:16px 0}
+    .warning-box{background:var(--panel);border:1px solid var(--warn);border-radius:12px;padding:16px;margin:16px 0}
     .code-box{background:#1e293b;color:#e2e8f0;padding:16px;border-radius:8px;font-family:monospace;font-size:13px;overflow-x:auto}
     .muted{color:var(--muted)}
     pre{margin:0;white-space:pre-wrap}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
-    .api-card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:16px}
+    .api-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
     .api-card h3{margin:0 0 8px;font-size:16px}
     .api-card p{margin:0;font-size:14px;color:var(--muted)}
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <h1>🔌 Hub de Integração (desenvolvedor)</h1>
     <div class="subtitle">Visão técnica das APIs e integrações do TeleMed</div>
@@ -90,6 +94,20 @@
 
   <script>
     try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/hub-integracao.html'}});}catch(e){}
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
   </script>
 </body>
 </html>

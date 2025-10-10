@@ -10,21 +10,25 @@
     .subtitle{color:var(--muted);margin-bottom:16px}
     .muted{color:var(--muted)}
     .stack>*{margin:10px 0}
-    textarea{width:100%;min-height:140px;padding:12px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-family:monospace;font-size:13px}
+    textarea{width:100%;min-height:140px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:monospace;font-size:13px}
     table{width:100%;border-collapse:collapse;margin-top:12px}
     th,td{padding:10px 8px;border-bottom:1px solid rgba(0,0,0,.08);text-align:left}
-    th{background:#f8fafc;font-weight:600}
+    th{background:var(--input);font-weight:600}
     .flag-ok{color:#1a7f37;font-weight:600}
     .flag-alt{color:#b42318;font-weight:700}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-    .chip{background:#eef2ff;border:1px solid rgba(37,99,235,.15);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:500}
+    .chip{background:var(--panel);border:1px solid var(--primary);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:500}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
-    canvas{width:100%;max-width:720px;height:200px;border:1px solid rgba(0,0,0,.08);border-radius:10px;margin-top:12px}
-    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:16px;margin-top:16px}
-    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:12px;margin:12px 0}
+    canvas{width:100%;max-width:720px;height:200px;border:1px solid var(--border);border-radius:10px;margin-top:12px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:16px}
+    .info-box{background:var(--panel);border:1px solid var(--primary);border-radius:12px;padding:12px;margin:12px 0}
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container stack">
     <h1>📊 Análise de Exames (demo)</h1>
     <div class="subtitle">Cole um CSV simples e gere rapidamente uma tabela com <strong>flags automáticos</strong> e um gráfico de tendência da <em>Glicemia</em>. Nenhum dado real é armazenado.</div>
@@ -207,6 +211,20 @@
         ctx.fill();
         ctx.fillText(`${d.valor}`, x+6, y-6);
       });
+    }
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
     }
   </script>
 </body>

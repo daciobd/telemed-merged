@@ -11,22 +11,26 @@
     .muted{color:var(--muted)}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
-    fieldset{border:1px solid rgba(0,0,0,.08);background:#f8fafc;border-radius:12px;padding:16px}
+    fieldset{border:1px solid var(--border);background:var(--input);border-radius:12px;padding:16px}
     legend{font-weight:700;color:#1e293b;padding:0 8px}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
     .feed{display:grid;gap:12px;min-height:200px}
-    .alert{border-radius:12px;padding:14px;border:1px solid rgba(0,0,0,.08);background:#fff}
-    .sev-info{border-left:6px solid #2563eb;background:#eff6ff}
-    .sev-attn{border-left:6px solid #d97706;background:#fff8ed}
-    .sev-emer{border-left:6px solid #b91c1c;background:#fff1f2}
+    .alert{border-radius:12px;padding:14px;border:1px solid var(--border);background:#fff}
+    .sev-info{border-left:6px solid #2563eb;background:var(--panel)}
+    .sev-attn{border-left:6px solid #d97706;background:var(--panel)}
+    .sev-emer{border-left:6px solid #b91c1c;background:var(--panel)}
     .meta{font-size:12px;color:var(--muted);margin:4px 0}
-    .tag{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:999px;padding:2px 10px;font-size:11px;margin-left:6px;font-weight:600}
+    .tag{background:var(--panel);border:1px solid var(--primary);border-radius:999px;padding:2px 10px;font-size:11px;margin-left:6px;font-weight:600}
     .btn-link{background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;padding:4px 0}
-    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:12px;margin-bottom:16px}
+    .info-box{background:var(--panel);border:1px solid var(--primary);border-radius:12px;padding:12px;margin-bottom:16px}
     label{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0}
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <h1>🔔 Simulador de Alertas (demo)</h1>
     <div class="subtitle">Dispare situações clínicas comuns e veja o feed de alertas com <strong>severidade</strong>, <strong>ações sugeridas</strong> e integração com o Dr. AI.</div>
@@ -225,6 +229,20 @@
         const el = document.getElementById(id); if(el) el.checked = on;
       });
     })();
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
   </script>
 </body>
 </html>

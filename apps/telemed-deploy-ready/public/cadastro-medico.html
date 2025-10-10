@@ -12,7 +12,7 @@
     .info-box{background:var(--panel);border:1px solid var(--primary);border-radius:12px;padding:16px;margin:16px 0}
     .form-group{margin-bottom:16px}
     label{display:block;font-weight:600;margin-bottom:6px}
-    input,select,textarea{width:100%;padding:10px;border:1px solid rgba(0,0,0,.12);border-radius:8px}
+    input,select,textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:720px){.row{grid-template-columns:1fr}}
     .actions,.actions-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
@@ -20,6 +20,10 @@
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <h1>👨‍⚕️ Cadastro do Médico (demo)</h1>
     <div class="subtitle">Complete seu perfil profissional para começar a atender</div>
@@ -98,5 +102,19 @@
 
   <!-- Script robusto e blindado -->
   <script src="/assets/js/cadastro-medico.js" defer></script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
+  </script>
 </body>
 </html>

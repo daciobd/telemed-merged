@@ -7,15 +7,19 @@
   <link rel="stylesheet" href="/assets/css/base.css" />
   <style>
     .container{max-width:860px;margin:48px auto;padding:16px}
-    .card{background:#f3f7fb;border:1px solid rgba(0,0,0,.06);border-radius:16px;padding:32px;text-align:center}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center}
     .icon{font-size:64px;margin-bottom:16px}
     h1{margin:0 0 12px;font-size:28px;font-weight:800}
     .muted{color:var(--muted);line-height:1.6}
-    .info-box{background:#eef2ff;border:1px solid rgba(37,99,235,.2);border-radius:12px;padding:16px;margin:24px 0;text-align:left}
+    .info-box{background:var(--panel);border:1px solid var(--primary);border-radius:12px;padding:16px;margin:24px 0;text-align:left}
     ul{text-align:left;line-height:1.8}
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <div class="container">
     <div class="card">
       <div class="icon">🩺</div>
@@ -47,6 +51,20 @@
     const pid = urlParams.get('pid');
     if(pid) console.log('📋 MedicalDesk aberto para paciente:', pid);
     try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/medical-desk-demo.html',patient_id:pid}});}catch(e){}
+  </script>
+  <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
   </script>
 </body>
 </html>
