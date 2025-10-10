@@ -28,7 +28,7 @@
       <strong>📋 Demonstração:</strong> Este formulário não armazena dados reais. Use para testar o fluxo.
     </div>
 
-    <form id="form-cadastro-medico" data-form="cadastro-medico" class="card">
+    <form id="cadastro-medico" data-form="cadastro-medico" class="card">
       <div class="row">
         <div class="form-group">
           <label for="nome">Nome completo *</label>
@@ -96,106 +96,7 @@
     <p style="margin-top:16px"><a href="/public/como-funciona-medico.html" class="muted" data-testid="link-back">← Voltar</a></p>
   </div>
 
-  <script defer>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Helper seguro para addEventListener
-      const on = (selOrEl, type, handler, opts) => {
-        const el = typeof selOrEl === 'string' ? document.querySelector(selOrEl) : selOrEl;
-        if (!el) { 
-          console.warn('Elemento não encontrado:', selOrEl); 
-          return; 
-        }
-        el.addEventListener(type, handler, opts);
-      };
-
-      const byId = (id) => document.getElementById(id);
-
-      // Telemetria page view
-      try {
-        window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/cadastro-medico.html'}});
-      } catch(e) {}
-
-      // Encontrar form com múltiplos seletores (fallback)
-      const form = 
-        byId('form-cadastro-medico') ||
-        document.querySelector('form[data-form="cadastro-medico"]') ||
-        document.querySelector('main form') ||
-        document.querySelector('form');
-
-      // Form submit usando helper on()
-      on(form, 'submit', (e) => {
-        e.preventDefault();
-        alert('✅ Cadastro simulado com sucesso! Redirecionando para o Demo do Médico...');
-        setTimeout(() => {
-          location.href = '/public/medico-demo.html';
-        }, 1000);
-      });
-
-      // Telemetria CTAs usando helper on()
-      document.querySelectorAll('[data-cta]').forEach(el => {
-        on(el, 'click', () => {
-          try {
-            window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}});
-          } catch(e) {}
-        });
-      });
-
-      // Encontrar container de ações com múltiplos seletores
-      let actions =
-        document.querySelector('[data-actions]') ||
-        byId('actions') ||
-        document.querySelector('.actions-row') ||
-        document.querySelector('.form-actions');
-
-      // Fallback: buscar submit e pegar o parent
-      if (!actions && form) {
-        const submit = form.querySelector('button[type="submit"], [type="submit"].btn');
-        actions = submit?.closest('div, section, footer, fieldset') || null;
-      }
-
-      // Último fallback: criar container
-      if (!actions && form) {
-        actions = document.createElement('div');
-        actions.id = 'actions';
-        actions.className = 'actions-row';
-        form.appendChild(actions);
-      }
-
-      // Função para garantir que botão existe (sem duplicação)
-      const ensure = (id, html) => {
-        if (!actions) return;
-        if (!byId(id)) {
-          actions.insertAdjacentHTML('beforeend', html);
-        }
-      };
-
-      // Garante botões principais
-      ensure('btn-demo-medico',
-        `<a id="btn-demo-medico" class="btn" href="/public/medico-demo.html" data-cta="med_cad_ir_demo" data-testid="button-ir-demo">Ir para Demo Médico</a>`);
-      ensure('btn-ja-tenho-cadastro',
-        `<a id="btn-ja-tenho-cadastro" class="btn btn-secondary" href="/public/medico-login.html" data-cta="med_cad_login" data-testid="button-ja-cadastro">Já tenho cadastro</a>`);
-
-      // Move/esconde o "Hub" para Opções avançadas
-      const hubLink = [...document.querySelectorAll('a')]
-        .find(a => /hub/i.test(a.textContent||''));
-      if (hubLink) {
-        let det = byId('opcoes-avancadas');
-        if (!det) {
-          det = document.createElement('details');
-          det.id = 'opcoes-avancadas';
-          const sum = document.createElement('summary');
-          sum.textContent = 'Opções avançadas (para equipes técnicas)';
-          sum.className = 'muted';
-          det.appendChild(sum);
-          if (actions?.parentNode) {
-            actions.parentNode.insertBefore(det, actions.nextSibling);
-          }
-        }
-        const p = document.createElement('p');
-        p.appendChild(hubLink);
-        det.appendChild(p);
-      }
-    });
-  </script>
+  <!-- Script robusto e blindado -->
+  <script src="/assets/js/cadastro-medico.js" defer></script>
 </body>
 </html>

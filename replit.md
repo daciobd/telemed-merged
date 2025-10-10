@@ -154,11 +154,17 @@ attachEvents() {
 
 **Arquivos Corrigidos:**
 1. `js/consent-banner.js` (linhas 180-182) - Adicionadas proteções if()
-2. `public/cadastro-medico.html`:
-   - Linha 34: Form com IDs e data-attributes corretos
-   - Linha 91: Container actions com ID e data-attribute
-   - Linhas 104-112: Helper on() seguro para addEventListener
-   - Linhas 129, 139: Substituídas todas as chamadas diretas por on()
+2. **`assets/js/cadastro-medico.js`** (NOVO - arquivo externo robusto):
+   - IIFE blindado com flag anti-duplicação
+   - Helper `on()` seguro para todos os addEventListener
+   - Auto-criação de elementos faltantes (container, botões)
+   - Idempotente e à prova de falhas
+   - Escopo limitado para evitar conflitos
+3. `public/cadastro-medico.html`:
+   - Linha 34: Form com `id="cadastro-medico"` (simplificado)
+   - Linha 91: Container actions com `id="actions" data-actions`
+   - Linha 103: Include script externo `<script src="/assets/js/cadastro-medico.js" defer></script>`
+   - **Script inline removido** (substituído por arquivo externo)
 
 **Validação E2E:**
 - ✅ Zero erros JavaScript no console
