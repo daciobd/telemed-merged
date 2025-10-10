@@ -10,6 +10,10 @@
 </style>
 </head>
 <body>
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+  <span class="dark-icon">☀️</span>
+  <span class="light-icon">🌙</span>
+</button>
 <div class="container stack">
   <h1><span class="logo">👨‍⚕️</span> Login do Médico (demo)</h1>
   
@@ -36,6 +40,19 @@
   <p><a class="muted" href="/public/como-funciona-medico.html" data-testid="link-back">← Voltar</a></p>
 </div>
 <script>
+  // Theme Toggle
+  function toggleTheme() {
+    document.documentElement.classList.toggle('light-mode');
+    const isLight = document.documentElement.classList.contains('light-mode');
+    localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+  }
+  
+  // Load saved theme
+  const savedTheme = localStorage.getItem('telemed-theme');
+  if (savedTheme === 'light') {
+    document.documentElement.classList.add('light-mode');
+  }
+  
   window.__BUILD='pilot-r1';
   try{window.Telemetry?.event?.({event_name:'page_view',meta:{page:'/public/medico-login.html'}});}catch(e){}
   document.getElementById('btnEntrar').addEventListener('click',()=>{

@@ -21,6 +21,27 @@
   --info: #3b82f6;
 }
 
+/* Light Mode - Tema Claro Profissional */
+:root.light-mode {
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --muted: #64748b;
+  --text: #0f172a;
+  --primary: #0ea5e9;
+  --primary-2: #0284c7;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --input: #f8fafc;
+  --border: #cbd5e1;
+  --radius: 14px;
+  
+  /* Cores adicionais */
+  --secondary: #6366f1;
+  --accent: #10b981;
+  --info: #3b82f6;
+}
+
 /* Reset e Base */
 * {
   box-sizing: border-box;
@@ -58,6 +79,12 @@ body {
   border-radius: var(--radius);
   padding: 28px 26px 22px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Light mode: sombras mais suaves */
+:root.light-mode .card,
+:root.light-mode main.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 /* Typography */
@@ -312,6 +339,62 @@ a.muted:hover {
 .mb-1 { margin-bottom: 8px; }
 .mb-2 { margin-bottom: 16px; }
 .mb-3 { margin-bottom: 24px; }
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-toggle .dark-icon {
+  display: none;
+}
+
+.theme-toggle .light-icon {
+  display: block;
+}
+
+:root.light-mode .theme-toggle .dark-icon {
+  display: block;
+}
+
+:root.light-mode .theme-toggle .light-icon {
+  display: none;
+}
+
+/* Light mode: info-box mais claro */
+:root.light-mode .info-box {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+/* Light mode: badge mais claro */
+:root.light-mode .badge {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
 
 /* Responsivo */
 @media (max-width: 720px) {

@@ -13,6 +13,10 @@
   </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
+    <span class="dark-icon">☀️</span>
+    <span class="light-icon">🌙</span>
+  </button>
   <main class="card" style="max-width:920px;margin:36px auto">
     <h1><span class="logo">🩺</span> Módulo de Triagem (demo)</h1>
     <div class="subtitle">Classificação inicial com sinais de alerta e direcionamento de especialidade.</div>
@@ -30,6 +34,19 @@
     <p style="margin-top:12px"><a href="/public/kit-modular.html" class="muted" data-testid="link-back">← Voltar para o Kit Modular</a></p>
   </main>
   <script>
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('light-mode');
+      const isLight = document.documentElement.classList.contains('light-mode');
+      localStorage.setItem('telemed-theme', isLight ? 'light' : 'dark');
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('telemed-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
+    
     window.__BUILD='pilot-r1';
     try{ window.Telemetry?.event?.({event_name:'page_view', meta:{page:'/public/mod-triagem.html'}});}catch(e){}
     document.querySelectorAll('[data-cta]').forEach(el=>el.addEventListener('click',()=>{try{window.Telemetry?.event?.({event_name:'cta_click',meta:{name:el.dataset.cta}})}catch(e){}}));
