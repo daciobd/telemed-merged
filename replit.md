@@ -88,19 +88,25 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
    - Persiste entre reloads e navegação
    - Tema dark é padrão
 
-5. **13+ Páginas Corrigidas:**
+5. **18+ Páginas Corrigidas:**
    - ✅ `/index.html` (homepage)
    - ✅ `/public/medico-login.html`
    - ✅ `/public/medico-demo.html`
    - ✅ `/public/mod-triagem.html`
    - ✅ `/public/mod-prescricao.html`
    - ✅ `/public/cadastro-medico.html`
+   - ✅ `/escolha-perfil.html` ⭐ NOVO
+   - ✅ `/demo-medico.html` ⭐ NOVO
+   - ✅ `/medico/como-funciona.html` ⭐ NOVO
+   - ✅ `/cadastro-medico.html` (raiz) ⭐ NOVO
+   - ✅ `/demo.html` ⭐ NOVO
    - ✅ Todas as outras páginas `/public/*.html`
 
-**Validação:**
+**Validação Final (Oct 10, 2025):**
 - ✅ Architect Review: "Production-ready, satisfies all acceptance criteria"
 - ✅ Zero cores fixas - 100% variáveis CSS
-- ✅ Toggle funciona perfeitamente em todas as páginas
+- ✅ Toggle funciona em TODAS as páginas (18+)
+- ✅ Teste E2E passou nas 5 páginas novas
 - ✅ Tema persiste após reload e navegação
 - ✅ UI profissional consistente dark/light
 
