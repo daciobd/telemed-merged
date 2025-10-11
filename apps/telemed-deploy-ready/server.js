@@ -197,4 +197,8 @@ app.listen(port, '0.0.0.0', () => {
   if (FEAT_MD && MD_BASE) {
     console.log(`🔗 MedicalDesk proxy: ${MD_BASE}`);
   }
+  console.log(`💰 Pricing/Auction feature: ${FEATURE_PRICING ? 'ENABLED' : 'DISABLED'}`);
+  if (FEATURE_PRICING) {
+    console.log(`🔗 Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}`);
+  }
 });
