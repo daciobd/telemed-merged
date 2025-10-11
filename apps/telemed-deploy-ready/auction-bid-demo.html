@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Telemed · Demo de Bids (Conservador)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    .badge { display:inline-block; padding:.25rem .5rem; border-radius:.5rem; font-size:.75rem; }
+    .badge-now { background:#e6ffed; color:#057647; border:1px solid #b7f7c8; }
+    .badge-today { background:#eef6ff; color:#1554ad; border:1px solid #cfe3ff; }
+    .badge-tomorrow { background:#fff7e6; color:#8a5c00; border:1px solid #ffe1a3; }
+    .muted { color:#6b7280; }
+    .mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; }
+  </style>
+</head>
+<body>
+  <!-- Flags globais -->
+  <script src="/config.js"></script>
+
+  <main class="container">
+    <header style="margin: 2rem 0 1rem">
+      <h2>Demo · Leilão (Modelo Conservador)</h2>
+      <p class="muted">Esta página chama <span class="mono">/api/auction/*</span> via proxy do Telemed.</p>
+      <small class="muted">Feature flag: <span id="ff-flag">—</span> · Target: <span id="ff-target">—</span></small>
+    </header>
+
+    <article data-feature="pricing">
+      <h4>1) Defina sua proposta</h4>
+      <div role="group">
+        <input type="range" id="bidRange" min="100" max="300" step="10" value="140" style="width: 60%">
+        <strong id="bidValue">R$ 140,00</strong>
+      </div>
+      <nav>
+        <button id="btnBuscar" data-testid="button-buscar">Buscar médicos</button>
+        <button id="btnAumentar" class="secondary" data-testid="button-aumentar">Aumentar + R$ 20 e buscar</button>
+      </nav>
+
+      <details id="debugBox">
+        <summary>Debug</summary>
+        <pre id="debug" class="mono muted" style="white-space:pre-wrap"></pre>
+      </details>
+
+      <hr />
+
+      <section id="resultado" hidden>
+        <h5>Resultado</h5>
+        <p id="msg"></p>
+        <div id="listaMedicos" class="grid" style="grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:1rem"></div>
+      </section>
+    </article>
+
+    <article id="off-msg" hidden>
+      <h4>Módulo de preços desativado</h4>
+      <p class="muted">O recurso está desligado por configuração (<code>FEATURE_PRICING=false</code>).</p>
+    </article>
+  </main>
+
+  <!-- Cliente de API (coloque este arquivo no caminho indicado abaixo) -->
+  <script type="module">
+    // Cliente inline minimalista (pode trocar por /src/services/pricing-client.js se preferir bundler)
+    const API = '/api/auction';
+    const authHeaders = () => ({ 'Authorization': 'Bearer ' + (localStorage.getItem('tm_auth_token') || '') });
+
+    const PricingClient = {
+      health: () => fetch(`${API}/health`).then(r => r.json()),
+      createBid: (patientId, specialty, amountCents, mode='immediate') =>
+        fetch(`${API}/bids`, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', ...authHeaders() },
+          body: JSON.stringify({ patientId, specialty, amountCents, mode })
+        }).then(r=>r.json()),
+      searchDoctors: (id) =>
+        fetch(`${API}/bids/${id}/search`, { method:'POST', headers: authHeaders() }).then(r=>r.json()),
+      increaseBid: (id, new_value) =>
+        fetch(`${API}/bids/${id}/increase`, {
+          method:'PUT',
+          headers:{ 'Content-Type':'application/json', ...authHeaders() },
+          body: JSON.stringify({ new_value })
+        }).then(r=>r.json()),
+      acceptDoctor: (id, doctorId) =>
+        fetch(`${API}/bids/${id}/accept`, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', ...authHeaders() },
+          body: JSON.stringify({ doctorId })
+        }).then(r=>r.json()),
+    };
+
+    // ---- UI wiring ----
+    const elFlag = document.querySelector('#ff-flag');
+    const elTarget = document.querySelector('#ff-target');
+    const elOff = document.querySelector('#off-msg');
+    const elCard = document.querySelector('[data-feature="pricing"]');
+    const range = document.querySelector('#bidRange');
+    const valueLabel = document.querySelector('#bidValue');
+    const btnBuscar = document.querySelector('#btnBuscar');
+    const btnAumentar = document.querySelector('#btnAumentar');
+    const box = document.querySelector('#resultado');
+    const msg = document.querySelector('#msg');
+    const grid = document.querySelector('#listaMedicos');
+    const dbg = document.querySelector('#debug');
+
+    const patientId = window.__DEMO_PATIENT_ID__ || 'patient-demo-001';
+    let currentBid = null;
+    const fmt = v => v.toLocaleString('pt-BR',{ style:'currency', currency:'BRL' });
+
+    function log(o){ dbg.textContent = (dbg.textContent + '\n' + JSON.stringify(o,null,2)).trim(); }
+
+    function setBidLabel() {
+      valueLabel.textContent = `R$ ${Number(range.value).toFixed(2)}`;
+    }
+    setBidLabel();
+    range.addEventListener('input', setBidLabel);
+
+    // Feature flag info
+    const FEAT = (window.TELEMED_CFG && window.TELEMED_CFG.FEATURE_PRICING) ?? true;
+    elFlag.textContent = FEAT ? 'ON' : 'OFF';
+    elTarget.textContent = (window.TELEMED_CFG && window.TELEMED_CFG.AUCTION_URL) || '/api/auction';
+    if (!FEAT) {
+      elCard.hidden = true;
+      elOff.hidden = false; // mostra mensagem de desativado
+    }
+
+    async function buscar() {
+      box.hidden = true; grid.innerHTML = ''; msg.textContent = '';
+      const amountCents = Math.round(Number(range.value) * 100);
+
+      // 1) cria bid
+      const created = await PricingClient.createBid(patientId, 'cardiology', amountCents, 'immediate');
+      log({ step:'createBid', created });
+      if (created?.error) { msg.textContent = 'Erro: ' + created.error; box.hidden = false; return; }
+      currentBid = created;
+
+      // 2) busca médicos
+      const found = await PricingClient.searchDoctors(created.id);
+      log({ step:'searchDoctors', found });
+
+      const docs = Array.isArray(found?.doctors) ? found.doctors : [];
+      if (!docs.length) {
+        msg.textContent = 'Nenhum médico disponível neste valor no momento. Tente aumentar a proposta.';
+        box.hidden = false;
+        return;
+      }
+      msg.textContent = 'Médicos encontrados:';
+      docs.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const badgeClass =
+          d.availability === 'now' ? 'badge-now' :
+          d.availability === 'today' ? 'badge-today' : 'badge-tomorrow';
+
+        card.innerHTML = `
+          <header>
+            <strong>${d.name}</strong><br/>
+            <small class="muted">${(d.specialty||'').toUpperCase()} · CRM ${d.crm} · ${d.uf}</small>
+          </header>
+          <p>
+            <span class="badge ${badgeClass}">
+              ${d.availability === 'now' ? '⚡ Imediato' : d.availability === 'today' ? 'Hoje' : 'Amanhã'}
+            </span>
+          </p>
+          <footer>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <strong>${fmt((d.priceCents||0)/100)}</strong>
+              <button data-doc="${d.id}" data-testid="button-aceitar-${d.id}">Aceitar</button>
+            </div>
+          </footer>
+        `;
+        grid.appendChild(card);
+        card.querySelector('button')?.addEventListener('click', async () => {
+          const res = await PricingClient.acceptDoctor(currentBid.id, d.id);
+          log({ step:'acceptDoctor', res });
+          if (res?.error) return alert('Erro: ' + res.error);
+          alert('✅ Consulta criada! (demo)\nID: ' + res.id + '\nMédico: ' + res.physicianId);
+        });
+      });
+
+      box.hidden = false;
+    }
+
+    async function aumentarEBuscar() {
+      const novo = Math.round((Number(range.value) + 20) * 100);
+      if (!currentBid?.id) {
+        range.value = String(Number(range.value) + 20);
+        setBidLabel();
+        return buscar();
+      }
+      const inc = await PricingClient.increaseBid(currentBid.id, novo);
+      log({ step:'increaseBid', inc });
+      if (inc?.error) return alert('Erro: ' + inc.error);
+      range.value = String(Math.round(novo / 100));
+      setBidLabel();
+      const found = await PricingClient.searchDoctors(currentBid.id);
+      log({ step:'searchDoctors', found });
+      // reaproveita render:
+      box.hidden = true; grid.innerHTML=''; msg.textContent='';
+      const docs = Array.isArray(found?.doctors) ? found.doctors : [];
+      if (!docs.length) {
+        msg.textContent = 'Ainda sem médicos neste valor. Ajuste novamente ou tente mais tarde.';
+        box.hidden = false; return;
+      }
+      msg.textContent = 'Médicos encontrados:';
+      docs.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const badgeClass =
+          d.availability === 'now' ? 'badge-now' :
+          d.availability === 'today' ? 'badge-today' : 'badge-tomorrow';
+        card.innerHTML = `
+          <header><strong>${d.name}</strong><br/><small class="muted">${(d.specialty||'').toUpperCase()} · CRM ${d.crm} · ${d.uf}</small></header>
+          <p><span class="badge ${badgeClass}">${d.availability==='now'?'⚡ Imediato': d.availability==='today'?'Hoje':'Amanhã'}</span></p>
+          <footer><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <strong>${fmt((d.priceCents||0)/100)}</strong>
+            <button data-doc="${d.id}" data-testid="button-aceitar-${d.id}">Aceitar</button>
+          </div></footer>`;
+        grid.appendChild(card);
+        card.querySelector('button')?.addEventListener('click', async () => {
+          const res = await PricingClient.acceptDoctor(currentBid.id, d.id);
+          log({ step:'acceptDoctor', res });
+          if (res?.error) return alert('Erro: ' + res.error);
+          alert('✅ Consulta criada! (demo)\nID: ' + res.id + '\nMédico: ' + res.physicianId);
+        });
+      });
+      box.hidden = false;
+    }
+
+    btnBuscar.addEventListener('click', buscar);
+    btnAumentar.addEventListener('click', aumentarEBuscar);
+
+    // Mostra config atual no debug
+    log({ cfg: window.TELEMED_CFG });
+  </script>
+</body>
+</html>
