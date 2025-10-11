@@ -14,6 +14,10 @@ const FEAT_MD = String(process.env.FEATURE_MEDICALDESK || 'false').toLowerCase()
 const MD_BASE = process.env.MEDICALDESK_URL || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'telemed-dev-secret-2025';
 
+// Environment variables for Pricing/Auction
+const FEATURE_PRICING = String(process.env.FEATURE_PRICING ?? 'true') === 'true';
+const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5000';
+
 // Health check endpoint for Render observability
 app.get(['/api/health', '/healthz'], (req, res) => {
   res.json({ 
@@ -145,6 +149,40 @@ app.all('/api/ai/ask', demoAiHandler);
 
 // Health check opcional para Dr. AI
 app.get('/api/ai/health', (_, res) => res.json({ ok: true, service: 'dr-ai-demo' }));
+
+// ==== Feature Flags Endpoint ====
+app.get('/config.js', (req, res) => {
+  res.type('application/javascript').send(
+    `window.TELEMED_CFG = {
+      FEATURE_PRICING: ${FEATURE_PRICING},
+      AUCTION_URL: '/api/auction'
+    };`
+  );
+});
+
+// ==== Auction/Pricing Proxy ====
+if (FEATURE_PRICING) {
+  app.use('/api/auction', createProxyMiddleware({
+    target: AUCTION_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: { '^/api/auction': '' },
+    proxyTimeout: 15000,
+    timeout: 20000,
+    onProxyReq: (proxyReq) => {
+      proxyReq.setHeader('X-From-TeleMed', 'true');
+    },
+    onError: (err, req, res) => {
+      console.error('[Auction Proxy Error]', err.message);
+      if (!res.headersSent) {
+        res.status(502).json({ error: 'auction_service_unavailable' });
+      }
+    }
+  }));
+} else {
+  app.all('/api/auction/*', (req, res) => {
+    res.status(503).json({ error: 'pricing_feature_disabled' });
+  });
+}
 
 // Static file serving
 app.use(express.static(process.cwd(), {
