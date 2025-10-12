@@ -26,20 +26,28 @@ app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credential
 
 // Security headers middleware
 app.use((req, res, next) => {
-  // CSP para API
-  res.setHeader('Content-Security-Policy', "default-src 'none'");
-  // HSTS
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  // Prevent MIME sniffing
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  // Prevent clickjacking
-  res.setHeader('X-Frame-Options', 'DENY');
-  // Referrer policy
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  // Remove server signature
-  res.removeHeader('X-Powered-By');
-  // No cache for API responses
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  // Não aplicar headers restritivos para arquivos estáticos (CSS, JS, imagens)
+  const isStaticFile = /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/i.test(req.path);
+  
+  if (!isStaticFile) {
+    // CSP permissivo para HTML (permite CSS/JS inline e do mesmo origin)
+    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; img-src 'self' data: https:;");
+    // HSTS
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // Prevent MIME sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Prevent clickjacking (SAMEORIGIN permite iframes do mesmo domínio)
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // Referrer policy
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Remove server signature
+    res.removeHeader('X-Powered-By');
+    // No cache para HTML/API
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  } else {
+    // Cache agressivo para arquivos estáticos (1 ano)
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
   next();
 });
 
@@ -52,7 +60,8 @@ app.use((req, res, next) => {
 });
 
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 3000;
+// Força porta 5000 conforme configuração do .replit (waitForPort = 5000)
+const PORT = 5000;
 
 // Health check endpoints para observabilidade (PÚBLICO - sem auth)
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
@@ -363,21 +372,28 @@ app.post('/_diag/auction/bids', async (req, res) => {
 });
 
 // ===== SERVE FRONTEND ESTÁTICO =====
-// Serve arquivos estáticos do build do telemed-deploy-ready
-const frontendPath = path.join(__dirname, '../../telemed-deploy-ready');
-app.use(express.static(frontendPath));
+// IMPORTANTE: express.static DEVE vir ANTES do SPA Fallback!
+const frontendPathHere = path.join(__dirname, '../../telemed-deploy-ready');
 
-console.log(`📁 Frontend estático: ${frontendPath}`);
+// attached_assets -> /assets (imagens anexadas pelo usuário)
+app.use('/assets', express.static(path.join(__dirname, '../../../attached_assets')));
+
+// Frontend build (telemed-deploy-ready) - CSS, JS, HTML
+app.use(express.static(frontendPathHere));
+
+console.log('📁 Arquivos estáticos configurados:');
+console.log(`   - /assets → attached_assets/`);
+console.log(`   - / → telemed-deploy-ready/`);
 
 // ===== SPA FALLBACK =====
-// Para React Router - retorna index.html para rotas não-API
+// Para React Router - retorna index.html para rotas não-API (DEPOIS do static!)
 app.get('*', (req, res, next) => {
   // Se é uma chamada de API, continua para os handlers
   if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) {
     return next();
   }
-  // Se é uma rota do frontend, retorna index.html
-  res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+  // Se é uma rota do frontend que não foi encontrada nos arquivos estáticos, retorna index.html
+  res.sendFile(path.join(frontendPathHere, 'index.html'), (err) => {
     if (err) {
       console.error('Erro ao servir index.html:', err);
       res.status(404).json({ error: 'not_found' });
@@ -1046,6 +1062,8 @@ const demoAiHandler = (req, res) => {
 
 app.all('/api/ai/answer', demoAiHandler);
 app.all('/api/ai/ask', demoAiHandler);
+
+// Arquivos estáticos configurados acima (antes do SPA fallback)
 
 app.listen(PORT, () => {
   console.log('[telemed] listening on', PORT);
