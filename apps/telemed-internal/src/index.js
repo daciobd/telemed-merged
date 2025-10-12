@@ -4,8 +4,16 @@ import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
+
+// TelemedMerged: Feature flags e configurações
+const FEATURE_PRICING = String(process.env.FEATURE_PRICING ?? 'true') === 'true';
+const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5000/api';
+
+app.set('trust proxy', 1);
 app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
 app.use(express.json());
 
@@ -176,6 +184,46 @@ app.get('/status.json', async (req, res) => {
   }
 });
 
+// ===== TelemedMerged: Feature Flags Endpoint =====
+app.get('/config.js', (_req, res) => {
+  res.type('application/javascript').send(
+    `window.TELEMED_CFG = {
+      FEATURE_PRICING: ${FEATURE_PRICING},
+      AUCTION_URL: '/api/auction'
+    };`
+  );
+});
+
+// ===== TelemedMerged: Auction Proxy =====
+// Rate limiting para o proxy de leilão
+app.use('/api/auction', rateLimit({
+  windowMs: 60_000, // 1 minuto
+  max: 120, // max 120 requests por minuto
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'too_many_requests' }
+}));
+
+// Proxy reverso para o serviço de leilão
+if (FEATURE_PRICING) {
+  app.use('/api/auction', createProxyMiddleware({
+    target: AUCTION_SERVICE_URL,
+    changeOrigin: true,
+    proxyTimeout: 15000,
+    timeout: 20000,
+    onError: (_err, _req, res) => {
+      if (!res.headersSent) {
+        res.status(502).json({ error: 'auction_service_unavailable' });
+      }
+    }
+  }));
+  console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}`);
+} else {
+  app.all('/api/auction/*', (_req, res) => {
+    res.status(503).json({ error: 'pricing_feature_disabled' });
+  });
+  console.log('💰 Pricing/Auction feature: DISABLED');
+}
 
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
