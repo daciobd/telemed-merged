@@ -98,7 +98,39 @@ curl -H "Authorization: Bearer <token>" http://localhost:5001/api/health
 curl -H "Authorization: Bearer <token>" http://localhost:3000/api/auction/health
 ```
 
-## Recent Updates (Oct 11, 2025)
+## Recent Updates
+
+### Oct 12, 2025 - Gateway Health Endpoints & Proxy Melhorias ✅
+
+**Implementado:**
+1. ✅ **Health Detalhado do Gateway** (`GET /health`)
+   - Retorna: service, feature_pricing, auction_target, timestamp
+   - Endpoint público para diagnóstico de configuração
+
+2. ✅ **Health Local do Proxy** (`GET /api/auction/health`)
+   - Diagnóstico local (não consulta BidConnect downstream)
+   - Útil para debug de configuração do gateway
+
+3. ✅ **PathRewrite Automático Melhorado**
+   - Usa regex `/\/api\/?$/` para detectar formato da URL
+   - Se AUCTION_SERVICE_URL termina com `/api` → SEM pathRewrite
+   - Se termina na raiz → COM pathRewrite (remove `/api/auction`)
+
+4. ✅ **Middleware de Feature Flag**
+   - Verifica `FEATURE_PRICING` antes de proxy
+   - Retorna 503 com erro claro se feature desativada
+
+5. ✅ **Documentação Expandida**
+   - `.env.example` com instruções detalhadas sobre pathRewrite
+   - `GATEWAY_HEALTH_ENDPOINTS.md` - Guia completo de health endpoints
+   - Script de teste: `/tmp/test-gateway-health.sh`
+
+**Arquivos Modificados:**
+- `apps/telemed-internal/src/index.js` - Health endpoints + proxy melhorado
+- `apps/telemed-internal/.env.example` - Documentação pathRewrite
+- `GATEWAY_HEALTH_ENDPOINTS.md` (novo) - Guia de referência
+
+### Oct 11, 2025
 
 ### 💰 TelemedMerged - Sistema Unificado de Precificação/Auction - PRODUÇÃO PRONTA ✅
 
