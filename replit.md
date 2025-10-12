@@ -146,3 +146,17 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 - **telemed-internal**: Gateway principal com proxy consolidado (produção)
 - Ambos os serviços compartilham JWT_SECRET para autenticação unificada
 - Rate limiting configurado (120 req/min) no gateway principal
+
+**Checklist de Conexão ao BidConnect:**
+1. ✅ Proxy `/api/auction` configurado em ambos os serviços
+2. ✅ Endpoint `/config.js` expondo feature flags
+3. ✅ Rate limiting ativo (120 req/min)
+4. ⏳ Aguardando configuração de `AUCTION_SERVICE_URL` para BidConnect real
+5. ⏳ Sincronizar `JWT_SECRET` entre telemed-internal e BidConnect
+6. 📋 Consultar **BIDCONNECT.md** para guia completo de conexão
+7. 🧪 Executar **test-auction-connection.sh** para smoke tests
+
+**Ferramentas de Integração:**
+- `BIDCONNECT.md` - Guia completo de conexão (contrato API, diagnóstico, mocks)
+- `test-auction-connection.sh` - Script de smoke test automatizado
+- `apps/telemed-internal/.env.example` - Instruções detalhadas de configuração

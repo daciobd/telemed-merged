@@ -199,6 +199,16 @@ chmod +x test-auction-connection.sh
 ./test-auction-connection.sh
 ```
 
+**Customização de Portas:**
+- **telemed-deploy-ready** (desenvolvimento): porta 5000 (padrão do script)
+- **telemed-internal** (produção): porta 3000
+
+Para testar gateway em porta diferente:
+```bash
+export GATEWAY_URL=http://localhost:3000
+./test-auction-connection.sh
+```
+
 ---
 
 ## 📦 Mock de Desenvolvimento

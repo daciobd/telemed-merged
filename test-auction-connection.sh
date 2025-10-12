@@ -13,8 +13,28 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuração
-GATEWAY_URL=${GATEWAY_URL:-"http://localhost:5000"}
+# Auto-detectar qual serviço está rodando:
+# - telemed-deploy-ready usa :5000 (desenvolvimento)
+# - telemed-internal usa :3000 (produção)
+# Ou customize com: export GATEWAY_URL=http://localhost:3000
+
+if [ -z "$GATEWAY_URL" ]; then
+    # Tentar porta 5000 primeiro (dev)
+    if curl -s -f http://localhost:5000/api/health > /dev/null 2>&1; then
+        GATEWAY_URL="http://localhost:5000"
+    # Tentar porta 3000 (prod)
+    elif curl -s -f http://localhost:3000/api/health > /dev/null 2>&1; then
+        GATEWAY_URL="http://localhost:3000"
+    else
+        # Default para dev se nenhum responder
+        GATEWAY_URL="http://localhost:5000"
+    fi
+fi
+
 BIDCONNECT_URL=${AUCTION_SERVICE_URL:-"http://localhost:5000/api"}
+
+echo -e "${BLUE}Gateway:${NC} $GATEWAY_URL"
+echo -e "${BLUE}BidConnect:${NC} $BIDCONNECT_URL"
 
 echo -e "${BLUE}🔌 TelemedMerged - Smoke Test${NC}"
 echo -e "${BLUE}================================${NC}\n"
