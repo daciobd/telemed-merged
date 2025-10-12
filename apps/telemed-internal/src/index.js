@@ -5,7 +5,11 @@ import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -60,14 +64,6 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
-// Root endpoint para resolver 404
-app.get('/', (_req, res) => res.json({
-  service: 'telemed-internal',
-  status: 'running',
-  endpoints: ['/healthz', '/api/health', '/ai/complete'],
-  version: '1.0.0'
-}));
 
 // Padronizado: /api/health
 app.get('/api/health', (req, res) => {
@@ -205,15 +201,6 @@ app.get('/config.js', (_req, res) => {
 });
 
 // ===== TelemedMerged: Auction Proxy =====
-// Rate limiting para o proxy de leilão
-app.use('/api/auction', rateLimit({
-  windowMs: 60_000, // 1 minuto
-  max: 120, // max 120 requests por minuto
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'too_many_requests' }
-}));
-
 // Health local do proxy (diagnóstico - não consulta downstream)
 app.get('/api/auction/health', (_req, res) => {
   res.json({ 
@@ -254,6 +241,29 @@ app.use('/api/auction', (req, res, next) => {
 
 console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}${needsRewrite ? ' (com pathRewrite)' : ''}`);
 console.log(`   Feature enabled: ${FEATURE_PRICING}`);
+
+// ===== SERVE FRONTEND ESTÁTICO =====
+// Serve arquivos estáticos do build do telemed-deploy-ready
+const frontendPath = path.join(__dirname, '../../telemed-deploy-ready');
+app.use(express.static(frontendPath));
+
+console.log(`📁 Frontend estático: ${frontendPath}`);
+
+// ===== SPA FALLBACK =====
+// Para React Router - retorna index.html para rotas não-API
+app.get('*', (req, res, next) => {
+  // Se é uma chamada de API, continua para os handlers
+  if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) {
+    return next();
+  }
+  // Se é uma rota do frontend, retorna index.html
+  res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+    if (err) {
+      console.error('Erro ao servir index.html:', err);
+      res.status(404).json({ error: 'not_found' });
+    }
+  });
+});
 
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
