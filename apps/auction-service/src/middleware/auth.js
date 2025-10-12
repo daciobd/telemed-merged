@@ -26,6 +26,13 @@ export function authMiddleware(roles = []){
 // Nova função requireAuth (para compatibilidade com o patch)
 export function requireAuth(req, res, next) {
   try {
+    // Verificar se JWT_SECRET está configurado em produção
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
+      console.error('FATAL: JWT_SECRET não configurado em produção!');
+      return res.status(500).json({ error: 'server_misconfigured' });
+    }
+
     // DEV ONLY: permitir sem token em desenvolvimento
     if (!req.headers.authorization && process.env.NODE_ENV !== 'production') {
       req.user = { sub: 'test-patient', role: 'paciente' };
@@ -37,7 +44,14 @@ export function requireAuth(req, res, next) {
       return res.status(401).json({ error: 'missing_token' });
     }
     const token = auth.slice(7);
-    req.user = jwt.verify(token, process.env.JWT_SECRET || 'telemed-dev-secret-2025');
+    
+    // Usar secret com fallback apenas em dev
+    const secret = JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'telemed-dev-secret-2025' : null);
+    if (!secret) {
+      return res.status(500).json({ error: 'jwt_secret_missing' });
+    }
+    
+    req.user = jwt.verify(token, secret);
     next();
   } catch (e) {
     return res.status(401).json({ error: 'invalid_token' });

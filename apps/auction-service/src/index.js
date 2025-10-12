@@ -4,7 +4,8 @@ import bidsRouter from './routes/bids.js';
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+// Default para 5001 para evitar conflito com telemed-deploy-ready (porta 5000)
+const PORT = process.env.PORT || 5001;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || '*';
 
 app.use(express.json());
