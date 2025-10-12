@@ -58,6 +58,46 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **jsonwebtoken**: Para autenticação JWT no backend.
 -   **http-proxy-middleware**: Para proxy reverso no backend.
 
+## Configuração de Ambiente
+
+### Gateway Principal (telemed-internal)
+
+1. **Copiar arquivo de exemplo:**
+   ```bash
+   cp apps/telemed-internal/.env.example apps/telemed-internal/.env
+   ```
+
+2. **Editar valores reais:**
+   - `JWT_SECRET`: Usar mesma secret em TODOS os serviços (≥32 caracteres)
+   - `AUCTION_SERVICE_URL`: URL do BidConnect em produção
+   - `FEATURE_PRICING`: `true` para ativar sistema de leilão
+   - `RATE_LIMIT_PER_MIN`: Limite de requisições (padrão: 600/min)
+
+3. **Produção (Replit/Render):**
+   - Nunca commitar arquivo `.env` com secrets reais
+   - Usar painel de Secrets do Replit ou variáveis de ambiente do Render
+   - Garantir que `JWT_SECRET` seja idêntico em todos os microserviços
+
+### BidConnect (auction-service)
+
+1. **Copiar arquivo de exemplo:**
+   ```bash
+   cp apps/auction-service/.env.example apps/auction-service/.env
+   ```
+
+2. **Configuração mínima:**
+   - `PORT=5001` (evitar conflito com gateway)
+   - `JWT_SECRET`: **DEVE SER IDÊNTICO** ao telemed-internal
+   - `NODE_ENV=production` em produção
+
+### Validação Rápida
+
+```bash
+# Testar se secrets estão sincronizados
+curl -H "Authorization: Bearer <token>" http://localhost:5001/api/health
+curl -H "Authorization: Bearer <token>" http://localhost:3000/api/auction/health
+```
+
 ## Recent Updates (Oct 11, 2025)
 
 ### 💰 TelemedMerged - Sistema Unificado de Precificação/Auction - PRODUÇÃO PRONTA ✅
