@@ -161,28 +161,8 @@ app.get('/config.js', (req, res) => {
 });
 
 // ==== Auction/Pricing Proxy ====
-if (FEATURE_PRICING) {
-  app.use('/api/auction', createProxyMiddleware({
-    target: AUCTION_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/api/auction': '' },
-    proxyTimeout: 15000,
-    timeout: 20000,
-    onProxyReq: (proxyReq) => {
-      proxyReq.setHeader('X-From-TeleMed', 'true');
-    },
-    onError: (err, req, res) => {
-      console.error('[Auction Proxy Error]', err.message);
-      if (!res.headersSent) {
-        res.status(502).json({ error: 'auction_service_unavailable' });
-      }
-    }
-  }));
-} else {
-  app.all('/api/auction/*', (req, res) => {
-    res.status(503).json({ error: 'pricing_feature_disabled' });
-  });
-}
+// REMOVIDO: Proxy mora no telemed-internal (gateway de produção)
+// Frontend usa /api/auction que será servido pelo gateway
 
 // Static file serving
 app.use(express.static(process.cwd(), {
@@ -198,7 +178,5 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`🔗 MedicalDesk proxy: ${MD_BASE}`);
   }
   console.log(`💰 Pricing/Auction feature: ${FEATURE_PRICING ? 'ENABLED' : 'DISABLED'}`);
-  if (FEATURE_PRICING) {
-    console.log(`🔗 Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}`);
-  }
+  console.log(`ℹ️  Auction proxy configurado no telemed-internal (gateway)`);
 });

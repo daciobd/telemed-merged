@@ -11,7 +11,7 @@ const app = express();
 
 // TelemedMerged: Feature flags e configurações
 const FEATURE_PRICING = String(process.env.FEATURE_PRICING ?? 'true') === 'true';
-const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5000/api';
+const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5001/api';
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
@@ -206,7 +206,11 @@ app.use('/api/auction', rateLimit({
 
 // Proxy reverso para o serviço de leilão
 if (FEATURE_PRICING) {
-  app.use('/api/auction', createProxyMiddleware({
+  // Se AUCTION_SERVICE_URL termina com /api, não usar pathRewrite
+  // Se termina na raiz, usar pathRewrite para remover /api/auction
+  const needsPathRewrite = !AUCTION_SERVICE_URL.endsWith('/api');
+  
+  const proxyConfig = {
     target: AUCTION_SERVICE_URL,
     changeOrigin: true,
     proxyTimeout: 15000,
@@ -216,8 +220,14 @@ if (FEATURE_PRICING) {
         res.status(502).json({ error: 'auction_service_unavailable' });
       }
     }
-  }));
-  console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}`);
+  };
+  
+  if (needsPathRewrite) {
+    proxyConfig.pathRewrite = { '^/api/auction': '' };
+  }
+  
+  app.use('/api/auction', createProxyMiddleware(proxyConfig));
+  console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}${needsPathRewrite ? ' (com pathRewrite)' : ''}`);
 } else {
   app.all('/api/auction/*', (_req, res) => {
     res.status(503).json({ error: 'pricing_feature_disabled' });
