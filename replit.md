@@ -97,3 +97,40 @@ O problema de timeout era causado por `express.json()` aplicado ANTES do proxy:
 
 **Próximo Passo:**
 Sincronizar JWT_SECRET e testar fluxo completo de leilão
+
+### Oct 12, 2025 - Mock Local do Auction Implementado 🎭
+
+**Status:** ✅ Mock completo e pronto para uso
+
+**Implementação:**
+- ✅ Mock local do auction com feature flag `USE_LOCAL_AUCTION_MOCK`
+- ✅ Endpoints completos: health, criar bid, buscar médicos, aumentar, aceitar
+- ✅ Compatibilidade 100% com frontend (mesmas rotas e formatos)
+- ✅ Aceita formatos alternativos de campos (flexibility)
+- ✅ Endpoint de diagnóstico `/_diag/auction/bids`
+- ✅ Script de teste `/tmp/test-mock.sh`
+
+**Como Usar:**
+
+*Para Demos (Mock):*
+```
+Tools → Secrets → USE_LOCAL_AUCTION_MOCK=true
+```
+Frontend funciona imediatamente sem BidConnect!
+
+*Para Produção (Real):*
+```
+Tools → Secrets → USE_LOCAL_AUCTION_MOCK=false (ou remover)
+```
+Usa proxy real para BidConnect.
+
+**Arquivos:**
+- `MOCK_AUCTION_GUIDE.md` - Guia completo de uso
+- `apps/telemed-internal/.env.example` - Variável documentada
+- `apps/telemed-internal/src/index.js` - Implementação
+
+**Benefícios:**
+- 🎭 Demos instantâneas sem setup
+- ⚡ Desenvolvimento sem depender de BidConnect
+- 🧪 Testes sempre passam
+- 🔄 Switch simples: mock ↔ real
