@@ -202,14 +202,15 @@ app.get('/config.js', (_req, res) => {
 
 // ===== TelemedMerged: Auction Proxy =====
 // Health local do proxy (diagnóstico - não consulta downstream)
-app.get('/api/auction/health', (_req, res) => {
-  res.json({ 
-    ok: true, 
-    via: 'gateway', 
-    target: AUCTION_SERVICE_URL,
-    feature_enabled: FEATURE_PRICING 
-  });
-});
+// COMENTADO para testar proxy real com BidConnect
+// app.get('/api/auction/health', (_req, res) => {
+//   res.json({ 
+//     ok: true, 
+//     via: 'gateway', 
+//     target: AUCTION_SERVICE_URL,
+//     feature_enabled: FEATURE_PRICING 
+//   });
+// });
 
 // Proxy reverso para o serviço de leilão
 // Se AUCTION_SERVICE_URL termina com /api, não reescreve path
