@@ -135,3 +135,14 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 - `apps/telemed-deploy-ready/src/routes/auction/shared.ts` - Configurações de rota
 - `apps/telemed-deploy-ready/server.js` - Proxy e feature flag configurados
 - `apps/telemed-deploy-ready/index.html` - Link para demo adicionado
+
+**Arquivos Atualizados (telemed-internal como Gateway):**
+- `apps/telemed-internal/src/index.js` - Proxy /api/auction, endpoint /config.js, rate limiting
+- `apps/telemed-internal/package.json` - Dependências http-proxy-middleware e express-rate-limit
+- `apps/telemed-internal/.env.example` - Variáveis de ambiente para FEATURE_PRICING e AUCTION_SERVICE_URL
+
+**Arquitetura de Deployment:**
+- **telemed-deploy-ready**: Frontend + proxy local (desenvolvimento)
+- **telemed-internal**: Gateway principal com proxy consolidado (produção)
+- Ambos os serviços compartilham JWT_SECRET para autenticação unificada
+- Rate limiting configurado (120 req/min) no gateway principal
