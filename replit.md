@@ -60,6 +60,42 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 
 ## Recent Updates
 
+### Oct 12, 2025 - MedicalDesk + Dr. AI Endpoints Implementados 🏥🤖
+
+**Status:** ✅ Sistema completo e funcionando
+
+**Implementação:**
+- ✅ Proxy MedicalDesk configurado (`/medicaldesk → MEDICALDESK_URL`)
+- ✅ Endpoint de feature flag: `GET /api/medicaldesk/feature`
+- ✅ Criação de sessão JWT: `POST /api/medicaldesk/session`
+- ✅ Dr. AI endpoints demo: `POST /api/ai/answer` e `ALL /api/ai/ask`
+- ✅ Bypass de autenticação para `/api/medicaldesk/*` e `/api/ai/*`
+- ✅ Importação do `jsonwebtoken` para geração de tokens
+
+**Endpoints Disponíveis:**
+
+*MedicalDesk:*
+- `GET /api/medicaldesk/feature` - Verifica se MedicalDesk está habilitado
+- `POST /api/medicaldesk/session` - Cria sessão JWT para integração (15min)
+  - Payload: `{ patientId, doctorId }`
+  - Response: `{ ok, launchUrl }` com JWT no query param
+
+*Dr. AI (Demo):*
+- `POST /api/ai/answer` - Resposta simulada de IA
+  - Payload: `{ question }` ou `{ q }`
+  - Response: `{ ok, answer, traceId }`
+- `GET/POST /api/ai/ask` - Alias do `/answer`, aceita query param `?q=`
+
+**Validação:**
+- ✅ Todos os endpoints públicos (sem autenticação)
+- ✅ MedicalDesk gera JWT válido com expiração de 15min
+- ✅ Dr. AI responde com mensagens demo
+- ✅ Logs simplificados mantidos
+
+**Arquivos Atualizados:**
+- `apps/telemed-internal/src/index.js` - Novos endpoints e bypass auth
+- `package.json` - jsonwebtoken já estava instalado
+
 ### Oct 12, 2025 - Proxy BidConnect 100% Funcional ✅
 
 **Status:** ✅ Proxy corrigido e funcionando - falta apenas sincronizar JWT_SECRET

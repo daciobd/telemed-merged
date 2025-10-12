@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -394,6 +395,16 @@ const requireToken = (req, res, next) => {
   // Proxy auction: passa direto (BidConnect faz autenticação própria)
   if (req.path.startsWith('/api/auction/')) {
     console.log(`[AUTH BYPASS] ${req.method} ${req.path} → proxying to auction service`);
+    return next();
+  }
+  
+  // MedicalDesk endpoints: públicos para integração
+  if (req.path.startsWith('/api/medicaldesk/')) {
+    return next();
+  }
+  
+  // Dr. AI endpoints: públicos para demos
+  if (req.path.startsWith('/api/ai/')) {
     return next();
   }
   
@@ -970,6 +981,71 @@ function startCleanupJob() {
   
   console.log(`🚀 Job de limpeza automática configurado para rodar a cada 6 horas`);
 }
+
+// ===== MEDICALDESK INTEGRATION =====
+
+// Proxy MedicalDesk (se configurado)
+if (process.env.MEDICALDESK_URL) {
+  app.use('/medicaldesk', createProxyMiddleware({
+    target: process.env.MEDICALDESK_URL,
+    changeOrigin: true,
+    pathRewrite: { '^/medicaldesk': '' },
+  }));
+  console.log(`🏥 MedicalDesk proxy: /medicaldesk → ${process.env.MEDICALDESK_URL}`);
+}
+
+// Feature flag MedicalDesk
+app.get('/api/medicaldesk/feature', (req, res) => {
+  res.json({
+    feature: String(process.env.FEATURE_MEDICALDESK || '').toLowerCase() === 'true',
+    hasBase: !!process.env.MEDICALDESK_URL
+  });
+});
+
+// Criar sessão MedicalDesk
+app.post('/api/medicaldesk/session', (req, res) => {
+  const feature = String(process.env.FEATURE_MEDICALDESK || '').toLowerCase() === 'true';
+  const baseOk = !!process.env.MEDICALDESK_URL;
+  
+  if (!feature || !baseOk) {
+    return res.status(503).json({ ok: false, error: 'MedicalDesk desabilitado' });
+  }
+
+  const { patientId, doctorId } = req.body || {};
+  if (!patientId || !doctorId) {
+    return res.status(400).json({ ok: false, error: 'patientId e doctorId obrigatórios' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ ok: false, error: 'JWT_SECRET ausente' });
+  }
+
+  const token = jwt.sign(
+    { sub: String(doctorId), patientId: String(patientId), role: 'doctor' },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m', issuer: 'telemed' }
+  );
+  
+  res.json({ 
+    ok: true, 
+    launchUrl: `/medicaldesk/app?token=${encodeURIComponent(token)}` 
+  });
+});
+
+// ===== DR. AI ENDPOINTS =====
+
+// Handler demo para Dr. AI (resposta simulada)
+const demoAiHandler = (req, res) => {
+  const q = (req.body && (req.body.question || req.body.q)) || req.query.q || 'pergunta de teste';
+  res.json({ 
+    ok: true, 
+    answer: `Resposta DEMO para: "${q}".\n(IA simulada localmente)`, 
+    traceId: String(Date.now()) 
+  });
+};
+
+app.all('/api/ai/answer', demoAiHandler);
+app.all('/api/ai/ask', demoAiHandler);
 
 app.listen(PORT, () => {
   console.log('[telemed] listening on', PORT);
