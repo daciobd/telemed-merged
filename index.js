@@ -17,13 +17,11 @@ console.log('📁 Gateway:', serverFile);
 process.chdir(gatewayPath);
 
 // Start the telemed internal gateway (serves frontend + proxies)
-// Force PORT 5000 as configured in .replit workflow
-const PORT = 5000;
-
+// Use PORT from environment (Replit sets this automatically)
 const child = spawn('node', ['src/index.js'], { 
   stdio: 'inherit',
   shell: true,
-  env: { ...process.env, PORT: String(PORT) }
+  env: { ...process.env }
 });
 
 child.on('error', (error) => {
