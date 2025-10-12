@@ -203,18 +203,88 @@ app.get('/config.js', (_req, res) => {
 });
 
 // ===== TelemedMerged: Auction Proxy =====
-// Health local do proxy (diagnóstico - não consulta downstream)
-// COMENTADO para testar proxy real com BidConnect
-// app.get('/api/auction/health', (_req, res) => {
-//   res.json({ 
-//     ok: true, 
-//     via: 'gateway', 
-//     target: AUCTION_SERVICE_URL,
-//     feature_enabled: FEATURE_PRICING 
-//   });
-// });
 
-// Proxy reverso para o serviço de leilão
+// ===== MOCK LOCAL DO AUCTION (ligado por flag) =====
+const USE_LOCAL_AUCTION_MOCK = process.env.USE_LOCAL_AUCTION_MOCK === 'true';
+
+if (USE_LOCAL_AUCTION_MOCK) {
+  const mockRouter = express.Router();
+
+  // Log de requisições no mock
+  mockRouter.use((req, _res, next) => {
+    console.log('[MOCK AUCTION]', req.method, req.path);
+    next();
+  });
+
+  // Health
+  mockRouter.get('/health', (_req, res) => {
+    res.json({ ok: true, service: 'auction-mock', ts: new Date().toISOString() });
+  });
+
+  // Criar bid
+  mockRouter.post('/bids', express.json(), (req, res) => {
+    const body = req.body || {};
+    // Aceitar os 3 formatos comuns automaticamente
+    const payload = body.bid || body;
+
+    const specialty = payload.specialty || payload.consultationType || payload.consultation_type;
+    const amountCents = payload.amountCents || payload.amount_cents || payload.initialAmount || payload.valueCents || payload.priceCents || Math.round((payload.amount || 0) * 100);
+    const mode = payload.mode || 'immediate';
+
+    if (!specialty || !amountCents) {
+      return res.status(400).json({
+        error: 'validation_error',
+        message: 'Required',
+        expected: ['specialty', 'amountCents|initialAmount|amount|valueCents|priceCents'],
+        received: Object.keys(payload || {})
+      });
+    }
+
+    const bid = {
+      id: 'bid_' + Math.random().toString(36).slice(2, 10),
+      specialty,
+      amountCents: Number(amountCents),
+      mode,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    return res.status(201).json({ success: true, bid });
+  });
+
+  // Buscar médicos
+  mockRouter.post('/bids/:id/search', (_req, res) => {
+    res.json({
+      success: true,
+      immediate: [{ id: 'doc_1', name: 'Dr. Roberto', specialty: 'cardiology' }],
+      scheduled: [{ id: 'doc_2', name: 'Dra. Maria', specialty: 'cardiology', nextSlots: ['2025-10-12T20:00:00Z']}],
+      message: 'Mock: médicos encontrados'
+    });
+  });
+
+  // Aumentar bid
+  mockRouter.put('/bids/:id/increase', express.json(), (req, res) => {
+    const newValue = req.body?.new_value || req.body?.newValue || req.body?.amountCents || req.body?.amount_cents;
+    if (!newValue) return res.status(400).json({ error: 'validation_error', message: 'new_value Required' });
+    res.json({ success: true, bidId: req.params.id, new_value: Number(newValue) });
+  });
+
+  // Aceitar médico
+  mockRouter.post('/bids/:id/accept', express.json(), (req, res) => {
+    const doctorId = req.body?.doctorId || req.body?.doctor_id || req.body?.doctor?.id;
+    if (!doctorId) return res.status(400).json({ error: 'validation_error', message: 'doctorId Required' });
+    res.json({
+      success: true,
+      consultation_id: 'c_' + Math.random().toString(36).slice(2, 10),
+      is_immediate: true,
+      doctor: { id: doctorId, name: 'Dr. Mock' }
+    });
+  });
+
+  app.use('/api/auction', mockRouter);
+  console.log('➡️  USE_LOCAL_AUCTION_MOCK=TRUE — usando mock local no gateway');
+}
+
+// Proxy reverso para o serviço de leilão (quando mock desligado)
 // SEMPRE reescreve /api/auction para '' porque:
 // - Se target termina com /api → /api/auction/bids vira /api + /bids = /api/bids ✅
 // - Se target termina na raiz → /api/auction/bids vira / + /bids = /bids ✅
@@ -256,6 +326,40 @@ console.log(`   Feature enabled: ${FEATURE_PRICING}`);
 // Agora que os proxies foram montados, podemos parsear JSON
 // para as demais rotas sem interferir no proxy
 app.use(express.json());
+
+// ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
+// Permite testar comunicação direta com o downstream BidConnect
+app.post('/_diag/auction/bids', async (req, res) => {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const targetUrl = (AUCTION_SERVICE_URL || '').replace(/\/$/, '') + '/bids';
+    
+    console.log(`[DIAG] Testing direct fetch to: ${targetUrl}`);
+    
+    const r = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': req.headers.authorization || '' 
+      },
+      body: JSON.stringify(req.body)
+    });
+    
+    const text = await r.text();
+    const safeJson = (txt) => { 
+      try { return JSON.parse(txt); } 
+      catch { return { raw: txt }; } 
+    };
+    
+    res.status(r.status).json({ 
+      passthroughStatus: r.status, 
+      response: safeJson(text),
+      url: targetUrl
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ===== SERVE FRONTEND ESTÁTICO =====
 // Serve arquivos estáticos do build do telemed-deploy-ready
