@@ -60,6 +60,40 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 
 ## Recent Updates
 
+### Oct 12, 2025 - Porta do Replit Configurada ✅
+
+**Status:** ✅ Servidor rodando na porta correta do Replit
+
+**Problema Resolvido:**
+- O servidor estava escutando na porta 3000, mas o Replit esperava a porta 5000
+- O `.replit` define `PORT = "5000"` e `waitForPort = 5000`
+- O `index.js` na raiz estava sendo sobrescrito por `process.env.PORT = 3000`
+
+**Solução Implementada:**
+```javascript
+// index.js (raiz do projeto)
+const PORT = 5000; // Força porta 5000 conforme configuração do .replit
+const child = spawn('node', ['src/index.js'], { 
+  env: { ...process.env, PORT: String(PORT) }
+});
+```
+
+**Configuração do Servidor:**
+```javascript
+// apps/telemed-internal/src/index.js
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('[telemed] listening on', PORT));
+```
+
+**Validação:**
+- ✅ Console mostra: `[telemed] listening on 5000`
+- ✅ Porta local 5000 mapeada para porta externa 80
+- ✅ Todos os endpoints respondendo corretamente
+- ✅ Frontend acessível via "Open in new tab"
+
+**Arquivos Atualizados:**
+- `index.js` - Força PORT=5000 para compatibilidade com .replit
+
 ### Oct 12, 2025 - MedicalDesk + Dr. AI Endpoints Implementados 🏥🤖
 
 **Status:** ✅ Sistema completo e funcionando
