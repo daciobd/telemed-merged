@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 });
 
 const prisma = new PrismaClient();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // Health check endpoints para observabilidade (PÚBLICO - sem auth)
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
@@ -972,15 +972,7 @@ function startCleanupJob() {
 }
 
 app.listen(PORT, () => {
-  console.log(`🚀 Starting TeleMed Internal Service...`);
-  console.log(`[${process.env.SERVICE_NAME || 'telemed-internal'}] listening on :${PORT}`);
-  console.log('Environment:', {
-    NODE_ENV: process.env.NODE_ENV || 'development',
-    PORT: PORT,
-    CORS_ORIGINS: 'all origins allowed',
-    INTERNAL_TOKEN: process.env.INTERNAL_TOKEN ? 'configured' : 'NOT SET',
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'configured' : 'NOT SET'
-  });
+  console.log('[telemed] listening on', PORT);
   
   // Iniciar job de limpeza automática
   startCleanupJob();
