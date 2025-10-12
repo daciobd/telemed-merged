@@ -5,21 +5,46 @@
 
 ---
 
+## 🎯 Resumo Executivo (TL;DR)
+
+**Você precisa fazer 2 ajustes nos Secrets do Replit:**
+
+### 1️⃣ AUCTION_SERVICE_URL (adicionar `/api`)
+```bash
+# ANTES (errado):
+https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/
+
+# DEPOIS (correto):
+https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/api
+```
+
+### 2️⃣ JWT_SECRET (copiar do BidConnect)
+- Abra o BidConnect → Tools → Secrets → JWT_SECRET
+- Copie o valor EXATO
+- Cole no TeleMed → Tools → Secrets → JWT_SECRET
+- Reinicie ambos os serviços
+
+**Após correções:** Teste com `curl http://localhost:5000/api/auction/health`
+
+---
+
 ## 📊 Problemas Identificados
 
 ### 1. ❌ AUCTION_SERVICE_URL Incorreta
 
 **Problema:** URL não termina com `/api`, causando pathRewrite incorreto
 
-**Valor Atual (INCORRETO):**
+**Valor Atual nos Secrets (INCORRETO):**
+```bash
+AUCTION_SERVICE_URL=https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/
 ```
-https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/
-```
+☝️ Sem `/api` no final
 
-**Valor Correto (deve terminar com /api):**
+**Valor Correto que DEVE ser configurado:**
+```bash
+AUCTION_SERVICE_URL=https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/api
 ```
-https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/api
-```
+☝️ **COM `/api` no final**
 
 **Impacto:**
 - Proxy usa pathRewrite quando NÃO deveria
@@ -54,22 +79,40 @@ https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev/ap
 
 **Como Corrigir:**
 
-#### Opção A - Copiar do BidConnect para TeleMed:
-1. Abra o Repl do **BidConnect**
-2. Tools → Secrets → JWT_SECRET
-3. Copie o valor EXATO
-4. Cole no TeleMed (Tools → Secrets)
-5. Reinicie ambos
+#### ⚡ PASSOS OBRIGATÓRIOS (em ordem):
 
-#### Opção B - Definir novo valor em ambos:
-```bash
-# Gere uma secret forte
-JWT_SECRET=$(openssl rand -hex 32)
+1. **Abra o Repl do BidConnect** (separadamente)
+   - URL: https://e30631f8-552f-45ca-806b-2436971c4a6d-00-15smgio1pkhr6.worf.replit.dev
 
-# Configure EXATAMENTE o mesmo valor em:
-# - TeleMed (Tools → Secrets)
-# - BidConnect (Tools → Secrets)
-```
+2. **No BidConnect:**
+   - Tools → Secrets
+   - Encontre `JWT_SECRET`
+   - **COPIE o valor completo** (Ctrl+C)
+
+3. **No TeleMed (este Repl):**
+   - Tools → Secrets
+   - Encontre `JWT_SECRET`
+   - **COLE exatamente o mesmo valor** (Ctrl+V)
+   - Clique em Save
+
+4. **Reinicie AMBOS os serviços:**
+   - TeleMed: Clique em Run (reinicia automaticamente)
+   - BidConnect: Clique em Run no Repl do BidConnect
+
+5. **Valide a sincronização:**
+   ```bash
+   # No Shell deste Repl (TeleMed)
+   TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({sub:'test'}, process.env.JWT_SECRET, {expiresIn:'15m'}))")
+   
+   # Testar no BidConnect via proxy
+   curl -X POST "http://localhost:5000/api/auction/bids" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer $TOKEN" \
+     -d '{"patientId":"test","specialty":"cardiology","amountCents":14000,"mode":"immediate"}'
+   ```
+
+   ✅ **Sucesso:** Retorna JSON com `"ok": true` e dados do bid  
+   ❌ **Falhou:** Retorna `"invalid_token"` → valores ainda diferentes
 
 ---
 
