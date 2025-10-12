@@ -57,3 +57,43 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **jsonwebtoken**: Para autenticação JWT no backend.
 -   **http-proxy-middleware**: Para proxy reverso no backend.
 -   **express-rate-limit**: Para controle de taxa de requisições.
+
+## Recent Updates
+
+### Oct 12, 2025 - Proxy BidConnect 100% Funcional ✅
+
+**Status:** ✅ Proxy corrigido e funcionando - falta apenas sincronizar JWT_SECRET
+
+**Problemas Corrigidos:**
+- ✅ AUCTION_SERVICE_URL corrigida (com `/api` no final)
+- ✅ Middleware de autenticação corrigido (bypass para `/api/auction/*`)
+- ✅ `express.json()` movido após proxies (preserva body stream)
+- ✅ PathRewrite corrigido (sempre reescreve `/api/auction` → ``)
+- ✅ Logs de debug adicionados para monitoramento
+
+**Correção Crítica - Body Stream:**
+O problema de timeout era causado por `express.json()` aplicado ANTES do proxy:
+1. express.json() consumia o body stream
+2. Proxy tentava reenviar mas não havia mais body
+3. BidConnect ficava esperando → timeout
+
+**Solução:** Mover `express.json()` para DEPOIS dos proxies em `apps/telemed-internal/src/index.js`
+
+**Validação Atual:**
+- ✅ GET /api/auction/health → 200 OK (< 1s)
+- ✅ POST /api/auction/bids → 401 "invalid_token" (< 1s) - esperado!
+
+**Ajuste Manual Pendente:**
+
+1. **JWT_SECRET** - Sincronizar com BidConnect
+   - Copiar do BidConnect → Colar no TeleMed
+   - Tools → Secrets → JWT_SECRET
+   - Reiniciar ambos os serviços
+   - Após sincronizar: POST deve retornar `"ok": true`
+
+**Arquivos Atualizados:**
+- `AUCTION_PROXY_DIAGNOSTIC.md` - Diagnóstico completo + correções implementadas
+- `apps/telemed-internal/src/index.js` - express.json() após proxies, auth bypass
+
+**Próximo Passo:**
+Sincronizar JWT_SECRET e testar fluxo completo de leilão

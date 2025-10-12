@@ -19,7 +19,9 @@ const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
-app.use(express.json());
+
+// NÃO aplicar express.json() globalmente - causa problema com proxy!
+// Será aplicado seletivamente após os proxies
 
 // Security headers middleware
 app.use((req, res, next) => {
@@ -213,11 +215,11 @@ app.get('/config.js', (_req, res) => {
 // });
 
 // Proxy reverso para o serviço de leilão
-// Se AUCTION_SERVICE_URL termina com /api, não reescreve path
-// Se termina na raiz, remove prefixo /api/auction antes de encaminhar
-const needsRewrite = !/\/api\/?$/.test(AUCTION_SERVICE_URL);
-
+// SEMPRE reescreve /api/auction para '' porque:
+// - Se target termina com /api → /api/auction/bids vira /api + /bids = /api/bids ✅
+// - Se target termina na raiz → /api/auction/bids vira / + /bids = /bids ✅
 app.use('/api/auction', (req, res, next) => {
+  console.log(`[PROXY] ${req.method} ${req.path} → forwarding to ${AUCTION_SERVICE_URL}`);
   // Feature flag: bloqueia tudo se desligado
   if (!FEATURE_PRICING) {
     return res.status(503).json({ error: 'pricing_disabled' });
@@ -226,9 +228,15 @@ app.use('/api/auction', (req, res, next) => {
 }, createProxyMiddleware({
   target: AUCTION_SERVICE_URL,
   changeOrigin: true,
-  pathRewrite: needsRewrite ? { '^/api/auction': '' } : undefined,
+  pathRewrite: { '^/api/auction': '' },
   proxyTimeout: 15000,
   timeout: 20000,
+  onProxyReq: (proxyReq, req, _res) => {
+    console.log(`[PROXY REQ] ${req.method} ${req.path} → ${proxyReq.host}${proxyReq.path}`);
+  },
+  onProxyRes: (proxyRes, req, _res) => {
+    console.log(`[PROXY RES] ${req.method} ${req.path} ← ${proxyRes.statusCode}`);
+  },
   onError: (err, _req, res) => {
     console.error('[Auction Proxy Error]', err.message);
     if (!res.headersSent) {
@@ -238,10 +246,16 @@ app.use('/api/auction', (req, res, next) => {
       });
     }
   },
+  logLevel: 'debug'
 }));
 
-console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}${needsRewrite ? ' (com pathRewrite)' : ''}`);
+console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL} (sempre com pathRewrite)`);
 console.log(`   Feature enabled: ${FEATURE_PRICING}`);
+
+// ===== JSON BODY PARSER (após proxies) =====
+// Agora que os proxies foram montados, podemos parsear JSON
+// para as demais rotas sem interferir no proxy
+app.use(express.json());
 
 // ===== SERVE FRONTEND ESTÁTICO =====
 // Serve arquivos estáticos do build do telemed-deploy-ready
@@ -268,9 +282,17 @@ app.get('*', (req, res, next) => {
 
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
+  
   // Endpoints públicos (sem auth)
-  const publicPaths = ['/healthz', '/health', '/api/health', '/api/auction/health', '/'];
+  const publicPaths = ['/healthz', '/health', '/api/health', '/'];
   if (publicPaths.includes(req.path)) return next();
+  
+  // Proxy auction: passa direto (BidConnect faz autenticação própria)
+  if (req.path.startsWith('/api/auction/')) {
+    console.log(`[AUTH BYPASS] ${req.method} ${req.path} → proxying to auction service`);
+    return next();
+  }
+  
   const tok = req.header('X-Internal-Token');
   const expectedToken = process.env.INTERNAL_TOKEN || '';
   
