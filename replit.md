@@ -151,12 +151,20 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 1. ✅ Proxy `/api/auction` configurado em ambos os serviços
 2. ✅ Endpoint `/config.js` expondo feature flags
 3. ✅ Rate limiting ativo (120 req/min)
-4. ⏳ Aguardando configuração de `AUCTION_SERVICE_URL` para BidConnect real
-5. ⏳ Sincronizar `JWT_SECRET` entre telemed-internal e BidConnect
-6. 📋 Consultar **BIDCONNECT.md** para guia completo de conexão
-7. 🧪 Executar **test-auction-connection.sh** para smoke tests
+4. ✅ BidConnect implementado com mocks in-memory completos
+5. ✅ Middleware de autenticação (requireAuth) com modo dev
+6. ✅ Rotas completas: health, bids, search, increase, accept
+7. ✅ Lógica de mock conservador (varia médicos por valor de bid)
+8. 📋 Configurar `AUCTION_SERVICE_URL` para ambiente de produção
+9. 📋 Sincronizar `JWT_SECRET` entre serviços em produção
+10. 📋 Consultar **BIDCONNECT.md** para guia completo de conexão
+11. 🧪 Executar **test-auction-connection.sh** para smoke tests
+12. 🧪 Consultar **QUICK_START_AUCTION.md** para instruções de inicialização
 
 **Ferramentas de Integração:**
 - `BIDCONNECT.md` - Guia completo de conexão (contrato API, diagnóstico, mocks)
+- `QUICK_START_AUCTION.md` - Guia rápido de inicialização e testes
 - `test-auction-connection.sh` - Script de smoke test automatizado
 - `apps/telemed-internal/.env.example` - Instruções detalhadas de configuração
+- `apps/auction-service/.env.example` - Configuração do BidConnect
+- `apps/auction-service/src/routes/bids.js` - Implementação completa de mocks
