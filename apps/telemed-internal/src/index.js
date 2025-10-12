@@ -49,7 +49,17 @@ const PORT = process.env.PORT || 5000;
 
 // Health check endpoints para observabilidade (PÚBLICO - sem auth)
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
-app.get('/health', (_req, res) => res.json({ ok: true }));
+
+// Health detalhado do gateway com feature flags
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'telemed-internal',
+    feature_pricing: FEATURE_PRICING,
+    auction_target: AUCTION_SERVICE_URL,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Root endpoint para resolver 404
 app.get('/', (_req, res) => res.json({
@@ -204,40 +214,52 @@ app.use('/api/auction', rateLimit({
   message: { error: 'too_many_requests' }
 }));
 
-// Proxy reverso para o serviço de leilão
-if (FEATURE_PRICING) {
-  // Se AUCTION_SERVICE_URL termina com /api, não usar pathRewrite
-  // Se termina na raiz, usar pathRewrite para remover /api/auction
-  const needsPathRewrite = !AUCTION_SERVICE_URL.endsWith('/api');
-  
-  const proxyConfig = {
+// Health local do proxy (diagnóstico - não consulta downstream)
+app.get('/api/auction/health', (_req, res) => {
+  res.json({ 
+    ok: true, 
+    via: 'gateway', 
     target: AUCTION_SERVICE_URL,
-    changeOrigin: true,
-    proxyTimeout: 15000,
-    timeout: 20000,
-    onError: (_err, _req, res) => {
-      if (!res.headersSent) {
-        res.status(502).json({ error: 'auction_service_unavailable' });
-      }
-    }
-  };
-  
-  if (needsPathRewrite) {
-    proxyConfig.pathRewrite = { '^/api/auction': '' };
-  }
-  
-  app.use('/api/auction', createProxyMiddleware(proxyConfig));
-  console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}${needsPathRewrite ? ' (com pathRewrite)' : ''}`);
-} else {
-  app.all('/api/auction/*', (_req, res) => {
-    res.status(503).json({ error: 'pricing_feature_disabled' });
+    feature_enabled: FEATURE_PRICING 
   });
-  console.log('💰 Pricing/Auction feature: DISABLED');
-}
+});
+
+// Proxy reverso para o serviço de leilão
+// Se AUCTION_SERVICE_URL termina com /api, não reescreve path
+// Se termina na raiz, remove prefixo /api/auction antes de encaminhar
+const needsRewrite = !/\/api\/?$/.test(AUCTION_SERVICE_URL);
+
+app.use('/api/auction', (req, res, next) => {
+  // Feature flag: bloqueia tudo se desligado
+  if (!FEATURE_PRICING) {
+    return res.status(503).json({ error: 'pricing_disabled' });
+  }
+  next();
+}, createProxyMiddleware({
+  target: AUCTION_SERVICE_URL,
+  changeOrigin: true,
+  pathRewrite: needsRewrite ? { '^/api/auction': '' } : undefined,
+  proxyTimeout: 15000,
+  timeout: 20000,
+  onError: (err, _req, res) => {
+    console.error('[Auction Proxy Error]', err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ 
+        error: 'auction_service_unavailable', 
+        details: err.message 
+      });
+    }
+  },
+}));
+
+console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL}${needsRewrite ? ' (com pathRewrite)' : ''}`);
+console.log(`   Feature enabled: ${FEATURE_PRICING}`);
 
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
-  if (req.path === '/healthz' || req.path === '/health' || req.path === '/api/health' || req.path === '/') return next(); // não exige token no health e root
+  // Endpoints públicos (sem auth)
+  const publicPaths = ['/healthz', '/health', '/api/health', '/api/auction/health', '/'];
+  if (publicPaths.includes(req.path)) return next();
   const tok = req.header('X-Internal-Token');
   const expectedToken = process.env.INTERNAL_TOKEN || '';
   
