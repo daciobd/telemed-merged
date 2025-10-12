@@ -100,35 +100,62 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/api/auction/health
 
 ## Recent Updates
 
-### Oct 12, 2025 - Gateway Health Endpoints & Proxy Melhorias ✅
+### Oct 12, 2025 - Gateway Consolidado + Frontend Integrado ✅
 
-**Implementado:**
-1. ✅ **Health Detalhado do Gateway** (`GET /health`)
+**Arquitetura Simplificada:**
+O `telemed-internal` agora é o **servidor único** que:
+- ✅ Serve o frontend estático (SPA React)
+- ✅ Proxy para auction service (`/api/auction`)
+- ✅ Health endpoints detalhados
+- ✅ Feature flags via `/config.js`
+- ✅ APIs internas protegidas por token
+
+**Mudanças Implementadas:**
+
+1. ✅ **Frontend Estático Servido pelo Gateway**
+   - `express.static()` serve arquivos do telemed-deploy-ready
+   - SPA fallback: retorna index.html para rotas não-API
+   - Porta unificada: 5000
+
+2. ✅ **Health Detalhado do Gateway** (`GET /health`)
    - Retorna: service, feature_pricing, auction_target, timestamp
    - Endpoint público para diagnóstico de configuração
 
-2. ✅ **Health Local do Proxy** (`GET /api/auction/health`)
+3. ✅ **Health Local do Proxy** (`GET /api/auction/health`)
    - Diagnóstico local (não consulta BidConnect downstream)
    - Útil para debug de configuração do gateway
 
-3. ✅ **PathRewrite Automático Melhorado**
+4. ✅ **PathRewrite Automático Melhorado**
    - Usa regex `/\/api\/?$/` para detectar formato da URL
    - Se AUCTION_SERVICE_URL termina com `/api` → SEM pathRewrite
    - Se termina na raiz → COM pathRewrite (remove `/api/auction`)
 
-4. ✅ **Middleware de Feature Flag**
+5. ✅ **Middleware de Feature Flag**
    - Verifica `FEATURE_PRICING` antes de proxy
    - Retorna 503 com erro claro se feature desativada
 
-5. ✅ **Documentação Expandida**
-   - `.env.example` com instruções detalhadas sobre pathRewrite
-   - `GATEWAY_HEALTH_ENDPOINTS.md` - Guia completo de health endpoints
-   - Script de teste: `/tmp/test-gateway-health.sh`
+6. ✅ **Workflow Atualizado**
+   - `index.js` raiz agora executa telemed-internal
+   - Arquitetura simplificada: um servidor ao invés de dois
 
 **Arquivos Modificados:**
-- `apps/telemed-internal/src/index.js` - Health endpoints + proxy melhorado
+- `apps/telemed-internal/src/index.js` - Frontend + health + proxy
+- `index.js` - Workflow atualizado para telemed-internal
 - `apps/telemed-internal/.env.example` - Documentação pathRewrite
-- `GATEWAY_HEALTH_ENDPOINTS.md` (novo) - Guia de referência
+- `GATEWAY_HEALTH_ENDPOINTS.md` - Guia de referência
+
+**Arquitetura Antes vs Depois:**
+
+**ANTES:**
+```
+telemed-deploy-ready (porta 5000) → Frontend + endpoints básicos
+telemed-internal (porta 3000) → Gateway API (NÃO rodando)
+```
+
+**DEPOIS:**
+```
+telemed-internal (porta 5000) → Frontend + Gateway + Proxy tudo-em-um ✅
+```
 
 ### Oct 11, 2025
 
