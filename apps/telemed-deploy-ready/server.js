@@ -16,7 +16,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'telemed-dev-secret-2025';
 
 // Environment variables for Pricing/Auction
 const FEATURE_PRICING = String(process.env.FEATURE_PRICING ?? 'true') === 'true';
-const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5000';
+const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5001/api';
 
 // Health check endpoint for Render observability
 app.get(['/api/health', '/healthz'], (req, res) => {
