@@ -205,6 +205,38 @@ Usa proxy real para BidConnect.
 - 🧪 Testes sempre passam
 - 🔄 Switch simples: mock ↔ real
 
+### Oct 13, 2025 - MedicalDesk Proxy Corrigido 🏥
+
+**Status:** ✅ Proxy funcionando 100%
+
+**Problema Resolvido:**
+- O proxy `/medicaldesk` estava DEPOIS de `express.static`
+- Arquivos estáticos interceptavam as requisições antes do proxy
+- `/medicaldesk/health` retornava HTML em vez de proxiar
+
+**Solução Implementada:**
+- Movi proxy `/medicaldesk` para ANTES de `express.static`
+- Adicionei debug middleware para monitoramento
+- Ordem correta: Proxy → Static → Fallback
+
+**Ordem Final dos Middlewares:**
+```javascript
+1. express.json()
+2. /api/auction proxy (mock ou BidConnect)
+3. /medicaldesk proxy ← MOVIDO PARA CÁ!
+4. express.static (arquivos estáticos)
+5. app.get('*') (SPA fallback)
+```
+
+**Testes Validados:**
+- ✅ `GET /medicaldesk/health` → `{"ok":true,"name":"MedicalDesk"}`
+- ✅ `GET /api/medicaldesk/feature` → `{"feature":true,"hasBase":true}`
+- ✅ `POST /api/medicaldesk/session` → JWT com 15min + launchUrl
+- ✅ Launch URL funciona: `/medicaldesk/app?token=...`
+
+**Arquivos Atualizados:**
+- `apps/telemed-internal/src/index.js` - Proxy reordenado com debug
+
 ### Oct 13, 2025 - Pricing/Auction Integration Completa 💰
 
 **Status:** ✅ Integração frontend-backend 100% funcional

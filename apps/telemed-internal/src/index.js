@@ -371,8 +371,32 @@ app.post('/_diag/auction/bids', async (req, res) => {
   }
 });
 
+// ===== MEDICALDESK PROXY (DEVE VIR ANTES DE STATIC/FALLBACK) =====
+
+// Debug middleware para /medicaldesk
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/medicaldesk')) {
+    console.log('[MEDICALDESK HIT]', req.method, req.path);
+  }
+  next();
+});
+
+// Proxy MedicalDesk (se configurado)
+if (process.env.MEDICALDESK_URL) {
+  app.use('/medicaldesk', createProxyMiddleware({
+    target: process.env.MEDICALDESK_URL,
+    changeOrigin: true,
+    pathRewrite: { '^/medicaldesk': '' },
+    logLevel: 'warn',
+    onProxyReq: (proxyReq, req, _res) => {
+      console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${proxyReq.host}${proxyReq.path}`);
+    },
+  }));
+  console.log(`🏥 MedicalDesk proxy: /medicaldesk → ${process.env.MEDICALDESK_URL}`);
+}
+
 // ===== SERVE FRONTEND ESTÁTICO =====
-// IMPORTANTE: express.static DEVE vir ANTES do SPA Fallback!
+// IMPORTANTE: express.static DEVE vir DEPOIS do proxy MedicalDesk e ANTES do SPA Fallback!
 const frontendPathHere = path.join(__dirname, '../../telemed-deploy-ready');
 
 // attached_assets -> /assets (imagens anexadas pelo usuário)
@@ -998,17 +1022,7 @@ function startCleanupJob() {
   console.log(`🚀 Job de limpeza automática configurado para rodar a cada 6 horas`);
 }
 
-// ===== MEDICALDESK INTEGRATION =====
-
-// Proxy MedicalDesk (se configurado)
-if (process.env.MEDICALDESK_URL) {
-  app.use('/medicaldesk', createProxyMiddleware({
-    target: process.env.MEDICALDESK_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/medicaldesk': '' },
-  }));
-  console.log(`🏥 MedicalDesk proxy: /medicaldesk → ${process.env.MEDICALDESK_URL}`);
-}
+// ===== MEDICALDESK API ENDPOINTS =====
 
 // Feature flag MedicalDesk
 app.get('/api/medicaldesk/feature', (req, res) => {
