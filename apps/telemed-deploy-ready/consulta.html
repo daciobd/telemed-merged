@@ -741,10 +741,12 @@
         body: JSON.stringify({ patientId:'paciente-test', doctorId:'medico-demo' })
       });
       const j = await r.json();
-      if(!j.ok || !j.launchUrl) throw new Error('Falha na sessão');
+      if(!j.ok) throw new Error('Falha na sessão');
 
-      // abre em nova aba/janela (token já vem encodado do backend)
-      window.open(j.launchUrl, '_blank', 'noopener');
+      // Abre página demo local do MedicalDesk com o token no query param
+      const token = j.launchUrl ? j.launchUrl.split('token=')[1] : '';
+      const demoUrl = `/public/medical-desk-demo.html?token=${token}&pid=paciente-test`;
+      window.open(demoUrl, '_blank', 'noopener,width=900,height=700');
 
       // atualiza badge depois de abrir
       checkHealth();
