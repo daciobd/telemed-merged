@@ -728,28 +728,20 @@
     }
   }
 
-  // --- cria sessão fresca e abre o app
+  // --- abre MedicalDesk (página demo local)
   async function openMDA(){
     $open.disabled = true;
     const old = $open.textContent;
-    $open.textContent = 'Gerando sessão…';
+    $open.textContent = 'Abrindo MDA…';
 
     try{
-      const r = await fetch('/api/medicaldesk/session', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ patientId:'paciente-test', doctorId:'medico-demo' })
-      });
-      const j = await r.json();
-      if(!j.ok) throw new Error('Falha na sessão');
-
-      // Abre página demo local do MedicalDesk com o token no query param
-      const token = j.launchUrl ? j.launchUrl.split('token=')[1] : '';
-      const demoUrl = `/public/medical-desk-demo.html?token=${token}&pid=paciente-test`;
+      // Abre página demo local do MedicalDesk diretamente
+      const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-DEMO';
+      const demoUrl = `/public/medical-desk-demo.html?pid=paciente-test&apt=${appointmentId}`;
       window.open(demoUrl, '_blank', 'noopener,width=900,height=700');
 
       // atualiza badge depois de abrir
-      checkHealth();
+      setTimeout(() => checkHealth(), 500);
     }catch(e){
       alert('Não foi possível abrir o MedicalDesk.\nDetalhe: '+e.message);
     }finally{

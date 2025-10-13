@@ -112,13 +112,19 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - 🟡 "MDA: Lento ⚠️" (400-1200ms)
   - 🔴 "MDA: Offline ❌" (indisponível)
 - **Botão "Regerar sessão (abrir)"**: 
-  - Cria token JWT novo via POST `/api/medicaldesk/session`
-  - Abre MedicalDesk em nova aba automaticamente
-  - Token encodado com `encodeURIComponent` (linha 991 de `apps/telemed-internal/src/index.js`)
+  - Abre página demo local `/public/medical-desk-demo.html` diretamente
+  - Popup 900x700px com MedicalDesk Advanced
+  - Passa ID do paciente e consulta via query params
+  - **Sem proxy, sem problemas de roteamento** ✅
 - **Health Check Automático**: Polling a cada 60s via `/medicaldesk/health`
 
+**Implementação:**
+- Botão abre direto `/public/medical-desk-demo.html?pid=paciente-test&apt={appointmentId}`
+- Solução simplificada sem dependência de JWT/proxy externo
+- Evita tela branca por problemas de roteamento SPA
+
 **Arquivos Modificados:**
-- `apps/telemed-deploy-ready/consulta.html` (linhas 79-89: HTML, 680-769: JavaScript)
+- `apps/telemed-deploy-ready/consulta.html` (linhas 79-89: HTML, 734-754: JavaScript)
 
 ### BidConnect - Modelos de Precificação 💰
 
