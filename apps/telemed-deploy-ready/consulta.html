@@ -72,6 +72,18 @@
       <div class="wrap" style="gap:8px">
         <a id="care-guidelines" class="badge" href="/diretrizes.html" target="_blank">Diretrizes de Cuidados</a>
         <span id="public-status" class="badge ok">Pronto</span>
+        
+        <!-- MDA status + ação rápida -->
+        <div id="mda-tools" style="display:flex;gap:8px;align-items:center">
+          <span id="mda-status" aria-live="polite"
+                style="font:600 12px/1 system-ui; padding:4px 8px; border-radius:999px; border:1px solid transparent;">
+            MDA: verificando…
+          </span>
+          <button id="mda-open" type="button" class="btn"
+                  style="padding:6px 10px; font-size:12px; font-weight:700;" data-testid="button-mda-open">
+            Regerar sessão (abrir)
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -659,6 +671,97 @@
   q.addEventListener('keyup', (e)=>{ if(e.key==='Enter') search(); });
   emit.onclick = emitRx;
   renderSelected();
+})();
+</script>
+
+<!-- MedicalDesk Health Check & Launch Script -->
+<script>
+(function(){
+  const $status = document.getElementById('mda-status');
+  const $open   = document.getElementById('mda-open');
+
+  // --- util: timeout pra fetch
+  function fetchWithTimeout(url, opts={}, ms=7000){
+    return Promise.race([
+      fetch(url, opts),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))
+    ]);
+  }
+
+  // --- atualiza selo visual
+  function setBadge(state, msg){
+    const base = {
+      OK:       {bg:'#e8f7ee', bd:'#86efac', fg:'#166534', txt:'MDA: OK ✅'},
+      DEGRADED:{bg:'#fff8e1', bd:'#fde68a', fg:'#92400e', txt:'MDA: Lento ⚠️'},
+      OFF:     {bg:'#fee2e2', bd:'#fca5a5', fg:'#991b1b', txt:'MDA: Offline ❌'}
+    }[state] || {bg:'#e5e7eb', bd:'#cbd5e1', fg:'#111827', txt:'MDA: ?'};
+
+    $status.textContent = msg || base.txt;
+    $status.style.background = base.bg;
+    $status.style.borderColor = base.bd;
+    $status.style.color = base.fg;
+  }
+
+  // --- health check via proxy do TeleMed
+  async function checkHealth(){
+    try{
+      const t0 = performance.now();
+      const r  = await fetchWithTimeout('/medicaldesk/health', {credentials:'include'}, 6000);
+      const t1 = performance.now();
+
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json().catch(()=>({}));
+
+      // latência simples só p/ dar noção
+      const ms = Math.round(t1 - t0);
+      if(ms < 400){
+        setBadge('OK', 'MDA: OK ✅ ('+ms+'ms)');
+      }else if(ms < 1200){
+        setBadge('DEGRADED', 'MDA: Lento ⚠️ ('+ms+'ms)');
+      }else{
+        setBadge('OFF', 'MDA: Sem resposta ❌ ('+ms+'ms)');
+      }
+      return true;
+    }catch(e){
+      setBadge('OFF', 'MDA: Offline ❌');
+      return false;
+    }
+  }
+
+  // --- cria sessão fresca e abre o app
+  async function openMDA(){
+    $open.disabled = true;
+    const old = $open.textContent;
+    $open.textContent = 'Gerando sessão…';
+
+    try{
+      const r = await fetch('/api/medicaldesk/session', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ patientId:'paciente-test', doctorId:'medico-demo' })
+      });
+      const j = await r.json();
+      if(!j.ok || !j.launchUrl) throw new Error('Falha na sessão');
+
+      // abre em nova aba/janela (token já vem encodado do backend)
+      window.open(j.launchUrl, '_blank', 'noopener');
+
+      // atualiza badge depois de abrir
+      checkHealth();
+    }catch(e){
+      alert('Não foi possível abrir o MedicalDesk.\nDetalhe: '+e.message);
+    }finally{
+      $open.disabled = false;
+      $open.textContent = old;
+    }
+  }
+
+  // wire-up
+  if($open)  $open.addEventListener('click', openMDA);
+
+  // 1ª leitura + polling leve (a cada 60s)
+  checkHealth();
+  setInterval(checkHealth, 60000);
 })();
 </script>
 

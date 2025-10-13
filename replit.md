@@ -101,3 +101,38 @@ Gateway (porta 5000) → Proxy /api/auction → localhost:3333
 - Testado via Playwright E2E
 
 Arquivo: `apps/telemed-deploy-ready/index.html`
+
+### MedicalDesk na Página de Consulta 🏥
+
+**Status:** ✅ Implementado com selo de status + botão de lançamento
+
+**Funcionalidades:**
+- **Selo de Status MDA**: Indicador visual com 3 estados
+  - 🟢 "MDA: OK ✅" (< 400ms)
+  - 🟡 "MDA: Lento ⚠️" (400-1200ms)
+  - 🔴 "MDA: Offline ❌" (indisponível)
+- **Botão "Regerar sessão (abrir)"**: 
+  - Cria token JWT novo via POST `/api/medicaldesk/session`
+  - Abre MedicalDesk em nova aba automaticamente
+  - Token encodado com `encodeURIComponent` (linha 991 de `apps/telemed-internal/src/index.js`)
+- **Health Check Automático**: Polling a cada 60s via `/medicaldesk/health`
+
+**Arquivos Modificados:**
+- `apps/telemed-deploy-ready/consulta.html` (linhas 79-89: HTML, 680-769: JavaScript)
+
+### BidConnect - Modelos de Precificação 💰
+
+**Status:** ✅ Página standalone integrada com mock/API real
+
+**Funcionalidades:**
+- **3 Modelos de Precificação**: Conservador, Sugestivo/IA, Dinâmico
+- **Componente React via CDN**: Sem build necessário
+- **Integração Mock/Real**: 
+  - Mock standalone: `mock-auction.js` (porta 3333)
+  - Proxy gateway: `/api/auction` → `localhost:3333`
+  - URL params: `?model=conservative`
+- **Link na Landing**: Card "BidConnect - Precificação" → `/pricing-models.html`
+
+**Arquivos Criados:**
+- `apps/telemed-deploy-ready/pricing-models.html` - Componente React standalone
+- `apps/telemed-deploy-ready/index.html` - Link atualizado (linha 322)
