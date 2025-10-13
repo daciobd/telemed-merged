@@ -8,47 +8,70 @@ import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import PricingClient from '@/src/services/pricing-client';
+import { pricing } from '@/src/services/pricing-client';
 
 export default function TelemedPricingModels() {
   const [step, setStep] = useState('form'); // form | searching | result
   const [patientId, setPatientId] = useState('');
-  const [specialty, setSpecialty] = useState('clinica_geral');
-  const [amount, setAmount] = useState('120');
+  const [specialty, setSpecialty] = useState('cardiologia');
+  const [amount, setAmount] = useState('140');
   const [mode, setMode] = useState('immediate');
   const [bidData, setBidData] = useState(null);
-  const [doctors, setDoctors] = useState([]);
+  const [bidId, setBidId] = useState(null);
+  const [doctors, setDoctors] = useState({ immediate: [], scheduled: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Carregar patientId do localStorage
+  // Extrair patientId do JWT automaticamente
+  const getPatientIdFromJWT = () => {
+    try {
+      const token = localStorage.getItem('tm_auth_token') || sessionStorage.getItem('tm_auth_token');
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1] || ''));
+      return payload?.sub || null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Carregar patientId (JWT > URL > localStorage > manual)
   useEffect(() => {
+    const jwtId = getPatientIdFromJWT();
     const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('patientId') || localStorage.getItem('patientId') || '';
-    setPatientId(id);
+    const urlId = urlParams.get('patientId');
+    const storageId = localStorage.getItem('patientId');
+    
+    setPatientId(jwtId || urlId || storageId || '');
   }, []);
 
   // Criar bid
   const handleCreateBid = async () => {
-    if (!patientId) {
-      setError('Patient ID é obrigatório');
-      return;
-    }
-
+    const finalPatientId = patientId || 'anon';
+    
     setLoading(true);
     setError(null);
 
     try {
       const amountCents = Math.round(parseFloat(amount) * 100);
-      const result = await PricingClient.createBid(patientId, specialty, amountCents, mode);
+      const result = await pricing.createBid({ 
+        patientId: finalPatientId, 
+        specialty, 
+        amountCents, 
+        mode 
+      });
       
       setBidData(result);
+      const id = result?.bid?.id || result?.id;
+      setBidId(id);
       setStep('searching');
 
       // Buscar médicos disponíveis
-      if (result.bidId || result.id) {
-        const searchResult = await PricingClient.searchDoctors(result.bidId || result.id);
-        setDoctors(searchResult.doctors || []);
+      if (id) {
+        const searchResult = await pricing.searchDoctors(id);
+        setDoctors({
+          immediate: searchResult?.immediate_doctors || [],
+          scheduled: searchResult?.scheduled_doctors || []
+        });
         setStep('result');
       }
     } catch (err) {
@@ -59,21 +82,50 @@ export default function TelemedPricingModels() {
     }
   };
 
+  // Aumentar proposta e buscar novamente
+  const handleIncreaseBid = async (delta = 20) => {
+    if (!bidId) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      const newAmount = parseFloat(amount) + delta;
+      const newAmountCents = Math.round(newAmount * 100);
+      
+      await pricing.increaseBid(bidId, newAmountCents);
+      setAmount(String(newAmount));
+      
+      // Buscar médicos novamente
+      const searchResult = await pricing.searchDoctors(bidId);
+      setDoctors({
+        immediate: searchResult?.immediate_doctors || [],
+        scheduled: searchResult?.scheduled_doctors || []
+      });
+    } catch (err) {
+      setError('Erro ao aumentar proposta: ' + err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Aceitar médico
   const handleAcceptDoctor = async (doctorId) => {
-    if (!bidData || !bidData.bidId) return;
+    if (!bidId) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const result = await PricingClient.acceptDoctor(bidData.bidId, doctorId);
+      const result = await pricing.acceptDoctor(bidId, doctorId);
       alert(`Médico aceito! Status: ${result.status || 'aceito'}`);
       
       // Resetar formulário
       setStep('form');
       setBidData(null);
-      setDoctors([]);
+      setBidId(null);
+      setDoctors({ immediate: [], scheduled: [] });
     } catch (err) {
       setError('Erro ao aceitar médico: ' + err.message);
       console.error(err);
@@ -184,64 +236,133 @@ export default function TelemedPricingModels() {
           {step === 'result' && (
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
-                <h3 className="font-semibold mb-2">📊 Dados do Lance</h3>
-                <pre className="text-xs bg-white p-2 rounded overflow-auto">
-                  {JSON.stringify(bidData, null, 2)}
-                </pre>
+                <h3 className="font-semibold mb-2">📊 Lance Atual</h3>
+                <p className="text-2xl font-bold text-blue-600">R$ {amount}</p>
+                {bidId && <p className="text-xs text-gray-500 mt-1">ID: {bidId}</p>}
               </div>
 
-              <h3 className="font-semibold text-lg mb-3">
-                👨‍⚕️ Médicos Disponíveis ({doctors.length})
-              </h3>
-
-              {doctors.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  Nenhum médico disponível no momento
-                </p>
-              ) : (
-                <div className="grid gap-3">
-                  {doctors.map((doc, idx) => (
-                    <div
-                      key={doc.id || idx}
-                      className="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50"
-                      data-testid={`doctor-card-${idx}`}
-                    >
-                      <div>
-                        <p className="font-semibold">{doc.name || 'Dr(a). Nome'}</p>
-                        <p className="text-sm text-gray-600">
-                          {doc.specialty || specialty} • CRM: {doc.crm || 'N/A'}
-                        </p>
-                        {doc.rating && (
-                          <p className="text-sm text-yellow-600">
-                            ⭐ {doc.rating}/5
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        onClick={() => handleAcceptDoctor(doc.id)}
-                        disabled={loading}
-                        data-testid={`button-accept-${idx}`}
-                        size="sm"
+              {/* Médicos Imediatos */}
+              {doctors.immediate.length > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded p-4">
+                  <h3 className="font-semibold text-lg mb-3 text-green-800">
+                    ⚡ Médicos Imediatos ({doctors.immediate.length})
+                  </h3>
+                  <div className="grid gap-3">
+                    {doctors.immediate.map((doc, idx) => (
+                      <div
+                        key={doc.id || idx}
+                        className="bg-white border rounded-lg p-4 flex items-center justify-between hover:shadow-sm"
+                        data-testid={`doctor-immediate-${idx}`}
                       >
-                        Aceitar
-                      </Button>
-                    </div>
-                  ))}
+                        <div>
+                          <p className="font-semibold">{doc.name || 'Dr(a). Nome'}</p>
+                          <p className="text-sm text-gray-600">
+                            {doc.specialty || specialty} • CRM: {doc.crm || 'N/A'}
+                          </p>
+                          {doc.rating && (
+                            <p className="text-sm text-yellow-600">⭐ {doc.rating}/5</p>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => handleAcceptDoctor(doc.id)}
+                          disabled={loading}
+                          data-testid={`button-accept-immediate-${idx}`}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Aceitar Agora
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setStep('form');
-                  setBidData(null);
-                  setDoctors([]);
-                }}
-                className="w-full mt-4"
-                data-testid="button-new-bid"
-              >
-                Novo Lance
-              </Button>
+              {/* Médicos Agendados */}
+              {doctors.scheduled.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+                  <h3 className="font-semibold text-lg mb-3 text-yellow-800">
+                    📅 Médicos Disponíveis para Agendamento ({doctors.scheduled.length})
+                  </h3>
+                  <div className="grid gap-3">
+                    {doctors.scheduled.map((doc, idx) => (
+                      <div
+                        key={doc.id || idx}
+                        className="bg-white border rounded-lg p-4 flex items-center justify-between hover:shadow-sm"
+                        data-testid={`doctor-scheduled-${idx}`}
+                      >
+                        <div>
+                          <p className="font-semibold">{doc.name || 'Dr(a). Nome'}</p>
+                          <p className="text-sm text-gray-600">
+                            {doc.specialty || specialty} • CRM: {doc.crm || 'N/A'}
+                          </p>
+                          {doc.next_slot && (
+                            <p className="text-sm text-blue-600">
+                              📆 Próximo horário: {doc.next_slot}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => handleAcceptDoctor(doc.id)}
+                          disabled={loading}
+                          data-testid={`button-accept-scheduled-${idx}`}
+                          size="sm"
+                          variant="outline"
+                        >
+                          Agendar
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sem médicos - CTA para aumentar */}
+              {doctors.immediate.length === 0 && doctors.scheduled.length === 0 && (
+                <div className="bg-red-50 border border-red-200 rounded p-6 text-center">
+                  <p className="text-red-800 font-semibold mb-3">
+                    ⚠️ Nenhum médico disponível no valor atual
+                  </p>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Tente aumentar sua proposta para encontrar médicos disponíveis
+                  </p>
+                  <Button
+                    onClick={() => handleIncreaseBid(20)}
+                    disabled={loading}
+                    data-testid="button-increase-bid"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {loading ? 'Aumentando...' : `Aumentar para R$ ${(parseFloat(amount) + 20).toFixed(2)}`}
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStep('form');
+                    setBidData(null);
+                    setBidId(null);
+                    setDoctors({ immediate: [], scheduled: [] });
+                  }}
+                  className="flex-1"
+                  data-testid="button-new-bid"
+                >
+                  Novo Lance
+                </Button>
+                {bidId && doctors.immediate.length === 0 && doctors.scheduled.length > 0 && (
+                  <Button
+                    onClick={() => handleIncreaseBid(10)}
+                    disabled={loading}
+                    variant="outline"
+                    className="flex-1"
+                    data-testid="button-increase-small"
+                  >
+                    + R$ 10
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
