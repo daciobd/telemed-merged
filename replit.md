@@ -204,3 +204,63 @@ Usa proxy real para BidConnect.
 - ⚡ Desenvolvimento sem depender de BidConnect
 - 🧪 Testes sempre passam
 - 🔄 Switch simples: mock ↔ real
+
+### Oct 13, 2025 - Pricing/Auction Integration Completa 💰
+
+**Status:** ✅ Integração frontend-backend 100% funcional
+
+**Implementação:**
+
+*Backend (pricing-client.js):*
+- ✅ Cliente de API robusto com tratamento de erros
+- ✅ Suporte a fallback de URL (`TELEMED_CFG.AUCTION_URL`)
+- ✅ Autenticação via JWT (localStorage/sessionStorage)
+- ✅ Funções: `createBid`, `searchDoctors`, `increaseBid`, `acceptDoctor`
+- ✅ Exports: `pricing` (nova API) + `PricingClient` (compatibilidade)
+
+*Frontend (TelemedPricingModels.jsx):*
+- ✅ Extração automática de `patientId` do JWT
+- ✅ Suporte a médicos imediatos (`immediate_doctors`) e agendados (`scheduled_doctors`)
+- ✅ Funcionalidade de aumentar proposta quando não há médicos
+- ✅ UI separada para médicos imediatos (verde) vs agendados (amarelo)
+- ✅ CTA de aumento quando sem médicos disponíveis
+- ✅ Loading states e error handling
+
+*HTML Demo (auction-bid-demo.html):*
+- ✅ Atualizado para usar estrutura correta: `bid.id` e `immediate_doctors/scheduled_doctors`
+- ✅ Compatível com mock local e BidConnect real
+
+**Fluxo de Integração:**
+```
+1. Create Bid   → POST /api/auction/bids {patientId, specialty, amountCents, mode}
+                  ← {success, bid: {id, ...}}
+
+2. Search       → POST /api/auction/bids/:id/search
+                  ← {success, immediate_doctors: [...], scheduled_doctors: [...]}
+
+3. Increase     → PUT /api/auction/bids/:id/increase {new_value}
+                  ← {success, bidId, new_value}
+
+4. Accept       → POST /api/auction/bids/:id/accept {doctorId}
+                  ← {success, consultation_id, doctor: {...}}
+```
+
+**Smoke Test:** ✅ Todos os endpoints validados via curl (create → search → increase → accept)
+
+**Arquivos Atualizados:**
+- `apps/telemed-deploy-ready/src/services/pricing-client.js` - Cliente API
+- `apps/telemed-deploy-ready/src/components/TelemedPricingModels.jsx` - Componente React
+- `apps/telemed-deploy-ready/auction-bid-demo.html` - Demo HTML
+- `apps/telemed-internal/src/index.js` - Mock corrigido (immediate_doctors/scheduled_doctors)
+
+**Como Testar:**
+```bash
+# Via HTML
+Abrir: http://localhost:5000/auction-bid-demo.html
+
+# Via React Component  
+Importar: <TelemedPricingModels /> em qualquer rota
+
+# Via API
+curl http://localhost:5000/api/auction/health
+```

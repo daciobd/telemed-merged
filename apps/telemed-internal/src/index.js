@@ -265,8 +265,8 @@ if (USE_LOCAL_AUCTION_MOCK) {
   mockRouter.post('/bids/:id/search', (_req, res) => {
     res.json({
       success: true,
-      immediate: [{ id: 'doc_1', name: 'Dr. Roberto', specialty: 'cardiology' }],
-      scheduled: [{ id: 'doc_2', name: 'Dra. Maria', specialty: 'cardiology', nextSlots: ['2025-10-12T20:00:00Z']}],
+      immediate_doctors: [{ id: 'doc_1', name: 'Dr. Roberto', specialty: 'cardiology' }],
+      scheduled_doctors: [{ id: 'doc_2', name: 'Dra. Maria', specialty: 'cardiology', next_slot: '2025-10-13 16:00' }],
       message: 'Mock: médicos encontrados'
     });
   });

@@ -132,10 +132,16 @@
       currentBid = created;
 
       // 2) busca médicos
-      const found = await PricingClient.searchDoctors(created.id);
+      const bidId = created?.bid?.id || created?.id;
+      if (!bidId) { msg.textContent = 'Erro: Bid ID não encontrado'; box.hidden = false; return; }
+      
+      const found = await PricingClient.searchDoctors(bidId);
       log({ step:'searchDoctors', found });
 
-      const docs = Array.isArray(found?.doctors) ? found.doctors : [];
+      const docs = [
+        ...(found?.immediate_doctors || []),
+        ...(found?.scheduled_doctors || [])
+      ];
       if (!docs.length) {
         msg.textContent = 'Nenhum médico disponível neste valor no momento. Tente aumentar a proposta.';
         box.hidden = false;
@@ -169,7 +175,8 @@
         `;
         grid.appendChild(card);
         card.querySelector('button')?.addEventListener('click', async () => {
-          const res = await PricingClient.acceptDoctor(currentBid.id, d.id);
+          const acceptBidId = currentBid?.bid?.id || currentBid?.id;
+          const res = await PricingClient.acceptDoctor(acceptBidId, d.id);
           log({ step:'acceptDoctor', res });
           if (res?.error) return alert('Erro: ' + res.error);
           alert('✅ Consulta criada! (demo)\nID: ' + res.id + '\nMédico: ' + res.physicianId);
@@ -181,21 +188,27 @@
 
     async function aumentarEBuscar() {
       const novo = Math.round((Number(range.value) + 20) * 100);
-      if (!currentBid?.id) {
+      const bidId = currentBid?.bid?.id || currentBid?.id;
+      
+      if (!bidId) {
         range.value = String(Number(range.value) + 20);
         setBidLabel();
         return buscar();
       }
-      const inc = await PricingClient.increaseBid(currentBid.id, novo);
+      
+      const inc = await PricingClient.increaseBid(bidId, novo);
       log({ step:'increaseBid', inc });
       if (inc?.error) return alert('Erro: ' + inc.error);
       range.value = String(Math.round(novo / 100));
       setBidLabel();
-      const found = await PricingClient.searchDoctors(currentBid.id);
+      const found = await PricingClient.searchDoctors(bidId);
       log({ step:'searchDoctors', found });
       // reaproveita render:
       box.hidden = true; grid.innerHTML=''; msg.textContent='';
-      const docs = Array.isArray(found?.doctors) ? found.doctors : [];
+      const docs = [
+        ...(found?.immediate_doctors || []),
+        ...(found?.scheduled_doctors || [])
+      ];
       if (!docs.length) {
         msg.textContent = 'Ainda sem médicos neste valor. Ajuste novamente ou tente mais tarde.';
         box.hidden = false; return;
@@ -216,7 +229,8 @@
           </div></footer>`;
         grid.appendChild(card);
         card.querySelector('button')?.addEventListener('click', async () => {
-          const res = await PricingClient.acceptDoctor(currentBid.id, d.id);
+          const acceptBidId = currentBid?.bid?.id || currentBid?.id;
+          const res = await PricingClient.acceptDoctor(acceptBidId, d.id);
           log({ step:'acceptDoctor', res });
           if (res?.error) return alert('Erro: ' + res.error);
           alert('✅ Consulta criada! (demo)\nID: ' + res.id + '\nMédico: ' + res.physicianId);
