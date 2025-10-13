@@ -226,7 +226,7 @@ const AUCTION_TARGET = USE_LOCAL_AUCTION_MOCK
   : AUCTION_SERVICE_URL;
 
 app.use('/api/auction', (req, res, next) => {
-  console.log(`[AUCTION PROXY] ${req.method} ${req.path} → ${AUCTION_TARGET}`);
+  console.log(`[AUCTION PROXY] ${req.method} ${req.originalUrl} → ${AUCTION_TARGET}`);
   
   // Feature flag: bloqueia tudo se desligado
   if (!FEATURE_PRICING) {
@@ -236,14 +236,14 @@ app.use('/api/auction', (req, res, next) => {
 }, createProxyMiddleware({
   target: AUCTION_TARGET,
   changeOrigin: true,
-  pathRewrite: { '^/api/auction': '/api/auction' }, // Mantém o path completo
+  pathRewrite: { '^/': '/api/auction/' }, // Adiciona prefixo de volta (/bids → /api/auction/bids)
   proxyTimeout: 15000,
   timeout: 20000,
   onProxyReq: (proxyReq, req, _res) => {
-    console.log(`[AUCTION PROXY REQ] ${req.method} ${req.path} → ${proxyReq.host}${proxyReq.path}`);
+    console.log(`[AUCTION PROXY REQ] ${req.method} ${req.originalUrl} → ${proxyReq.host}${proxyReq.path}`);
   },
   onProxyRes: (proxyRes, req, _res) => {
-    console.log(`[AUCTION PROXY RES] ${req.method} ${req.path} ← ${proxyRes.statusCode}`);
+    console.log(`[AUCTION PROXY RES] ${req.method} ${req.originalUrl} ← ${proxyRes.statusCode}`);
   },
   onError: (err, _req, res) => {
     console.error('[Auction Proxy Error]', err.message);
