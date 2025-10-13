@@ -214,122 +214,52 @@ app.get('/config.js', (_req, res) => {
 
 // ===== TelemedMerged: Auction Proxy =====
 
-// ===== MOCK LOCAL DO AUCTION (ligado por flag) =====
+// Proxy reverso para o serviço de auction/leilão
+// Roteamento condicional:
+// - USE_LOCAL_AUCTION_MOCK=true → proxy para mock standalone (localhost:MOCK_PORT)
+// - USE_LOCAL_AUCTION_MOCK=false → proxy para serviço real (AUCTION_URL)
+
 const USE_LOCAL_AUCTION_MOCK = process.env.USE_LOCAL_AUCTION_MOCK === 'true';
+const MOCK_PORT = process.env.MOCK_PORT || 3333;
+const AUCTION_TARGET = USE_LOCAL_AUCTION_MOCK 
+  ? `http://localhost:${MOCK_PORT}`
+  : AUCTION_SERVICE_URL;
 
-if (USE_LOCAL_AUCTION_MOCK) {
-  const mockRouter = express.Router();
-
-  // Log de requisições no mock
-  mockRouter.use((req, _res, next) => {
-    console.log('[MOCK AUCTION]', req.method, req.path);
-    next();
-  });
-
-  // Health
-  mockRouter.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'auction-mock', ts: new Date().toISOString() });
-  });
-
-  // Criar bid
-  mockRouter.post('/bids', express.json(), (req, res) => {
-    const body = req.body || {};
-    // Aceitar os 3 formatos comuns automaticamente
-    const payload = body.bid || body;
-
-    const specialty = payload.specialty || payload.consultationType || payload.consultation_type;
-    const amountCents = payload.amountCents || payload.amount_cents || payload.initialAmount || payload.valueCents || payload.priceCents || Math.round((payload.amount || 0) * 100);
-    const mode = payload.mode || 'immediate';
-
-    if (!specialty || !amountCents) {
-      return res.status(400).json({
-        error: 'validation_error',
-        message: 'Required',
-        expected: ['specialty', 'amountCents|initialAmount|amount|valueCents|priceCents'],
-        received: Object.keys(payload || {})
-      });
-    }
-
-    const bid = {
-      id: 'bid_' + Math.random().toString(36).slice(2, 10),
-      specialty,
-      amountCents: Number(amountCents),
-      mode,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
-    return res.status(201).json({ success: true, bid });
-  });
-
-  // Buscar médicos
-  mockRouter.post('/bids/:id/search', (_req, res) => {
-    res.json({
-      success: true,
-      immediate_doctors: [{ id: 'doc_1', name: 'Dr. Roberto', specialty: 'cardiology' }],
-      scheduled_doctors: [{ id: 'doc_2', name: 'Dra. Maria', specialty: 'cardiology', next_slot: '2025-10-13 16:00' }],
-      message: 'Mock: médicos encontrados'
-    });
-  });
-
-  // Aumentar bid
-  mockRouter.put('/bids/:id/increase', express.json(), (req, res) => {
-    const newValue = req.body?.new_value || req.body?.newValue || req.body?.amountCents || req.body?.amount_cents;
-    if (!newValue) return res.status(400).json({ error: 'validation_error', message: 'new_value Required' });
-    res.json({ success: true, bidId: req.params.id, new_value: Number(newValue) });
-  });
-
-  // Aceitar médico
-  mockRouter.post('/bids/:id/accept', express.json(), (req, res) => {
-    const doctorId = req.body?.doctorId || req.body?.doctor_id || req.body?.doctor?.id;
-    if (!doctorId) return res.status(400).json({ error: 'validation_error', message: 'doctorId Required' });
-    res.json({
-      success: true,
-      consultation_id: 'c_' + Math.random().toString(36).slice(2, 10),
-      is_immediate: true,
-      doctor: { id: doctorId, name: 'Dr. Mock' }
-    });
-  });
-
-  app.use('/api/auction', mockRouter);
-  console.log('➡️  USE_LOCAL_AUCTION_MOCK=TRUE — usando mock local no gateway');
-}
-
-// Proxy reverso para o serviço de leilão (quando mock desligado)
-// SEMPRE reescreve /api/auction para '' porque:
-// - Se target termina com /api → /api/auction/bids vira /api + /bids = /api/bids ✅
-// - Se target termina na raiz → /api/auction/bids vira / + /bids = /bids ✅
 app.use('/api/auction', (req, res, next) => {
-  console.log(`[PROXY] ${req.method} ${req.path} → forwarding to ${AUCTION_SERVICE_URL}`);
+  console.log(`[AUCTION PROXY] ${req.method} ${req.path} → ${AUCTION_TARGET}`);
+  
   // Feature flag: bloqueia tudo se desligado
   if (!FEATURE_PRICING) {
     return res.status(503).json({ error: 'pricing_disabled' });
   }
   next();
 }, createProxyMiddleware({
-  target: AUCTION_SERVICE_URL,
+  target: AUCTION_TARGET,
   changeOrigin: true,
-  pathRewrite: { '^/api/auction': '' },
+  pathRewrite: { '^/api/auction': '/api/auction' }, // Mantém o path completo
   proxyTimeout: 15000,
   timeout: 20000,
   onProxyReq: (proxyReq, req, _res) => {
-    console.log(`[PROXY REQ] ${req.method} ${req.path} → ${proxyReq.host}${proxyReq.path}`);
+    console.log(`[AUCTION PROXY REQ] ${req.method} ${req.path} → ${proxyReq.host}${proxyReq.path}`);
   },
   onProxyRes: (proxyRes, req, _res) => {
-    console.log(`[PROXY RES] ${req.method} ${req.path} ← ${proxyRes.statusCode}`);
+    console.log(`[AUCTION PROXY RES] ${req.method} ${req.path} ← ${proxyRes.statusCode}`);
   },
   onError: (err, _req, res) => {
     console.error('[Auction Proxy Error]', err.message);
     if (!res.headersSent) {
       res.status(502).json({ 
         error: 'auction_service_unavailable', 
-        details: err.message 
+        details: err.message,
+        target: AUCTION_TARGET
       });
     }
   },
   logLevel: 'debug'
 }));
 
-console.log(`💰 Pricing/Auction proxy: /api/auction → ${AUCTION_SERVICE_URL} (sempre com pathRewrite)`);
+console.log(`💰 Auction proxy: /api/auction → ${AUCTION_TARGET}`);
+console.log(`   Mode: ${USE_LOCAL_AUCTION_MOCK ? 'MOCK STANDALONE' : 'REAL SERVICE'}`);
 console.log(`   Feature enabled: ${FEATURE_PRICING}`);
 
 // ===== JSON BODY PARSER (após proxies) =====

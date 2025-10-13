@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Mock Auction Server (standalone)
+  mock:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY mock-auction.js ./
+        EXPOSE 3333
+        CMD ["node", "mock-auction.js"]
+    ports:
+      - "3333:3333"
+    environment:
+      - MOCK_PORT=3333
+      - NODE_ENV=development
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - telemed
+
+  # Main Web Server (gateway)
+  web:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY . .
+        EXPOSE 5000
+        CMD ["node", "apps/telemed-internal/src/index.js"]
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - USE_LOCAL_AUCTION_MOCK=true
+      - MOCK_PORT=3333
+      - FEATURE_PRICING=true
+      - NODE_ENV=development
+      - JWT_SECRET=telemed-secret-key
+    depends_on:
+      mock:
+        condition: service_healthy
+    networks:
+      - telemed
+
+networks:
+  telemed:
+    driver: bridge
