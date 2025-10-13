@@ -55,3 +55,49 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **jsonwebtoken**: Para autenticação JWT no backend.
 -   **http-proxy-middleware**: Para proxy reverso no backend.
 -   **express-rate-limit**: Para controle de taxa de requisições.
+
+## Recent Updates (Oct 13, 2025)
+
+### Migração para Mock Auction Standalone 🚀
+
+**Status:** ✅ Mock standalone implementado e funcional
+
+**Motivação:**
+- Separar mock do gateway para facilitar desenvolvimento independente
+- Telemetria melhorada com console.table
+- Deploy flexível (web + mock como sidecars)
+
+**Arquitetura:**
+```
+mock-auction.js (porta 3333)
+    ↓
+Gateway (porta 5000) → Proxy /api/auction → localhost:3333
+```
+
+**Arquivos Criados:**
+- `mock-auction.js` - Servidor mock standalone com Express
+- `.env.example` (atualizado) - USE_LOCAL_AUCTION_MOCK, MOCK_PORT, AUCTION_URL
+- `nodemon.json` - Hot-reload config
+- `Procfile` - Deploy Heroku/Render (web + mock)
+- `docker-compose.yml` - Orquestração Docker com healthchecks
+- `MOCK_AUCTION_STANDALONE.md` - Documentação completa
+
+**Endpoints:** POST /bids, POST /search, PUT /bids/:id/increase, POST /accept
+
+**Regras de Negócio:**
+- Valor ≥ R$ 180 → 3 imediatos + 6 agendados
+- Valor ≥ R$ 160 → 0 imediatos + 6 agendados
+- Valor < R$ 160 → 0 médicos
+
+**Dependências:** concurrently, cross-env, nodemon, cors
+
+### Health Check Visual do MedicalDesk 💚
+
+**Status:** ✅ Implementado e testado via Playwright
+
+- Indicador visual no header (bolinha verde/vermelha)
+- Polling automático a cada 60s via /medicaldesk/health
+- Tooltip com status detalhado
+- Testado via Playwright E2E
+
+Arquivo: `apps/telemed-deploy-ready/index.html`
