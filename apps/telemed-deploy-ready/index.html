@@ -152,6 +152,32 @@
       --bg:#f6f7fb; --card:#ffffff; --text:#17203b; --muted:#4b5a7d; 
       --accent:#1c7bff; --accent-strong:#0d66e0; --ring:rgba(28,123,255,.25); --ok:#16a34a;
     }
+
+    /* MedicalDesk Health Indicator */
+    .md-health {
+      display: inline-flex; align-items: center; gap: 8px; position: relative; cursor: help;
+    }
+    .md-health-dot {
+      width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .md-health-dot.online { background: var(--ok); color: var(--ok); }
+    .md-health-dot.offline { background: #ef4444; color: #ef4444; }
+    .md-health-dot.checking { background: #f59e0b; color: #f59e0b; animation: pulse 1.5s infinite; }
+    .md-health-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .md-health-tooltip {
+      position: absolute; top: calc(100% + 8px); right: 0; background: var(--card);
+      border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 8px 12px;
+      font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,.2); z-index: 100;
+    }
+    .md-health:hover .md-health-tooltip { opacity: 1; }
   </style>
   <script src="/js/feature-flags.js"></script>
   <script src="/js/audit-logger.js"></script>
@@ -168,7 +194,14 @@
         <div class="logo" aria-hidden="true">Tm</div>
         <strong class="brand-title">TeleMed Consulta</strong>
       </a>
-      <span class="chip" aria-label="Estado do projeto">Programa de Testes</span>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="chip" aria-label="Estado do projeto">Programa de Testes</span>
+        <div class="md-health" data-testid="medicaldesk-health">
+          <span class="md-health-dot checking" id="md-dot"></span>
+          <span class="md-health-label" id="md-label">MD</span>
+          <div class="md-health-tooltip" id="md-tooltip">Verificando...</div>
+        </div>
+      </div>
     </header>
 
     <!-- ⚡ Banner: Demo Prescrição em 90s -->
@@ -505,6 +538,46 @@
     if (savedTheme === 'light') {
       document.documentElement.classList.add('light-mode');
     }
+  </script>
+
+  <!-- MedicalDesk Health Check -->
+  <script>
+  (function() {
+    const dot = document.getElementById('md-dot');
+    const label = document.getElementById('md-label');
+    const tooltip = document.getElementById('md-tooltip');
+    
+    if (!dot || !label || !tooltip) return;
+    
+    async function checkHealth() {
+      try {
+        const response = await fetch('/medicaldesk/health', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          dot.className = 'md-health-dot online';
+          label.textContent = 'MD';
+          tooltip.textContent = `MedicalDesk: ${data.name || 'Online'} ✓`;
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (error) {
+        dot.className = 'md-health-dot offline';
+        label.textContent = 'MD';
+        tooltip.textContent = `MedicalDesk: Offline (${error.message})`;
+      }
+    }
+    
+    // Check immediately
+    checkHealth();
+    
+    // Poll every 60 seconds
+    setInterval(checkHealth, 60000);
+  })();
   </script>
   
   <script src="/assets/js/fix-medico-flow.js"></script>
