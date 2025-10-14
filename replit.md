@@ -119,11 +119,17 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 - **Health Check Automático**: Polling a cada 60s via `/medicaldesk/health`
 
 **Implementação:**
-- Botão abre direto `/public/medical-desk-demo.html?pid=paciente-test&apt={appointmentId}`
-- Solução simplificada sem dependência de JWT/proxy externo
-- Evita tela branca por problemas de roteamento SPA
+- **Proxy Corrigido**: `apps/telemed-internal/src/index.js` (linhas 317-345)
+  - pathRewrite como função: `(path) => path.replace(/^\/medicaldesk/, '/')`
+  - Ordem correta: Proxy → Static → Fallback SPA
+  - onError handler para tratamento de erros
+  - Validação FEATURE_MEDICALDESK + MEDICALDESK_URL
+- **Botão Simplificado**: Abre `/public/medical-desk-demo.html` direto (sem proxy)
+  - Popup 900x700px com query params
+  - Evita tela branca por problemas de roteamento SPA
 
 **Arquivos Modificados:**
+- `apps/telemed-internal/src/index.js` (linhas 317-345: Proxy corrigido)
 - `apps/telemed-deploy-ready/consulta.html` (linhas 79-89: HTML, 734-754: JavaScript)
 
 ### BidConnect - Modelos de Precificação 💰

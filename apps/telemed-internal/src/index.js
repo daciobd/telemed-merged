@@ -312,17 +312,34 @@ app.use((req, _res, next) => {
 });
 
 // Proxy MedicalDesk (se configurado)
-if (process.env.MEDICALDESK_URL) {
-  app.use('/medicaldesk', createProxyMiddleware({
-    target: process.env.MEDICALDESK_URL,
-    changeOrigin: true,
-    pathRewrite: { '^/medicaldesk': '' },
-    logLevel: 'warn',
-    onProxyReq: (proxyReq, req, _res) => {
-      console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${proxyReq.host}${proxyReq.path}`);
-    },
-  }));
-  console.log(`🏥 MedicalDesk proxy: /medicaldesk → ${process.env.MEDICALDESK_URL}`);
+const MD_BASE = process.env.MEDICALDESK_URL;
+const MD_ENABLED = String(process.env.FEATURE_MEDICALDESK || 'false').toLowerCase() === 'true';
+
+if (MD_ENABLED && MD_BASE) {
+  app.use(
+    '/medicaldesk',
+    createProxyMiddleware({
+      target: MD_BASE,
+      changeOrigin: true,
+      // IMPORTANTÍSSIMO: tirar o prefixo /medicaldesk para que:
+      // /medicaldesk/app             -> /app
+      // /medicaldesk/assets/*.js     -> /assets/*.js
+      pathRewrite: (path) => path.replace(/^\/medicaldesk/, '/'),
+      // Cache correto e tipos corretos passam do upstream; não mexer aqui.
+      onProxyReq: (proxyReq, req) => {
+        proxyReq.setHeader('x-forwarded-host', req.get('host') || '');
+        const rewrittenPath = req.path.replace(/^\/medicaldesk/, '/');
+        console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${MD_BASE}${rewrittenPath}`);
+      },
+      onError: (err, req, res) => {
+        console.error('[MedicalDesk proxy error]', err.message);
+        res.writeHead(502).end('Bad gateway (MedicalDesk)');
+      },
+    })
+  );
+  console.log(`🏥 MedicalDesk proxy: /medicaldesk → ${MD_BASE} (feature enabled: ${MD_ENABLED})`);
+} else {
+  console.log(`🏥 MedicalDesk proxy: DISABLED (enabled=${MD_ENABLED}, url=${!!MD_BASE})`);
 }
 
 // ===== SERVE FRONTEND ESTÁTICO =====
