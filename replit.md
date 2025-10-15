@@ -104,7 +104,7 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 
 ### MedicalDesk na Página de Consulta 🏥
 
-**Status:** ✅ Implementado com selo de status + botão de lançamento
+**Status:** ✅ Implementado com sessão real via proxy
 
 **Funcionalidades:**
 - **Selo de Status MDA**: Indicador visual com 3 estados
@@ -112,10 +112,10 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - 🟡 "MDA: Lento ⚠️" (400-1200ms)
   - 🔴 "MDA: Offline ❌" (indisponível)
 - **Botão "Regerar sessão (abrir)"**: 
-  - Abre página demo local `/public/medical-desk-demo.html` diretamente
-  - Popup 900x700px com MedicalDesk Advanced
-  - Passa ID do paciente e consulta via query params
-  - **Sem proxy, sem problemas de roteamento** ✅
+  - Cria sessão JWT via `/api/medicaldesk/session`
+  - Abre MedicalDesk na **raiz do SPA**: `/medicaldesk/?token=...`
+  - Popup 900x700px com MedicalDesk Advanced proxeado
+  - Token expira em 15min (renovável)
 - **Health Check Automático**: Polling a cada 60s via `/medicaldesk/health`
 
 **Implementação:**
@@ -124,13 +124,17 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - Ordem correta: Proxy → Static → Fallback SPA
   - onError handler para tratamento de erros
   - Validação FEATURE_MEDICALDESK + MEDICALDESK_URL
-- **Botão Simplificado**: Abre `/public/medical-desk-demo.html` direto (sem proxy)
-  - Popup 900x700px com query params
-  - Evita tela branca por problemas de roteamento SPA
+- **LaunchUrl Corrigido**: `/medicaldesk/?token=...` (linha 1011)
+  - **ANTES:** `/medicaldesk/app?token=...` (quebrava React Router)
+  - **AGORA:** `/medicaldesk/?token=...` (raiz do SPA, compatível com base: '/medicaldesk/')
+- **Botão com Sessão Real**: `apps/telemed-deploy-ready/consulta.html` (linhas 734-773)
+  - POST `/api/medicaldesk/session` com patientId + doctorId
+  - Abre launchUrl retornado (JWT válido por 15min)
+  - Error handling robusto
 
 **Arquivos Modificados:**
-- `apps/telemed-internal/src/index.js` (linhas 317-345: Proxy corrigido)
-- `apps/telemed-deploy-ready/consulta.html` (linhas 79-89: HTML, 734-754: JavaScript)
+- `apps/telemed-internal/src/index.js` (linhas 317-345: Proxy, linha 1011: LaunchUrl)
+- `apps/telemed-deploy-ready/consulta.html` (linhas 79-89: HTML, 734-773: JavaScript)
 
 ### BidConnect - Modelos de Precificação 💰
 

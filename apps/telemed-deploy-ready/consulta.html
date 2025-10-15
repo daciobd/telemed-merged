@@ -728,17 +728,36 @@
     }
   }
 
-  // --- abre MedicalDesk (página demo local)
+  // --- abre MedicalDesk (sessão real via proxy)
   async function openMDA(){
     $open.disabled = true;
     const old = $open.textContent;
-    $open.textContent = 'Abrindo MDA…';
+    $open.textContent = 'Criando sessão…';
 
     try{
-      // Abre página demo local do MedicalDesk diretamente
+      // Cria sessão MedicalDesk via endpoint real
       const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-DEMO';
-      const demoUrl = `/public/medical-desk-demo.html?pid=paciente-test&apt=${appointmentId}`;
-      window.open(demoUrl, '_blank', 'noopener,width=900,height=700');
+      const patientId = 'paciente-test'; // TODO: pegar ID real do paciente
+      const doctorId = 'medico-demo';    // TODO: pegar ID real do médico logado
+      
+      const response = await fetch('/api/medicaldesk/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId, doctorId })
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.ok || !data.launchUrl) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      // Abre MedicalDesk na raiz do SPA (não mais /app)
+      window.open(data.launchUrl, '_blank', 'noopener,width=900,height=700');
 
       // atualiza badge depois de abrir
       setTimeout(() => checkHealth(), 500);
