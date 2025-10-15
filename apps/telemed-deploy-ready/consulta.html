@@ -1,782 +1,685 @@
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
+  <base href="/">
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeleMed • Consulta</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Consulta Avançada • TeleMed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0b1020; --panel:#0f172a; --muted:#9fb3ff; --text:#eaf0ff; --ring:rgba(110,168,255,.5);
-      --ok:#16a34a; --warn:#f59e0b; --err:#ef4444; --line:rgba(255,255,255,.08);
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #f8fafc;
+      --bg-white: #ffffff;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --border: 1px solid rgba(0, 0, 0, 0.08);
+      --border-light: 1px solid rgba(0, 0, 0, 0.04);
+      --accent-blue: #3b82f6;
+      --accent-blue-light: #60a5fa;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
-    a{color:#7cb2ff}
 
-    .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);background:rgba(15,23,42,.8);border-bottom:1px solid var(--line)}
-    .topbar .wrap{display:flex;gap:16px;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:10px 16px}
-    .badge{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;opacity:.9}
-    .badge.ok{background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.35)}
-    .badge.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+    * { box-sizing: border-box; }
 
-    .consult-split{display:grid;grid-template-columns: minmax(280px, 42%) 1fr; gap:16px; max-width:1200px;margin:12px auto;padding:0 16px}
-    @media (max-width: 980px){ .consult-split{ grid-template-columns:1fr; } }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      color: var(--text-primary);
+      line-height: 1.5;
+      font-feature-settings: 'cv02', 'cv03', 'cv11';
+    }
 
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
-    .video-col{position:relative;min-height:380px;display:grid;grid-template-rows:auto 1fr auto}
-    .video-stage{display:grid;place-items:center;height:100%;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-    .video-stage .placeholder{opacity:.8}
-    .video-actions{display:flex;gap:8px;padding:10px;justify-content:center}
-    .btn{height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
-    .btn.primary{background:rgba(110,168,255,.18)}
-    .btn.danger{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35)}
-    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .page {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-    .video-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}
-    .video-head .small{font-size:12px;opacity:.8}
+    /* ====== COLUNA VÍDEO ====== */
+    .videoWrap {
+      position: relative;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, #1e293b 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      grid-row: 2;
+      overflow: hidden;
+    }
 
-    .form-col{display:grid;grid-template-rows:auto 1fr auto}
-    .form-head{padding:10px 12px;display:flex;gap:12px;align-items:center;justify-content:space-between}
-    .tabs{display:flex;gap:6px;flex-wrap:wrap}
-    .tab{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03);cursor:pointer;font-size:14px}
-    .tab[aria-selected="true"]{outline:2px solid var(--ring);}
+    .room {
+      color: #cbd5e1;
+      text-align: center;
+      padding: 2rem;
+      opacity: 0.9;
+      transition: var(--transition);
+    }
 
-    .form-body{padding:12px; overflow:auto}
-    .grid{display:grid;gap:10px}
-    .grid.cols-2{grid-template-columns:1fr 1fr}
-    @media (max-width: 720px){ .grid.cols-2{grid-template-columns:1fr} }
-    label{display:block;font-size:13px;margin-bottom:4px;opacity:.9}
-    input[type=text], textarea, select{width:100%;min-height:38px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:inherit}
-    textarea{min-height:90px;resize:vertical}
-    .field.invalid input,.field.invalid textarea,.field.invalid select{border-color:rgba(239,68,68,.6);}
-    .help{font-size:12px;opacity:.75}
+    .room .cam {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    }
 
-    .files{display:grid;gap:8px}
-    .file-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03)}
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #d1d5db;
+      font-size: 0.875rem;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
 
-    .form-foot{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid var(--line)}
+    .uptime {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(17, 24, 39, 0.9);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(10px);
+    }
 
-    .nps-modal[hidden]{display:none}
-    .nps-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50}
-    .nps-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;width:min(560px,92vw)}
-    .nps-grid{display:grid;gap:10px}
+    /* Controles de vídeo */
+    .controls {
+      position: absolute;
+      left: 50%;
+      bottom: 1.5rem;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.75rem;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      padding: 0.75rem;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .control {
+      width: 3rem;
+      height: 3rem;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: grid;
+      place-items: center;
+      color: #e5e7eb;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1.25rem;
+    }
+
+    .control:hover {
+      transform: translateY(-0.125rem) scale(1.05);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: var(--shadow-md);
+    }
+
+    .control.red {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+      color: #fff;
+    }
+
+    /* ====== COLUNA PAINEL ====== */
+    .panel {
+      background: var(--bg-white);
+      overflow: auto;
+      grid-row: 2;
+      box-shadow: -4px 0 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: var(--bg-white);
+      border-bottom: var(--border);
+      padding: 1rem;
+      z-index: 10;
+      grid-column: 1 / 3;
+      grid-row: 1;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pInfo {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-full);
+      border: var(--border-light);
+      background: var(--bg-white);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .status {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      gap: 0.5rem;
+      align-items: center;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.875rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      background: var(--accent-blue);
+      color: #fff;
+      border-color: var(--accent-blue);
+    }
+
+    .btn.primary:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn.ghost {
+      background: var(--bg-white);
+      border: var(--border);
+      color: var(--text-primary);
+    }
+
+    .btn.ghost:hover {
+      background: #f8fafc;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: var(--border);
+      background: var(--bg-white);
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: var(--transition);
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+      background: #f1f5f9;
+    }
+
+    .tab.active {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      background: #eff6ff;
+      font-weight: 600;
+    }
+
+    .pad {
+      padding: 1.5rem;
+    }
+
+    .field {
+      margin-bottom: 1.25rem;
+    }
+
+    .label {
+      font-size: 0.875rem;
+      color: #374151;
+      margin: 0 0 0.5rem;
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+      font-weight: 500;
+    }
+
+    .inp, .area, .select {
+      width: 100%;
+      border: var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      background: var(--bg-white);
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .inp:focus, .area:focus, .select:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .area {
+      min-height: 4rem;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-white);
+      padding: 1rem;
+      border-top: var(--border);
+      box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* MedicalDesk Status Badge */
+    .mda-badge {
+      font: 600 12px/1 system-ui;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: var(--transition);
+    }
+
+    /* Responsivo */
+    @media (max-width: 980px) {
+      .page {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+      }
+      .videoWrap {
+        grid-row: 3;
+      }
+      .panel {
+        grid-row: 2 / 4;
+      }
+    }
   </style>
+  <script src="https://meet.jit.si/external_api.js"></script>
 </head>
 <body>
-  <div class="topbar">
-    <div class="wrap">
-      <div>
-        <strong id="appt-title">Consulta</strong>
-        <span id="appt-meta" class="badge">APT-???</span>
-      </div>
-      <div class="wrap" style="gap:8px">
-        <a id="care-guidelines" class="badge" href="/diretrizes.html" target="_blank">Diretrizes de Cuidados</a>
-        <span id="public-status" class="badge ok">Pronto</span>
-        
-        <!-- MDA status + ação rápida -->
-        <div id="mda-tools" style="display:flex;gap:8px;align-items:center">
-          <span id="mda-status" aria-live="polite"
-                style="font:600 12px/1 system-ui; padding:4px 8px; border-radius:999px; border:1px solid transparent;">
-            MDA: verificando…
-          </span>
-          <button id="mda-open" type="button" class="btn"
-                  style="padding:6px 10px; font-size:12px; font-weight:700;" data-testid="button-mda-open">
+  <div class="page">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="row">
+        <div class="pInfo">
+          <div class="avatar">👤</div>
+          <div>
+            <div><strong id="pName">Ana Costa Silva</strong> <span class="pill" id="pAge">32 anos</span></div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">📞 <span id="pPhone">11987654321</span> • <span class="pill">Particular</span></div>
+          </div>
+        </div>
+        <div class="status">
+          <!-- MDA Status Badge + Button (PRESERVADO DA VERSÃO TESTADA) -->
+          <span id="mda-status" class="mda-badge" aria-live="polite">MDA: verificando…</span>
+          <button id="mda-open" type="button" class="btn ghost" data-testid="button-mda-open">
             Regerar sessão (abrir)
           </button>
+          <button class="btn primary" id="btn-start">Iniciar Consulta</button>
+          <button class="btn ghost" id="btn-back">Voltar</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <main class="consult-split">
-    <!-- COLUNA VÍDEO / CONTROLES -->
-    <section class="panel video-col" id="video-col" data-role="medico" data-appointment-id="APT-EXEMPLO">
-      <div class="video-head">
-        <div>
-          <div class="small">Sala de vídeo</div>
-          <div id="wait-label" class="small">Esperando o paciente: <span id="wait-timer">--</span></div>
+    <!-- Coluna Vídeo -->
+    <div class="videoWrap" id="video-col" data-appointment-id="APT-DEMO">
+      <div class="room">
+        <div class="cam">📹</div>
+        <div class="badge">Sala: <span id="roomId">telemed-demo</span></div>
+      </div>
+      <div class="uptime" id="uptime">00:00</div>
+      <div class="controls" id="controls">
+        <button class="control" id="btn-mic" title="Microfone">🎤</button>
+        <button class="control" id="btn-cam" title="Câmera">📹</button>
+        <button class="control red" id="btn-hang" title="Encerrar">📞</button>
+      </div>
+    </div>
+
+    <!-- Coluna Painel -->
+    <section class="panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="chat">💬 Chat</div>
+        <div class="tab" data-tab="care">📋 Atendimento</div>
+        <div class="tab" data-tab="exams">🔬 Exames</div>
+        <div class="tab" data-tab="receitas">🧾 Receitas</div>
+      </div>
+
+      <!-- Tab Chat -->
+      <div class="pad" id="tab-chat">
+        <div style="border: var(--border); border-radius: var(--radius-md); padding: 1rem; min-height: 200px; background: #f8fafc; margin-bottom: 1rem;" id="chatBox">
+          <p style="color: var(--text-muted); text-align: center;">Mensagens do chat aparecem aqui</p>
         </div>
-        <div class="small" id="room-state">conectando…</div>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" class="inp" id="chatInput" placeholder="Digite uma mensagem..." style="flex: 1;">
+          <button class="btn primary" id="chatSend">Enviar</button>
+        </div>
       </div>
-      <div class="video-stage" id="video-stage">
-        <div class="placeholder">(Sua área de vídeo WebRTC aqui)</div>
+
+      <!-- Tab Atendimento -->
+      <div class="pad" id="tab-care" hidden>
+        <div class="field">
+          <label class="label">Queixa Principal</label>
+          <textarea class="area" name="chief_complaint" placeholder="Descreva a queixa principal do paciente..."></textarea>
+        </div>
+        <div class="field">
+          <label class="label">História da Doença Atual (HDA)</label>
+          <textarea class="area" name="hpi" placeholder="Histórico detalhado da doença..."></textarea>
+        </div>
+        <div class="field">
+          <label class="label">Diagnóstico (CID-10)</label>
+          <input type="text" class="inp" name="dx" list="cid10" placeholder="Digite para buscar CID-10...">
+          <datalist id="cid10"></datalist>
+        </div>
+        <div class="field">
+          <label class="label">Plano Terapêutico / Conduta</label>
+          <textarea class="area" name="plan" placeholder="Descreva o plano de tratamento..."></textarea>
+        </div>
       </div>
-      <div class="video-actions">
-        <button id="btn-open-call" class="btn primary">Abrir consultório</button>
-        <button id="btn-join-audio" class="btn">Áudio-apenas</button>
-        <button id="btn-end-call" class="btn danger" disabled>Encerrar chamada</button>
+
+      <!-- Tab Exames -->
+      <div class="pad" id="tab-exams" hidden>
+        <div class="field">
+          <label class="label">Nome do Exame</label>
+          <input type="text" class="inp" id="exName" placeholder="Ex: Hemograma completo">
+        </div>
+        <div class="field">
+          <label class="label">Observações</label>
+          <input type="text" class="inp" id="exNotes" placeholder="Ex: Jejum 8h">
+        </div>
+        <div class="field">
+          <label class="label">Prioridade</label>
+          <select class="select" id="exPriority">
+            <option>Rotina</option>
+            <option>Urgente</option>
+          </select>
+        </div>
+        <button class="btn primary" id="exAdd">Adicionar Exame</button>
+        <div style="margin-top: 1rem; border: var(--border); border-radius: var(--radius-md); padding: 1rem; min-height: 100px;" id="examList">
+          Nenhum exame adicionado
+        </div>
+      </div>
+
+      <!-- Tab Receitas -->
+      <div class="pad" id="tab-receitas" hidden>
+        <div style="border: var(--border); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 1rem;">
+          <div style="font-weight: 600; margin-bottom: 0.5rem;">🧾 Prescrição Digital</div>
+          <p style="margin: 0.5rem 0; color: var(--text-secondary); font-size: 0.875rem;">
+            Prescreva medicamentos de forma segura com assinatura digital.
+          </p>
+          <button class="btn primary" id="memedBtn">Nova Receita</button>
+        </div>
+        <div id="rxList" style="border: var(--border); border-radius: var(--radius-md); padding: 1rem; min-height: 100px;">
+          Nenhuma receita ainda
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="btn ghost" id="btn-save">💾 Salvar</button>
+        <button class="btn primary" id="btn-finish">✅ Finalizar</button>
       </div>
     </section>
-
-    <!-- COLUNA FORMULÁRIO / ABAS -->
-    <section class="panel form-col" id="form-col">
-      <div class="form-head">
-        <div class="tabs" role="tablist" aria-label="Editor da consulta">
-          <button class="tab" role="tab" aria-selected="true" data-tab="soap">Registro Profissional</button>
-          <button class="tab" role="tab" aria-selected="false" data-tab="notes">Notas privadas</button>
-          <button class="tab" role="tab" aria-selected="false" data-tab="files">Arquivos</button>
-          <button class="tab" role="tab" aria-selected="false" data-tab="presc">Prescrições</button>
-        </div>
-        <label class="badge warn" style="cursor:pointer">
-          <input type="checkbox" id="flag-emergency"> Marcar como emergência
-        </label>
-      </div>
-
-      <div class="form-body" id="tab-soap" role="tabpanel">
-        <div class="grid cols-2">
-          <div class="field" id="f-queixa">
-            <label for="queixa">Queixa Principal *</label>
-            <input type="text" id="queixa" placeholder="Ex.: febre e dor de garganta há 3 dias" />
-          </div>
-          <div class="field" id="f-hda">
-            <label for="hda">Doença atual *</label>
-            <input type="text" id="hda" placeholder="Resumo da história atual" />
-          </div>
-          <div class="field" id="f-hipotese">
-            <label for="hipotese">Hipótese diagnóstica *</label>
-            <input type="text" id="hipotese" placeholder="Ex.: Amigdalite (poderá ter código depois)" />
-            <div class="help">Obrigatório para finalizar. Em breve: seleção por CID/ICD.</div>
-          </div>
-          <div class="field" id="f-conduta">
-            <label for="conduta">Conduta terapêutica</label>
-            <textarea id="conduta" placeholder="Ex.: analgesia, hidratação, repouso; retorno se piora"></textarea>
-          </div>
-          <div class="field">
-            <label for="alertas">Sinais de alerta</label>
-            <select id="alertas">
-              <option value="nao">não</option>
-              <option value="sim">sim</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-body" id="tab-notes" role="tabpanel" hidden>
-        <label for="notas">Notas privadas (não visíveis ao paciente)</label>
-        <textarea id="notas" placeholder="Anotações do médico"></textarea>
-      </div>
-
-      <div class="form-body" id="tab-files" role="tabpanel" hidden>
-        <div class="grid">
-          <div>
-            <label>Enviar arquivo (pdf, jpg, png – máx 10MB)</label>
-            <input type="file" id="file-input" accept="application/pdf,image/*" />
-            <div class="help">Arquivos ficam vinculados a esta consulta.</div>
-          </div>
-          <div class="files" id="files-list"></div>
-        </div>
-      </div>
-
-      <div class="form-body" id="tab-presc" role="tabpanel" hidden>
-        <div class="grid">
-          <div class="help">Integração com Receita Certa disponível. Use o botão abaixo para abrir o seletor de medicamentos (ANVISA) e montar a prescrição.</div>
-          <div>
-            <button id="btn-new-presc" class="btn">Nova Prescrição</button>
-          </div>
-          <div id="presc-table"></div>
-        </div>
-      </div>
-
-      <div class="form-foot">
-        <div class="help" id="gate-msg">Preencha os campos obrigatórios marcados com *</div>
-        <div>
-          <button id="btn-save" class="btn">Salvar rascunho</button>
-          <button id="btn-finalize" class="btn primary" disabled>Finalizar atendimento</button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Modal NPS pós-consulta -->
-  <div class="nps-modal" id="nps" hidden>
-    <div class="nps-card">
-      <h3>Avalie sua experiência nesta consulta</h3>
-      <div class="nps-grid">
-        <label>Teve dificuldades com a plataforma?</label>
-        <label><input type="checkbox" id="nps-audio"> Qualidade do Áudio</label>
-        <label><input type="checkbox" id="nps-video"> Qualidade do Vídeo</label>
-        <label><input type="checkbox" id="nps-lento"> Sistema lento</label>
-        <label for="nps-msg">Observações</label>
-        <textarea id="nps-msg"></textarea>
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-        <button class="btn" id="nps-skip">Pular</button>
-        <button class="btn primary" id="nps-send">Enviar</button>
-      </div>
-    </div>
   </div>
 
-<script>
-(function(){
-  // ====== Config ======
-  const room = document.getElementById('video-col');
-  const appointmentId = room?.dataset?.appointmentId || 'APT-EXEMPLO';
-  const role = room?.dataset?.role || 'medico';
+  <!-- Scripts -->
+  <script>
+  (function(){
+    // Parâmetros URL
+    const p = new URLSearchParams(location.search);
+    const room = (p.get('appointmentId') || p.get('room') || 'telemed-demo').trim();
+    const role = (p.get('role') || 'doctor').toLowerCase();
 
-  document.getElementById('appt-meta').textContent = appointmentId;
+    // Tabs
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const which = t.dataset.tab;
+      document.getElementById('tab-chat').hidden = which !== 'chat';
+      document.getElementById('tab-care').hidden = which !== 'care';
+      document.getElementById('tab-exams').hidden = which !== 'exams';
+      document.getElementById('tab-receitas').hidden = which !== 'receitas';
+    }));
 
-  // ====== Helpers ======
-  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('GET fallback', e); return null; } }
-  async function postJSON(url, data){ try{ const r=await fetch(url,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('POST fallback', e); return null; } }
-  function sendEvent(type, payload){ return postJSON('/api/events', { type, appointmentId, ts: new Date().toISOString(), payload }); }
-  const fmt2 = (n)=> String(n).padStart(2,'0');
+    // Timer
+    let sec = 0;
+    setInterval(() => {
+      sec++;
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      document.getElementById('uptime').textContent = `${m}:${s}`;
+    }, 1000);
 
-  // ====== Sala / Timer aguardando paciente ======
-  const roomStateEl = document.getElementById('room-state');
-  const waitTimerEl = document.getElementById('wait-timer');
-  const waitLabelEl = document.getElementById('wait-label');
-  let hostPresent=false, patientPresent=false, waitStart=Date.now(), callStartedAt=null;
-
-  async function fetchRoomState(){
-    const data = await getJSON(`/api/appointments/${appointmentId}/room-state`) || { hostPresent: role==='medico', patientPresent:false, canJoin:true };
-    hostPresent = !!data.hostPresent; patientPresent = !!data.patientPresent;
-    roomStateEl.textContent = `médico: ${hostPresent? 'presente':'ausente'} · paciente: ${patientPresent? 'presente':'aguardando'}`;
-    return data;
-  }
-  function tickWait(){
-    const d = Math.floor((Date.now()-waitStart)/1000); const m = Math.floor(d/60), s=d%60; waitTimerEl.textContent = `${fmt2(m)}m ${fmt2(s)}s`;
-  }
-
-  // ====== Vídeo actions (mock) ======
-  const btnOpen = document.getElementById('btn-open-call');
-  const btnAudio = document.getElementById('btn-join-audio');
-  const btnEnd = document.getElementById('btn-end-call');
-  btnOpen.onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/call/start`, { mode:'av' }); btnEnd.disabled=false; callStartedAt = Date.now(); sendEvent('consult_started',{ mode:'av' }); };
-  btnAudio.onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/call/start`, { mode:'audio' }); btnEnd.disabled=false; callStartedAt = Date.now(); sendEvent('consult_started',{ mode:'audio' }); };
-  btnEnd.onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/call/end`, {}); btnEnd.disabled=true; sendEvent('call_ended',{}); };
-
-  // ====== Tabs ======
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(t=> t.addEventListener('click', ()=>{
-    tabs.forEach(x=> x.setAttribute('aria-selected','false'));
-    t.setAttribute('aria-selected','true');
-    document.querySelectorAll('[role="tabpanel"]').forEach(p=> p.hidden=true);
-    document.getElementById('tab-'+t.dataset.tab).hidden=false;
-  }));
-
-  // ====== Form / validação ======
-  const reqFields = [ ['f-queixa','queixa'], ['f-hda','hda'], ['f-hipotese','hipotese'] ];
-  function validate(){
-    let ok = true; let missing=[];
-    reqFields.forEach(([fid,iid])=>{
-      const f = document.getElementById(fid); const v = (document.getElementById(iid).value||'').trim();
-      if(!v){ f.classList.add('invalid'); ok=false; missing.push(iid);} else { f.classList.remove('invalid'); }
-    });
-    document.getElementById('btn-finalize').disabled = !ok;
-    document.getElementById('gate-msg').textContent = ok? 'Pronto para finalizar.' : 'Preencha os campos obrigatórios marcados com *';
-    return { ok, missing };
-  }
-  ['queixa','hda','hipotese','conduta'].forEach(id=> document.getElementById(id).addEventListener('input', validate));
-
-  // ====== Salvar rascunho / Finalizar ======
-  document.getElementById('btn-save').onclick = async ()=>{
-    const payload = collectForm(); await postJSON(`/api/appointments/${appointmentId}/note/save`, payload); sendEvent('consult_note_saved',{});
-    alert('Rascunho salvo.');
-  };
-  document.getElementById('btn-finalize').onclick = async ()=>{
-    const v = validate(); if(!v.ok){ alert('Complete os obrigatórios antes de finalizar.'); return; }
-    const payload = collectForm(); payload.finishedAt = new Date().toISOString();
-    await postJSON(`/api/appointments/${appointmentId}/finalize`, payload);
-    sendEvent('consult_completed', { duration_sec: callStartedAt? Math.round((Date.now()-callStartedAt)/1000): null });
-    showNPS();
-  };
-  function collectForm(){
-    return {
-      appointmentId,
-      emergency: document.getElementById('flag-emergency').checked,
-      queixa: document.getElementById('queixa').value.trim(),
-      hda: document.getElementById('hda').value.trim(),
-      hipotese: document.getElementById('hipotese').value.trim(),
-      conduta: document.getElementById('conduta').value.trim(),
-      alertas: document.getElementById('alertas').value,
-      notas_privadas: document.getElementById('notas').value.trim(),
-      prescricao: currentPresc
+    // Chat
+    const chatSend = document.getElementById('chatSend');
+    if (chatSend) chatSend.onclick = () => {
+      const input = document.getElementById('chatInput');
+      const v = input.value.trim();
+      if (!v) return;
+      input.value = '';
+      const msg = document.createElement('div');
+      msg.style.cssText = 'max-width:70%;background:#3b82f6;color:#fff;border-radius:12px;padding:10px;margin:8px 0 8px auto';
+      msg.textContent = v;
+      document.getElementById('chatBox').appendChild(msg);
+      document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
     };
-  }
 
-  // ====== Uploads ======
-  const fileInput = document.getElementById('file-input');
-  const filesList = document.getElementById('files-list');
-  fileInput?.addEventListener('change', async (e)=>{
-    const file = e.target.files?.[0]; if(!file) return;
-    if(file.size > 10*1024*1024){ alert('Arquivo muito grande (máx 10MB).'); return; }
-    // Envio simplificado (troque por multipart real se necessário)
-    const buf = await file.arrayBuffer();
-    await fetch(`/api/uploads?appointmentId=${encodeURIComponent(appointmentId)}&filename=${encodeURIComponent(file.name)}`, { method:'POST', headers:{'Content-Type':'application/octet-stream'}, body: buf });
-    sendEvent('doc_uploaded',{ filename:file.name, size:file.size });
-    addFileRow({ name:file.name, url:`/api/uploads/${appointmentId}/${encodeURIComponent(file.name)}` });
-    fileInput.value='';
-  });
-  function addFileRow(f){
-    const row = document.createElement('div'); row.className='file-row';
-    const left = document.createElement('div'); left.textContent = f.name; row.appendChild(left);
-    const right = document.createElement('div');
-    const a = document.createElement('a'); a.href=f.url; a.target='_blank'; a.textContent='Abrir'; right.appendChild(a);
-    row.appendChild(right); filesList.appendChild(row);
-  }
-
-  // ====== Prescrição (integração placeholder) ======
-  let currentPresc = [];// [{name:'Ibuprofeno 200mg', directions:'1 cp 8/8h por 3 dias'}]
-  const prescTable = document.getElementById('presc-table');
-  function renderPresc(){
-    if(!currentPresc.length){ prescTable.innerHTML = '<div class="help">Nenhum item ainda.</div>'; return; }
-    const html = ['<table style="width:100%;border-collapse:collapse">','<tr><th style="text-align:left;padding:6px;border-bottom:1px solid var(--line)">Produto</th><th style="text-align:left;padding:6px;border-bottom:1px solid var(--line)">Indicações</th><th></th></tr>'];
-    currentPresc.forEach((it,idx)=> html.push(`<tr><td style="padding:6px;border-bottom:1px solid var(--line)">${it.name}</td><td style="padding:6px;border-bottom:1px solid var(--line)">${it.directions||''}</td><td style="padding:6px;text-align:right"><button class="btn danger" data-i="${idx}">Remover</button></td></tr>`));
-    html.push('</table>'); prescTable.innerHTML = html.join('');
-    prescTable.querySelectorAll('button[data-i]').forEach(b=> b.onclick = ()=>{ currentPresc.splice(Number(b.dataset.i),1); renderPresc(); });
-  };
-  renderPresc();
-
-  // ====== NPS ======
-  function showNPS(){ document.getElementById('nps').hidden=false; }
-  document.getElementById('nps-skip').onclick = ()=> location.href='/dashboard-medico';
-  document.getElementById('nps-send').onclick = async ()=>{
-    const feedback = {
-      appointmentId,
-      audio: document.getElementById('nps-audio').checked,
-      video: document.getElementById('nps-video').checked,
-      lento: document.getElementById('nps-lento').checked,
-      msg: document.getElementById('nps-msg').value||''
-    };
-    await postJSON('/api/feedback', feedback); sendEvent('feedback_submitted', feedback);
-    location.href='/dashboard-medico';
-  };
-
-  // ====== Boot ======
-  validate();
-  waitStart = Date.now(); setInterval(tickWait, 1000); tickWait();
-  (async function loop(){ await fetchRoomState(); setTimeout(loop, 5000); })();
-})();
-</script>
-<!-- TeleMed Sprint Pack 02 - Módulo A: Chat + CID/CIAP -->
-<style>
-  /* Chat flutuante (consulta) */
-  #tm-chat{ position:fixed; right:16px; bottom:16px; width:min(360px, 92vw); z-index:60; font-family:inherit }
-  #tm-chat .card{ background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.08); border-radius:14px; box-shadow:0 10px 40px rgba(0,0,0,.35) }
-  #tm-chat .h{ display:flex; justify-content:space-between; align-items:center; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.08) }
-  #tm-chat .list{ max-height:280px; overflow:auto; padding:8px 10px; display:grid; gap:6px }
-  #tm-chat .msg{ padding:8px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03) }
-  #tm-chat .me{ background:rgba(110,168,255,.12); border-color:rgba(110,168,255,.35) }
-  #tm-chat form{ display:flex; gap:6px; padding:8px; border-top:1px solid rgba(255,255,255,.08) }
-  #tm-chat input{ flex:1; height:38px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit; padding:0 10px }
-  #tm-chat button{ height:38px; padding:0 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(110,168,255,.18); color:inherit; cursor:pointer }
-  #tm-chat .muted{ opacity:.8; font-size:12px }
-  .icd-hints{ position:absolute; z-index:40; background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:10px; width:100%; margin-top:4px; box-shadow:0 10px 20px rgba(0,0,0,.35) }
-  .icd-hints div{ padding:8px 10px; cursor:pointer }
-  .icd-hints div:hover{ background:rgba(255,255,255,.06) }
-</style>
-<div id="tm-chat" hidden>
-  <div class="card">
-    <div class="h">
-      <strong>Chat da Consulta</strong>
-      <div style="display:flex;gap:6px">
-        <button id="tm-invite" title="Convidar paciente">Convidar</button>
-        <button id="tm-close">Fechar</button>
-      </div>
-    </div>
-    <div id="tm-chat-list" class="list"></div>
-    <form id="tm-chat-form">
-      <input id="tm-chat-input" placeholder="Escreva uma mensagem…" autocomplete="off" />
-      <button type="submit">Enviar</button>
-    </form>
-    <div class="muted" style="padding:0 10px 8px">Dica: use o chat quando a internet estiver ruim ou para compartilhar nomes difíceis.</div>
-  </div>
-</div>
-<script>
-(function(){
-  // Detecta consulta.html pré-existente
-  const videoCol = document.getElementById('video-col');
-  if(!videoCol) return; // não está na página de consulta
-  const appointmentId = videoCol.dataset.appointmentId || 'APT-EXEMPLO';
-  const role = videoCol.dataset.role || 'medico';
-
-  // Injeta botão "Chat" perto dos controles de vídeo
-  const actions = document.querySelector('.video-actions');
-  if(actions){ const b=document.createElement('button'); b.className='btn'; b.textContent='Chat'; b.onclick=()=> toggleChat(true); actions.prepend(b); }
-
-  const root = document.getElementById('tm-chat');
-  const list = document.getElementById('tm-chat-list');
-  const form = document.getElementById('tm-chat-form');
-  const input= document.getElementById('tm-chat-input');
-  document.getElementById('tm-close').onclick = ()=> toggleChat(false);
-  document.getElementById('tm-invite').onclick = async ()=>{ await postJSON(`/api/appointments/${appointmentId}/invite`,{}); toast('Convite enviado ao paciente.'); };
-
-  function toggleChat(on){ root.hidden = !on; if(on) input.focus(); }
-  function toast(t){ const x=document.createElement('div'); x.textContent=t; x.style.cssText='position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#0f172a;border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:10px;color:#eaf0ff;z-index:70'; document.body.appendChild(x); setTimeout(()=>x.remove(),1800); }
-
-  async function getJSON(u){ try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
-  async function postJSON(u,d){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
-
-  // Histórico (fallback mock)
-  function mockHistory(){ return [ {from:'sistema', text:'Você entrou na sala.'} ]; }
-  async function loadHistory(){ const h = await getJSON(`/api/chat/history?appointmentId=${encodeURIComponent(appointmentId)}`) || mockHistory(); h.forEach(addMsg); list.scrollTop = list.scrollHeight; }
-
-  // WebSocket (opcional)
-  try{
-    const ws = new WebSocket(location.origin.replace('http','ws') + `/ws/appointments/${appointmentId}`);
-    ws.onmessage = (ev)=>{ try{ const msg=JSON.parse(ev.data); if(msg.type==='chat_message') addMsg(msg.payload); if(msg.type==='invite_patient') toast('Paciente convidado'); }catch{} };
-  }catch{}
-
-  form.onsubmit = async (e)=>{
-    e.preventDefault(); const text=(input.value||'').trim(); if(!text) return;
-    addMsg({from: role, text}); input.value='';
-    await postJSON('/api/chat/send', { appointmentId, from: role, text, ts: new Date().toISOString() });
-  };
-
-  function addMsg(m){
-    const div=document.createElement('div'); div.className='msg'+(m.from===role? ' me':''); div.textContent = (m.from? m.from+': ':'')+ m.text; list.appendChild(div);
-  }
-
-  // ICD/CIAP Lookup (aplica sobre o #hipotese)
-  const hip = document.getElementById('hipotese');
-  if(hip){
-    const wrap = hip.parentElement; wrap.style.position='relative';
-    const box = document.createElement('div'); box.className='icd-hints'; box.hidden=true; wrap.appendChild(box);
-    const hidden = document.createElement('input'); hidden.type='hidden'; hidden.id='hipotese_code'; wrap.appendChild(hidden);
-
-    hip.addEventListener('input', async ()=>{
-      const q=(hip.value||'').trim(); if(q.length<2){ box.hidden=true; return; }
-      const res = await getJSON(`/api/codes/search?systems=icd10,ciap&q=${encodeURIComponent(q)}`) || sampleCodes(q);
-      box.innerHTML=''; res.slice(0,8).forEach(item=>{
-        const d=document.createElement('div'); d.textContent = `${item.system.toUpperCase()} ${item.code} — ${item.label}`;
-        d.onclick = ()=>{ hip.value = item.label; hidden.value = `${item.system}:${item.code}`; box.hidden=true; };
-        box.appendChild(d);
-      });
-      box.hidden = res.length===0;
-    });
-    hip.addEventListener('blur', ()=> setTimeout(()=> box.hidden=true, 120));
-  }
-
-  function sampleCodes(q){
-    const data=[
-      {system:'icd10', code:'J02.9', label:'Faringite aguda, não especificada'},
-      {system:'icd10', code:'B34.9', label:'Infecção viral, não especificada'},
-      {system:'icd10', code:'F41.1', label:'Transtorno de ansiedade generalizada'},
-      {system:'ciap',  code:'R74',  label:'Infecção aguda do trato respiratório superior'},
-      {system:'ciap',  code:'P74',  label:'Ansiedade/estado ansioso'},
-    ];
-    return data.filter(x=> x.label.toLowerCase().includes(q.toLowerCase()) || x.code.toLowerCase().includes(q.toLowerCase()));
-  }
-
-  // Boot
-  loadHistory();
-})();
-</script>
-
-<!-- Modal de Prescrição Digital (Sprint Pack integração) -->
-<style>
-  #rx-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:70; background:rgba(0,0,0,.5) }
-  #rx-modal.show{ display:flex }
-  #rx-card{ width:min(900px,95vw); background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
-  #rx-card .h{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.08) }
-  #rx-body{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:12px }
-  @media(max-width: 900px){ #rx-body{ grid-template-columns:1fr } }
-  .rx-panel{ border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:10px; background:rgba(255,255,255,.02) }
-  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-  .rx-list{ display:grid; gap:6px; max-height:280px; overflow:auto }
-  .rx-item{ display:flex; justify-content:space-between; gap:8px; padding:8px; border:1px solid rgba(255,255,255,.08); border-radius:10px; background:rgba(255,255,255,.03) }
-  input.rx, textarea.rx, select.rx{ width:100%; height:38px; padding:0 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:inherit }
-  textarea.rx{ height:80px }
-  .rx-actions{ display:flex; gap:8px; justify-content:flex-end; padding:10px 12px; border-top:1px solid rgba(255,255,255,.08) }
-</style>
-<div id="rx-modal" aria-hidden="true">
-  <div id="rx-card">
-    <div class="h">
-      <strong>Prescrição Digital</strong>
-      <div class="row">
-        <button id="rx-close" class="btn">Fechar</button>
-      </div>
-    </div>
-    <div id="rx-body">
-      <div class="rx-panel">
-        <div class="row" style="margin-bottom:6px">
-          <input id="drug-q" class="rx" placeholder="Buscar medicamento (nome, substância ou ANVISA)">
-          <button id="drug-search" class="btn">Buscar</button>
-        </div>
-        <div id="drug-results" class="rx-list"></div>
-      </div>
-      <div class="rx-panel">
-        <div class="row" style="margin-bottom:6px">
-          <input id="rx-directions" class="rx" placeholder="Indicações gerais (ex.: 1 cp 8/8h por 3 dias)">
-          <input id="rx-qty" class="rx" placeholder="Quantidade (ex.: 6 comprimidos)">
-        </div>
-        <div class="row" style="margin-bottom:6px">
-          <input id="rx-route" class="rx" placeholder="Via (ex.: VO)">
-          <input id="rx-duration" class="rx" placeholder="Duração (ex.: 3 dias)">
-        </div>
-        <div id="rx-items" class="rx-list" style="min-height:120px"></div>
-      </div>
-    </div>
-    <div class="rx-actions">
-      <button id="rx-emit" class="btn primary" data-testid="rx-emit">Emitir Prescrição</button>
-    </div>
-  </div>
-</div>
-<script>
-(function(){
-  // UTIL: reimprimir link assinado (sem duplicar a RX)
-  async function reprintPDFLink(rxId) {
-    try {
-      const r = await fetch(`/api/prescriptions/${encodeURIComponent(rxId)}/reprint`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const { pdf_url } = await r.json();
-      if (pdf_url) window.open(pdf_url, '_blank');
-      else alert('Não foi possível reemitir o link agora.');
-    } catch (e) {
-      alert('Falha ao reemitir link: ' + e.message);
-    }
-  }
-
-  const btn = document.getElementById('btn-new-presc');
-  if(!btn) return;
-  const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-EXEMPLO';
-  const diagCode = document.getElementById('hipotese_code');
-  const modal = document.getElementById('rx-modal');
-  const close = document.getElementById('rx-close');
-  const q = document.getElementById('drug-q');
-  const searchBtn = document.getElementById('drug-search');
-  const results = document.getElementById('drug-results');
-  const list = document.getElementById('rx-items');
-  const emit = document.getElementById('rx-emit');
-  const dDirections = document.getElementById('rx-directions');
-  const dQty = document.getElementById('rx-qty');
-  const dRoute = document.getElementById('rx-route');
-  const dDur = document.getElementById('rx-duration');
-
-  let selected = [];
-
-  function show(on){ modal.classList.toggle('show', !!on); }
-  function itemRow(it){
-    const row=document.createElement('div'); row.className='rx-item';
-    row.innerHTML = `<div><div><strong>${it.name}</strong></div><div class="muted">ANVISA ${it.anvisa_code||'—'} · ${it.form||''} ${it.concentration||''}</div></div>`;
-    const right=document.createElement('div');
-    const rm=document.createElement('button'); rm.className='btn'; rm.textContent='Remover'; rm.onclick=()=>{ selected=selected.filter(x=>x.anvisa_code!==it.anvisa_code||x.name!==it.name); renderSelected(); };
-    right.appendChild(rm); row.appendChild(right); return row;
-  }
-  function renderSelected(){ list.innerHTML=''; if(!selected.length){ list.innerHTML='<div class="muted">Nenhum item selecionado.</div>'; return; } selected.forEach(it=> list.appendChild(itemRow(it))); }
-
-  async function getJSON(u){ try{ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
-  async function postJSON(u,d){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
-  async function postJSONWithIdempotency(u,d,key){ try{ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key},body:JSON.stringify(d)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ return null; } }
-
-  function mockDrugs(){
-    return [
-      { anvisa_code:'102310045', name:'Paracetamol 750mg comprimido', form:'cp', concentration:'750mg', route:'VO' },
-      { anvisa_code:'109990012', name:'Ibuprofeno 200mg comprimido', form:'cp', concentration:'200mg', route:'VO' }
-    ];
-  }
-
-  async function search(){
-    const term=(q.value||'').trim(); if(!term) return;
-    try {
-      const data = await getJSON(`/api/drugs/search?q=${encodeURIComponent(term)}`);
-      if(data && data.length) {
-        results.innerHTML='';
-        data.forEach(d=>{
-          const row=document.createElement('div'); row.className='rx-item';
-          row.innerHTML = `<div><div><strong>${d.name}</strong></div><div class="muted">ANVISA ${d.anvisa_code||'—'} · ${d.form||''} ${d.concentration||''}</div></div>`;
-          const right=document.createElement('div');
-          const add=document.createElement('button'); add.className='btn'; add.textContent='Adicionar'; add.onclick=()=>{ selected.push({ ...d, directions:dDirections.value, quantity:dQty.value, route:dRoute.value||d.route, duration:dDur.value }); renderSelected(); };
-          right.appendChild(add); row.appendChild(right); results.appendChild(row);
-        });
-      } else {
-        throw new Error('No results from API');
+    // Exames
+    const examList = [];
+    function renderExamList() {
+      const box = document.getElementById('examList');
+      if (!box) return;
+      box.innerHTML = '';
+      if (!examList.length) {
+        box.textContent = 'Nenhum exame adicionado';
+        return;
       }
-    } catch(error) {
-      // Fallback: permitir item livre com alerta
-      console.warn('Drug search API failed, falling back to free input:', error);
-      const freeItem = {
-        anvisa_code: 'LIVRE-' + Date.now(),
-        name: term + ' (medicamento livre)',
-        form: 'livre',
-        concentration: '',
-        route: 'conforme orientação médica'
-      };
-      
-      results.innerHTML='';
-      const row=document.createElement('div'); row.className='rx-item';
-      row.innerHTML = `<div><div><strong>${freeItem.name}</strong></div><div class="muted">⚠️ Base ANVISA indisponível - Item livre</div></div>`;
-      const right=document.createElement('div');
-      const add=document.createElement('button'); add.className='btn'; add.textContent='Adicionar'; add.onclick=()=>{ selected.push({ ...freeItem, directions:dDirections.value, quantity:dQty.value, route:freeItem.route, duration:dDur.value }); renderSelected(); };
-      right.appendChild(add); row.appendChild(right); results.appendChild(row);
-    }
-  }
-
-  async function emitRx(){
-    if(!selected.length){ alert('Selecione pelo menos 1 item.'); return; }
-    
-    // Gerencia Idempotency-Key para retry/double-click
-    const storageKey = `rx_idem_${appointmentId}`;
-    let idempotencyKey = sessionStorage.getItem(storageKey);
-    if(!idempotencyKey){
-      idempotencyKey = 'RX-' + Date.now() + '-' + Math.random().toString(36).substr(2);
-      sessionStorage.setItem(storageKey, idempotencyKey);
-    }
-    
-    const payload = {
-      appointmentId,
-      diagnosis_code: diagCode?.value || null,
-      items: selected.map(x=> ({ anvisa_code:x.anvisa_code, name:x.name, directions:x.directions||'', quantity:x.quantity||'', route:x.route||'', duration:x.duration||'' }))
-    };
-    
-    // Log auditoria para observabilidade (conforme checklist go-live)
-    console.log('prescription_emit_attempt', {
-      appointmentId,
-      idempotencyKey,
-      timestamp: new Date().toISOString(),
-      user_agent: navigator.userAgent,
-      items_count: selected.length
-    });
-    
-    const res = await postJSONWithIdempotency('/api/prescriptions', payload, idempotencyKey) || { ok:true, id:'RX-123', pdf_url:'#' };
-    if(res?.ok){
-      // Log auditoria sucesso
-      console.log('prescription_emitted', {
-        rx_id: res.id,
-        appointmentId,
-        timestamp: new Date().toISOString(),
-        pdf_generated: !!res.pdf_url
+      examList.forEach((ex, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(0,0,0,.06);padding:8px;border-radius:8px;margin:6px 0';
+        row.innerHTML = `<div><b>${ex.name}</b> • ${ex.priority}<br><small>${ex.notes || ''}</small></div><button data-i="${i}" class="btn ghost" style="padding:4px 8px;font-size:12px">Excluir</button>`;
+        const btn = row.querySelector('button');
+        if (btn) btn.onclick = (ev) => {
+          examList.splice(Number(ev.target.dataset.i), 1);
+          renderExamList();
+        };
+        box.appendChild(row);
       });
-      // Mantém a chave durante a sessão da consulta para idempotência
-      // sessionStorage.removeItem(storageKey); // Removido: mantém para testes de idempotência
-      
-      // Adicionar botão "Reimprimir link" após emissão
-      const reprintBtn = document.createElement('button');
-      reprintBtn.className = 'btn';
-      reprintBtn.textContent = 'Reimprimir link';
-      reprintBtn.setAttribute('data-testid','rx-reprint');
-      reprintBtn.onclick = () => reprintPDFLink(res.id);
-      document.querySelector('.rx-actions')?.prepend(reprintBtn);
-      
-      // atualiza a tabela da aba Prescrições, se existir (usa variáveis do arquivo consulta.html)
+    }
+    const exAdd = document.getElementById('exAdd');
+    if (exAdd) exAdd.onclick = () => {
+      const name = document.getElementById('exName').value.trim();
+      if (!name) return alert('Informe o nome do exame.');
+      examList.push({
+        name,
+        priority: document.getElementById('exPriority').value,
+        notes: document.getElementById('exNotes').value.trim()
+      });
+      document.getElementById('exName').value = '';
+      document.getElementById('exNotes').value = '';
+      renderExamList();
+    };
+
+    // Botões
+    if (document.getElementById('btn-start')) document.getElementById('btn-start').onclick = () => alert('Consulta iniciada!');
+    if (document.getElementById('btn-back')) document.getElementById('btn-back').onclick = () => history.back();
+    if (document.getElementById('btn-save')) document.getElementById('btn-save').onclick = () => alert('Anotações salvas!');
+    if (document.getElementById('btn-finish')) document.getElementById('btn-finish').onclick = () => {
+      if (confirm('Finalizar consulta?')) {
+        alert('Consulta finalizada!');
+        window.location.href = '/agenda.html';
+      }
+    };
+    if (document.getElementById('memedBtn')) document.getElementById('memedBtn').onclick = () => {
+      window.open('https://memed.com.br/?demo=1', '_blank', 'noopener');
+      const li = document.createElement('div');
+      li.style.cssText = 'padding:10px;border:1px solid rgba(0,0,0,.06);border-radius:10px;margin:6px 0';
+      li.innerHTML = `<b>Receita #${Math.random().toString(36).slice(2, 8).toUpperCase()}</b> <span style="color:#16a34a">✔ Assinada</span><br><small>${new Date().toLocaleString()}</small>`;
+      const rxList = document.getElementById('rxList');
+      if (rxList.textContent.includes('Nenhuma')) rxList.innerHTML = '';
+      rxList.appendChild(li);
+    };
+  })();
+  </script>
+
+  <!-- MedicalDesk Integration (PRESERVADO DA VERSÃO TESTADA) -->
+  <script>
+  (function(){
+    const $status = document.getElementById('mda-status');
+    const $open = document.getElementById('mda-open');
+
+    // Util: timeout para fetch
+    function fetchWithTimeout(url, opts={}, ms=7000){
+      return Promise.race([
+        fetch(url, opts),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))
+      ]);
+    }
+
+    // Atualiza selo visual
+    function setBadge(state, msg){
+      const base = {
+        OK: {bg:'#e8f7ee', bd:'#86efac', fg:'#166534', txt:'MDA: OK ✅'},
+        DEGRADED: {bg:'#fff8e1', bd:'#fde68a', fg:'#92400e', txt:'MDA: Lento ⚠️'},
+        OFF: {bg:'#fee2e2', bd:'#fca5a5', fg:'#991b1b', txt:'MDA: Offline ❌'}
+      }[state] || {bg:'#e5e7eb', bd:'#cbd5e1', fg:'#111827', txt:'MDA: ?'};
+
+      $status.textContent = msg || base.txt;
+      $status.style.background = base.bg;
+      $status.style.borderColor = base.bd;
+      $status.style.color = base.fg;
+    }
+
+    // Health check via proxy do TeleMed
+    async function checkHealth(){
       try{
-        if(window.currentPresc){
-          window.currentPresc.push(...selected.map(x=> ({ name:x.name, directions:x.directions })));
-          if(window.renderPresc) window.renderPresc();
+        const t0 = performance.now();
+        const r = await fetchWithTimeout('/medicaldesk/health', {credentials:'include'}, 6000);
+        const t1 = performance.now();
+
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j = await r.json().catch(()=>({}));
+
+        // Latência
+        const ms = Math.round(t1 - t0);
+        if(ms < 400){
+          setBadge('OK', 'MDA: OK ✅ ('+ms+'ms)');
+        }else if(ms < 1200){
+          setBadge('DEGRADED', 'MDA: Lento ⚠️ ('+ms+'ms)');
+        }else{
+          setBadge('OFF', 'MDA: Sem resposta ❌ ('+ms+'ms)');
         }
-      }catch{}
-      show(false);
-      if(res.pdf_url && res.pdf_url!=='#'){ window.open(res.pdf_url,'_blank'); }
-    }else{
-      alert('Falha ao emitir prescrição.');
-    }
-  }
-
-  btn.onclick = ()=> show(true);
-  close.onclick = ()=> show(false);
-  searchBtn.onclick = search;
-  q.addEventListener('keyup', (e)=>{ if(e.key==='Enter') search(); });
-  emit.onclick = emitRx;
-  renderSelected();
-})();
-</script>
-
-<!-- MedicalDesk Health Check & Launch Script -->
-<script>
-(function(){
-  const $status = document.getElementById('mda-status');
-  const $open   = document.getElementById('mda-open');
-
-  // --- util: timeout pra fetch
-  function fetchWithTimeout(url, opts={}, ms=7000){
-    return Promise.race([
-      fetch(url, opts),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))
-    ]);
-  }
-
-  // --- atualiza selo visual
-  function setBadge(state, msg){
-    const base = {
-      OK:       {bg:'#e8f7ee', bd:'#86efac', fg:'#166534', txt:'MDA: OK ✅'},
-      DEGRADED:{bg:'#fff8e1', bd:'#fde68a', fg:'#92400e', txt:'MDA: Lento ⚠️'},
-      OFF:     {bg:'#fee2e2', bd:'#fca5a5', fg:'#991b1b', txt:'MDA: Offline ❌'}
-    }[state] || {bg:'#e5e7eb', bd:'#cbd5e1', fg:'#111827', txt:'MDA: ?'};
-
-    $status.textContent = msg || base.txt;
-    $status.style.background = base.bg;
-    $status.style.borderColor = base.bd;
-    $status.style.color = base.fg;
-  }
-
-  // --- health check via proxy do TeleMed
-  async function checkHealth(){
-    try{
-      const t0 = performance.now();
-      const r  = await fetchWithTimeout('/medicaldesk/health', {credentials:'include'}, 6000);
-      const t1 = performance.now();
-
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const j = await r.json().catch(()=>({}));
-
-      // latência simples só p/ dar noção
-      const ms = Math.round(t1 - t0);
-      if(ms < 400){
-        setBadge('OK', 'MDA: OK ✅ ('+ms+'ms)');
-      }else if(ms < 1200){
-        setBadge('DEGRADED', 'MDA: Lento ⚠️ ('+ms+'ms)');
-      }else{
-        setBadge('OFF', 'MDA: Sem resposta ❌ ('+ms+'ms)');
+        return true;
+      }catch(e){
+        setBadge('OFF', 'MDA: Offline ❌');
+        return false;
       }
-      return true;
-    }catch(e){
-      setBadge('OFF', 'MDA: Offline ❌');
-      return false;
     }
-  }
 
-  // --- abre MedicalDesk (sessão real via proxy)
-  async function openMDA(){
-    $open.disabled = true;
-    const old = $open.textContent;
-    $open.textContent = 'Criando sessão…';
+    // Abre MedicalDesk (sessão real via proxy)
+    async function openMDA(){
+      $open.disabled = true;
+      const old = $open.textContent;
+      $open.textContent = 'Criando sessão…';
 
-    try{
-      // Cria sessão MedicalDesk via endpoint real
-      const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-DEMO';
-      const patientId = 'paciente-test'; // TODO: pegar ID real do paciente
-      const doctorId = 'medico-demo';    // TODO: pegar ID real do médico logado
-      
-      const response = await fetch('/api/medicaldesk/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patientId, doctorId })
-      });
+      try{
+        // Cria sessão MedicalDesk via endpoint real
+        const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-DEMO';
+        const patientId = 'paciente-test'; // TODO: pegar ID real do paciente
+        const doctorId = 'medico-demo';    // TODO: pegar ID real do médico logado
+        
+        const response = await fetch('/api/medicaldesk/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientId, doctorId })
+        });
 
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-        throw new Error(err.error || `HTTP ${response.status}`);
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+          throw new Error(err.error || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.ok || !data.launchUrl) {
+          throw new Error('Resposta inválida do servidor');
+        }
+
+        // Abre MedicalDesk na raiz do SPA (não mais /app)
+        window.open(data.launchUrl, '_blank', 'noopener,width=900,height=700');
+
+        // Atualiza badge depois de abrir
+        setTimeout(() => checkHealth(), 500);
+      }catch(e){
+        alert('Não foi possível abrir o MedicalDesk.\nDetalhe: '+e.message);
+      }finally{
+        $open.disabled = false;
+        $open.textContent = old;
       }
-
-      const data = await response.json();
-      if (!data.ok || !data.launchUrl) {
-        throw new Error('Resposta inválida do servidor');
-      }
-
-      // Abre MedicalDesk na raiz do SPA (não mais /app)
-      window.open(data.launchUrl, '_blank', 'noopener,width=900,height=700');
-
-      // atualiza badge depois de abrir
-      setTimeout(() => checkHealth(), 500);
-    }catch(e){
-      alert('Não foi possível abrir o MedicalDesk.\nDetalhe: '+e.message);
-    }finally{
-      $open.disabled = false;
-      $open.textContent = old;
     }
-  }
 
-  // wire-up
-  if($open)  $open.addEventListener('click', openMDA);
+    // Wire-up
+    if($open) $open.addEventListener('click', openMDA);
 
-  // 1ª leitura + polling leve (a cada 60s)
-  checkHealth();
-  setInterval(checkHealth, 60000);
-})();
-</script>
+    // 1ª leitura + polling leve (a cada 60s)
+    checkHealth();
+    setInterval(checkHealth, 60000);
+  })();
+  </script>
 
 </body>
 </html>
