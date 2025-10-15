@@ -321,15 +321,11 @@ if (MD_ENABLED && MD_BASE) {
     createProxyMiddleware({
       target: MD_BASE,
       changeOrigin: true,
-      // IMPORTANTÍSSIMO: tirar o prefixo /medicaldesk para que:
-      // /medicaldesk/app             -> /app
-      // /medicaldesk/assets/*.js     -> /assets/*.js
-      pathRewrite: (path) => path.replace(/^\/medicaldesk/, '/'),
-      // Cache correto e tipos corretos passam do upstream; não mexer aqui.
+      // SEM pathRewrite: MedicalDesk tem base:'/medicaldesk/' e precisa receber paths completos
+      // /medicaldesk/?token=... → /medicaldesk/?token=... (sem alteração)
       onProxyReq: (proxyReq, req) => {
         proxyReq.setHeader('x-forwarded-host', req.get('host') || '');
-        const rewrittenPath = req.path.replace(/^\/medicaldesk/, '/');
-        console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${MD_BASE}${rewrittenPath}`);
+        console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${MD_BASE}${req.path}`);
       },
       onError: (err, req, res) => {
         console.error('[MedicalDesk proxy error]', err.message);
@@ -361,6 +357,10 @@ console.log(`   - / → telemed-deploy-ready/`);
 app.get('*', (req, res, next) => {
   // Se é uma chamada de API, continua para os handlers
   if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) {
+    return next();
+  }
+  // IMPORTANTE: NÃO interceptar rotas do MedicalDesk (já processadas pelo proxy)
+  if (req.path.startsWith('/medicaldesk')) {
     return next();
   }
   // Se é uma rota do frontend que não foi encontrada nos arquivos estáticos, retorna index.html
