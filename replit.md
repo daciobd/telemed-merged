@@ -165,7 +165,8 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 - **UI/UX Aprimorada**: Cards modernos, espaçamento consistente, cores harmoniosas
 - **Integração MedicalDesk PRESERVADA**: 
   - Health check com polling 60s (linhas 608-632)
-  - Botão POST /api/medicaldesk/session + JWT (linhas 634-673)
+  - **Popup Sincrônico** (linhas 637-693): Abre popup IMEDIATAMENTE no clique para evitar bloqueio do navegador
+  - POST /api/medicaldesk/session + JWT com URL absoluta garantida
   - Badge de status com 3 estados (OK/Lento/Offline)
   - data-testid="button-mda-open" para testes E2E
 

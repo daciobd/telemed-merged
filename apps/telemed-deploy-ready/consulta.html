@@ -631,22 +631,29 @@
       }
     }
 
-    // Abre MedicalDesk (sessão real via proxy)
+    // Abre MedicalDesk (POPUP SINCRÔNICO - evita bloqueio de navegador)
     async function openMDA(){
-      $open.disabled = true;
+      const BASE = window.location.origin;
       const old = $open.textContent;
+      $open.disabled = true;
       $open.textContent = 'Criando sessão…';
+      setBadge('DEGRADED', 'MDA: criando…');
+
+      // 1) Abre POPUP JÁ (sincrônico) para não ser bloqueado pelo navegador
+      const popup = window.open('about:blank', 'mda', 'width=900,height=700,noopener,noreferrer');
 
       try{
-        // Cria sessão MedicalDesk via endpoint real
-        const appointmentId = document.getElementById('video-col')?.dataset?.appointmentId || 'APT-DEMO';
+        const t0 = performance.now();
+
+        // 2) Cria sessão MedicalDesk via endpoint real
         const patientId = 'paciente-test'; // TODO: pegar ID real do paciente
         const doctorId = 'medico-demo';    // TODO: pegar ID real do médico logado
         
-        const response = await fetch('/api/medicaldesk/session', {
+        const response = await fetch(`${BASE}/api/medicaldesk/session`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patientId, doctorId })
+          body: JSON.stringify({ patientId, doctorId }),
+          credentials: 'include'
         });
 
         if (!response.ok) {
@@ -659,12 +666,22 @@
           throw new Error('Resposta inválida do servidor');
         }
 
-        // Abre MedicalDesk na raiz do SPA (não mais /app)
-        window.open(data.launchUrl, '_blank', 'noopener,width=900,height=700');
+        // 3) Garante URL absoluta (se vier relativa)
+        const url = data.launchUrl.startsWith('http')
+          ? data.launchUrl
+          : new URL(data.launchUrl, BASE).toString();
 
+        // 4) Aponta popup para o MedicalDesk (token curto → faça já)
+        popup.location.replace(url);
+
+        const dt = Math.round(performance.now() - t0);
+        setBadge('OK', `MDA: OK ✅ (${dt}ms)`);
+        
         // Atualiza badge depois de abrir
         setTimeout(() => checkHealth(), 500);
       }catch(e){
+        try { popup?.close(); } catch {}
+        setBadge('OFF', 'MDA: erro ❌');
         alert('Não foi possível abrir o MedicalDesk.\nDetalhe: '+e.message);
       }finally{
         $open.disabled = false;
