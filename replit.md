@@ -171,11 +171,12 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - data-testid="button-mda-open" para testes E2E
 
 **Gateway Proxy - Configuração Final:**
-- **SEM pathRewrite**: Proxy passa paths completos `/medicaldesk/app?token=...` para upstream
-- **LaunchUrl Corrigido**: Volta a usar `/medicaldesk/app?token=...` (linha 1011)
+- **SEM pathRewrite**: Proxy passa paths completos `/medicaldesk/?token=...` para upstream
+- **LaunchUrl**: `/medicaldesk/?token=...` (linha 1011) - Raiz do SPA, compatível com servidor upstream
 - **SPA Fallback**: Exclui `/medicaldesk` (linha 370 em index.js)
   - Evita servir index.html do telemed-deploy-ready para rotas MedicalDesk
 - **Ordem de Middleware**: Proxy MedicalDesk → Static → Fallback (CORRETO)
+- **Popup Sincrônico**: Abre about:blank imediatamente no clique, evita bloqueio do navegador (linhas 645-678 consulta.html)
 
 **Arquivos Modificados:**
 - `apps/telemed-deploy-ready/consulta.html` - Design moderno + integração MedicalDesk
