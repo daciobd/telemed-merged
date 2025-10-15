@@ -152,3 +152,37 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 **Arquivos Criados:**
 - `apps/telemed-deploy-ready/pricing-models.html` - Componente React standalone
 - `apps/telemed-deploy-ready/index.html` - Link atualizado (linha 322)
+
+## Recent Updates (Oct 15, 2025)
+
+### Modernização da Página de Consulta 🎨
+
+**Status:** ✅ Design moderno mesclado com integração MedicalDesk preservada
+
+**Mudanças Aplicadas:**
+- **Design Moderno**: Interface atualizada com Inter font, gradiente elegante, layout responsivo
+- **Tabs Funcionais**: Chat, Atendimento, Exames, Receitas com navegação suave
+- **UI/UX Aprimorada**: Cards modernos, espaçamento consistente, cores harmoniosas
+- **Integração MedicalDesk PRESERVADA**: 
+  - Health check com polling 60s (linhas 608-632)
+  - Botão POST /api/medicaldesk/session + JWT (linhas 634-673)
+  - Badge de status com 3 estados (OK/Lento/Offline)
+  - data-testid="button-mda-open" para testes E2E
+
+**Gateway Proxy - Configuração Atualizada:**
+- **SEM pathRewrite**: Proxy passa paths completos `/medicaldesk/?token=...` para upstream
+- **SPA Fallback Corrigido**: Exclui `/medicaldesk` (linha 370 em index.js)
+  - Evita servir index.html do telemed-deploy-ready para rotas MedicalDesk
+- **Ordem de Middleware**: Proxy MedicalDesk → Static → Fallback (CORRETO)
+
+**Investigação Técnica - Upstream MedicalDesk:**
+- Identificado problema no upstream (fora do escopo do gateway):
+  - Assets Vite retornam `Content-Type: text/html` em vez de `application/javascript`
+  - SPA fallback do upstream servindo HTML para todos os paths, inclusive assets
+  - Causa: Configuração incorreta do SPA fallback no servidor MedicalDesk upstream
+- Gateway TeleMed configurado corretamente e funcionando como esperado
+
+**Arquivos Modificados:**
+- `apps/telemed-deploy-ready/consulta.html` - Design moderno + integração MedicalDesk
+- `apps/telemed-internal/src/index.js` - Proxy sem pathRewrite + SPA fallback corrigido
+- `apps/telemed-deploy-ready/consulta.html.backup` - Backup da versão anterior
