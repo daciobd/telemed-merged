@@ -163,11 +163,13 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 - **Design Moderno**: Interface atualizada com Inter font, gradiente elegante, layout responsivo
 - **Tabs Funcionais**: Chat, Atendimento, Exames, Receitas com navegação suave
 - **UI/UX Aprimorada**: Cards modernos, espaçamento consistente, cores harmoniosas
-- **Integração MedicalDesk PRESERVADA**: 
-  - Health check com polling 60s (linhas 608-632)
-  - **Popup Sincrônico** (linhas 637-693): Abre popup IMEDIATAMENTE no clique para evitar bloqueio do navegador
-  - POST /api/medicaldesk/session + JWT com URL absoluta garantida
-  - Badge de status com 3 estados (OK/Lento/Offline)
+- **Integração MedicalDesk ROBUSTA**: 
+  - **Script Anti-Bloqueio** (linhas 583-660): Abre popup about:blank IMEDIATAMENTE no clique
+  - Token fresco a cada clique via POST /api/medicaldesk/session
+  - Usa `/medicaldesk/?token=...` (compatível com servidor upstream)
+  - Badge de status simplificado (OK ✅ / verificando / erro ❌)
+  - Health check inicial opcional
+  - Tratamento robusto de erros com fallback
   - data-testid="button-mda-open" para testes E2E
 
 **Gateway Proxy - Configuração Final:**

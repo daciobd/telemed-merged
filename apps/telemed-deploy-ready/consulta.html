@@ -577,124 +577,82 @@
   })();
   </script>
 
-  <!-- MedicalDesk Integration (PRESERVADO DA VERSÃO TESTADA) -->
+  <!-- MedicalDesk Integration - Script Robusto Anti-Bloqueio -->
   <script>
-  (function(){
-    const $status = document.getElementById('mda-status');
-    const $open = document.getElementById('mda-open');
+  (function () {
+    const btn   = document.getElementById('mda-open');
+    const badge = document.getElementById('mda-status');
 
-    // Util: timeout para fetch
-    function fetchWithTimeout(url, opts={}, ms=7000){
-      return Promise.race([
-        fetch(url, opts),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))
-      ]);
-    }
+    if (!btn) return;
 
-    // Atualiza selo visual
-    function setBadge(state, msg){
-      const base = {
-        OK: {bg:'#e8f7ee', bd:'#86efac', fg:'#166534', txt:'MDA: OK ✅'},
-        DEGRADED: {bg:'#fff8e1', bd:'#fde68a', fg:'#92400e', txt:'MDA: Lento ⚠️'},
-        OFF: {bg:'#fee2e2', bd:'#fca5a5', fg:'#991b1b', txt:'MDA: Offline ❌'}
-      }[state] || {bg:'#e5e7eb', bd:'#cbd5e1', fg:'#111827', txt:'MDA: ?'};
+    // util: atualiza badge
+    function setBadge(text) { if (badge) badge.textContent = text; }
 
-      $status.textContent = msg || base.txt;
-      $status.style.background = base.bg;
-      $status.style.borderColor = base.bd;
-      $status.style.color = base.fg;
-    }
+    // util: abre popup sem ser bloqueado (abre em branco no clique e navega depois)
+    function openPopup(url) {
+      // abre no clique, antes do fetch terminar
+      const pop = window.open('about:blank', '_blank',
+        'width=1000,height=740,noopener,noreferrer');
+      if (pop) { pop.opener = null; }  // segurança
 
-    // Health check via proxy do TeleMed
-    async function checkHealth(){
-      try{
-        const t0 = performance.now();
-        const r = await fetchWithTimeout('/medicaldesk/health', {credentials:'include'}, 6000);
-        const t1 = performance.now();
-
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        const j = await r.json().catch(()=>({}));
-
-        // Latência
-        const ms = Math.round(t1 - t0);
-        if(ms < 400){
-          setBadge('OK', 'MDA: OK ✅ ('+ms+'ms)');
-        }else if(ms < 1200){
-          setBadge('DEGRADED', 'MDA: Lento ⚠️ ('+ms+'ms)');
-        }else{
-          setBadge('OFF', 'MDA: Sem resposta ❌ ('+ms+'ms)');
-        }
-        return true;
-      }catch(e){
-        setBadge('OFF', 'MDA: Offline ❌');
-        return false;
+      if (url) {
+        if (pop) pop.location.href = url;
+        else window.open(url, '_blank', 'noopener,noreferrer');
       }
+      return pop;
     }
 
-    // Abre MedicalDesk (POPUP SINCRÔNICO - evita bloqueio de navegador)
-    async function openMDA(){
-      const BASE = window.location.origin;
-      const old = $open.textContent;
-      $open.disabled = true;
-      $open.textContent = 'Criando sessão…';
-      setBadge('DEGRADED', 'MDA: criando…');
+    // checagem inicial (opcional)
+    fetch('/medicaldesk/health', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => setBadge(j?.name ? `MDA: OK ✅` : `MDA: OK ✅`))
+      .catch(() => setBadge('MDA: (verificando)'));
 
-      // 1) Abre POPUP JÁ (sincrônico) para não ser bloqueado pelo navegador
-      const popup = window.open('about:blank', 'mda', 'width=900,height=700,noopener,noreferrer');
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-      try{
-        const t0 = performance.now();
+      // 1) abre popup em branco já no clique p/ evitar bloqueio
+      const popup = openPopup();
 
-        // 2) Cria sessão MedicalDesk via endpoint real
-        const patientId = 'paciente-test'; // TODO: pegar ID real do paciente
-        const doctorId = 'medico-demo';    // TODO: pegar ID real do médico logado
-        
-        const response = await fetch(`${BASE}/api/medicaldesk/session`, {
+      // 2) feedback
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Criando sessão…';
+      setBadge('MDA: gerando token…');
+
+      try {
+        // 3) pede token NOVO (expira rápido!)
+        const resp = await fetch('/api/medicaldesk/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patientId, doctorId }),
-          credentials: 'include'
+          body: JSON.stringify({ patientId: 'paciente-test', doctorId: 'medico-demo' })
         });
+        if (!resp.ok) throw new Error('Falha ao criar sessão');
 
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-          throw new Error(err.error || `HTTP ${response.status}`);
-        }
+        const data = await resp.json();
+        if (!data?.launchUrl) throw new Error('launchUrl ausente');
 
-        const data = await response.json();
-        if (!data.ok || !data.launchUrl) {
-          throw new Error('Resposta inválida do servidor');
-        }
+        // 4) a API já retorna caminho relativo correto:
+        //    >>> /medicaldesk/?token=... <<<  (NÃO usa /app)
+        const url = data.launchUrl;
 
-        // 3) Garante URL absoluta (se vier relativa)
-        const url = data.launchUrl.startsWith('http')
-          ? data.launchUrl
-          : new URL(data.launchUrl, BASE).toString();
+        // 5) navega o popup (ou abre um novo se não existir)
+        if (popup) popup.location.href = url;
+        else openPopup(url);
 
-        // 4) Aponta popup para o MedicalDesk (token curto → faça já)
-        popup.location.replace(url);
-
-        const dt = Math.round(performance.now() - t0);
-        setBadge('OK', `MDA: OK ✅ (${dt}ms)`);
-        
-        // Atualiza badge depois de abrir
-        setTimeout(() => checkHealth(), 500);
-      }catch(e){
-        try { popup?.close(); } catch {}
-        setBadge('OFF', 'MDA: erro ❌');
-        alert('Não foi possível abrir o MedicalDesk.\nDetalhe: '+e.message);
-      }finally{
-        $open.disabled = false;
-        $open.textContent = old;
+        // 6) restaura UI
+        setBadge('MDA: OK ✅');
+        btn.textContent = original;
+        btn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        setBadge('MDA: erro ❌');
+        btn.textContent = original;
+        btn.disabled = false;
+        if (popup && !popup.closed) popup.close();
+        alert('Não consegui abrir o MedicalDesk. Tente novamente.');
       }
-    }
-
-    // Wire-up
-    if($open) $open.addEventListener('click', openMDA);
-
-    // 1ª leitura + polling leve (a cada 60s)
-    checkHealth();
-    setInterval(checkHealth, 60000);
+    });
   })();
   </script>
 
