@@ -124,9 +124,9 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - Ordem correta: Proxy → Static → Fallback SPA
   - onError handler para tratamento de erros
   - Validação FEATURE_MEDICALDESK + MEDICALDESK_URL
-- **LaunchUrl Corrigido**: `/medicaldesk/?token=...` (linha 1011)
-  - **ANTES:** `/medicaldesk/app?token=...` (quebrava React Router)
-  - **AGORA:** `/medicaldesk/?token=...` (raiz do SPA, compatível com base: '/medicaldesk/')
+- **LaunchUrl**: `/medicaldesk/app?token=...` (linha 1011)
+  - Abre na rota `/app` do SPA MedicalDesk
+  - Token JWT válido por 15 minutos
 - **Botão com Sessão Real**: `apps/telemed-deploy-ready/consulta.html` (linhas 734-773)
   - POST `/api/medicaldesk/session` com patientId + doctorId
   - Abre launchUrl retornado (JWT válido por 15min)
@@ -169,18 +169,12 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - Badge de status com 3 estados (OK/Lento/Offline)
   - data-testid="button-mda-open" para testes E2E
 
-**Gateway Proxy - Configuração Atualizada:**
-- **SEM pathRewrite**: Proxy passa paths completos `/medicaldesk/?token=...` para upstream
-- **SPA Fallback Corrigido**: Exclui `/medicaldesk` (linha 370 em index.js)
+**Gateway Proxy - Configuração Final:**
+- **SEM pathRewrite**: Proxy passa paths completos `/medicaldesk/app?token=...` para upstream
+- **LaunchUrl Corrigido**: Volta a usar `/medicaldesk/app?token=...` (linha 1011)
+- **SPA Fallback**: Exclui `/medicaldesk` (linha 370 em index.js)
   - Evita servir index.html do telemed-deploy-ready para rotas MedicalDesk
 - **Ordem de Middleware**: Proxy MedicalDesk → Static → Fallback (CORRETO)
-
-**Investigação Técnica - Upstream MedicalDesk:**
-- Identificado problema no upstream (fora do escopo do gateway):
-  - Assets Vite retornam `Content-Type: text/html` em vez de `application/javascript`
-  - SPA fallback do upstream servindo HTML para todos os paths, inclusive assets
-  - Causa: Configuração incorreta do SPA fallback no servidor MedicalDesk upstream
-- Gateway TeleMed configurado corretamente e funcionando como esperado
 
 **Arquivos Modificados:**
 - `apps/telemed-deploy-ready/consulta.html` - Design moderno + integração MedicalDesk

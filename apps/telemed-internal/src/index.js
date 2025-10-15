@@ -1005,7 +1005,7 @@ app.post('/api/medicaldesk/session', (req, res) => {
   
   res.json({ 
     ok: true, 
-    launchUrl: `/medicaldesk/?token=${encodeURIComponent(token)}` 
+    launchUrl: `/medicaldesk/app?token=${encodeURIComponent(token)}` 
   });
 });
 
