@@ -365,11 +365,13 @@ if (MD_ENABLED && MD_BASE) {
     createProxyMiddleware({
       target: MD_BASE,
       changeOrigin: true,
-      // SEM pathRewrite: MedicalDesk tem base:'/medicaldesk/' e precisa receber paths completos
-      // /medicaldesk/?token=... → /medicaldesk/?token=... (sem alteração)
+      // IMPORTANTE: pathRewrite remove /medicaldesk para enviar ao upstream
+      // /medicaldesk/?token=... → /?token=...
+      pathRewrite: (path) => path.replace(/^\/medicaldesk/, ''),
       onProxyReq: (proxyReq, req) => {
         proxyReq.setHeader('x-forwarded-host', req.get('host') || '');
-        console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${MD_BASE}${req.path}`);
+        const newPath = req.path.replace(/^\/medicaldesk/, '');
+        console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${MD_BASE}${newPath}`);
       },
       onError: (err, req, res) => {
         console.error('[MedicalDesk proxy error]', err.message);
