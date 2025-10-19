@@ -124,8 +124,8 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
   - Ordem correta: Proxy → Static → Fallback SPA
   - onError handler para tratamento de erros
   - Validação FEATURE_MEDICALDESK + MEDICALDESK_URL
-- **LaunchUrl**: `/medicaldesk/app?token=...` (linha 1011)
-  - Abre na rota `/app` do SPA MedicalDesk
+- **LaunchUrl**: `/medicaldesk/?token=...` (linha 335 e 1055)
+  - Usa rota raiz do SPA MedicalDesk (compatível com servidor upstream)
   - Token JWT válido por 15 minutos
 - **Botão com Sessão Real**: `apps/telemed-deploy-ready/consulta.html` (linhas 734-773)
   - POST `/api/medicaldesk/session` com patientId + doctorId
@@ -184,3 +184,18 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 - `apps/telemed-deploy-ready/consulta.html` - Design moderno + integração MedicalDesk
 - `apps/telemed-internal/src/index.js` - Proxy sem pathRewrite + SPA fallback corrigido
 - `apps/telemed-deploy-ready/consulta.html.backup` - Backup da versão anterior
+
+## Recent Updates (Oct 19, 2025)
+
+### MedicalDesk LaunchUrl - Rota Raiz ✅
+
+**Status:** ✅ Confirmado que servidor upstream usa rota raiz
+
+**Mudanças:**
+- **Tentativa de `/medicaldesk/app?token=...`**: Testado mas servidor upstream retornou 404
+- **Solução Final**: Voltou para `/medicaldesk/?token=...` (rota raiz compatível)
+- **Confirmação via curl**: Ambos endpoints (POST e GET) funcionando corretamente
+
+**Arquivos Modificados:**
+- `apps/telemed-internal/src/index.js` (linhas 335 e 1055): LaunchUrl usando rota raiz
+- `replit.md` - Documentação atualizada

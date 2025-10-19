@@ -328,8 +328,8 @@ app.get('/go/medicaldesk', async (req, res) => {
       { expiresIn: '15m', issuer: 'telemed' }
     );
 
-    // LaunchUrl no formato correto
-    const launchUrl = `/medicaldesk/app?token=${encodeURIComponent(token)}`;
+    // LaunchUrl no formato correto (rota raiz do MedicalDesk)
+    const launchUrl = `/medicaldesk/?token=${encodeURIComponent(token)}`;
 
     // (opcional) Pre-warm: acorda servidor/assets antes do redirect
     try {
@@ -1049,7 +1049,7 @@ app.post('/api/medicaldesk/session', (req, res) => {
   
   res.json({ 
     ok: true, 
-    launchUrl: `/medicaldesk/app?token=${encodeURIComponent(token)}` 
+    launchUrl: `/medicaldesk/?token=${encodeURIComponent(token)}` 
   });
 });
 
