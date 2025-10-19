@@ -328,8 +328,8 @@ app.get('/go/medicaldesk', async (req, res) => {
       { expiresIn: '15m', issuer: 'telemed' }
     );
 
-    // LaunchUrl no formato correto (rota raiz do MedicalDesk)
-    const launchUrl = `/medicaldesk/?token=${encodeURIComponent(token)}`;
+    // LaunchUrl no formato /app (upstream espera /app)
+    const launchUrl = `/medicaldesk/app?token=${encodeURIComponent(token)}`;
 
     // (opcional) Pre-warm: acorda servidor/assets antes do redirect
     try {
@@ -353,6 +353,15 @@ app.use((req, _res, next) => {
     console.log('[MEDICALDESK HIT]', req.method, req.path);
   }
   next();
+});
+
+// Redireciona /medicaldesk/ → /medicaldesk/app (preservando query string)
+app.get(['/medicaldesk', '/medicaldesk/'], (req, res) => {
+  const q = req.originalUrl.includes('?')
+    ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
+    : '';
+  console.log(`[MEDICALDESK REDIRECT] ${req.originalUrl} → /medicaldesk/app${q}`);
+  res.redirect(302, '/medicaldesk/app' + q);
 });
 
 // Proxy MedicalDesk (se configurado)
@@ -1051,7 +1060,7 @@ app.post('/api/medicaldesk/session', (req, res) => {
   
   res.json({ 
     ok: true, 
-    launchUrl: `/medicaldesk/?token=${encodeURIComponent(token)}` 
+    launchUrl: `/medicaldesk/app?token=${encodeURIComponent(token)}` 
   });
 });
 

@@ -187,15 +187,39 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 
 ## Recent Updates (Oct 19, 2025)
 
-### MedicalDesk LaunchUrl - Rota Raiz ✅
+### MedicalDesk LaunchUrl - Solução com Redirect ✅
 
-**Status:** ✅ Confirmado que servidor upstream usa rota raiz
+**Status:** ✅ Implementado com middleware de redirect + pathRewrite
 
-**Mudanças:**
-- **Tentativa de `/medicaldesk/app?token=...`**: Testado mas servidor upstream retornou 404
-- **Solução Final**: Voltou para `/medicaldesk/?token=...` (rota raiz compatível)
-- **Confirmação via curl**: Ambos endpoints (POST e GET) funcionando corretamente
+**Solução Final:**
+1. **Middleware de Redirect** (linha 359-368): Intercepta `/medicaldesk/` e redireciona para `/medicaldesk/app`
+   - `/medicaldesk/?token=...` → **302** → `/medicaldesk/app?token=...`
+   - Preserva query string automaticamente
+   
+2. **LaunchUrl atualizado** (linhas 335 e 1066): Sempre retorna `/medicaldesk/app?token=...`
+   - GET `/go/medicaldesk` → redirect 302 para `/medicaldesk/app?token=...`
+   - POST `/api/medicaldesk/session` → retorna `launchUrl: "/medicaldesk/app?token=..."`
+   
+3. **PathRewrite mantido** (linha 379): Proxy remove `/medicaldesk` antes de enviar para upstream
+   - `/medicaldesk/app?token=...` → upstream recebe `/app?token=...`
+   - `/medicaldesk/assets/...` → upstream recebe `/assets/...`
+
+**Fluxo Completo:**
+```
+Cliente → /medicaldesk/?token=...
+  ↓ (redirect 302)
+Cliente → /medicaldesk/app?token=...
+  ↓ (proxy + pathRewrite)
+Upstream ← /app?token=...
+```
+
+**Testes Realizados:**
+- ✅ Health check → 200 OK
+- ✅ POST /session → launchUrl: `/medicaldesk/app?token=...`
+- ✅ Redirect /medicaldesk/ → /medicaldesk/app (302)
+- ✅ Proxy pathRewrite funcionando
+- ✅ Assets carregados corretamente
 
 **Arquivos Modificados:**
-- `apps/telemed-internal/src/index.js` (linhas 335 e 1055): LaunchUrl usando rota raiz
+- `apps/telemed-internal/src/index.js` (linhas 359-368, 335, 379, 1066)
 - `replit.md` - Documentação atualizada
