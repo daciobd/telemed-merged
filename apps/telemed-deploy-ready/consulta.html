@@ -366,11 +366,15 @@
           </div>
         </div>
         <div class="status">
-          <!-- MDA Status Badge + Button (PRESERVADO DA VERSÃO TESTADA) -->
-          <span id="mda-status" class="mda-badge" aria-live="polite">MDA: verificando…</span>
-          <button id="mda-open" type="button" class="btn ghost" data-testid="button-mda-open">
-            Regerar sessão (abrir)
-          </button>
+          <!-- MDA Link Simples (Redirect 302 - Sem popup, sem JS) -->
+          <a href="/go/medicaldesk" 
+             target="_blank" 
+             rel="noopener" 
+             class="btn ghost" 
+             data-testid="button-mda-open"
+             title="Abre o MedicalDesk em nova aba">
+            Abrir MedicalDesk
+          </a>
           <button class="btn primary" id="btn-start">Iniciar Consulta</button>
           <button class="btn ghost" id="btn-back">Voltar</button>
         </div>
@@ -577,84 +581,7 @@
   })();
   </script>
 
-  <!-- MedicalDesk Integration - Script Robusto Anti-Bloqueio -->
-  <script>
-  (function () {
-    const btn   = document.getElementById('mda-open');
-    const badge = document.getElementById('mda-status');
-
-    if (!btn) return;
-
-    // util: atualiza badge
-    function setBadge(text) { if (badge) badge.textContent = text; }
-
-    // util: abre popup sem ser bloqueado (abre em branco no clique e navega depois)
-    function openPopup(url) {
-      // abre no clique, antes do fetch terminar
-      const pop = window.open('about:blank', '_blank',
-        'width=1000,height=740,noopener,noreferrer');
-      if (pop) { pop.opener = null; }  // segurança
-
-      if (url) {
-        if (pop) pop.location.href = url;
-        else window.open(url, '_blank', 'noopener,noreferrer');
-      }
-      return pop;
-    }
-
-    // checagem inicial (opcional)
-    fetch('/medicaldesk/health', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(j => setBadge(j?.name ? `MDA: OK ✅` : `MDA: OK ✅`))
-      .catch(() => setBadge('MDA: (verificando)'));
-
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-
-      // 1) abre popup em branco já no clique p/ evitar bloqueio
-      const popup = openPopup();
-
-      // 2) feedback
-      const original = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Criando sessão…';
-      setBadge('MDA: gerando token…');
-
-      try {
-        // 3) pede token NOVO (expira rápido!)
-        const resp = await fetch('/api/medicaldesk/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patientId: 'paciente-test', doctorId: 'medico-demo' })
-        });
-        if (!resp.ok) throw new Error('Falha ao criar sessão');
-
-        const data = await resp.json();
-        if (!data?.launchUrl) throw new Error('launchUrl ausente');
-
-        // 4) a API já retorna caminho relativo correto:
-        //    >>> /medicaldesk/?token=... <<<  (NÃO usa /app)
-        const url = data.launchUrl;
-
-        // 5) navega o popup (ou abre um novo se não existir)
-        if (popup) popup.location.href = url;
-        else openPopup(url);
-
-        // 6) restaura UI
-        setBadge('MDA: OK ✅');
-        btn.textContent = original;
-        btn.disabled = false;
-      } catch (err) {
-        console.error(err);
-        setBadge('MDA: erro ❌');
-        btn.textContent = original;
-        btn.disabled = false;
-        if (popup && !popup.closed) popup.close();
-        alert('Não consegui abrir o MedicalDesk. Tente novamente.');
-      }
-    });
-  })();
-  </script>
+  <!-- MedicalDesk: Usa link simples com redirect 302 (sem JS necessário) -->
 
 </body>
 </html>

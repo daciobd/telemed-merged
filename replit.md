@@ -163,22 +163,22 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 - **Design Moderno**: Interface atualizada com Inter font, gradiente elegante, layout responsivo
 - **Tabs Funcionais**: Chat, Atendimento, Exames, Receitas com navegação suave
 - **UI/UX Aprimorada**: Cards modernos, espaçamento consistente, cores harmoniosas
-- **Integração MedicalDesk ROBUSTA**: 
-  - **Script Anti-Bloqueio** (linhas 583-660): Abre popup about:blank IMEDIATAMENTE no clique
-  - Token fresco a cada clique via POST /api/medicaldesk/session
+- **Integração MedicalDesk ELEGANTE**: 
+  - **Solução Radical com Redirect 302** (linhas 1015-1054 index.js): Endpoint GET `/go/medicaldesk`
+  - **Link Simples** (linha 373-380 consulta.html): `<a href="/go/medicaldesk" target="_blank">`
+  - SEM popup, SEM JavaScript complexo, SEM problemas de timing
+  - Token fresco gerado no servidor a cada clique
+  - Pre-warm opcional do servidor MedicalDesk (health check antes do redirect)
   - Usa `/medicaldesk/?token=...` (compatível com servidor upstream)
-  - Badge de status simplificado (OK ✅ / verificando / erro ❌)
-  - Health check inicial opcional
-  - Tratamento robusto de erros com fallback
-  - data-testid="button-mda-open" para testes E2E
+  - Aceita query params: `?patientId=...&doctorId=...` para sessões personalizadas
+  - data-testid="button-mda-open" mantido para testes E2E
 
 **Gateway Proxy - Configuração Final:**
 - **SEM pathRewrite**: Proxy passa paths completos `/medicaldesk/?token=...` para upstream
-- **LaunchUrl**: `/medicaldesk/?token=...` (linha 1011) - Raiz do SPA, compatível com servidor upstream
+- **Endpoint Redirect**: GET `/go/medicaldesk` (linha 1016) - Gera token + redirect 302
 - **SPA Fallback**: Exclui `/medicaldesk` (linha 370 em index.js)
   - Evita servir index.html do telemed-deploy-ready para rotas MedicalDesk
 - **Ordem de Middleware**: Proxy MedicalDesk → Static → Fallback (CORRETO)
-- **Popup Sincrônico**: Abre about:blank imediatamente no clique, evita bloqueio do navegador (linhas 645-678 consulta.html)
 
 **Arquivos Modificados:**
 - `apps/telemed-deploy-ready/consulta.html` - Design moderno + integração MedicalDesk

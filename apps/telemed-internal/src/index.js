@@ -301,6 +301,50 @@ app.post('/_diag/auction/bids', async (req, res) => {
   }
 });
 
+// ===== MEDICALDESK ENDPOINTS (ANTES DO PROXY!) =====
+
+// Abrir MedicalDesk com redirect 302 (SOLUÇÃO ROBUSTA - sem popup, sem JS)
+app.get('/go/medicaldesk', async (req, res) => {
+  try {
+    const feature = String(process.env.FEATURE_MEDICALDESK || '').toLowerCase() === 'true';
+    const baseOk = !!process.env.MEDICALDESK_URL;
+    
+    if (!feature || !baseOk) {
+      return res.status(503).send('MedicalDesk desabilitado');
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).send('Configuração inválida');
+    }
+
+    // Aceita query params ou usa defaults
+    const patientId = req.query.patientId || 'paciente-test';
+    const doctorId = req.query.doctorId || 'medico-demo';
+
+    // Gera token JWT
+    const token = jwt.sign(
+      { sub: String(doctorId), patientId: String(patientId), role: 'doctor' },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m', issuer: 'telemed' }
+    );
+
+    // LaunchUrl no formato correto
+    const launchUrl = `/medicaldesk/?token=${encodeURIComponent(token)}`;
+
+    // (opcional) Pre-warm: acorda servidor/assets antes do redirect
+    try {
+      await fetch(`${req.protocol}://${req.get('host')}/medicaldesk/health`).catch(() => {});
+    } catch (e) {}
+
+    // Redirect 302 definitivo
+    console.log(`[GO/MEDICALDESK] Redirecting to: ${launchUrl}`);
+    res.redirect(302, launchUrl);
+  } catch (err) {
+    console.error('[go/medicaldesk]', err);
+    res.status(500).send('Falha ao iniciar MedicalDesk');
+  }
+});
+
 // ===== MEDICALDESK PROXY (DEVE VIR ANTES DE STATIC/FALLBACK) =====
 
 // Debug middleware para /medicaldesk
@@ -979,7 +1023,7 @@ app.get('/api/medicaldesk/feature', (req, res) => {
   });
 });
 
-// Criar sessão MedicalDesk
+// Criar sessão MedicalDesk (POST - mantido para compatibilidade)
 app.post('/api/medicaldesk/session', (req, res) => {
   const feature = String(process.env.FEATURE_MEDICALDESK || '').toLowerCase() === 'true';
   const baseOk = !!process.env.MEDICALDESK_URL;
