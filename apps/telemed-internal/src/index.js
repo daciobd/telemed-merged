@@ -328,8 +328,8 @@ app.get('/go/medicaldesk', async (req, res) => {
       { expiresIn: '15m', issuer: 'telemed' }
     );
 
-    // LaunchUrl no formato /app (upstream espera /app)
-    const launchUrl = `/medicaldesk/app?token=${encodeURIComponent(token)}`;
+    // LaunchUrl na raiz (SPA espera / não /app)
+    const launchUrl = `/medicaldesk/?token=${encodeURIComponent(token)}`;
 
     // (opcional) Pre-warm: acorda servidor/assets antes do redirect
     try {
@@ -350,18 +350,19 @@ app.get('/go/medicaldesk', async (req, res) => {
 // Debug middleware para /medicaldesk
 app.use((req, _res, next) => {
   if (req.path.startsWith('/medicaldesk')) {
-    console.log('[MEDICALDESK HIT]', req.method, req.path);
+    const fullUrl = req.originalUrl || req.url;
+    console.log('[MEDICALDESK HIT]', req.method, fullUrl, 'query:', req.query);
   }
   next();
 });
 
-// Redireciona /medicaldesk/ → /medicaldesk/app (preservando query string)
-app.get(['/medicaldesk', '/medicaldesk/'], (req, res) => {
+// Redireciona /medicaldesk/app → /medicaldesk/ (backwards compatibility)
+app.get(['/medicaldesk/app', '/medicaldesk/app/'], (req, res) => {
   const q = req.originalUrl.includes('?')
     ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
     : '';
-  console.log(`[MEDICALDESK REDIRECT] ${req.originalUrl} → /medicaldesk/app${q}`);
-  res.redirect(302, '/medicaldesk/app' + q);
+  console.log(`[MEDICALDESK REDIRECT] ${req.originalUrl} → /medicaldesk/${q}`);
+  res.redirect(302, '/medicaldesk/' + q);
 });
 
 // Proxy MedicalDesk (se configurado)
@@ -380,7 +381,12 @@ if (MD_ENABLED && MD_BASE) {
       onProxyReq: (proxyReq, req) => {
         proxyReq.setHeader('x-forwarded-host', req.get('host') || '');
         const newPath = req.path.replace(/^\/medicaldesk/, '');
-        console.log(`[MEDICALDESK PROXY] ${req.method} ${req.path} → ${MD_BASE}${newPath}`);
+        const fullUrl = req.originalUrl || req.url;
+        console.log(`[MEDICALDESK PROXY] ${req.method} ${fullUrl} → ${MD_BASE}${newPath}`);
+      },
+      onProxyRes: (proxyRes, req) => {
+        const fullUrl = req.originalUrl || req.url;
+        console.log(`[MEDICALDESK PROXY RESPONSE] ${proxyRes.statusCode} for ${fullUrl}`);
       },
       onError: (err, req, res) => {
         console.error('[MedicalDesk proxy error]', err.message);
@@ -1060,7 +1066,7 @@ app.post('/api/medicaldesk/session', (req, res) => {
   
   res.json({ 
     ok: true, 
-    launchUrl: `/medicaldesk/app?token=${encodeURIComponent(token)}` 
+    launchUrl: `/medicaldesk/?token=${encodeURIComponent(token)}` 
   });
 });
 

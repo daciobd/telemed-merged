@@ -187,39 +187,50 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 
 ## Recent Updates (Oct 19, 2025)
 
-### MedicalDesk LaunchUrl - Solução com Redirect ✅
+### MedicalDesk LaunchUrl - Solução Final com Raiz do SPA ✅
 
-**Status:** ✅ Implementado com middleware de redirect + pathRewrite
+**Status:** ✅ Implementado e testado - SPA carrega na raiz com pathRewrite
+
+**Descoberta Crítica:**
+- O bundle MedicalDesk tem `<base href="/medicaldesk/">` e assets em `/medicaldesk/assets/...`
+- O React Router do SPA **não tem rota `/app`** - espera a **raiz `/`**
+- O 404 anterior era do React Router (client-side), não do servidor HTTP
 
 **Solução Final:**
-1. **Middleware de Redirect** (linha 359-368): Intercepta `/medicaldesk/` e redireciona para `/medicaldesk/app`
-   - `/medicaldesk/?token=...` → **302** → `/medicaldesk/app?token=...`
+1. **LaunchUrl usa RAIZ** (linhas 335 e 1066): `/medicaldesk/?token=...`
+   - GET `/go/medicaldesk` → redirect 302 para `/medicaldesk/?token=...`
+   - POST `/api/medicaldesk/session` → retorna `launchUrl: "/medicaldesk/?token=..."`
+   
+2. **Backwards Compatibility** (linha 362-368): Redirect `/medicaldesk/app` → `/medicaldesk/`
+   - `/medicaldesk/app?token=...` → **302** → `/medicaldesk/?token=...`
    - Preserva query string automaticamente
    
-2. **LaunchUrl atualizado** (linhas 335 e 1066): Sempre retorna `/medicaldesk/app?token=...`
-   - GET `/go/medicaldesk` → redirect 302 para `/medicaldesk/app?token=...`
-   - POST `/api/medicaldesk/session` → retorna `launchUrl: "/medicaldesk/app?token=..."`
-   
-3. **PathRewrite mantido** (linha 379): Proxy remove `/medicaldesk` antes de enviar para upstream
-   - `/medicaldesk/app?token=...` → upstream recebe `/app?token=...`
-   - `/medicaldesk/assets/...` → upstream recebe `/assets/...`
+3. **PathRewrite essencial** (linha 379): Proxy remove `/medicaldesk` antes de enviar para upstream
+   - `/medicaldesk/?token=...` → upstream recebe `/?token=...` ✅
+   - `/medicaldesk/assets/...` → upstream recebe `/assets/...` ✅
 
-**Fluxo Completo:**
+**Fluxo Correto:**
 ```
 Cliente → /medicaldesk/?token=...
-  ↓ (redirect 302)
-Cliente → /medicaldesk/app?token=...
   ↓ (proxy + pathRewrite)
-Upstream ← /app?token=...
+Upstream ← /?token=... (raiz do SPA) ✅
+
+OU (backwards compatibility):
+Cliente → /medicaldesk/app?token=...
+  ↓ (redirect 302)
+Cliente → /medicaldesk/?token=...
+  ↓ (proxy + pathRewrite)
+Upstream ← /?token=... ✅
 ```
 
 **Testes Realizados:**
 - ✅ Health check → 200 OK
-- ✅ POST /session → launchUrl: `/medicaldesk/app?token=...`
-- ✅ Redirect /medicaldesk/ → /medicaldesk/app (302)
+- ✅ POST /session → launchUrl: `/medicaldesk/?token=...` (RAIZ)
+- ✅ Acessar LaunchUrl → 200 OK (SPA carrega corretamente)
+- ✅ Backwards compatibility → `/medicaldesk/app` redireciona para `/medicaldesk/`
 - ✅ Proxy pathRewrite funcionando
 - ✅ Assets carregados corretamente
 
 **Arquivos Modificados:**
-- `apps/telemed-internal/src/index.js` (linhas 359-368, 335, 379, 1066)
+- `apps/telemed-internal/src/index.js` (linhas 335, 362-368, 379, 1066)
 - `replit.md` - Documentação atualizada
