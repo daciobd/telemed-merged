@@ -329,7 +329,7 @@ app.get('/go/medicaldesk', async (req, res) => {
     );
 
     // LaunchUrl no formato correto
-    const launchUrl = `/medicaldesk/?token=${encodeURIComponent(token)}`;
+    const launchUrl = `/medicaldesk/app?token=${encodeURIComponent(token)}`;
 
     // (opcional) Pre-warm: acorda servidor/assets antes do redirect
     try {
@@ -1049,7 +1049,7 @@ app.post('/api/medicaldesk/session', (req, res) => {
   
   res.json({ 
     ok: true, 
-    launchUrl: `/medicaldesk/?token=${encodeURIComponent(token)}` 
+    launchUrl: `/medicaldesk/app?token=${encodeURIComponent(token)}` 
   });
 });
 
