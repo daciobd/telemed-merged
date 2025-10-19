@@ -328,7 +328,7 @@ app.get('/go/medicaldesk', async (req, res) => {
       { expiresIn: '15m', issuer: 'telemed' }
     );
 
-    // LaunchUrl na raiz (SPA espera / não /app)
+    // LaunchUrl na raiz (será redirecionado para /app automaticamente)
     const launchUrl = `/medicaldesk/?token=${encodeURIComponent(token)}`;
 
     // (opcional) Pre-warm: acorda servidor/assets antes do redirect
@@ -356,16 +356,8 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Redireciona /medicaldesk/app → /medicaldesk/ (backwards compatibility)
-app.get(['/medicaldesk/app', '/medicaldesk/app/'], (req, res) => {
-  const q = req.originalUrl.includes('?')
-    ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
-    : '';
-  console.log(`[MEDICALDESK REDIRECT] ${req.originalUrl} → /medicaldesk/${q}`);
-  res.redirect(302, '/medicaldesk/' + q);
-});
-
-// Proxy MedicalDesk (se configurado)
+// Proxy MedicalDesk (se configurado) - SEM REDIRECT
+// O upstream espera a raiz /, NÃO /app (que retorna 401)
 const MD_BASE = process.env.MEDICALDESK_URL;
 const MD_ENABLED = String(process.env.FEATURE_MEDICALDESK || 'false').toLowerCase() === 'true';
 

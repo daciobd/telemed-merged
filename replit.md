@@ -187,50 +187,67 @@ Arquivo: `apps/telemed-deploy-ready/index.html`
 
 ## Recent Updates (Oct 19, 2025)
 
-### MedicalDesk LaunchUrl - Solução Final com Raiz do SPA ✅
+### MedicalDesk Proxy - Análise Completa e Status ✅❌
 
-**Status:** ✅ Implementado e testado - SPA carrega na raiz com pathRewrite
+**Status:** 🟡 **Proxy funciona (HTTP), mas validação JWT falha no frontend**
 
-**Descoberta Crítica:**
-- O bundle MedicalDesk tem `<base href="/medicaldesk/">` e assets em `/medicaldesk/assets/...`
-- O React Router do SPA **não tem rota `/app`** - espera a **raiz `/`**
-- O 404 anterior era do React Router (client-side), não do servidor HTTP
+**Descobertas Críticas da Investigação:**
 
-**Solução Final:**
-1. **LaunchUrl usa RAIZ** (linhas 335 e 1066): `/medicaldesk/?token=...`
-   - GET `/go/medicaldesk` → redirect 302 para `/medicaldesk/?token=...`
-   - POST `/api/medicaldesk/session` → retorna `launchUrl: "/medicaldesk/?token=..."`
-   
-2. **Backwards Compatibility** (linha 362-368): Redirect `/medicaldesk/app` → `/medicaldesk/`
-   - `/medicaldesk/app?token=...` → **302** → `/medicaldesk/?token=...`
-   - Preserva query string automaticamente
-   
-3. **PathRewrite essencial** (linha 379): Proxy remove `/medicaldesk` antes de enviar para upstream
-   - `/medicaldesk/?token=...` → upstream recebe `/?token=...` ✅
-   - `/medicaldesk/assets/...` → upstream recebe `/assets/...` ✅
+1. **Roteamento Upstream:**
+   - `/` (raiz) → **200 OK** ✅
+   - `/app` → **401 Unauthorized** ❌
+   - Upstream **NÃO aceita `/app`**, apenas raiz `/`
+   - Bundle tem `<base href="/medicaldesk/">` e assets em `/medicaldesk/assets/...`
 
-**Fluxo Correto:**
+2. **Proxy Funcionando Corretamente:**
+   - ✅ GET `/medicaldesk/?token=...` → HTTP 200 OK
+   - ✅ Assets (JS/CSS) carregam via proxy
+   - ✅ PathRewrite funciona: `/medicaldesk/...` → `/...` no upstream
+   - ✅ Query params preservados corretamente
+
+3. **Problema Identificado:**
+   - ❌ React Router mostra "404 Page Not Found" (client-side)
+   - ❌ SPA nunca transiciona para rotas autenticadas
+   - 🔍 **Causa:** Token JWT não está sendo validado pelo frontend MedicalDesk
+
+**Solução Implementada (Proxy apenas):**
+```javascript
+// Linha 354-363: Debug middleware
+// Linha 367-398: Proxy com pathRewrite
+app.use('/medicaldesk', createProxyMiddleware({
+  target: MEDICALDESK_URL,
+  changeOrigin: true,
+  pathRewrite: (path) => path.replace(/^\/medicaldesk/, ''),
+  onProxyReq/onProxyRes: logging
+}));
+```
+
+**Fluxo Atual:**
 ```
 Cliente → /medicaldesk/?token=...
   ↓ (proxy + pathRewrite)
-Upstream ← /?token=... (raiz do SPA) ✅
-
-OU (backwards compatibility):
-Cliente → /medicaldesk/app?token=...
-  ↓ (redirect 302)
-Cliente → /medicaldesk/?token=...
-  ↓ (proxy + pathRewrite)
-Upstream ← /?token=... ✅
+Upstream ← /?token=... → HTTP 200 OK
+  ↓ (assets carregam)
+React Router → 404 client-side (JWT inválido)
 ```
 
-**Testes Realizados:**
-- ✅ Health check → 200 OK
-- ✅ POST /session → launchUrl: `/medicaldesk/?token=...` (RAIZ)
-- ✅ Acessar LaunchUrl → 200 OK (SPA carrega corretamente)
-- ✅ Backwards compatibility → `/medicaldesk/app` redireciona para `/medicaldesk/`
-- ✅ Proxy pathRewrite funcionando
-- ✅ Assets carregados corretamente
+**Próximos Passos Necessários:**
+1. **Validar contrato JWT** com documentação MedicalDesk:
+   - Claims esperados (sub, aud, patientId, role, etc.)
+   - Algoritmo de assinatura (HS256, RS256?)
+   - Secret/chave pública esperada
+   - Headers HTTP específicos
+
+2. **Instrumentar debugging:**
+   - Browser DevTools → Network tab
+   - Identificar qual API call retorna 401
+   - Verificar headers enviados vs esperados
+
+3. **Ajustar geração de token:**
+   - Alinhar claims com contrato esperado
+   - Configurar secret correto
+   - Adicionar headers necessários
 
 **Arquivos Modificados:**
-- `apps/telemed-internal/src/index.js` (linhas 335, 362-368, 379, 1066)
-- `replit.md` - Documentação atualizada
+- `apps/telemed-internal/src/index.js` (linhas 354-398: Proxy config)
+- `replit.md` - Documentação atualizada com descobertas
