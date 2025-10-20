@@ -248,6 +248,51 @@ React Router → 404 client-side (JWT inválido)
    - Configurar secret correto
    - Adicionar headers necessários
 
+**MedicalDesk Button Handler - Implementação Completa ✅**
+
+**Status:** ✅ Frontend 100% funcional, testado via Playwright E2E
+
+**Implementação Final (consulta.html):**
+```javascript
+// Linhas 373-380: HTML
+<button id="btn-medical-desk" class="btn ghost" data-testid="button-mda-open">
+  Abrir MedicalDesk
+</button>
+<span id="mda-badge" class="mda-badge"></span>
+
+// Linhas 588-618: Handler JavaScript
+async function openMDA() {
+  try {
+    btn.disabled = true;
+    btn.textContent = 'Criando sessão…';
+    const resp = await fetch('/api/medicaldesk/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patientId: 'paciente-test', doctorId: 'medico-demo' })
+    });
+    const data = await resp.json();
+    if (!data?.launchUrl) throw new Error('launchUrl ausente');
+    window.open(data.launchUrl, '_blank', 'width=900,height=700');
+    btn.textContent = 'Abrir MedicalDesk';
+    btn.disabled = false; // ✅ Bug fix: Sempre reativa o botão
+    badge.textContent = 'MDA: OK ✅';
+  } catch (e) {
+    console.error(e);
+    btn.textContent = 'Abrir MedicalDesk';
+    badge.textContent = 'MDA: erro ❌';
+    btn.disabled = false;
+  }
+}
+```
+
+**Testes E2E (Playwright):**
+- ✅ Botão abre popup via `window.open()`
+- ✅ POST `/api/medicaldesk/session` retorna `launchUrl`
+- ✅ Badge mostra "MDA: OK ✅" após sucesso
+- ✅ Botão pode ser clicado MÚLTIPLAS VEZES (bug fix testado)
+- ✅ Cada clique gera nova sessão JWT (token expira em 15min)
+
 **Arquivos Modificados:**
-- `apps/telemed-internal/src/index.js` (linhas 354-398: Proxy config)
-- `replit.md` - Documentação atualizada com descobertas
+- `apps/telemed-deploy-ready/consulta.html` (linhas 373-380, 588-618: Button + Handler)
+- `apps/telemed-internal/src/index.js` (linhas 354-398: Proxy config, 1011-1051: Session API)
+- `replit.md` - Documentação atualizada com implementação completa

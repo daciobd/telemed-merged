@@ -366,15 +366,15 @@
           </div>
         </div>
         <div class="status">
-          <!-- MDA Link Simples (Redirect 302 - Sem popup, sem JS) -->
-          <a href="/go/medicaldesk" 
-             target="_blank" 
-             rel="noopener" 
+          <!-- MDA com Popup via Session API -->
+          <button 
+             id="btn-medical-desk" 
              class="btn ghost" 
              data-testid="button-mda-open"
-             title="Abre o MedicalDesk em nova aba">
+             title="Abre o MedicalDesk em popup">
             Abrir MedicalDesk
-          </a>
+          </button>
+          <span id="mda-badge" class="mda-badge"></span>
           <button class="btn primary" id="btn-start">Iniciar Consulta</button>
           <button class="btn ghost" id="btn-back">Voltar</button>
         </div>
@@ -581,7 +581,39 @@
   })();
   </script>
 
-  <!-- MedicalDesk: Usa link simples com redirect 302 (sem JS necessário) -->
+  <!-- MedicalDesk: Handler com Session API + Popup -->
+  <script>
+  (async () => {
+    const btn = document.getElementById('btn-medical-desk');
+    const badge = document.getElementById('mda-badge');
+
+    async function openMDA() {
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Criando sessão…';
+        const resp = await fetch('/api/medicaldesk/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientId: 'paciente-test', doctorId: 'medico-demo' })
+        });
+        const data = await resp.json();
+        if (!data?.launchUrl) throw new Error('launchUrl ausente');
+        // abre em popup/aba
+        window.open(data.launchUrl, '_blank', 'width=900,height=700');
+        btn.textContent = 'Abrir MedicalDesk';
+        btn.disabled = false;
+        badge.textContent = 'MDA: OK ✅';
+      } catch (e) {
+        console.error(e);
+        btn.textContent = 'Abrir MedicalDesk';
+        badge.textContent = 'MDA: erro ❌';
+        btn.disabled = false;
+      }
+    }
+
+    btn?.addEventListener('click', openMDA);
+  })();
+  </script>
 
 </body>
 </html>
