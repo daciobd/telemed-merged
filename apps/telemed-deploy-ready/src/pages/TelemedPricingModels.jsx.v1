@@ -154,14 +154,6 @@ export default function TelemedPricingModels() {
   const active = models[currentModel];
   const activeColors = colorBlock[active.color];
 
-  // Expor switch de modelo para o Modo Demo
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__BIDCONNECT_DEMO = window.__BIDCONNECT_DEMO || {};
-      window.__BIDCONNECT_DEMO.switchModel = (m) => setCurrentModel(m);
-    }
-  }, []);
-
   return (
     <div className="max-w-3xl mx-auto p-6 bg-gray-50 min-h-screen">
       {/* Selector de Modelos */}
@@ -191,7 +183,6 @@ export default function TelemedPricingModels() {
         {currentModel === "conservative" && <ConservativeModel />}
         {currentModel === "suggestive" && <SuggestiveModel />}
         {currentModel === "dynamic" && <DynamicModel />}
-              <DemoMode currentModel={currentModel} />
       </div>
     </div>
   );
@@ -201,19 +192,6 @@ export default function TelemedPricingModels() {
 // MODELO 1: CONSERVADOR
 // -----------------------------------------
 function ConservativeModel() {
-  // Registrar ganchos de demo
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__BIDCONNECT_DEMO = window.__BIDCONNECT_DEMO || {};
-      window.__BIDCONNECT_DEMO.conservative = window.__BIDCONNECT_DEMO.conservative || {};
-      window.__BIDCONNECT_DEMO.conservative.setBid = (v) => setUserBid(v);
-      window.__BIDCONNECT_DEMO.conservative.search = () => searchDoctors();
-      window.__BIDCONNECT_DEMO.conservative.acceptFirst = () => {
-        const first = (result?.immediate?.[0] || result?.scheduled?.[0]);
-        if (first) acceptDoctor(first.id);
-      };
-    }
-  }, [result]);
   const [userBid, setUserBid] = useState(140);
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState(null);
@@ -364,22 +342,6 @@ function ConservativeModel() {
 // MODELO 2: SUGESTIVO (IA)
 // -----------------------------------------
 function SuggestiveModel() {
-  // Registrar ganchos de demo (IA)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__BIDCONNECT_DEMO = window.__BIDCONNECT_DEMO || {};
-      window.__BIDCONNECT_DEMO.suggestive = {
-        setBid: (v) => setUserBid(v),
-        search: () => searchWithAI(),
-        acceptSuggestion: () => {
-          setUserBid(195);
-          setAiSuggest(null);
-          setTimeout(searchWithAI, 50);
-        }
-      };
-    }
-  }, []);
-
   const [userBid, setUserBid] = useState(140);
   const [searching, setSearching] = useState(false);
   const [aiSuggest, setAiSuggest] = useState(null);
@@ -491,16 +453,6 @@ function SuggestiveModel() {
 // MODELO 3: DINÂMICO (Mercado)
 // -----------------------------------------
 function DynamicModel() {
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__BIDCONNECT_DEMO = window.__BIDCONNECT_DEMO || {};
-      window.__BIDCONNECT_DEMO.dynamic = {
-        selectFast: () => setSelected('fast'),
-        selectPremium: () => setSelected('prem')
-      };
-    }
-  }, []);
-
   const [selected, setSelected] = useState(null);
   const tiers = [
     { key:"econ", min:140, max:159, immediate:0, scheduled:2, wait:"2–4 h", label:"Econômico", color:"gray" },
@@ -604,76 +556,5 @@ function DynamicModel() {
         </div>
       </div>
     </div>
-  );
-}
-
-// -----------------------------------------
-// MODO DEMONSTRAÇÃO (overlay)
-// -----------------------------------------
-function DemoMode({ currentModel }) {
-  const [open, setOpen] = useState(false);
-  const api = (typeof window !== 'undefined' ? window.__BIDCONNECT_DEMO : undefined) || {};
-
-  const goCons140 = async () => {
-    api.switchModel && api.switchModel('conservative');
-    api.conservative?.setBid?.(140);
-    api.conservative?.search?.();
-  };
-  const goCons180 = async () => {
-    api.switchModel && api.switchModel('conservative');
-    api.conservative?.setBid?.(180);
-    api.conservative?.search?.();
-  };
-  const acceptFirst = () => api.conservative?.acceptFirst?.();
-
-  const goSuggest = () => {
-    api.switchModel && api.switchModel('suggestive');
-    api.suggestive?.setBid?.(160);
-    api.suggestive?.search?.();
-  };
-
-  const goDynamic = () => {
-    api.switchModel && api.switchModel('dynamic');
-    setTimeout(()=> api.dynamic?.selectFast?.(), 50);
-  };
-
-  return (
-    <>
-      <button
-        onClick={() => setOpen(!open)}
-        title="Modo Apresentação"
-        className="fixed bottom-4 right-4 z-50 shadow-lg bg-black/80 text-white rounded-full px-4 py-2 text-sm font-bold hover:bg-black"
-      >
-        🎬 Modo Demo
-      </button>
-      {open && (
-        <div className="fixed bottom-16 right-4 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-bold">Roteiro rápido</div>
-            <button onClick={()=>setOpen(false)} className="text-gray-500 hover:text-gray-800">✕</button>
-          </div>
-          <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
-            <li>
-              <div className="flex gap-2 mt-1">
-                <button onClick={goCons140} className="px-2 py-1 rounded bg-gray-800 text-white text-xs">R$140 → Buscar</button>
-                <button onClick={goCons180} className="px-2 py-1 rounded bg-blue-600 text-white text-xs">R$180 → Buscar</button>
-                <button onClick={acceptFirst} className="px-2 py-1 rounded bg-green-600 text-white text-xs">Aceitar 1º</button>
-              </div>
-            </li>
-            <li>
-              <div className="flex gap-2 mt-1">
-                <button onClick={goSuggest} className="px-2 py-1 rounded bg-purple-600 text-white text-xs">IA → sugerir</button>
-              </div>
-            </li>
-            <li>
-              <div className="flex gap-2 mt-1">
-                <button onClick={goDynamic} className="px-2 py-1 rounded bg-green-600 text-white text-xs">Dinâmico → Rápido</button>
-              </div>
-            </li>
-          </ol>
-          <div className="text-[11px] text-gray-500 mt-3">Dica: deixe o Console aberto para ver a telemetria (grupos e tabelas).</div>
-        </div>
-      )}
-    </>
   );
 }
