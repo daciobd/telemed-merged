@@ -4,6 +4,7 @@ import PacienteCadastroSucesso from './views/paciente/CadastroSucesso';
 import PacientePedido from './views/paciente/Pedido';
 import MedicoComoFunciona from './views/medico/ComoFunciona';
 import ConsultaSala from './views/consulta/Sala';
+import TelemedPricingModels from './pages/TelemedPricingModels';
 
 export default function AppRoutes() {
   return (
@@ -13,6 +14,8 @@ export default function AppRoutes() {
       <Route path="/paciente/pedido" element={<PacientePedido />} />
       <Route path="/medico/como-funciona" element={<MedicoComoFunciona />} />
       <Route path="/consulta/sala" element={<ConsultaSala />} />
+      <Route path="/pricing" element={<TelemedPricingModels />} />
+      <Route path="/bidconnect" element={<TelemedPricingModels />} />
     </Routes>
   );
 }
