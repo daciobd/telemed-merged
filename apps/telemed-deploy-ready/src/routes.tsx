@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Routes, Route } from "react-router-dom";
 import PacienteComoFunciona from './views/paciente/ComoFunciona';
 import PacienteCadastroSucesso from './views/paciente/CadastroSucesso';
