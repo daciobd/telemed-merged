@@ -211,20 +211,20 @@
         <strong class="brand-title">TeleMed Consulta</strong>
       </a>
       <div style="display:flex; align-items:center; gap:12px;">
-        <a href="/pricing?model=conservative" class="bidconnect-link" data-testid="link-bidconnect-header">
+        <a href="/pricing?model=conservative" class="bidconnect-link" data-testid="link-bidconnect-header" id="bidconnect-header-link" data-allow-demo>
           BidConnect<span class="beta-badge">BETA</span>
         </a>
         <div class="menu-wrapper">
-          <button class="menu-trigger" data-testid="button-demo-menu">Começar Demo ▾</button>
+          <button class="menu-trigger" data-testid="button-demo-menu" id="menu-trigger-btn">Começar Demo ▾</button>
           <div class="dropdown-menu">
-            <a href="/pricing?model=conservative" data-testid="menu-bidconnect">
+            <a href="/pricing?model=conservative" data-testid="menu-bidconnect" id="menu-bidconnect-link" data-allow-demo>
               <span>BidConnect – Preço Dinâmico</span>
               <span class="beta-badge">BETA</span>
             </a>
-            <a href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es" data-testid="menu-prescricao">
+            <a href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es" data-testid="menu-prescricao" id="menu-prescricao-link" data-allow-demo>
               <span>Prescrição em 90s</span>
             </a>
-            <a href="/public/alertas-demo.html?perfil=paciente&rules=pa_emerg,febre&channels=app,email" data-testid="menu-alertas">
+            <a href="/public/alertas-demo.html?perfil=paciente&rules=pa_emerg,febre&channels=app,email" data-testid="menu-alertas" id="menu-alertas-link" data-allow-demo>
               <span>Alertas Clínicos</span>
             </a>
           </div>
@@ -442,9 +442,9 @@
   (function(){
     // ===== Configurações =====
     const DEMO_ON_BY_DEFAULT = true; // deixe true para testers; use ?full=1 para liberar tudo
-    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', '/public/', '/dashboard', '/preview/', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/' ];
+    const allowHrefsStartsWith = [ '/escolha-perfil', '/demo-paciente', '/demo-medico', '/public/', '/dashboard', '/preview/', 'demo-paciente', 'demo-medico', 'public/', 'dr-ai-assistant', 'auth/', 'app/', '/pricing', '/bidconnect' ];
     const allowIds = [ 'tm-cta-demo', 'go', 'card-paciente', 'card-chat', 'card-kit', 'card-toasts', 'card-auction', 'btn-sys-paciente', 'btn-sys-medico', 'cta-med-dashboard', 'cta-med-kit', 'cta-med-dr-ai', 'demo-prescricao-90s', 'demo-alertas' ]; // você pode adicionar ids de CTAs próprios da landing que devem permanecer ativos
-    const allowClasses = [ 'theme-toggle' ]; // classes permitidas (ex: botão de tema)
+    const allowClasses = [ 'theme-toggle', 'bidconnect-link', 'menu-trigger' ]; // classes permitidas (ex: botão de tema)
     const lockByText = [ 'Saiba Mais', 'Para cadastro', 'Conheça o Dr. AI', 'Consulta online', 'Demonstração para pacientes', 'Contato', 'Suporte', 'Termos' ];
     const lockMessages = {
       'Conheça o Dr. AI': 'Área ainda em desenvolvimento. Nesta demonstração, priorizamos a conexão médico–paciente.',
@@ -545,6 +545,45 @@
       applyLocks();
       console.log('🔒 Locks aplicados. CTAs médicos na whitelist:', 
         document.querySelectorAll('#cta-med-dashboard,#cta-med-kit,#cta-med-dr-ai').length);
+    }
+  })();
+  </script>
+
+  <!-- Failsafe: Garantir que BidConnect sempre funcione -->
+  <script>
+  (function() {
+    function unlockBidConnect() {
+      const bidconnectSelectors = [
+        'a[href*="/pricing"]',
+        'a[href*="/bidconnect"]',
+        '.bidconnect-link',
+        '#bidconnect-header-link',
+        '#menu-bidconnect-link',
+        '#menu-trigger-btn'
+      ];
+      
+      bidconnectSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          el.classList.remove('tm-locked', 'disabled');
+          el.removeAttribute('aria-disabled');
+          el.removeAttribute('data-lock-msg');
+          el.style.pointerEvents = 'auto';
+          el.style.cursor = '';
+          el.style.opacity = '';
+          if (el.title && el.title.includes('Disponível')) el.title = '';
+        });
+      });
+      console.log('✅ BidConnect desbloqueado');
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(unlockBidConnect, 100);
+        setTimeout(unlockBidConnect, 500);
+      });
+    } else {
+      setTimeout(unlockBidConnect, 100);
+      setTimeout(unlockBidConnect, 500);
     }
   })();
   </script>
