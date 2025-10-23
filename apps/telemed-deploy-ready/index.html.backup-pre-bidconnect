@@ -178,28 +178,12 @@
       transition: opacity 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,.2); z-index: 100;
     }
     .md-health:hover .md-health-tooltip { opacity: 1; }
-    
-    /* Pilot Banner */
-    .pilot-banner{background:#f59e0b;color:#111827;text-align:center;padding:10px;font-size:13px;font-weight:700;border-bottom:2px solid #d97706}
-    
-    /* Dropdown Menu */
-    .menu-wrapper{position:relative;display:inline-block}
-    .menu-trigger{background:var(--accent);color:white;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
-    .menu-trigger:hover{background:var(--accent-strong)}
-    .dropdown-menu{position:absolute;top:100%;right:0;margin-top:8px;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:12px;box-shadow:0 16px 36px rgba(0,0,0,.12);padding:8px;min-width:280px;display:none;z-index:100}
-    .menu-wrapper:hover .dropdown-menu{display:block}
-    .dropdown-menu a{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--text);transition:background .2s}
-    .dropdown-menu a:hover{background:rgba(77,163,255,.1)}
-    .beta-badge{font-size:10px;background:#6366f1;color:white;padding:2px 6px;border-radius:999px;margin-left:6px;font-weight:800}
-    .bidconnect-link{font-weight:600;padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--accent);border:1px solid rgba(77,163,255,.3);transition:all .2s}
-    .bidconnect-link:hover{background:rgba(77,163,255,.1);border-color:var(--accent)}
   </style>
   <script src="/js/feature-flags.js"></script>
   <script src="/js/audit-logger.js"></script>
   <script src="/js/consent-banner.js"></script>
 </head>
 <body>
-  <div class="pilot-banner">⚠️ AMBIENTE DE PILOTO — Não use dados reais. Este é um ambiente de testes.</div>
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema" data-testid="button-toggle-theme">
     <span class="dark-icon">☀️</span>
     <span class="light-icon">🌙</span>
@@ -211,24 +195,6 @@
         <strong class="brand-title">TeleMed Consulta</strong>
       </a>
       <div style="display:flex; align-items:center; gap:12px;">
-        <a href="/pricing?model=conservative" class="bidconnect-link" data-testid="link-bidconnect-header">
-          BidConnect<span class="beta-badge">BETA</span>
-        </a>
-        <div class="menu-wrapper">
-          <button class="menu-trigger" data-testid="button-demo-menu">Começar Demo ▾</button>
-          <div class="dropdown-menu">
-            <a href="/pricing?model=conservative" data-testid="menu-bidconnect">
-              <span>BidConnect – Preço Dinâmico</span>
-              <span class="beta-badge">BETA</span>
-            </a>
-            <a href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es" data-testid="menu-prescricao">
-              <span>Prescrição em 90s</span>
-            </a>
-            <a href="/public/alertas-demo.html?perfil=paciente&rules=pa_emerg,febre&channels=app,email" data-testid="menu-alertas">
-              <span>Alertas Clínicos</span>
-            </a>
-          </div>
-        </div>
         <span class="chip" aria-label="Estado do projeto">Programa de Testes</span>
         <div class="md-health" data-testid="medicaldesk-health">
           <span class="md-health-dot checking" id="md-dot" data-testid="medicaldesk-health-dot" aria-label="Status MedicalDesk"></span>
@@ -282,12 +248,10 @@
         </div>
 
         <div class="cta-wrap">
-          <a class="btn" href="/pricing?model=conservative" id="go" aria-label="Começar demonstração BidConnect" data-testid="button-start-bidconnect">
-            Começar agora: BidConnect <span class="beta-badge">BETA</span>
-          </a>
+          <a class="btn" href="/escolha-perfil.html" id="go" aria-label="Começar demonstração do TeleMed" data-testid="button-start-demo">Começar Demo →</a>
           <a class="btn ghost" href="#saiba-mais">Saiba mais</a>
         </div>
-        <p class="muted" style="margin-top:8px"><strong>Roteiro sugerido:</strong> Testar R$140 (sem imediatos) → R$180 (imediatos + agendados) → Aceitar. Paga só ao aceitar.</p>
+        <p class="muted" style="margin-top:8px">Ao clicar em "Começar Demo", você escolherá seu perfil e será direcionado para o fluxo adequado.</p>
       </section>
 
       <aside>
