@@ -3,7 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TeleMed Consulta — Boas‑vindas</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>TeleMed Consulta — Boas‑vindas (BidConnect BETA)</title>
   <meta name="description" content="Página preliminar de boas‑vindas aos testes do TeleMed Consulta." />
   <style>
     :root{
@@ -559,31 +562,52 @@
         '.bidconnect-link',
         '#bidconnect-header-link',
         '#menu-bidconnect-link',
-        '#menu-trigger-btn'
+        '#menu-trigger-btn',
+        '#go'
       ];
       
+      let unlockedCount = 0;
       bidconnectSelectors.forEach(selector => {
         document.querySelectorAll(selector).forEach(el => {
+          // Remover classes e atributos de bloqueio
           el.classList.remove('tm-locked', 'disabled');
           el.removeAttribute('aria-disabled');
           el.removeAttribute('data-lock-msg');
           el.style.pointerEvents = 'auto';
-          el.style.cursor = '';
-          el.style.opacity = '';
+          el.style.cursor = 'pointer';
+          el.style.opacity = '1';
           if (el.title && el.title.includes('Disponível')) el.title = '';
+          
+          // CRÍTICO: Clonar elemento para remover TODOS os event listeners
+          const clone = el.cloneNode(true);
+          clone.classList.remove('tm-locked', 'disabled');
+          clone.removeAttribute('aria-disabled');
+          clone.style.pointerEvents = 'auto';
+          clone.style.cursor = 'pointer';
+          clone.style.opacity = '1';
+          
+          if (el.parentNode) {
+            el.parentNode.replaceChild(clone, el);
+            unlockedCount++;
+          }
         });
       });
-      console.log('✅ BidConnect desbloqueado');
+      console.log(`✅ BidConnect desbloqueado (${unlockedCount} elementos)`);
     }
     
+    // Executar múltiplas vezes em delays diferentes
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(unlockBidConnect, 100);
-        setTimeout(unlockBidConnect, 500);
+        unlockBidConnect();
+        setTimeout(unlockBidConnect, 50);
+        setTimeout(unlockBidConnect, 200);
+        setTimeout(unlockBidConnect, 1000);
       });
     } else {
-      setTimeout(unlockBidConnect, 100);
-      setTimeout(unlockBidConnect, 500);
+      unlockBidConnect();
+      setTimeout(unlockBidConnect, 50);
+      setTimeout(unlockBidConnect, 200);
+      setTimeout(unlockBidConnect, 1000);
     }
   })();
   </script>
