@@ -214,14 +214,22 @@
         <strong class="brand-title">TeleMed Consulta</strong>
       </a>
       <div style="display:flex; align-items:center; gap:12px;">
-        <a href="/bidconnect-standalone.html" class="bidconnect-link" data-testid="link-bidconnect-header" id="bidconnect-header-link" data-allow-demo data-bidconnect>
+        <a href="/pricing-models.html?model=conservative" class="bidconnect-link" data-testid="link-bidconnect-header" id="bidconnect-header-link" data-allow-demo data-bidconnect>
           BidConnect<span class="beta-badge">BETA</span>
         </a>
         <div class="menu-wrapper">
           <button class="menu-trigger" data-testid="button-demo-menu" id="menu-trigger-btn">Começar Demo ▾</button>
           <div class="dropdown-menu">
-            <a href="/bidconnect-standalone.html" data-testid="menu-bidconnect" id="menu-bidconnect-link" data-allow-demo data-bidconnect>
-              <span>BidConnect – Preço Dinâmico</span>
+            <a href="/pricing-models.html?model=conservative" data-testid="menu-bidconnect-conservative" id="menu-bidconnect-conservative" data-allow-demo data-bidconnect>
+              <span>BidConnect – Conservador</span>
+              <span class="beta-badge">BETA</span>
+            </a>
+            <a href="/pricing-models.html?model=suggestive" data-testid="menu-bidconnect-suggestive" id="menu-bidconnect-suggestive" data-allow-demo data-bidconnect>
+              <span>BidConnect – Sugestivo (IA)</span>
+              <span class="beta-badge">BETA</span>
+            </a>
+            <a href="/pricing-models.html?model=dynamic" data-testid="menu-bidconnect-dynamic" id="menu-bidconnect-dynamic" data-allow-demo data-bidconnect>
+              <span>BidConnect – Dinâmico</span>
               <span class="beta-badge">BETA</span>
             </a>
             <a href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es" data-testid="menu-prescricao" id="menu-prescricao-link" data-allow-demo>
@@ -285,7 +293,7 @@
         </div>
 
         <div class="cta-wrap">
-          <a class="btn" href="/bidconnect-standalone.html" id="go" aria-label="Começar demonstração BidConnect" data-testid="button-start-bidconnect" data-bidconnect>
+          <a class="btn" href="/pricing-models.html?model=conservative" id="go" aria-label="Começar demonstração BidConnect" data-testid="button-start-bidconnect" data-bidconnect>
             Começar agora: BidConnect <span class="beta-badge">BETA</span>
           </a>
           <a class="btn ghost" href="#saiba-mais">Saiba mais</a>
@@ -355,7 +363,7 @@
           <span class="tm-cta">Abrir →</span>
         </a>
         
-        <a id="card-auction" href="/pricing?model=conservative" class="tm-card" data-cta="pricing_models" data-feature="pricing" data-testid="card-pricing-models">
+        <a id="card-auction" href="/pricing-models.html?model=conservative" class="tm-card" data-cta="pricing_models" data-feature="pricing" data-testid="card-pricing-models">
           <div class="tm-card-icon">💰</div>
           <h3>BidConnect - Precificação</h3>
           <p>3 modelos de precificação dinâmica com API real ou mock local</p>
@@ -732,6 +740,17 @@
     setTimeout(forceNavigation, 100);
     setTimeout(forceNavigation, 500);
     setTimeout(forceNavigation, 1500);
+  })();
+  </script>
+  
+  <!-- Shim: Redireciona /pricing e /bidconnect para /pricing-models.html -->
+  <script>
+  (function () {
+    const path = location.pathname;
+    if (path === '/pricing' || path === '/bidconnect') {
+      console.log(`🔄 Redirecionando ${path} → /pricing-models.html${location.search}`);
+      location.replace('/pricing-models.html' + location.search);
+    }
   })();
   </script>
   

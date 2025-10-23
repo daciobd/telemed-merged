@@ -242,9 +242,23 @@
           description: "Paciente propõe, o sistema busca e você decide aumentar se necessário.",
           color: "blue",
         },
+        suggestive: {
+          key: "suggestive",
+          name: "Modelo Sugestivo (IA)",
+          subtitle: "Inteligência Artificial Sugere o Preço Ideal",
+          description: "A IA analisa seu perfil e sugere o melhor preço para você.",
+          color: "purple",
+        },
+        dynamic: {
+          key: "dynamic",
+          name: "Modelo Dinâmico",
+          subtitle: "Leilão em Tempo Real",
+          description: "O preço se ajusta automaticamente com base na demanda.",
+          color: "green",
+        },
       };
 
-      const active = models[currentModel];
+      const active = models[currentModel] || models.conservative;
       const activeColors = colorBlock[active.color];
 
       return (
