@@ -40,6 +40,16 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **CI/CD**: GitHub Actions com Playwright para testes E2E em PRs/pushes.
 -   **Mock Auction Standalone**: Serviço mock independente para leilão/precificação, melhorando telemetria e flexibilidade de deploy.
 
+## BidConnect - Precificação Dinâmica
+-   **3 Modelos Implementados**: Conservador (azul), Sugestivo com IA (roxo), Dinâmico (verde)
+-   **Mock Standalone**: 100% embutido, zero network, dados previsíveis para demos
+-   **Toggle Mock ↔ Real**: Alternância instantânea via `USE_LOCAL_AUCTION_MOCK` (30 segundos)
+-   **Documentação**:
+    -   `ROTEIRO-DEMO.md`: Script passo a passo para apresentações (8-10 min)
+    -   `TOGGLES-MOCK-REAL.md`: Guia completo de comandos mock/real + fallback de emergência
+-   **Testes E2E**: Playwright validando os 3 modelos (Conservador R$140→R$180, Sugestivo com card de sugestão IA, Dinâmico com grid de faixas)
+-   **Diferenciação Visual**: Badges coloridos, botões temáticos, emojis (sem Lucide Icons - compatibilidade React 18)
+
 ## External Dependencies
 -   **AWS S3**: Armazenamento seguro de documentos médicos (PDFs) e geração de URLs assinadas.
 -   **PostgreSQL**: Banco de dados relacional.
