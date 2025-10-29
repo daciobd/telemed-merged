@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BidConnect Standalone - Precificação Dinâmica | TeleMed</title>
-  <meta name="description" content="Demonstração standalone do modelo Conservador de precificação dinâmica do BidConnect - Zero network, 100% mock.">
+  <title>BidConnect Standalone - 3 Modelos | TeleMed</title>
+  <meta name="description" content="Demonstração dos 3 modelos de precificação dinâmica do BidConnect: Conservador, Sugestivo (IA) e Dinâmico.">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +17,36 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <style>
-    body { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; background: #f9fafb; }
+    .app { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .hero { margin-bottom: 20px; }
+    .hero h1 { font-size: 28px; font-weight: 800; margin: 0 0 8px; color: #1f2937; }
+    .hero p { font-size: 15px; color: #6b7280; margin: 0; }
+    .card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
+    .btn { display: inline-block; padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+    .btn:hover { background: #f3f4f6; transform: translateY(-1px); }
+    .btn.primary { background: #2563eb; color: white; border-color: #2563eb; }
+    .btn.primary:hover { background: #1d4ed8; }
+    .cta { display: inline-block; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 13px; border: none; background: #16a34a; color: white; cursor: pointer; transition: all 0.2s; }
+    .cta:hover { background: #15803d; transform: translateY(-1px); }
+    .priceBadge { font-size: 36px; font-weight: 900; color: #2563eb; margin: 8px 0; }
+    .slider { width: 100%; height: 6px; border-radius: 999px; background: #e5e7eb; outline: none; appearance: none; }
+    .slider::-webkit-slider-thumb { appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; cursor: pointer; }
+    .slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: #2563eb; cursor: pointer; border: none; }
+    .markers { display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-top: 6px; }
+    .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .availability { border-radius: 12px; padding: 16px; margin-top: 16px; }
+    .availability.good { background: #ecfdf5; border: 2px solid #10b981; }
+    .availability.low { background: #fef3c7; border: 2px solid #f59e0b; }
+    .avHead { margin-bottom: 12px; }
+    .statusIcon { font-size: 28px; }
+    .statusMsg { font-weight: 800; font-size: 16px; color: #1f2937; margin-top: 6px; }
+    .statusDesc { font-size: 14px; color: #6b7280; margin-top: 2px; }
+    .docs { display: grid; gap: 12px; margin-top: 12px; }
+    .doc { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; background: white; padding: 12px; border-radius: 10px; border: 1px solid #e5e7eb; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .name { font-weight: 700; font-size: 14px; color: #1f2937; }
+    .spec { font-size: 12px; color: #6b7280; }
   </style>
 </head>
 <body>
@@ -25,33 +54,25 @@
 
   <script type="text/babel">
     const { useState, useMemo } = React;
-    
-    // Simple SVG Icons (no external lib needed)
-    const Zap = () => <span style={{fontSize:'14px'}}>⚡</span>;
-    const Calendar = () => <span style={{fontSize:'14px'}}>📅</span>;
-    const Users = () => <span style={{fontSize:'14px'}}>👥</span>;
 
     // STANDALONE MODE: SEMPRE USA MOCK - ZERO NETWORK
     console.info("[BidConnect Standalone] ⚙️ Modo MOCK embutido - zero network");
     
     const API = {
       createBid: async ({ amount }) => {
-        // Simula delay de rede
         await new Promise(resolve => setTimeout(resolve, 200));
         return { ok: true, bid: { id: "BID-DEMO", amount } };
       },
       
       search: async ({ bidId, amount }) => {
-        // Simula delay de rede
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Lógica do mock: se >= R$180, retorna médicos
         if (amount >= 180) {
           return {
             ok: true,
             immediate_doctors: [
-              { id: "D1", name: "Dr. Silva", specialty: "Clínica Geral" },
-              { id: "D2", name: "Dra. Santos", specialty: "Pediatria" },
+              { id: "D1", name: "Dr. Silva", spec: "Clínica Geral" },
+              { id: "D2", name: "Dra. Santos", spec: "Pediatria" },
             ],
             scheduled_doctors: [
               { id: "D9", name: "Dr. Souza", time: "+30 min" },
@@ -63,243 +84,270 @@
       },
       
       accept: async ({ doctorId }) => {
-        // Simula delay de rede
         await new Promise(resolve => setTimeout(resolve, 250));
         return { ok: true, consultation_id: `CONS-${doctorId}-${Date.now()}` };
       },
     };
 
-    // Utilities
-    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
     const formatBRL = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
-    // Color blocks
-    const colorBlock = {
-      blue: { wrap: "border-blue-500 bg-blue-50", title: "text-blue-900", borderLite: "border-blue-200 bg-blue-50" },
-      purple: { wrap: "border-purple-500 bg-purple-50", title: "text-purple-900", borderLite: "border-purple-200 bg-purple-50" },
-      green: { wrap: "border-green-500 bg-green-50", title: "text-green-900", borderLite: "border-green-200 bg-green-50" },
-    };
+    function TelemedStandalone() {
+      const MODEL = new URLSearchParams(location.search).get('model') || 'conservative';
+      const THEMES = {
+        conservative: { label: 'Conservador', color: '#2563eb' },
+        suggestive:   { label: 'Sugestivo (IA)', color: '#7c3aed' },
+        dynamic:      { label: 'Dinâmico', color: '#16a34a' },
+      };
+      const theme = THEMES[MODEL];
 
-    // Conservative Model Component
-    function ConservativeModel() {
-      const [userBid, setUserBid] = useState(140);
-      const [searching, setSearching] = useState(false);
+      const [value, setValue]   = useState(140);
+      const [busy, setBusy]     = useState(false);
       const [result, setResult] = useState(null);
-      const [bidId, setBidId] = useState(null);
+      const [bidId, setBidId]   = useState(null);
+      const [aiTip, setAiTip]   = useState(null);
 
-      const searchDoctors = async () => {
+      async function runSearch(forcedValue) {
+        const searchValue = forcedValue || value;
+        console.log(`[BidConnect] runSearch called - MODEL: ${MODEL}, searchValue: ${searchValue}, forcedValue: ${forcedValue}`);
+        setBusy(true); setResult(null);
         try {
-          setSearching(true);
-          setResult(null);
-
-          const amount = clamp(userBid, 100, 300);
-          const created = await API.createBid({ amount });
-          const newBidId = created?.bid?.id || "BID-LOCAL";
-          setBidId(newBidId);
-
-          console.group("[BidConnect Standalone] 🔎 Busca de médicos (Conservador)");
-          console.log("proposta", amount, "bidId", newBidId);
-
-          const found = await API.search({ bidId: newBidId, amount });
-          console.table({ immediate: found.immediate_doctors?.length || 0, scheduled: found.scheduled_doctors?.length || 0 });
+          // Comportamento especial do Sugestivo (IA):
+          if (MODEL === 'suggestive' && searchValue < 180) {
+            // Mostra sugestão (sem chamar "rede")
+            console.log('[BidConnect] Mostrando sugestão IA (valor < 180)');
+            setAiTip({ price: 195, chance: 85, immediates: 2 });
+            setBusy(false);
+            return;
+          }
+          // Limpa sugestão se estiver fazendo busca normal
+          setAiTip(null);
+          console.log('[BidConnect] Fazendo busca normal (valor >= 180 ou não-IA)');
+          const created = await API.createBid({ amount: searchValue });
+          setBidId(created.bid.id);
+          const found = await API.search({ bidId: created.bid.id, amount: searchValue });
+          setResult(found);
+          console.group(`[${MODEL}] 🔎 search`);
+          console.log('bid', created.bid); console.log('found', found);
           console.groupEnd();
-
-          setResult({
-            immediate: found.immediate_doctors || [],
-            scheduled: found.scheduled_doctors || [],
-          });
-        } catch (e) {
-          console.error("[BidConnect] erro na busca:", e);
-          setResult({ error: "Falha ao buscar médicos. Tente novamente." });
         } finally {
-          setSearching(false);
+          setBusy(false);
         }
-      };
+      }
 
-      const acceptDoctor = async (docId) => {
-        try {
-          const r = await API.accept({ doctorId: docId, bidId });
-          console.group("[BidConnect] ✅ Aceite de médico");
-          console.log("doctorId", docId, "bidId", bidId, r);
-          console.groupEnd();
-          alert(`Consulta confirmada! ID: ${r.consultation_id}`);
-        } catch (e) {
-          console.error("[BidConnect] erro no aceite:", e);
-          alert("Não foi possível confirmar a consulta agora.");
-        }
-      };
+      function acceptSuggestion() {
+        setAiTip(null);
+        setValue(195);
+        setTimeout(() => runSearch(195), 50);
+      }
 
-      return (
-        <div className="space-y-6">
-          <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-blue-900 mb-2">Como funciona</h3>
-            <ol className="list-decimal list-inside text-sm text-blue-900 space-y-1">
-              <li>Você propõe um valor</li>
-              <li>Buscamos médicos disponíveis neste valor</li>
-              <li>Se não houver, você pode aumentar e tentar novamente</li>
-            </ol>
-          </div>
-
-          <div className="border-2 border-gray-200 rounded-lg p-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Quanto deseja pagar?</label>
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-3xl font-bold text-blue-600">{formatBRL(userBid)}</span>
-              <input 
-                type="range" 
-                min={100} 
-                max={300} 
-                step={10} 
-                value={userBid} 
-                onChange={(e)=>setUserBid(Number(e.target.value))} 
-                className="flex-1" 
-                disabled={searching} 
-              />
-            </div>
-            <div className="flex gap-2 mb-4">
-              {[140,160,180,200,220].map((val)=> (
-                <button 
-                  key={val} 
-                  onClick={()=>setUserBid(val)} 
-                  disabled={searching}
-                  className={`px-3 py-1 rounded text-sm font-medium transition ${userBid===val?"bg-blue-600 text-white":"bg-gray-100 text-gray-800 hover:bg-gray-200"}`}
+      function TierGrid() {
+        if (MODEL !== 'dynamic') return null;
+        const tiers = [
+          { label:'Econômico', min:140, max:159, immediate:0, scheduled:2, wait:'2–4 h' },
+          { label:'Padrão',    min:160, max:179, immediate:1, scheduled:5, wait:'30–60 min' },
+          { label:'Rápido',    min:180, max:199, immediate:3, scheduled:8, wait:'5–15 min' },
+          { label:'Premium',   min:200, max:250, immediate:7, scheduled:12, wait:'Imediato' },
+        ];
+        const active = tiers.find(t => value >= t.min && value <= t.max) || tiers[0];
+        return (
+          <div style={{marginTop:16}}>
+            <div style={{fontWeight:800,marginBottom:8}}>Faixas de preço — mercado em tempo real</div>
+            <div style={{display:'grid',gap:8,gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))'}}>
+              {tiers.map(t => (
+                <div key={t.label}
+                  style={{
+                    border:'2px solid', borderColor: t===active ? theme.color : '#e5e7eb',
+                    borderRadius:12, padding:12, background:t===active ? '#f8fafc' : '#fff', cursor:'pointer'
+                  }}
+                  onClick={()=> { setValue(Math.min(t.max, Math.max(t.min, value))); setResult(null); }}
                 >
-                  {formatBRL(val)}
-                </button>
+                  <div style={{fontWeight:800, marginBottom:6}}>{t.label}</div>
+                  <div style={{fontSize:13, color:'#334155', marginBottom:6}}>R$ {t.min} – R$ {t.max}</div>
+                  <div style={{fontSize:12}}>⚡ {t.immediate} imediato(s) • 📅 {t.scheduled} agendados • ⏱ {t.wait}</div>
+                  {t.immediate>0 && t===active && (
+                    <button className="cta" style={{marginTop:8, background:theme.color}}
+                            onClick={(e)=>{ e.stopPropagation(); runSearch(); }}>
+                      Atender Agora
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
-            <button 
-              onClick={searchDoctors} 
-              disabled={searching}
-              className="w-full bg-blue-600 text-white rounded-lg py-4 font-bold text-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center justify-center gap-2"
-            >
-              {searching ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> 
-                  Buscando médicos...
-                </>
-              ) : (
-                <>
-                  <Users /> Buscar Médicos Disponíveis
-                </>
-              )}
-            </button>
           </div>
+        );
+      }
 
-          {result && !result.error && (
-            <div className={`border-2 rounded-lg p-6 ${result.immediate.length>0?"bg-green-50 border-green-200":"bg-yellow-50 border-yellow-200"}`}>
-              <div className="flex items-start gap-3 mb-4">
-                <span style={{fontSize:'24px'}}>
-                  {result.immediate.length>0 ? '✅' : '⚠️'}
-                </span>
-                <div>
-                  <h4 className="font-bold text-lg mb-1">
-                    {result.immediate.length>0 ? "Encontramos médicos disponíveis!" : "Sem atendimento imediato, mas há opções para agendar."}
-                  </h4>
-                  {result.immediate.length>0 && <p className="text-green-800 font-semibold">⚡ {result.immediate.length} médico(s) pode(m) atender agora</p>}
-                  {result.scheduled.length>0 && <p className="text-gray-800">📅 {result.scheduled.length} médico(s) com horário nas próximas horas</p>}
-                </div>
-              </div>
+      function AIBanner() {
+        if (MODEL !== 'suggestive') return null;
+        return (
+          <div style={{background:'#f5f3ff',border:'1px solid #e9d5ff',color:'#4c1d95',padding:10,
+                       borderRadius:10, marginBottom:12}}>
+            A IA sugere o melhor preço para você — experimente "Buscar com IA" em R$ 160.
+          </div>
+        );
+      }
 
-              {result.immediate.length>0 && (
-                <div className="space-y-2 mb-4">
-                  {result.immediate.map((d)=> (
-                    <div key={d.id} className="flex items-center justify-between bg-white rounded border p-3">
-                      <div>
-                        <div className="font-semibold text-gray-900">{d.name}</div>
-                        <div className="text-xs text-gray-600">{d.specialty || "Clínico"} — disponível agora</div>
-                      </div>
-                      <button 
-                        onClick={()=>acceptDoctor(d.id)} 
-                        className="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-3 py-2 rounded flex items-center gap-1"
-                      >
-                        <Zap/> Aceitar
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+      function AISuggestionCard() {
+        console.log('[BidConnect] AISuggestionCard render - aiTip:', aiTip);
+        if (!aiTip) return null;
+        return (
+          <div style={{background:'#fff',border:'2px dashed #7c3aed',padding:14,borderRadius:12, marginTop:12}}>
+            <div style={{fontWeight:800, color:'#7c3aed', marginBottom:6}}>💡 Sugestão Inteligente</div>
+            <div style={{fontSize:14, marginBottom:8}}>
+              Com <b>R$ {aiTip.price}</b> você tem <b>{aiTip.chance}%</b> de chance de atendimento imediato
+              (≈ {aiTip.immediates} médico(s) agora).
             </div>
-          )}
-
-          {result && result.error && (
-            <div className="border-2 border-red-200 bg-red-50 rounded-lg p-4 text-sm text-red-800">{result.error}</div>
-          )}
-        </div>
-      );
-    }
-
-    // Main App Component
-    function TelemedPricingModels() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlModel = urlParams.get("model");
-      const [currentModel] = useState(urlModel || "conservative");
-
-      const models = {
-        conservative: {
-          key: "conservative",
-          name: "Modelo Conservador",
-          subtitle: "Transparência Total — Sem Gamificação",
-          description: "Paciente propõe, o sistema busca e você decide aumentar se necessário.",
-          color: "blue",
-        },
-        suggestive: {
-          key: "suggestive",
-          name: "Modelo Sugestivo (IA)",
-          subtitle: "Inteligência Artificial Sugere o Preço Ideal",
-          description: "A IA analisa seu perfil e sugere o melhor preço para você.",
-          color: "purple",
-        },
-        dynamic: {
-          key: "dynamic",
-          name: "Modelo Dinâmico",
-          subtitle: "Leilão em Tempo Real",
-          description: "O preço se ajusta automaticamente com base na demanda.",
-          color: "green",
-        },
-      };
-
-      const active = models[currentModel] || models.conservative;
-      const activeColors = colorBlock[active.color];
+            <div style={{display:'flex',gap:8}}>
+              <button className="cta" style={{background:'#7c3aed'}} onClick={acceptSuggestion}>Aceitar Sugestão</button>
+              <button className="btn" onClick={()=>setAiTip(null)}>Manter R$ {value}</button>
+            </div>
+          </div>
+        );
+      }
 
       return (
-        <div className="max-w-3xl mx-auto p-6 bg-gray-50 min-h-screen">
-          <div className="mb-6">
-            <a href="/index.html" className="text-blue-600 hover:underline mb-4 inline-block">← Voltar</a>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Precificação Dinâmica — BidConnect</h1>
-            <p className="text-sm text-gray-600 mb-4">
-              Demonstração <strong>Standalone</strong> - Modo MOCK embutido (zero network).
+        <div className="app">
+          {/* Cabeçalho com badge do modelo */}
+          <div className="hero" style={{marginBottom:12}}>
+            <h1 style={{display:'inline-flex',alignItems:'center',gap:8}}>
+              BidConnect — <span style={{
+                background:theme.color,color:'#fff',borderRadius:999,padding:'3px 10px',fontSize:14
+              }}>{theme.label}</span>
+            </h1>
+            <p style={{opacity:.9}}>
+              {MODEL==='conservative' && 'Paciente propõe, sistema busca e você decide.'}
+              {MODEL==='suggestive'   && 'IA recomenda valores com maior chance de atendimento imediato.'}
+              {MODEL==='dynamic'      && 'Transparência de oferta e tempo por faixas de preço.'}
             </p>
+
+            {/* Abas para alternar rapidamente */}
+            <div style={{marginTop:8, display:'flex', gap:8, flexWrap:'wrap'}}>
+              <a className="btn" href="?model=conservative">Conservador</a>
+              <a className="btn" href="?model=suggestive">Sugestivo (IA)</a>
+              <a className="btn" href="?model=dynamic">Dinâmico</a>
+            </div>
           </div>
 
-          <div className={`rounded-lg p-4 mb-6 border ${activeColors.borderLite}`}>
-            <p className="text-sm text-gray-700">{active.description}</p>
-          </div>
+          {/* Banner do IA (apenas no modelo IA) */}
+          <AIBanner/>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <ConservativeModel />
+          <div className="card">
+            {/* Como funciona */}
+            <div className="card" style={{border:'1px solid #e5e7eb', background:'#f8fafc', marginBottom:12}}>
+              <strong>Como funciona</strong>
+              <ol style={{marginTop:6, paddingLeft:18}}>
+                <li>Você propõe um valor</li>
+                <li>Buscamos médicos disponíveis neste valor</li>
+                <li>Se não houver, você pode aumentar e tentar novamente</li>
+              </ol>
+            </div>
+
+            {/* Slider */}
+            <div style={{margin:'10px 0'}}>
+              <div style={{fontSize:12, color:'#475569', marginBottom:4}}>Quanto deseja pagar?</div>
+              <div className="priceBadge" style={{marginBottom:8}}>{formatBRL(value)}</div>
+              <input className="slider" type="range" min={100} max={300} value={value}
+                     onChange={(e)=>{ setValue(parseInt(e.target.value,10)); setResult(null); setAiTip(null); }}/>
+              <div className="markers">
+                <div>Min: R$ 100</div>
+                <div>Recomendado: R$ 180</div>
+                <div>Máx: R$ 300</div>
+              </div>
+              <div className="row">
+                {[140,160,180,200,220].map(v => (
+                  <button key={v} className="btn" onClick={()=>{ setValue(v); setResult(null); setAiTip(null); }}
+                          style={{background:'#eee'}}>R$ {v}</button>
+                ))}
+              </div>
+
+              {/* Botão principal muda o rótulo no IA */}
+              <div className="row">
+                <button className="btn primary"
+                        style={{background:theme.color}}
+                        onClick={() => runSearch()}
+                        disabled={busy}>
+                  {busy ? 'Buscando…' : (MODEL==='suggestive' ? 'Buscar com IA' : 'Buscar Médicos Disponíveis')}
+                </button>
+              </div>
+            </div>
+
+            {/* Card de sugestão (IA) */}
+            <AISuggestionCard/>
+
+            {/* Grid de faixas (Dinâmico) */}
+            <TierGrid/>
+
+            {/* Resultado padrão (verde/amarelo) */}
+            {result && (
+              <div className={'availability ' + (result.immediate_doctors?.length>0 ? 'good' : 'low')}>
+                <div className="avHead">
+                  <span className="statusIcon">{result.immediate_doctors?.length>0?'⚡':'⏳'}</span>
+                  <div className="statusMsg">
+                    {result.immediate_doctors?.length>0
+                      ? 'Médicos disponíveis agora!'
+                      : 'Sem atendimento imediato; há opções para agendar'}
+                  </div>
+                  <div className="statusDesc">
+                    {result.immediate_doctors?.length>0
+                      ? `${result.immediate_doctors.length} imediato(s)`
+                      : `${result.scheduled_doctors?.length||0} para agendar`}
+                  </div>
+                </div>
+
+                {/* Imediatos */}
+                {result.immediate_doctors?.length>0 && (
+                  <div className="docs">
+                    {result.immediate_doctors.map(d => (
+                      <div className="doc" key={d.id}>
+                        <div className="avatar">⚡</div>
+                        <div>
+                          <div className="name">{d.name}</div>
+                          <div className="spec">{d.spec||'Clínico'} — disponível agora</div>
+                        </div>
+                        <button className="cta" style={{background:theme.color}}
+                                onClick={async ()=>{
+                                  const r = await API.accept({ doctorId: d.id, bidId });
+                                  alert(`Consulta confirmada! ID: ${r.consultation_id}`);
+                                }}>
+                          Aceitar por {formatBRL(value)}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Agendados */}
+                {result.scheduled_doctors?.length>0 && (
+                  <div className="docs">
+                    {result.scheduled_doctors.map(d => (
+                      <div className="doc" key={d.id}>
+                        <div className="avatar">📅</div>
+                        <div>
+                          <div className="name">{d.name}</div>
+                          <div className="spec">Horário: {d.time}</div>
+                        </div>
+                        <button className="cta" style={{background:theme.color}}
+                                onClick={async ()=>{
+                                  const r = await API.accept({ doctorId: d.id, bidId });
+                                  alert(`Agendado! ID: ${r.consultation_id}`);
+                                }}>
+                          Agendar por {formatBRL(value)}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
       );
     }
 
-    // Render - APENAS UMA VEZ
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        const rootEl = document.getElementById('root');
-        if (rootEl && !rootEl._reactRoot) {
-          const root = ReactDOM.createRoot(rootEl);
-          rootEl._reactRoot = root;
-          root.render(<TelemedPricingModels />);
-        }
-      });
-    } else {
-      const rootEl = document.getElementById('root');
-      if (rootEl && !rootEl._reactRoot) {
-        const root = ReactDOM.createRoot(rootEl);
-        rootEl._reactRoot = root;
-        root.render(<TelemedPricingModels />);
-      }
-    }
+    // Render - React 18
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TelemedStandalone/>);
   </script>
 </body>
 </html>
