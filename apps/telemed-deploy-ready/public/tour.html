@@ -56,6 +56,62 @@
       margin-left: 10px;
     }
     
+    /* Toggle de Papéis */
+    .role-toggle {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .role-toggle h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    
+    .role-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .role-btn {
+      padding: 12px 30px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      background: white;
+      color: #666;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .role-btn:hover {
+      border-color: #667eea;
+      transform: scale(1.05);
+    }
+    
+    .role-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .role-btn.patient.active {
+      background: #10b981;
+      border-color: #10b981;
+    }
+    
+    .role-btn.doctor.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+    
     .section {
       margin-bottom: 30px;
     }
@@ -89,7 +145,11 @@
       border-radius: 12px;
       padding: 25px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+    }
+    
+    .card.hidden {
+      display: none;
     }
     
     .card:hover {
@@ -102,12 +162,20 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     
     .card-title {
       font-size: 1.3rem;
       font-weight: 700;
       color: #333;
+    }
+    
+    .card-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     
     .card-badge {
@@ -123,6 +191,9 @@
     .badge-green { background: #d1fae5; color: #16a34a; }
     .badge-yellow { background: #fef3c7; color: #d97706; }
     .badge-red { background: #fee2e2; color: #dc2626; }
+    .badge-patient { background: #d1fae5; color: #059669; }
+    .badge-doctor { background: #dbeafe; color: #2563eb; }
+    .badge-both { background: #f3e8ff; color: #7c3aed; }
     
     .card-description {
       color: #666;
@@ -221,6 +292,129 @@
       margin-top: 10px;
     }
     
+    /* Guia por Papéis - Cards grandes */
+    .role-guide {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .role-guide h2 {
+      color: #667eea;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .role-guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+    }
+    
+    .role-card {
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+    
+    .role-card:hover {
+      border-color: #667eea;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.15);
+    }
+    
+    .role-card.patient {
+      border-color: #10b981;
+    }
+    
+    .role-card.doctor {
+      border-color: #3b82f6;
+    }
+    
+    .role-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .role-card.patient h3 {
+      color: #10b981;
+    }
+    
+    .role-card.doctor h3 {
+      color: #3b82f6;
+    }
+    
+    .role-card p {
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+    
+    .role-steps {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .role-steps h4 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: #333;
+    }
+    
+    .role-steps ol {
+      margin-left: 20px;
+      color: #555;
+    }
+    
+    .role-steps li {
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    
+    .role-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .role-link {
+      display: inline-block;
+      padding: 10px 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    
+    .role-link:hover {
+      background: #e5e7eb;
+      transform: translateX(5px);
+    }
+    
+    .role-card.patient .role-link:hover {
+      background: #d1fae5;
+      color: #059669;
+    }
+    
+    .role-card.doctor .role-link:hover {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    
     .plan-b {
       background: white;
       border-radius: 12px;
@@ -299,6 +493,10 @@
       .plan-b-grid {
         grid-template-columns: 1fr;
       }
+      
+      .role-guide-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -309,30 +507,134 @@
       <p>Guia completo do testador - Explore todas as funcionalidades da plataforma</p>
     </header>
     
+    <!-- Toggle de Papéis -->
+    <div class="role-toggle">
+      <h3>Filtrar por Papel</h3>
+      <div class="role-buttons">
+        <button class="role-btn all active" onclick="filterByRole('all')">👥 Todos</button>
+        <button class="role-btn patient" onclick="filterByRole('patient')">🧑‍🦽 Paciente</button>
+        <button class="role-btn doctor" onclick="filterByRole('doctor')">👨‍⚕️ Médico</button>
+      </div>
+    </div>
+    
+    <!-- Guia por Papéis -->
+    <div class="role-guide">
+      <h2>📚 Guia por Papéis</h2>
+      <div class="role-guide-grid">
+        
+        <!-- Paciente -->
+        <div class="role-card patient">
+          <h3>🧑‍🦽 Fluxo do Paciente</h3>
+          <p>Passos recomendados para testar a jornada completa do paciente na plataforma.</p>
+          
+          <div class="role-steps">
+            <h4>📋 Sequência Recomendada:</h4>
+            <ol>
+              <li><strong>BidConnect Conservador</strong> - Propor valor e buscar médicos</li>
+              <li><strong>BidConnect Sugestivo (IA)</strong> - Testar recomendação inteligente</li>
+              <li><strong>BidConnect Dinâmico</strong> - Explorar faixas de preço</li>
+              <li><strong>Dr. AI (Opcional)</strong> - Triagem médica complementar</li>
+              <li><strong>Prescrição 90s</strong> - Receber prescrição digital</li>
+              <li><strong>Alertas Clínicos</strong> - Ver notificações importantes</li>
+            </ol>
+          </div>
+          
+          <div class="role-links">
+            <a href="/bidconnect-standalone.html?model=conservative" target="_blank" class="role-link">1️⃣ BidConnect Conservador</a>
+            <a href="/bidconnect-standalone.html?model=suggestive" target="_blank" class="role-link">2️⃣ BidConnect Sugestivo (IA)</a>
+            <a href="/bidconnect-standalone.html?model=dynamic" target="_blank" class="role-link">3️⃣ BidConnect Dinâmico</a>
+            <a href="/dr-ai" target="_blank" class="role-link">4️⃣ Dr. AI (Complementar)</a>
+            <a href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es" target="_blank" class="role-link">5️⃣ Prescrição em 90s</a>
+            <a href="/public/alertas-demo.html?perfil=paciente&rules=pa_emerg,febre&channels=app,email" target="_blank" class="role-link">6️⃣ Alertas Clínicos</a>
+          </div>
+          
+          <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
+            <strong>Nota:</strong> O Dr. AI é uma ferramenta de <strong>triagem complementar</strong>, não obrigatória no fluxo principal.
+          </p>
+        </div>
+        
+        <!-- Médico -->
+        <div class="role-card doctor">
+          <h3>👨‍⚕️ Fluxo do Médico</h3>
+          <p>Passos recomendados para testar as funcionalidades disponíveis para médicos.</p>
+          
+          <div class="role-steps">
+            <h4>📋 Sequência Recomendada:</h4>
+            <ol>
+              <li><strong>MedicalDesk</strong> - Acesso à plataforma de gestão clínica</li>
+              <li><strong>Consulta (via BidConnect)</strong> - Receber consultation_id</li>
+              <li><strong>Alertas Clínicos</strong> - Monitorar pacientes críticos</li>
+              <li><strong>Prescrição 90s</strong> - Gerar prescrições digitais</li>
+            </ol>
+          </div>
+          
+          <div class="role-links">
+            <a href="/api/medicaldesk/session?consultation_id=123" target="_blank" class="role-link">1️⃣ MedicalDesk (Integração)</a>
+            <a href="/consulta/123" target="_blank" class="role-link">2️⃣ Página de Consulta</a>
+            <a href="/public/alertas-demo.html?perfil=medico&rules=pa_emerg,febre&channels=app,sms" target="_blank" class="role-link">3️⃣ Alertas Clínicos</a>
+            <a href="/public/prescricao-demo.html?paciente=João%20Silva&crm=Dr.%20Carlos%20(CRM%2054321-RJ)&med=Amoxicilina%20500%20mg&dose=1%20cápsula&pos=a%20cada%2012%20horas&dur=por%207%20dias&obs=Tomar%20com%20alimentos" target="_blank" class="role-link">4️⃣ Prescrição em 90s</a>
+          </div>
+          
+          <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
+            <strong>Importante:</strong> O <code>consultation_id</code> vem do sistema BidConnect quando um paciente aceita uma consulta.
+          </p>
+        </div>
+        
+      </div>
+    </div>
+    
     <!-- Landing Page -->
     <section class="section">
       <h2 class="section-title">🏠 Página Inicial</h2>
       <div class="cards-grid">
-        <div class="card">
+        <div class="card" data-role="both">
           <div class="card-header">
             <h3 class="card-title">Landing Page</h3>
-            <span class="card-badge badge-blue">Início</span>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Início</span>
+              <span class="card-badge badge-both">Todos</span>
+            </div>
           </div>
-          <p class="card-description">
-            Página inicial da plataforma TeleMed com dropdown de navegação e acesso rápido às demos.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que fazer:</h4>
-            <ul>
-              <li>Verificar carregamento completo</li>
-              <li>Fazer hover em "Começar Demo ▾"</li>
-              <li>Verificar 5 opções no menu</li>
-              <li>Menu não deve fechar ao mover mouse</li>
+          
+          <div style="background: #f0f9ff; border-left: 3px solid #3b82f6; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
+            <h4 style="color: #3b82f6; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600;">🎯 O que é:</h4>
+            <p style="font-size: 0.9rem; color: #555; margin: 0;">
+              Página inicial da plataforma TeleMed que serve como hub central para acessar todas as funcionalidades. Apresenta o dropdown de navegação "Começar Demo ▾" com acesso rápido aos 3 modelos BidConnect e outras demos.
+            </p>
+          </div>
+          
+          <div style="background: #fef3c7; border-left: 3px solid #f59e0b; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
+            <h4 style="color: #f59e0b; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600;">🧭 Como navegar:</h4>
+            <ul style="list-style: none; padding-left: 0; margin: 0;">
+              <li style="padding: 4px 0; font-size: 0.9rem; color: #555;">✓ Fazer <strong>hover</strong> em "Começar Demo ▾"</li>
+              <li style="padding: 4px 0; font-size: 0.9rem; color: #555;">✓ Menu abre com <strong>5 opções</strong></li>
+              <li style="padding: 4px 0; font-size: 0.9rem; color: #555;">✓ Menu <strong>não fecha</strong> ao mover mouse</li>
+              <li style="padding: 4px 0; font-size: 0.9rem; color: #555;">✓ Último item: "🧪 Guia do Testador"</li>
             </ul>
           </div>
+          
+          <div style="background: #f0fdf4; border-left: 3px solid #10b981; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
+            <h4 style="color: #10b981; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600;">👥 Qual fluxo seguir:</h4>
+            <p style="font-size: 0.9rem; color: #555; margin: 0;">
+              <strong>Paciente:</strong> Começar pelo BidConnect → Consulta<br>
+              <strong>Médico:</strong> Começar pelo MedicalDesk → Consulta → Prescrição
+            </p>
+          </div>
+          
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Logo TM e badge BETA visíveis</li>
+              <li>Dropdown menu sem gap visual</li>
+              <li>3 BidConnect + 2 demos listados</li>
+              <li>Link "Guia do Testador" no final</li>
+              <li>Indicador de status MedicalDesk (MD)</li>
+            </ul>
+          </div>
+          
           <div class="card-success">
             <h4>✅ Critério de Sucesso:</h4>
-            <p>Logo TM visível, badge BETA, dropdown sem gap, 3 BidConnect + 2 demos aparecendo.</p>
+            <p>Menu dropdown funciona perfeitamente, todas as opções clicáveis, navegação fluida sem fechar ao mover mouse.</p>
           </div>
           <a href="/" target="_blank" class="btn btn-primary btn-full">Abrir Landing Page</a>
         </div>
@@ -345,10 +647,13 @@
       <div class="cards-grid">
         
         <!-- Conservador -->
-        <div class="card">
+        <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Conservador</h3>
-            <span class="card-badge badge-blue">Azul</span>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Azul</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
           </div>
           <p class="card-description">
             Modelo tradicional onde o paciente propõe o valor e o sistema busca médicos disponíveis.
@@ -371,10 +676,13 @@
         </div>
         
         <!-- Sugestivo IA -->
-        <div class="card">
+        <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Sugestivo (IA)</h3>
-            <span class="card-badge badge-purple">Roxo</span>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Roxo</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
           </div>
           <p class="card-description">
             IA recomenda o melhor preço com card de sugestão inteligente e probabilidade de sucesso.
@@ -397,10 +705,13 @@
         </div>
         
         <!-- Dinâmico -->
-        <div class="card">
+        <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Dinâmico</h3>
-            <span class="card-badge badge-green">Verde</span>
+            <div class="card-badges">
+              <span class="card-badge badge-green">Verde</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
           </div>
           <p class="card-description">
             Grid transparente com 4 faixas de preço mostrando disponibilidade antes de buscar.
@@ -431,10 +742,13 @@
       <div class="cards-grid">
         
         <!-- Página de Consulta -->
-        <div class="card">
+        <div class="card" data-role="both">
           <div class="card-header">
             <h3 class="card-title">Página de Consulta</h3>
-            <span class="card-badge badge-blue">Atendimento</span>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Atendimento</span>
+              <span class="card-badge badge-both">Todos</span>
+            </div>
           </div>
           <p class="card-description">
             Interface modernizada com tabs (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.
@@ -457,10 +771,13 @@
         </div>
         
         <!-- MedicalDesk -->
-        <div class="card">
+        <div class="card" data-role="doctor">
           <div class="card-header">
             <h3 class="card-title">MedicalDesk</h3>
-            <span class="card-badge badge-purple">Integração</span>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Integração</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
           </div>
           <p class="card-description">
             Plataforma externa de gestão clínica integrada via proxy com autenticação JWT.
@@ -490,13 +807,16 @@
       <div class="cards-grid">
         
         <!-- Dr. AI -->
-        <div class="card">
+        <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Dr. AI Medical Triage</h3>
-            <span class="card-badge badge-yellow">IA</span>
+            <div class="card-badges">
+              <span class="card-badge badge-yellow">IA</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
           </div>
           <p class="card-description">
-            Sistema de triagem médica com IA, pattern-matching e detecção de Red Flags (LGPD-compliant).
+            Sistema de triagem médica com IA, pattern-matching e detecção de Red Flags (LGPD-compliant). <strong>Ferramenta complementar</strong>, não obrigatória.
           </p>
           <div class="card-steps">
             <h4>📋 O que testar:</h4>
@@ -516,10 +836,13 @@
         </div>
         
         <!-- Alertas Clínicos -->
-        <div class="card">
+        <div class="card" data-role="both">
           <div class="card-header">
             <h3 class="card-title">Alertas Clínicos</h3>
-            <span class="card-badge badge-red">Urgente</span>
+            <div class="card-badges">
+              <span class="card-badge badge-red">Urgente</span>
+              <span class="card-badge badge-both">Todos</span>
+            </div>
           </div>
           <p class="card-description">
             Sistema de notificações e alertas médicos em tempo real para situações críticas.
@@ -541,10 +864,13 @@
         </div>
         
         <!-- Prescrição Digital -->
-        <div class="card">
+        <div class="card" data-role="both">
           <div class="card-header">
             <h3 class="card-title">Prescrição em 90s</h3>
-            <span class="card-badge badge-green">Rápido</span>
+            <div class="card-badges">
+              <span class="card-badge badge-green">Rápido</span>
+              <span class="card-badge badge-both">Todos</span>
+            </div>
           </div>
           <p class="card-description">
             Sistema de prescrição digital ANVISA-compliant com geração de PDF e verificação farmacêutica.
@@ -664,5 +990,30 @@
       </p>
     </footer>
   </div>
+  
+  <script>
+    // Função de filtro por papel
+    function filterByRole(role) {
+      const cards = document.querySelectorAll('.card[data-role]');
+      const buttons = document.querySelectorAll('.role-btn');
+      
+      // Atualizar botões ativos
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Filtrar cards
+      cards.forEach(card => {
+        const cardRole = card.getAttribute('data-role');
+        
+        if (role === 'all') {
+          card.classList.remove('hidden');
+        } else if (cardRole === role || cardRole === 'both') {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    }
+  </script>
 </body>
 </html>
