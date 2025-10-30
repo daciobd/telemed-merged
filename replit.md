@@ -48,10 +48,11 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
     -   `ROTEIRO-DEMO.md`: Script passo a passo para apresentações (8-10 min)
     -   `TOGGLES-MOCK-REAL.md`: Guia completo de comandos mock/real + fallback de emergência
     -   `GUIA-TESTES-COMPLETO.md`: Manual de testes QA com 25+ cenários e screenshots ASCII
-    -   `apps/telemed-deploy-ready/public/tour.html`: Guia interativo do testador com navegação direta para todas as páginas
+    -   `apps/telemed-deploy-ready/public/tour.html`: Guia interativo completo com toggle Paciente/Médico, badges coloridos e navegação por papel
+    -   `apps/telemed-deploy-ready/public/tour-quick.html`: Versão compacta dark para testes rápidos com links diretos no topo
 -   **Testes E2E**: Playwright validando os 3 modelos (Conservador R$140→R$180, Sugestivo com card de sugestão IA, Dinâmico com grid de faixas)
 -   **Diferenciação Visual**: Badges coloridos, botões temáticos, emojis (sem Lucide Icons - compatibilidade React 18)
--   **Navegação**: Dropdown menu na landing com "Guia do Testador" acessível no último item
+-   **Navegação**: Dropdown menu na landing com 2 opções de tour (Completo + Rápido), banner roxo visível com ambos os links
 
 ## External Dependencies
 -   **AWS S3**: Armazenamento seguro de documentos médicos (PDFs) e geração de URLs assinadas.

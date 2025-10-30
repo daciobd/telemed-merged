@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed — Guia do Testador (Rápido)</title>
+  <style>
+    :root{--bg:#0b1221;--card:#0f172a;--muted:#94a3b8;--text:#e2e8f0;--brand:#2563eb;--ok:#16a34a;--warn:#f59e0b;--danger:#ef4444;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:radial-gradient(1200px 800px at 20% 0%,#111827,#0b1221)}
+    .wrap{max-width:1100px;margin:0 auto;padding:28px}
+    h1{font-size:28px;margin:0 0 10px;font-weight:900;letter-spacing:.2px}
+    p.lead{color:var(--muted);margin-top:0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+    .card{background:linear-gradient(180deg,var(--card),#0b1323);border:1px solid #1f2937;border-radius:16px;padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+    .card h2{font-size:18px;margin:0 0 8px}
+    .card small{color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:#1f2937;border:1px solid #334155;color:#e2e8f0;padding:9px 12px;border-radius:10px;text-decoration:none;font-weight:700;margin-right:8px;margin-bottom:8px}
+    .btn:hover{background:#263243}
+    .btn.primary{background:var(--brand);border-color:#1d4ed8}
+    .btn.green{background:var(--ok);border-color:#15803d}
+    .btn.warn{background:var(--warn);border-color:#b45309;color:#111}
+    .btn.purple{background:#7c3aed;border-color:#6d28d9}
+    .tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;background:#0b1221;border:1px solid #334155;color:#93c5fd;font-weight:800;font-size:12px}
+    .ok{color:#22c55e}
+    .muted{color:var(--muted)}
+    ul{margin:8px 0 0 18px;color:#cbd5e1}
+    hr{border:0;border-top:1px solid #1f2937;margin:18px 0}
+    header .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .tiny{font-size:12px;color:#9ca3af}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>⚡ Guia do Testador (Rápido)</h1>
+      <p class="lead">Tour compacto com links diretos. Abra em tela cheia e siga os cards na ordem. <a href="/public/tour.html" style="color:#93c5fd">Ver versão completa →</a></p>
+      <div class="actions">
+        <a class="btn primary" target="_blank" href="/" data-testid="quick-tour-landing">Abrir Landing</a>
+        <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="quick-tour-conservative">Conservador</a>
+        <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive" data-testid="quick-tour-suggestive">Sugestivo (IA)</a>
+        <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic" data-testid="quick-tour-dynamic">Dinâmico</a>
+        <a class="btn" target="_blank" href="/prescricao" data-testid="quick-tour-prescricao">Prescrição 90s</a>
+        <a class="btn" target="_blank" href="/alertas" data-testid="quick-tour-alertas">Alertas Clínicos</a>
+        <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="quick-tour-health">Health</a>
+      </div>
+    </header>
+
+    <hr/>
+
+    <!-- Guia por Papéis -->
+    <section class="card" style="margin-bottom:16px">
+      <h2>📚 Guia por Papéis</h2>
+      <small class="muted">Escolha o seu papel para seguir o fluxo recomendado. Você pode alternar a qualquer momento.</small>
+      <div class="grid" style="margin-top:10px">
+        <div class="card">
+          <h3 style="margin:0 0 6px">🧑‍🦽 Sou <b>Paciente</b></h3>
+          <ul>
+            <li><b>Começar:</b> Landing → <span class="mono">BidConnect (BETA)</span>.</li>
+            <li><b>Passo 1:</b> <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="role-patient-conservative">Conservador</a> — teste <b>R$140</b> e <b>R$180</b>, aceite um médico (gera <span class="mono">consultation_id</span>).</li>
+            <li><b>Passo 2 (opcional):</b> <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive" data-testid="role-patient-suggestive">Sugestivo (IA)</a> — peça a <b>Sugestão R$195</b> e aceite.</li>
+            <li><b>Passo 3 (visão de mercado):</b> <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic" data-testid="role-patient-dynamic">Dinâmico</a> — veja faixas e escolha <b>Rápido</b>.</li>
+            <li><b>Passo 4 (entregável):</b> <a class="btn" target="_blank" href="/prescricao" data-testid="role-patient-prescricao">Prescrição 90s</a> — revisar e exportar PDF.</li>
+            <li><b>Complemento:</b> <a class="btn" target="_blank" href="/alertas" data-testid="role-patient-alertas">Alertas Clínicos</a> — triagem/segurança (apoio, não obrigatório).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 6px">👨‍⚕️ Sou <b>Médico</b></h3>
+          <ul>
+            <li><b>Começar:</b> <a class="btn" target="_blank" href="/medicaldesk" data-testid="role-doctor-medicaldesk">MedicalDesk</a> (se ativo) e <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="role-doctor-health">Health</a> (deve dar <span class="mono">{ok:true}</span>).</li>
+            <li><b>Visão operacional:</b> dashboard/contadores no MedicalDesk.</li>
+            <li><b>Protocolos & segurança:</b> <a class="btn" target="_blank" href="/alertas" data-testid="role-doctor-alertas">Alertas</a> — políticas e níveis de severidade.</li>
+            <li><b>Fluxo de atendimento:</b> paciente gera <span class="mono">consultation_id</span> no BidConnect → aparece em sua fila (quando integrado).</li>
+            <li><b>Entregáveis:</b> <a class="btn" target="_blank" href="/prescricao" data-testid="role-doctor-prescricao">Prescrição 90s</a> para revisão/assinatura.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tiny" style="margin-top:6px">Nota: o <b>Assistente Dr. AI</b> (quando disponível em <span class="mono">/dr-ai</span>) é <b>complementar</b> à triagem — não é obrigatório no fluxo básico do paciente.</div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>0) Landing <span class="tag">Início</span></h2>
+        <small>URL: <span class="mono">/</span></small>
+        <ul>
+          <li><b>O que é:</b> home do piloto com CTAs e menu "Começar Demo".</li>
+          <li><b>Como navegar:</b> você pode entrar pelos <b>cards</b> ou usar o menu.<br/>Para uma visão completa do sistema, siga o <b>fluxo do seu papel</b> (Paciente ou Médico) no card <b>Guia por Papéis</b> acima.</li>
+          <li><b>Se for Paciente:</b> comece pelo <b>BidConnect (Conservador)</b> para gerar uma consulta (ID) e ver disponibilidade em tempo real. O <b>Assistente Dr. AI</b> é <b>opcional</b>, como reforço de triagem.</li>
+          <li><b>Se for Médico:</b> comece pelo <b>MedicalDesk</b> (e <b>Health</b>) para ver operação e protocolos; depois visite <b>Alertas</b> e <b>Prescrição 90s</b>.</li>
+          <li><b>Critério de sucesso:</b> você consegue localizar o item certo do seu fluxo e abrir a primeira página do tour.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn primary" target="_blank" href="/" data-testid="card-landing">Abrir</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>1) BidConnect — Conservador <span class="tag">Transparência</span></h2>
+        <small>URL: <span class="mono">/pricing-models.html?model=conservative</span></small>
+        <ul>
+          <li>R$ 140 → <b>Buscar</b> → 0 imediatos.</li>
+          <li>R$ 180 → <b>Buscar</b> → ⚡ imediatos + 📅 agendados.</li>
+          <li><b>Aceitar</b> → alerta com <span class="mono">consultation_id</span>.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="card-conservative">Abrir</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>2) BidConnect — Sugestivo (IA) <span class="tag" style="color:#fff;background:#7c3aed;border-color:#6d28d9">IA</span></h2>
+        <small>URL: <span class="mono">/pricing-models.html?model=suggestive</span></small>
+        <ul>
+          <li>R$ 160 → <b>Buscar com IA</b>.</li>
+          <li>Surge <b>Sugestão</b>: R$ 195 (85%).</li>
+          <li><b>Aceitar Sugestão</b> → aparecem ⚡ médicos.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive" data-testid="card-suggestive">Abrir</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>3) BidConnect — Dinâmico <span class="tag" style="color:#052e12;background:#22c55e;border-color:#16a34a">Mercado</span></h2>
+        <small>URL: <span class="mono">/pricing-models.html?model=dynamic</span></small>
+        <ul>
+          <li>Veja faixas: Econômico / Padrão / <b>Rápido</b> / Premium.</li>
+          <li>Selecione <b>Rápido</b> → "Atender Agora".</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic" data-testid="card-dynamic">Abrir</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>4) Consulta <span class="tag">Confirmação</span></h2>
+        <small>URL sugerida: <span class="mono">/consulta?id=CONS-…</span></small>
+        <ul>
+          <li>Mostra ID, médico e orientações.</li>
+          <li><b>Como chegar:</b> aceite um médico no BidConnect.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="card-consulta">Gerar ID via BidConnect</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>5) Dr. AI <span class="tag">Assistente</span></h2>
+        <small>URL: <span class="mono">/dr-ai</span> (ou use <span class="mono">/alertas</span>)</small>
+        <ul>
+          <li>Informe 2–3 sintomas → especialidade/alertas.</li>
+          <li><b>Encaminhar</b> para BidConnect (se disponível).</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn" target="_blank" href="/alertas" data-testid="card-dr-ai">Abrir Alertas (proxy do Dr. AI)</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>6) Prescrição em 90s <span class="tag">Entregável</span></h2>
+        <small>URL: <span class="mono">/prescricao</span></small>
+        <ul>
+          <li>Receita pré-preenchida → revisar e validar.</li>
+          <li><b>Exportar</b> PDF/print.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn" target="_blank" href="/prescricao" data-testid="card-prescricao">Abrir</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>7) Alertas Clínicos <span class="tag">Políticas</span></h2>
+        <small>URL: <span class="mono">/alertas</span></small>
+        <ul>
+          <li>Severidade, políticas e ações sugeridas.</li>
+          <li>Abra um alerta e veja o racional.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn" target="_blank" href="/alertas" data-testid="card-alertas">Abrir</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>8) MedicalDesk <span class="tag">Operação</span></h2>
+        <small>URLs: <span class="mono">/medicaldesk</span> • <span class="mono">/medicaldesk/health</span></small>
+        <ul>
+          <li><b>Health:</b> deve retornar <span class="mono">{ ok: true }</span>.</li>
+          <li>Dashboard (se ativo): cards/contadores.</li>
+        </ul>
+        <div style="margin-top:10px">
+          <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="card-health">Teste Health</a>
+          <a class="btn" target="_blank" href="/medicaldesk" data-testid="card-medicaldesk">Abrir Dashboard</a>
+        </div>
+      </article>
+    </section>
+
+    <hr/>
+
+    <section class="card">
+      <h2>🚨 Plano B — Sem rede / Palco</h2>
+      <ul>
+        <li>Preferir caminhos <b>standalone</b>: <span class="mono">/pricing-models.html?model=…</span> (mock embutido, zero network).</li>
+        <li>Se quiser API real: defina <span class="mono">USE_LOCAL_AUCTION_MOCK=true</span> e suba o proxy.</li>
+        <li>Se um link quebrar, use os botões no topo para abrir diretamente a etapa.</li>
+      </ul>
+      <div class="tiny" style="margin-top:6px">Dica: mantenha o Console aberto para ver a telemetria do BidConnect.</div>
+    </section>
+
+    <footer style="margin-top:30px;text-align:center;color:var(--muted);font-size:14px">
+      <p>
+        <a href="/public/tour.html" style="color:#93c5fd;text-decoration:none;font-weight:600">← Voltar para Tour Completo</a>
+        •
+        <a href="/" style="color:#93c5fd;text-decoration:none;font-weight:600">Landing Page</a>
+      </p>
+      <p style="margin-top:10px;font-size:12px">
+        TeleMed Platform — Versão BETA | Plataforma de Telemedicina Brasileira
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
