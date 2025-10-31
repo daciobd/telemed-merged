@@ -112,6 +112,15 @@
       border-color: #3b82f6;
     }
     
+    /* Acessibilidade - Navegação por teclado */
+    .btn:focus-visible,
+    .role-btn:focus-visible,
+    a.btn:focus-visible,
+    .role-link:focus-visible {
+      outline: 3px solid #f59e0b;
+      outline-offset: 2px;
+    }
+    
     .section {
       margin-bottom: 30px;
     }
@@ -511,9 +520,9 @@
     <div class="role-toggle">
       <h3>Filtrar por Papel</h3>
       <div class="role-buttons">
-        <button class="role-btn all active" onclick="filterByRole('all')">👥 Todos</button>
-        <button class="role-btn patient" onclick="filterByRole('patient')">🧑‍🦽 Paciente</button>
-        <button class="role-btn doctor" onclick="filterByRole('doctor')">👨‍⚕️ Médico</button>
+        <button class="role-btn all active" onclick="filterByRole('all', this)">👥 Todos</button>
+        <button class="role-btn patient" onclick="filterByRole('patient', this)">🧑‍🦽 Paciente</button>
+        <button class="role-btn doctor" onclick="filterByRole('doctor', this)">👨‍⚕️ Médico</button>
       </div>
     </div>
     
@@ -552,13 +561,13 @@
           </div>
           
           <div class="role-links">
-            <a href="/cadastro.html" target="_blank" class="role-link">1️⃣ Cadastro Paciente</a>
-            <a href="/auth/login.html" target="_blank" class="role-link">2️⃣ Login</a>
-            <a href="/paciente/pedido.html" target="_blank" class="role-link">3️⃣ Fazer Pedido</a>
-            <a href="/sala-de-espera/" target="_blank" class="role-link">4️⃣ Sala de Espera</a>
-            <a href="/consulta/" target="_blank" class="role-link">5️⃣ Consulta</a>
-            <a href="/phr.html" target="_blank" class="role-link">6️⃣ PHR (Prontuário)</a>
-            <a href="/centro-de-testes/" target="_blank" class="role-link">7️⃣ Centro de Testes</a>
+            <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="role-link">1️⃣ Cadastro Paciente</a>
+            <a href="/auth/login.html" target="_blank" rel="noopener noreferrer" class="role-link">2️⃣ Login</a>
+            <a href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer" class="role-link">3️⃣ Fazer Pedido (BidConnect)</a>
+            <a href="/patient/waiting-room.html" target="_blank" rel="noopener noreferrer" class="role-link">4️⃣ Sala de Espera</a>
+            <a href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer" class="role-link">5️⃣ Consulta (Demo)</a>
+            <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="role-link">6️⃣ PHR (Prontuário)</a>
+            <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="role-link">7️⃣ Centro de Testes (via PHR)</a>
           </div>
           
           <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
@@ -595,13 +604,13 @@
           </div>
           
           <div class="role-links">
-            <a href="/public/cadastro-medico.html" target="_blank" class="role-link">1️⃣ Cadastro Médico</a>
-            <a href="/auth/login.html" target="_blank" class="role-link">2️⃣ Login</a>
-            <a href="/dashboard/" target="_blank" class="role-link">3️⃣ Dashboard</a>
-            <a href="/agenda/" target="_blank" class="role-link">4️⃣ Agenda</a>
-            <a href="/meus-pacientes/" target="_blank" class="role-link">5️⃣ Meus Pacientes</a>
-            <a href="/consulta/" target="_blank" class="role-link">6️⃣ Consulta</a>
-            <a href="/medico/" target="_blank" class="role-link">7️⃣ Perfil Médico</a>
+            <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="role-link">1️⃣ Cadastro Médico</a>
+            <a href="/auth/login.html" target="_blank" rel="noopener noreferrer" class="role-link">2️⃣ Login</a>
+            <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="role-link">3️⃣ Dashboard</a>
+            <a href="/medicaldesk/agenda.html" target="_blank" rel="noopener noreferrer" class="role-link">4️⃣ Agenda</a>
+            <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="role-link">5️⃣ Meus Pacientes</a>
+            <a href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer" class="role-link">6️⃣ Consulta (Demo)</a>
+            <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="role-link">7️⃣ Perfil Médico</a>
           </div>
           
           <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
@@ -665,7 +674,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Menu dropdown funciona perfeitamente, todas as opções clicáveis, navegação fluida sem fechar ao mover mouse.</p>
           </div>
-          <a href="/" target="_blank" class="btn btn-primary btn-full">Abrir Landing Page</a>
+          <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Landing Page</a>
         </div>
       </div>
     </section>
@@ -701,7 +710,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Botões AZUIS (#2563eb), loading 1s, Dr. Silva e Dra. Santos aparecem em R$ 180+.</p>
           </div>
-          <a href="/bidconnect-standalone.html?model=conservative" target="_blank" class="btn btn-primary btn-full">Abrir Conservador</a>
+          <a href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Conservador</a>
         </div>
         
         <!-- Sugestivo IA -->
@@ -730,7 +739,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Card com borda tracejada roxo, "85% de chance", valor muda para R$ 195, botões ROXOS.</p>
           </div>
-          <a href="/bidconnect-standalone.html?model=suggestive" target="_blank" class="btn btn-primary btn-full">Abrir Sugestivo (IA)</a>
+          <a href="/bidconnect-standalone.html?model=suggestive" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Sugestivo (IA)</a>
         </div>
         
         <!-- Dinâmico -->
@@ -759,7 +768,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>4 faixas coloridas, borda verde move com slider, botões VERDES (#16a34a), 3 médicos em R$ 190.</p>
           </div>
-          <a href="/bidconnect-standalone.html?model=dynamic" target="_blank" class="btn btn-primary btn-full">Abrir Dinâmico</a>
+          <a href="/bidconnect-standalone.html?model=dynamic" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Dinâmico</a>
         </div>
         
       </div>
@@ -796,7 +805,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>4 tabs clicáveis, MedicalDesk abre em nova aba com sessão JWT, dados do paciente carregam.</p>
           </div>
-          <a href="/consulta/123" target="_blank" class="btn btn-primary btn-full">Abrir Consulta</a>
+          <a href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Consulta (Demo)</a>
         </div>
         
         <!-- MedicalDesk -->
@@ -824,7 +833,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Abre em nova aba, não pede login, interface completa carrega, dados do paciente aparecem.</p>
           </div>
-          <a href="/api/medicaldesk/session?consultation_id=123" target="_blank" class="btn btn-primary btn-full">Abrir MedicalDesk</a>
+          <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir MedicalDesk</a>
         </div>
         
       </div>
@@ -861,7 +870,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Triagem completa, Red Flags em vermelho, especialidade sugerida, aviso LGPD no rodapé.</p>
           </div>
-          <a href="/dr-ai" target="_blank" class="btn btn-primary btn-full">Abrir Dr. AI</a>
+          <a href="/dr-ai" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Dr. AI</a>
         </div>
         
         <!-- Alertas Clínicos -->
@@ -889,7 +898,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Alertas visíveis, cores distintas por prioridade, timestamp correto, ações disponíveis.</p>
           </div>
-          <a href="/alertas" target="_blank" class="btn btn-primary btn-full">Abrir Alertas</a>
+          <a href="/alertas" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Alertas</a>
         </div>
         
         <!-- Prescrição Digital -->
@@ -918,7 +927,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>PDF gerado em <90s, QR Code funciona, template profissional, validação ANVISA OK.</p>
           </div>
-          <a href="/prescricao" target="_blank" class="btn btn-primary btn-full">Abrir Prescrição</a>
+          <a href="/prescricao" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Prescrição</a>
         </div>
         
       </div>
@@ -955,7 +964,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Cadastro realizado, Patient ID gerado, link para fazer pedido de consulta funciona.</p>
           </div>
-          <a href="/cadastro.html" target="_blank" class="btn btn-primary btn-full">Abrir Cadastro Paciente</a>
+          <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Cadastro Paciente</a>
         </div>
         
         <!-- Cadastro Médico -->
@@ -984,7 +993,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Cadastro médico concluído, botões de navegação funcionam, validação CRM OK.</p>
           </div>
-          <a href="/public/cadastro-medico.html" target="_blank" class="btn btn-primary btn-full">Abrir Cadastro Médico</a>
+          <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Cadastro Médico</a>
         </div>
         
         <!-- Login -->
@@ -1013,7 +1022,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Login funcional, mensagens de erro claras, redirecionamento correto por papel.</p>
           </div>
-          <a href="/auth/login.html" target="_blank" class="btn btn-primary btn-full">Abrir Login</a>
+          <a href="/auth/login.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Login</a>
         </div>
         
       </div>
@@ -1049,7 +1058,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Instruções claras, botão "Fazer cadastro" funciona, fluxo visual compreensível.</p>
           </div>
-          <a href="/paciente/como-funciona.html" target="_blank" class="btn btn-primary btn-full">Abrir Como Funciona</a>
+          <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Como Funciona (Landing)</a>
         </div>
         
         <!-- Fazer Pedido -->
@@ -1078,7 +1087,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Pedido criado, redirecionamento para Sala de Espera, Patient ID preservado.</p>
           </div>
-          <a href="/paciente/pedido.html" target="_blank" class="btn btn-primary btn-full">Abrir Fazer Pedido</a>
+          <a href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Fazer Pedido (BidConnect)</a>
         </div>
         
         <!-- Sala de Espera -->
@@ -1107,7 +1116,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Polling funciona, mudança de status detectada, navegação para consulta OK.</p>
           </div>
-          <a href="/sala-de-espera/" target="_blank" class="btn btn-primary btn-full">Abrir Sala de Espera</a>
+          <a href="/patient/waiting-room.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Sala de Espera</a>
         </div>
         
         <!-- PHR -->
@@ -1136,7 +1145,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Histórico completo exibido, downloads funcionam, navegação entre seções OK.</p>
           </div>
-          <a href="/phr.html" target="_blank" class="btn btn-primary btn-full">Abrir PHR</a>
+          <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir PHR</a>
         </div>
         
         <!-- Centro de Testes -->
@@ -1165,7 +1174,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Agendamento funcional, laudos acessíveis, integração com prontuário OK.</p>
           </div>
-          <a href="/centro-de-testes/" target="_blank" class="btn btn-primary btn-full">Abrir Centro de Testes</a>
+          <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Centro de Testes (via PHR)</a>
         </div>
         
         <!-- Verificação de Receita -->
@@ -1194,7 +1203,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>QR Code validado, dados exibidos corretamente, status atualizado OK.</p>
           </div>
-          <a href="/verify-rx.html" target="_blank" class="btn btn-primary btn-full">Abrir Verificação</a>
+          <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Verificação (via PHR)</a>
         </div>
         
       </div>
@@ -1230,7 +1239,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Fluxo claro, links funcionais, botões para cadastro e dashboard OK.</p>
           </div>
-          <a href="/medico/como-funciona.html" target="_blank" class="btn btn-primary btn-full">Abrir Como Funciona</a>
+          <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Como Funciona (Landing)</a>
         </div>
         
         <!-- Dashboard Médico -->
@@ -1259,7 +1268,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>BIDs exibidos, ações funcionam, navegação para consulta OK, métricas atualizadas.</p>
           </div>
-          <a href="/dashboard/" target="_blank" class="btn btn-primary btn-full">Abrir Dashboard</a>
+          <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Dashboard</a>
         </div>
         
         <!-- Agenda -->
@@ -1288,7 +1297,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Calendário funcional, agendamentos salvos, bloqueios funcionam, navegação OK.</p>
           </div>
-          <a href="/agenda/" target="_blank" class="btn btn-primary btn-full">Abrir Agenda</a>
+          <a href="/medicaldesk/agenda.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Agenda</a>
         </div>
         
         <!-- Meus Pacientes -->
@@ -1317,7 +1326,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Lista carregada, busca funciona, prontuários acessíveis, anotações salvas.</p>
           </div>
-          <a href="/meus-pacientes/" target="_blank" class="btn btn-primary btn-full">Abrir Meus Pacientes</a>
+          <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Meus Pacientes (Dashboard)</a>
         </div>
         
         <!-- Perfil Médico -->
@@ -1346,7 +1355,7 @@
             <h4>✅ Critério de Sucesso:</h4>
             <p>Dados atualizados, uploads funcionam, configurações salvas, validação OK.</p>
           </div>
-          <a href="/medico/" target="_blank" class="btn btn-primary btn-full">Abrir Perfil</a>
+          <a href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Perfil (Dashboard)</a>
         </div>
         
       </div>
@@ -1545,13 +1554,13 @@
   
   <script>
     // Função de filtro por papel
-    function filterByRole(role) {
+    function filterByRole(role, element) {
       const cards = document.querySelectorAll('.card[data-role]');
       const buttons = document.querySelectorAll('.role-btn');
       
       // Atualizar botões ativos
       buttons.forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      if (element) element.classList.add('active');
       
       // Filtrar cards
       cards.forEach(card => {
