@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeleMed • Pitch Deck Interativo</title>
+  <meta name="description" content="Pitch deck interativo do TeleMed: problema, solução, produto (BidConnect), tração, mercado, modelo de negócio, unit economics e roadmap." />
+  <style>
+    :root{
+      --bg:#0f172a;--card:#111827;--card2:#1f2937;--text:#e5e7eb;--muted:#9ca3af;--accent:#3b82f6;--accent2:#8b5cf6;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;--border:#334155
+    }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:72px 20px}
+    /* Hero */
+    .hero{min-height:92vh;display:grid;place-items:center;background:linear-gradient(135deg,#0b1222, #162035)}
+    .hero .inner{max-width:980px;text-align:center;padding:32px}
+    .logo{font-size:64px;filter:drop-shadow(0 8px 24px rgba(59,130,246,.35));}
+    h1.title{font-size:48px;margin:12px 0;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .subtitle{color:var(--muted);font-size:18px;margin:0 auto 24px;max-width:800px}
+    .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0 28px}
+    .badge{border:1px solid var(--border);padding:8px 12px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:.3px}
+    .b-beta{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35);color:var(--warn)}
+    .b-live{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.35);color:var(--ok)}
+    .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn{padding:14px 22px;border-radius:12px;border:1px solid var(--border);background:#0b1220;color:#fff;font-weight:700}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;box-shadow:0 10px 30px rgba(59,130,246,.35)}
+    .btn.secondary:hover{border-color:var(--accent)}
+    .scroll{margin-top:24px;color:var(--muted);font-size:14px}
+
+    /* Section */
+    section{scroll-margin-top:80px}
+    .section-head{text-align:center;margin-bottom:36px}
+    h2{font-size:32px;margin:0 0 8px}
+    .lead{color:var(--muted);max-width:760px;margin:0 auto}
+
+    /* Grid cards */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+    .card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px}
+    .card h3{margin:0 0 8px;font-size:18px}
+    .card p{margin:0;color:var(--muted);font-size:14px}
+    .icon{font-size:28px;margin-bottom:8px;display:block}
+
+    /* Split cols */
+    .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px}
+
+    /* Timeline */
+    .timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+    .stage{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px;position:relative}
+    .stage::before{content:'';position:absolute;inset:0 0 auto 0;height:4px;border-radius:16px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+    .kpi .box{background:rgba(59,130,246,.06);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center}
+    .big{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .meta{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+    /* Table compare */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;background:var(--card2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    thead{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.1))}
+    th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14px}
+    tbody tr:last-child td{border-bottom:none}
+    .telemed-col{background:rgba(16,185,129,.07);font-weight:700}
+
+    /* Economics */
+    .eco{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+    .calc{background:rgba(59,130,246,.05);border:1px dashed var(--border);border-radius:12px;padding:14px;font-size:14px}
+    .row{display:flex;justify-content:space-between;padding:6px 0}
+    .row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:10px;font-weight:800}
+    .pos{color:var(--ok)} .neg{color:var(--danger)}
+    .payback{height:40px;background:rgba(148,163,184,.25);border-radius:20px;overflow:hidden}
+    .fill{height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,var(--ok),#34d399);color:#fff;font-weight:800}
+
+    /* Footer CTA */
+    .cta-final{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+    footer{padding:40px 20px;text-align:center;color:var(--muted)}
+
+    @media (max-width:768px){ h1.title{font-size:36px} h2{font-size:26px} }
+  </style>
+</head>
+<body>
+  <!-- HERO -->
+  <header class="hero" id="topo">
+    <div class="inner">
+      <div class="logo">🏥</div>
+      <h1 class="title">TeleMed • Pitch Deck</h1>
+      <p class="subtitle">Plataforma brasileira de telemedicina com <strong>precificação dinâmica</strong> (BidConnect), 
+        integração clínica e ferramentas de IA. Este deck resume problema, solução, produto, mercado, 
+        tração e modelo de negócio — em uma página interativa.</p>
+      <div class="badges">
+        <span class="badge b-live">✅ MVP validado</span>
+        <span class="badge b-beta">🧪 Pilotos em andamento</span>
+        <span class="badge">🔐 LGPD-ready</span>
+      </div>
+      <div class="cta">
+        <a class="btn primary" href="#produto" data-testid="btn-ver-produto">Ver Produto</a>
+        <a class="btn secondary" href="#modelo" data-testid="btn-modelo-negocio">Modelo de Negócio</a>
+        <a class="btn secondary" href="#roadmap" data-testid="btn-roadmap">Roadmap</a>
+      </div>
+      <div class="scroll">↓ role para ver mais</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- PROBLEMA & SOLUÇÃO -->
+    <section class="container" id="problema">
+      <div class="section-head">
+        <h2>Problema & Solução</h2>
+        <p class="lead">Destravar acesso rápido a médicos, com preço justo para pacientes e remuneração 
+          sustentável para médicos, sem fricção operacional.</p>
+      </div>
+      <div class="grid">
+        <div class="card"><span class="icon">⏱️</span><h3>Espera e imprevisibilidade</h3><p>Pacientes aguardam horas/dias e não sabem quanto pagar.</p></div>
+        <div class="card"><span class="icon">💸</span><h3>Preço desalinhado</h3><p>Falta visibilidade de demanda/oferta; preço fixo é ineficiente.</p></div>
+        <div class="card"><span class="icon">🧾</span><h3>Operação fragmentada</h3><p>Agenda, consulta, prescrição e pagamento em silos.</p></div>
+        <div class="card"><span class="icon">✅</span><h3>TeleMed resolve</h3><p>Match em tempo real via BidConnect + fluxo unificado (agendamento, vídeo, prescrição e pagamento).</p></div>
+      </div>
+    </section>
+
+    <!-- PRODUTO / BIDCONNECT -->
+    <section class="container" id="produto">
+      <div class="section-head">
+        <h2>Produto: BidConnect</h2>
+        <p class="lead">Três modelos de precificação para diferentes contextos de demanda.</p>
+      </div>
+      <div class="cols">
+        <div class="card">
+          <span class="pill">Conservador</span>
+          <h3>Transparência total</h3>
+          <p>Paciente propõe valor, sistema busca disponibilidade; opção de aumentar proposta.</p>
+        </div>
+        <div class="card">
+          <span class="pill">Sugestivo (IA)</span>
+          <h3>Recomendação inteligente</h3>
+          <p>IA sugere valor ótimo conforme horário, especialidade e histórico.</p>
+        </div>
+        <div class="card">
+          <span class="pill">Dinâmico</span>
+          <h3>Mercado em tempo real</h3>
+          <p>Mostra quantos médicos há por faixa de preço e tempo estimado de espera.</p>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:18px">
+        <div class="card"><span class="icon">🧩</span><h3>Integrações</h3><p>Agenda, vídeo, prescrição 90s e faturamento no mesmo fluxo.</p></div>
+        <div class="card"><span class="icon">🔐</span><h3>Segurança</h3><p>JWT, logs, rate limiting; conformidade LGPD/CFM.</p></div>
+        <div class="card"><span class="icon">📈</span><h3>Observabilidade</h3><p>Métricas de conversão, valor médio, SLA e NPS.</p></div>
+      </div>
+    </section>
+
+    <!-- MERCADO & TRAÇÃO -->
+    <section class="container" id="mercado">
+      <div class="section-head">
+        <h2>Mercado & Tração</h2>
+        <p class="lead">Mercado endereçável crescente em telemedicina; primeiros pilotos validando o modelo.</p>
+      </div>
+      <div class="cols">
+        <div class="card">
+          <h3>Mercado</h3>
+          <p>Telemedicina no Brasil avança com regulação e adoção pós‑pandemia. Oportunidade em consultas 
+            particulares e B2B (empresas/seguros).<br/><span class="pill">TAM: R$ bilhões / ano</span></p>
+        </div>
+        <div class="card">
+          <h3>Tração (MVP)</h3>
+          <p>Fluxo E2E validado: criação de BID → busca → aceite → consulta demo → prescrição 90s. 
+            Gateway consolidado sem CORS e feature flags.</p>
+        </div>
+      </div>
+      <div class="timeline" style="margin-top:14px">
+        <div class="stage">
+          <h3 style="margin:6px 0 2px">Fase 1 • Pilotos</h3>
+          <div class="kpi">
+            <div class="box"><div class="big">AOV R$180</div><div class="meta">ticket médio</div></div>
+            <div class="box"><div class="big">NPS 70+</div><div class="meta">satisfação</div></div>
+          </div>
+          <p class="muted">Foco em UX, métricas básicas e playbook de aquisição.</p>
+        </div>
+        <div class="stage">
+          <h3 style="margin:6px 0 2px">Fase 2 • Go‑to‑Market</h3>
+          <div class="kpi">
+            <div class="box"><div class="big">+1.5k</div><div class="meta">médicos</div></div>
+            <div class="box"><div class="big">120k</div><div class="meta">consultas/ano</div></div>
+          </div>
+          <p class="muted">Canais escaláveis e parcerias B2B/white‑label.</p>
+        </div>
+        <div class="stage">
+          <h3 style="margin:6px 0 2px">Fase 3 • Escala</h3>
+          <div class="kpi">
+            <div class="box"><div class="big">R$108mi</div><div class="meta">GMV/ano</div></div>
+            <div class="box"><div class="big">SLA &lt; 5m</div><div class="meta">espera</div></div>
+          </div>
+          <p class="muted">Expansão regional e produtos adjacentes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODELO DE NEGÓCIO / COMPARATIVO -->
+    <section class="container" id="modelo">
+      <div class="section-head">
+        <h2>Modelo de Negócio</h2>
+        <p class="lead">Receita por consulta + planos premium + B2B. Unit economics saudáveis desde o início.</p>
+      </div>
+      <div class="grid">
+        <div class="card"><span class="icon">💰</span><h3>Comissão por consulta</h3><p>12–18% sobre o valor pago, conforme especialidade e SLA.</p></div>
+        <div class="card"><span class="icon">🎟️</span><h3>Planos premium</h3><p>Assinaturas para pacientes (prioridade) e médicos (destaque/agenda).</p></div>
+        <div class="card"><span class="icon">🏢</span><h3>B2B/Parcerias</h3><p>White‑label, empresas e seguradoras; faturamento recorrente.</p></div>
+      </div>
+
+      <div class="eco" style="margin-top:18px">
+        <div class="card">
+          <h3>Unit Economics (exemplo por consulta)</h3>
+          <div class="calc">
+            <div class="row"><span>Ticket médio</span><strong>R$ 180,00</strong></div>
+            <div class="row"><span>Comissão (15%)</span><strong class="pos">R$ 27,00</strong></div>
+            <div class="row"><span>Gateway (3%)</span><strong class="neg">R$ 5,40</strong></div>
+            <div class="row"><span>Infra/ops</span><strong class="neg">R$ 2,50</strong></div>
+            <div class="row total"><span>Margem por consulta</span><strong class="pos">R$ 19,10</strong></div>
+          </div>
+          <div style="margin:12px 0 4px">Payback (CAC R$45, 3.2 consultas/ano):</div>
+          <div class="payback"><div class="fill" style="width: 68%">~1.7 meses</div></div>
+        </div>
+        <div class="card">
+          <h3>Comparativo competitivo (resumo)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Recursos</th><th>Conc. A</th><th>Conc. B</th><th class="telemed-col">TeleMed</th></tr></thead>
+              <tbody>
+                <tr><td>Precificação dinâmica</td><td>❌</td><td>⚠️</td><td class="telemed-col">✅ (3 modelos)</td></tr>
+                <tr><td>Prescrição 90s</td><td>⚠️</td><td>✅</td><td class="telemed-col">✅ integrado</td></tr>
+                <tr><td>Gateway unificado</td><td>❌</td><td>⚠️</td><td class="telemed-col">✅ sem CORS</td></tr>
+                <tr><td>SLA &lt; 5 minutos</td><td>⚠️</td><td>⚠️</td><td class="telemed-col">✅ meta</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section class="container" id="roadmap">
+      <div class="section-head"><h2>Roadmap</h2><p class="lead">Fases claras para escalar com segurança e qualidade.</p></div>
+      <div class="timeline">
+        <div class="stage"><h3>M0–M3 • MVP & Pilotos</h3><ul style="margin:8px 0 0 18px; color:var(--muted)"><li>Feature flag + mock & proxy</li><li>Pagamentos e e2e demo</li><li>Observabilidade base</li></ul></div>
+        <div class="stage"><h3>M4–M8 • Go‑to‑Market</h3><ul style="margin:8px 0 0 18px; color:var(--muted)"><li>Planos premium</li><li>Parcerias B2B</li><li>IA sugestiva v2</li></ul></div>
+        <div class="stage"><h3>M9–M12 • Escala</h3><ul style="margin:8px 0 0 18px; color:var(--muted)"><li>Marketplace adjacente</li><li>SLAs contratuais</li><li>Expansão regional</li></ul></div>
+      </div>
+    </section>
+
+    <!-- EQUIPE & GOVERNANÇA (placeholder simples) -->
+    <section class="container" id="team">
+      <div class="section-head"><h2>Time & Governança</h2><p class="lead">Time enxuto com experiência em saúde digital, IA e produtos B2C/B2B.</p></div>
+      <div class="grid">
+        <div class="card"><span class="icon">🧑‍💻</span><h3>Tech</h3><p>Arquitetura modular, segurança por padrão, feature flags e deploy contínuo.</p></div>
+        <div class="card"><span class="icon">🩺</span><h3>Clínico</h3><p>Compliance CFM, LGPD, protocolos e curadoria de especialidades.</p></div>
+        <div class="card"><span class="icon">📊</span><h3>Produto</h3><p>Foco em métricas, UX e crescimento sustentável.</p></div>
+      </div>
+    </section>
+
+    <!-- CALL TO ACTION FINAL -->
+    <section class="container" id="cta">
+      <div class="section-head"><h2>Próximos Passos</h2><p class="lead">Quer ver o fluxo ao vivo ou receber o PDF do deck?</p></div>
+      <div class="cta-final">
+        <a class="btn primary" href="/bidconnect-standalone.html" data-testid="btn-demo-bidconnect">Ver demo BidConnect</a>
+        <a class="btn secondary" href="#" id="btn-download" data-testid="btn-baixar-pdf">Baixar PDF</a>
+        <a class="btn secondary" href="mailto:invest@telemed.com.br?subject=TeleMed%20Pitch" data-testid="btn-contato">Contato Investidores</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>© TeleMed • Pitch Deck Interativo • v1.0</footer>
+
+  <script>
+    // Geração rápida de PDF via print() (substituir por pipeline real quando quiser)
+    document.getElementById('btn-download').addEventListener('click', (e)=>{
+      e.preventDefault();
+      window.print();
+    });
+  </script>
+</body>
+</html>
