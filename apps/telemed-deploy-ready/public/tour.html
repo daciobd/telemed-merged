@@ -528,28 +528,41 @@
           <p>Passos recomendados para testar a jornada completa do paciente na plataforma.</p>
           
           <div class="role-steps">
-            <h4>📋 Sequência Recomendada:</h4>
+            <h4>📋 Fluxo End-to-End Completo:</h4>
             <ol>
-              <li><strong>BidConnect Conservador</strong> - Propor valor e buscar médicos</li>
-              <li><strong>BidConnect Sugestivo (IA)</strong> - Testar recomendação inteligente</li>
-              <li><strong>BidConnect Dinâmico</strong> - Explorar faixas de preço</li>
-              <li><strong>Dr. AI (Opcional)</strong> - Triagem médica complementar</li>
-              <li><strong>Prescrição 90s</strong> - Receber prescrição digital</li>
-              <li><strong>Alertas Clínicos</strong> - Ver notificações importantes</li>
+              <li><strong>Cadastro</strong> - Criar conta de paciente</li>
+              <li><strong>Login</strong> - Autenticar na plataforma</li>
+              <li><strong>Fazer Pedido</strong> - Criar pedido de consulta (BID)</li>
+              <li><strong>Sala de Espera</strong> - Aguardar aceitação do médico</li>
+              <li><strong>Consulta</strong> - Atendimento por vídeo</li>
+              <li><strong>Prescrição</strong> - Receber prescrição digital</li>
+              <li><strong>PHR</strong> - Ver histórico médico</li>
+              <li><strong>Centro de Testes</strong> - Agendar exames</li>
+            </ol>
+          </div>
+          
+          <div class="role-steps" style="margin-top: 15px;">
+            <h4>💰 Fluxo BidConnect (Demo):</h4>
+            <ol>
+              <li><strong>BidConnect Conservador</strong> - Propor valor fixo</li>
+              <li><strong>BidConnect Sugestivo (IA)</strong> - Recomendação inteligente</li>
+              <li><strong>BidConnect Dinâmico</strong> - Faixas de preço</li>
+              <li><strong>Dr. AI (Opcional)</strong> - Triagem complementar</li>
             </ol>
           </div>
           
           <div class="role-links">
-            <a href="/bidconnect-standalone.html?model=conservative" target="_blank" class="role-link">1️⃣ BidConnect Conservador</a>
-            <a href="/bidconnect-standalone.html?model=suggestive" target="_blank" class="role-link">2️⃣ BidConnect Sugestivo (IA)</a>
-            <a href="/bidconnect-standalone.html?model=dynamic" target="_blank" class="role-link">3️⃣ BidConnect Dinâmico</a>
-            <a href="/dr-ai" target="_blank" class="role-link">4️⃣ Dr. AI (Complementar)</a>
-            <a href="/public/prescricao-demo.html?paciente=Maria%20Oliveira&crm=Dra.%20Ana%20(CRM%2012345-SP)&med=Dipirona%20500%20mg&dose=1%20comprimido&pos=a%20cada%208%20horas&dur=por%205%20dias&obs=Tomar%20ap%C3%B3s%20as%20refei%C3%A7%C3%B5es" target="_blank" class="role-link">5️⃣ Prescrição em 90s</a>
-            <a href="/public/alertas-demo.html?perfil=paciente&rules=pa_emerg,febre&channels=app,email" target="_blank" class="role-link">6️⃣ Alertas Clínicos</a>
+            <a href="/cadastro.html" target="_blank" class="role-link">1️⃣ Cadastro Paciente</a>
+            <a href="/auth/login.html" target="_blank" class="role-link">2️⃣ Login</a>
+            <a href="/paciente/pedido.html" target="_blank" class="role-link">3️⃣ Fazer Pedido</a>
+            <a href="/sala-de-espera/" target="_blank" class="role-link">4️⃣ Sala de Espera</a>
+            <a href="/consulta/" target="_blank" class="role-link">5️⃣ Consulta</a>
+            <a href="/phr.html" target="_blank" class="role-link">6️⃣ PHR (Prontuário)</a>
+            <a href="/centro-de-testes/" target="_blank" class="role-link">7️⃣ Centro de Testes</a>
           </div>
           
           <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
-            <strong>Nota:</strong> O Dr. AI é uma ferramenta de <strong>triagem complementar</strong>, não obrigatória no fluxo principal.
+            <strong>💡 Dica:</strong> Para testar os <strong>3 modelos BidConnect</strong>, use a seção "💰 BidConnect — Precificação Dinâmica" abaixo. O <strong>Dr. AI</strong> é uma ferramenta de triagem complementar.
           </p>
         </div>
         
@@ -559,24 +572,40 @@
           <p>Passos recomendados para testar as funcionalidades disponíveis para médicos.</p>
           
           <div class="role-steps">
-            <h4>📋 Sequência Recomendada:</h4>
+            <h4>📋 Fluxo End-to-End Completo:</h4>
             <ol>
-              <li><strong>MedicalDesk</strong> - Acesso à plataforma de gestão clínica</li>
-              <li><strong>Consulta (via BidConnect)</strong> - Receber consultation_id</li>
+              <li><strong>Cadastro Médico</strong> - Criar conta com CRM</li>
+              <li><strong>Login</strong> - Autenticar na plataforma</li>
+              <li><strong>Dashboard</strong> - Ver BIDs pendentes e métricas</li>
+              <li><strong>Agenda</strong> - Gerenciar horários disponíveis</li>
+              <li><strong>Aceitar BID</strong> - Aceitar pedido de consulta</li>
+              <li><strong>Consulta</strong> - Atendimento por vídeo</li>
+              <li><strong>Prescrição</strong> - Gerar prescrição digital</li>
+              <li><strong>Meus Pacientes</strong> - Gerenciar prontuários</li>
+            </ol>
+          </div>
+          
+          <div class="role-steps" style="margin-top: 15px;">
+            <h4>🏥 Integrações (Demo):</h4>
+            <ol>
+              <li><strong>MedicalDesk</strong> - Gestão clínica completa</li>
               <li><strong>Alertas Clínicos</strong> - Monitorar pacientes críticos</li>
-              <li><strong>Prescrição 90s</strong> - Gerar prescrições digitais</li>
+              <li><strong>Prescrição 90s</strong> - Geração rápida de receitas</li>
             </ol>
           </div>
           
           <div class="role-links">
-            <a href="/api/medicaldesk/session?consultation_id=123" target="_blank" class="role-link">1️⃣ MedicalDesk (Integração)</a>
-            <a href="/consulta/123" target="_blank" class="role-link">2️⃣ Página de Consulta</a>
-            <a href="/public/alertas-demo.html?perfil=medico&rules=pa_emerg,febre&channels=app,sms" target="_blank" class="role-link">3️⃣ Alertas Clínicos</a>
-            <a href="/public/prescricao-demo.html?paciente=João%20Silva&crm=Dr.%20Carlos%20(CRM%2054321-RJ)&med=Amoxicilina%20500%20mg&dose=1%20cápsula&pos=a%20cada%2012%20horas&dur=por%207%20dias&obs=Tomar%20com%20alimentos" target="_blank" class="role-link">4️⃣ Prescrição em 90s</a>
+            <a href="/public/cadastro-medico.html" target="_blank" class="role-link">1️⃣ Cadastro Médico</a>
+            <a href="/auth/login.html" target="_blank" class="role-link">2️⃣ Login</a>
+            <a href="/dashboard/" target="_blank" class="role-link">3️⃣ Dashboard</a>
+            <a href="/agenda/" target="_blank" class="role-link">4️⃣ Agenda</a>
+            <a href="/meus-pacientes/" target="_blank" class="role-link">5️⃣ Meus Pacientes</a>
+            <a href="/consulta/" target="_blank" class="role-link">6️⃣ Consulta</a>
+            <a href="/medico/" target="_blank" class="role-link">7️⃣ Perfil Médico</a>
           </div>
           
           <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
-            <strong>Importante:</strong> O <code>consultation_id</code> vem do sistema BidConnect quando um paciente aceita uma consulta.
+            <strong>💡 Dica:</strong> Para testar <strong>MedicalDesk</strong> e <strong>Prescrição 90s</strong>, veja as seções "🏥 Consulta e Integração" e "🛠️ Ferramentas" abaixo.
           </p>
         </div>
         
