@@ -1308,6 +1308,21 @@
       const card = $(`.tg-card[data-id="${bug.testId}"]`);
       card?.classList.add('has-bug');
     });
+    
+    // =========================
+    // FILTRO POR URL (?filter=patient|doctor)
+    // =========================
+    (function initFromURL(){
+      const p = new URLSearchParams(location.search);
+      const f = p.get('filter');
+      if(!f) return;
+      const btn = document.querySelector(`.tg-filter-btn[data-filter="${f}"]`);
+      if(btn) {
+        btn.click();
+        // Scroll suave para o topo após aplicar o filtro
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      }
+    })();
   })();
   </script>
 </body>
