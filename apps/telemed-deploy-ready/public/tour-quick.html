@@ -37,13 +37,13 @@
       <h1>⚡ Guia do Testador (Rápido)</h1>
       <p class="lead">Tour compacto com links diretos. Abra em tela cheia e siga os cards na ordem. <a href="/public/tour.html" style="color:#93c5fd">Ver versão completa →</a></p>
       <div class="actions">
-        <a class="btn primary" target="_blank" href="/" data-testid="quick-tour-landing">Abrir Landing</a>
-        <a class="btn" target="_blank" href="/cadastro.html" data-testid="quick-tour-cadastro">Cadastro</a>
-        <a class="btn" target="_blank" href="/auth/login.html" data-testid="quick-tour-login">Login</a>
-        <a class="btn" target="_blank" href="/dashboard/" data-testid="quick-tour-dashboard">Dashboard</a>
-        <a class="btn" target="_blank" href="/agenda/" data-testid="quick-tour-agenda">Agenda</a>
-        <a class="btn" target="_blank" href="/phr.html" data-testid="quick-tour-phr">PHR</a>
-        <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="quick-tour-health">Health</a>
+        <a class="btn primary" target="_blank" rel="noopener noreferrer" href="/" data-testid="quick-tour-landing">Abrir Landing</a>
+        <a class="btn" target="_blank" rel="noopener noreferrer" href="/auth/register.html" data-testid="quick-tour-cadastro">Cadastro</a>
+        <a class="btn" target="_blank" rel="noopener noreferrer" href="/auth/login.html" data-testid="quick-tour-login">Login</a>
+        <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/index.html" data-testid="quick-tour-dashboard">Dashboard</a>
+        <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/agenda.html" data-testid="quick-tour-agenda">Agenda</a>
+        <a class="btn" target="_blank" rel="noopener noreferrer" href="/patient/phr.html" data-testid="quick-tour-phr">PHR</a>
+        <a class="btn green" target="_blank" rel="noopener noreferrer" href="/medicaldesk/health" data-testid="quick-tour-health">Health</a>
       </div>
     </header>
 
@@ -58,29 +58,29 @@
           <h3 style="margin:0 0 6px">🧑‍🦽 Sou <b>Paciente</b></h3>
           <p style="margin:0 0 6px;color:var(--muted);font-size:13px"><b>Fluxo End-to-End:</b></p>
           <ul>
-            <li><b>1. Cadastro:</b> <a class="btn" target="_blank" href="/cadastro.html" data-testid="role-patient-cadastro">Cadastro</a> → criar conta.</li>
-            <li><b>2. Login:</b> <a class="btn" target="_blank" href="/auth/login.html" data-testid="role-patient-login">Login</a> → autenticar.</li>
-            <li><b>3. Pedido:</b> <a class="btn" target="_blank" href="/paciente/pedido.html" data-testid="role-patient-pedido">Fazer Pedido</a> → criar BID.</li>
-            <li><b>4. Espera:</b> <a class="btn" target="_blank" href="/sala-de-espera/" data-testid="role-patient-espera">Sala de Espera</a> → aguardar médico.</li>
-            <li><b>5. Consulta:</b> <a class="btn" target="_blank" href="/consulta/" data-testid="role-patient-consulta">Consulta</a> → atendimento.</li>
-            <li><b>6. PHR:</b> <a class="btn" target="_blank" href="/phr.html" data-testid="role-patient-phr">Prontuário</a> → histórico.</li>
-            <li><b>7. Exames:</b> <a class="btn" target="_blank" href="/centro-de-testes/" data-testid="role-patient-testes">Centro de Testes</a> → agendar.</li>
+            <li><b>1. Cadastro:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/auth/register.html" data-testid="role-patient-cadastro">Cadastro</a> → criar conta.</li>
+            <li><b>2. Login:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/auth/login.html" data-testid="role-patient-login">Login</a> → autenticar.</li>
+            <li><b>3. Pedido:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=conservative" data-testid="role-patient-pedido">Fazer Pedido (BidConnect)</a> → criar BID.</li>
+            <li><b>4. Espera:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/patient/waiting-room.html" data-testid="role-patient-espera">Sala de Espera</a> → aguardar médico.</li>
+            <li><b>5. Consulta:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/patient/waiting-room.html?id=CONS-DEMO-12345" data-testid="role-patient-consulta">Consulta (Demo)</a> → atendimento.</li>
+            <li><b>6. PHR:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/patient/phr.html" data-testid="role-patient-phr">Prontuário</a> → histórico.</li>
+            <li><b>7. Exames:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/patient/phr.html" data-testid="role-patient-testes">Centro de Testes (via PHR)</a> → agendar.</li>
           </ul>
-          <p style="margin:6px 0 0;color:var(--muted);font-size:13px"><b>Demos BidConnect:</b> <a class="btn" target="_blank" href="/pricing-models.html?model=conservative">Conservador</a> <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive">Sugestivo (IA)</a> <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic">Dinâmico</a></p>
+          <p style="margin:6px 0 0;color:var(--muted);font-size:13px"><b>Demos BidConnect:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=conservative">Conservador</a> <a class="btn purple" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=suggestive">Sugestivo (IA)</a> <a class="btn green" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=dynamic">Dinâmico</a></p>
         </div>
         <div class="card">
           <h3 style="margin:0 0 6px">👨‍⚕️ Sou <b>Médico</b></h3>
           <p style="margin:0 0 6px;color:var(--muted);font-size:13px"><b>Fluxo End-to-End:</b></p>
           <ul>
-            <li><b>1. Cadastro:</b> <a class="btn" target="_blank" href="/public/cadastro-medico.html" data-testid="role-doctor-cadastro">Cadastro Médico</a> → criar conta CRM.</li>
-            <li><b>2. Login:</b> <a class="btn" target="_blank" href="/auth/login.html" data-testid="role-doctor-login">Login</a> → autenticar.</li>
-            <li><b>3. Dashboard:</b> <a class="btn" target="_blank" href="/dashboard/" data-testid="role-doctor-dashboard">Dashboard</a> → ver BIDs pendentes.</li>
-            <li><b>4. Agenda:</b> <a class="btn" target="_blank" href="/agenda/" data-testid="role-doctor-agenda">Agenda</a> → gerenciar horários.</li>
-            <li><b>5. Pacientes:</b> <a class="btn" target="_blank" href="/meus-pacientes/" data-testid="role-doctor-pacientes">Meus Pacientes</a> → prontuários.</li>
-            <li><b>6. Consulta:</b> <a class="btn" target="_blank" href="/consulta/" data-testid="role-doctor-consulta">Consulta</a> → atendimento.</li>
-            <li><b>7. Perfil:</b> <a class="btn" target="_blank" href="/medico/" data-testid="role-doctor-perfil">Perfil</a> → configurações.</li>
+            <li><b>1. Cadastro:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/auth/register.html" data-testid="role-doctor-cadastro">Cadastro Médico</a> → criar conta CRM.</li>
+            <li><b>2. Login:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/auth/login.html" data-testid="role-doctor-login">Login</a> → autenticar.</li>
+            <li><b>3. Dashboard:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/index.html" data-testid="role-doctor-dashboard">Dashboard</a> → ver BIDs pendentes.</li>
+            <li><b>4. Agenda:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/agenda.html" data-testid="role-doctor-agenda">Agenda</a> → gerenciar horários.</li>
+            <li><b>5. Pacientes:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/index.html" data-testid="role-doctor-pacientes">Meus Pacientes (Dashboard)</a> → prontuários.</li>
+            <li><b>6. Consulta:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/patient/waiting-room.html?id=CONS-DEMO-12345" data-testid="role-doctor-consulta">Consulta (Demo)</a> → atendimento.</li>
+            <li><b>7. Perfil:</b> <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/index.html" data-testid="role-doctor-perfil">Perfil (Dashboard)</a> → configurações.</li>
           </ul>
-          <p style="margin:6px 0 0;color:var(--muted);font-size:13px"><b>Integrações:</b> <a class="btn green" target="_blank" href="/medicaldesk/health">MedicalDesk</a> <a class="btn" target="_blank" href="/prescricao">Prescrição 90s</a> <a class="btn" target="_blank" href="/alertas">Alertas</a></p>
+          <p style="margin:6px 0 0;color:var(--muted);font-size:13px"><b>Integrações:</b> <a class="btn green" target="_blank" rel="noopener noreferrer" href="/medicaldesk/health">MedicalDesk Health</a> <a class="btn" target="_blank" rel="noopener noreferrer" href="/prescricao">Prescrição 90s</a> <a class="btn" target="_blank" rel="noopener noreferrer" href="/alertas">Alertas</a></p>
         </div>
       </div>
       <div class="tiny" style="margin-top:6px">Nota: o <b>Assistente Dr. AI</b> (quando disponível em <span class="mono">/dr-ai</span>) é <b>complementar</b> à triagem — não é obrigatório no fluxo básico do paciente.</div>
@@ -98,7 +98,7 @@
           <li><b>Critério de sucesso:</b> você consegue localizar o item certo do seu fluxo e abrir a primeira página do tour.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn primary" target="_blank" href="/" data-testid="card-landing">Abrir</a>
+          <a class="btn primary" target="_blank" rel="noopener noreferrer" href="/" data-testid="card-landing">Abrir</a>
         </div>
       </article>
 
@@ -111,7 +111,7 @@
           <li><b>Aceitar</b> → alerta com <span class="mono">consultation_id</span>.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="card-conservative">Abrir</a>
+          <a class="btn" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=conservative" data-testid="card-conservative">Abrir</a>
         </div>
       </article>
 
@@ -124,7 +124,7 @@
           <li><b>Aceitar Sugestão</b> → aparecem ⚡ médicos.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive" data-testid="card-suggestive">Abrir</a>
+          <a class="btn purple" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=suggestive" data-testid="card-suggestive">Abrir</a>
         </div>
       </article>
 
@@ -136,7 +136,7 @@
           <li>Selecione <b>Rápido</b> → "Atender Agora".</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic" data-testid="card-dynamic">Abrir</a>
+          <a class="btn green" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=dynamic" data-testid="card-dynamic">Abrir</a>
         </div>
       </article>
 
@@ -148,7 +148,7 @@
           <li><b>Como chegar:</b> aceite um médico no BidConnect.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="card-consulta">Gerar ID via BidConnect</a>
+          <a class="btn" target="_blank" rel="noopener noreferrer" href="/bidconnect-standalone.html?model=conservative" data-testid="card-consulta">Gerar ID via BidConnect</a>
         </div>
       </article>
 
@@ -160,7 +160,7 @@
           <li><b>Encaminhar</b> para BidConnect (se disponível).</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn" target="_blank" href="/alertas" data-testid="card-dr-ai">Abrir Alertas (proxy do Dr. AI)</a>
+          <a class="btn" target="_blank" rel="noopener noreferrer" href="/alertas" data-testid="card-dr-ai">Abrir Alertas (proxy do Dr. AI)</a>
         </div>
       </article>
 
@@ -172,7 +172,7 @@
           <li><b>Exportar</b> PDF/print.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn" target="_blank" href="/prescricao" data-testid="card-prescricao">Abrir</a>
+          <a class="btn" target="_blank" rel="noopener noreferrer" href="/prescricao" data-testid="card-prescricao">Abrir</a>
         </div>
       </article>
 
@@ -184,7 +184,7 @@
           <li>Abra um alerta e veja o racional.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn" target="_blank" href="/alertas" data-testid="card-alertas">Abrir</a>
+          <a class="btn" target="_blank" rel="noopener noreferrer" href="/alertas" data-testid="card-alertas">Abrir</a>
         </div>
       </article>
 
@@ -196,8 +196,8 @@
           <li>Dashboard (se ativo): cards/contadores.</li>
         </ul>
         <div style="margin-top:10px">
-          <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="card-health">Teste Health</a>
-          <a class="btn" target="_blank" href="/medicaldesk" data-testid="card-medicaldesk">Abrir Dashboard</a>
+          <a class="btn green" target="_blank" rel="noopener noreferrer" href="/medicaldesk/health" data-testid="card-health">Teste Health</a>
+          <a class="btn" target="_blank" rel="noopener noreferrer" href="/medicaldesk/index.html" data-testid="card-medicaldesk">Abrir Dashboard</a>
         </div>
       </article>
     </section>
