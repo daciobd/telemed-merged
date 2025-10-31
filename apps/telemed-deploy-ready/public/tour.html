@@ -895,6 +895,529 @@
       </div>
     </section>
     
+    <!-- Autenticação -->
+    <section class="section">
+      <h2 class="section-title">🔐 Autenticação</h2>
+      <div class="cards-grid">
+        
+        <!-- Cadastro Paciente -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">Cadastro de Paciente</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-green">Registro</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Formulário de registro para novos pacientes na plataforma TeleMed.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Formulário de cadastro completo</li>
+              <li>Campos obrigatórios funcionam</li>
+              <li>Validação de CPF/email</li>
+              <li>Geração de Patient ID</li>
+              <li>Redirecionamento para página de sucesso</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Cadastro realizado, Patient ID gerado, link para fazer pedido de consulta funciona.</p>
+          </div>
+          <a href="/cadastro.html" target="_blank" class="btn btn-primary btn-full">Abrir Cadastro Paciente</a>
+        </div>
+        
+        <!-- Cadastro Médico -->
+        <div class="card" data-role="doctor">
+          <div class="card-header">
+            <h3 class="card-title">Cadastro de Médico</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Registro</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Formulário de registro para médicos com validação de CRM.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Formulário médico completo</li>
+              <li>Validação de CRM/especialidade</li>
+              <li>Upload de documentos (opcional)</li>
+              <li>Link para demo médico</li>
+              <li>Link "Já tenho cadastro"</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Cadastro médico concluído, botões de navegação funcionam, validação CRM OK.</p>
+          </div>
+          <a href="/public/cadastro-medico.html" target="_blank" class="btn btn-primary btn-full">Abrir Cadastro Médico</a>
+        </div>
+        
+        <!-- Login -->
+        <div class="card" data-role="both">
+          <div class="card-header">
+            <h3 class="card-title">Login</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Acesso</span>
+              <span class="card-badge badge-both">Ambos</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página de autenticação para pacientes e médicos acessarem a plataforma.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Formulário de login funciona</li>
+              <li>Validação de credenciais</li>
+              <li>Link "Esqueci minha senha"</li>
+              <li>Link para cadastro</li>
+              <li>Redirecionamento pós-login</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Login funcional, mensagens de erro claras, redirecionamento correto por papel.</p>
+          </div>
+          <a href="/auth/login.html" target="_blank" class="btn btn-primary btn-full">Abrir Login</a>
+        </div>
+        
+      </div>
+    </section>
+    
+    <!-- Fluxo Paciente End-to-End -->
+    <section class="section">
+      <h2 class="section-title">🧑‍🦽 Fluxo Paciente End-to-End</h2>
+      <div class="cards-grid">
+        
+        <!-- Como Funciona Paciente -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">Como Funciona (Paciente)</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-green">Guia</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página explicativa sobre o funcionamento da plataforma para pacientes.
+          </p>
+          <div class="card-steps">
+            <h4>📋 Passos explicados:</h4>
+            <ul>
+              <li>1. Fazer cadastro</li>
+              <li>2. Criar pedido de consulta (BID)</li>
+              <li>3. Aguardar na Sala de Espera</li>
+              <li>4. Entrar na Sala da Consulta</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Instruções claras, botão "Fazer cadastro" funciona, fluxo visual compreensível.</p>
+          </div>
+          <a href="/paciente/como-funciona.html" target="_blank" class="btn btn-primary btn-full">Abrir Como Funciona</a>
+        </div>
+        
+        <!-- Fazer Pedido -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">Fazer Pedido de Consulta</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-green">Pedido</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Formulário para criar um novo pedido de consulta médica (BID).
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Patient ID preenchido automaticamente</li>
+              <li>Seleção de especialidade</li>
+              <li>Definir valor máximo (R$)</li>
+              <li>Escolher tipo (imediata/agendada)</li>
+              <li>Botão "Enviar Pedido" funciona</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Pedido criado, redirecionamento para Sala de Espera, Patient ID preservado.</p>
+          </div>
+          <a href="/paciente/pedido.html" target="_blank" class="btn btn-primary btn-full">Abrir Fazer Pedido</a>
+        </div>
+        
+        <!-- Sala de Espera -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">Sala de Espera</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-yellow">Aguardando</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página onde paciente aguarda até médico aceitar ou agendar a consulta.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Status "Aguardando médico" visível</li>
+              <li>Indicador de tempo de espera</li>
+              <li>Notificação quando aceito</li>
+              <li>Botão para entrar na consulta</li>
+              <li>Opção de cancelar pedido</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Polling funciona, mudança de status detectada, navegação para consulta OK.</p>
+          </div>
+          <a href="/sala-de-espera/" target="_blank" class="btn btn-primary btn-full">Abrir Sala de Espera</a>
+        </div>
+        
+        <!-- PHR -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">PHR (Prontuário)</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Histórico</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Personal Health Record - Histórico médico e consultas anteriores do paciente.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Lista de consultas anteriores</li>
+              <li>Prescrições recebidas</li>
+              <li>Exames realizados</li>
+              <li>Filtros por data/especialidade</li>
+              <li>Download de documentos</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Histórico completo exibido, downloads funcionam, navegação entre seções OK.</p>
+          </div>
+          <a href="/phr.html" target="_blank" class="btn btn-primary btn-full">Abrir PHR</a>
+        </div>
+        
+        <!-- Centro de Testes -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">Centro de Testes</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Laboratório</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Interface para agendamento e visualização de resultados de exames laboratoriais.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Agendar novos exames</li>
+              <li>Ver resultados disponíveis</li>
+              <li>Download de laudos</li>
+              <li>Histórico de exames</li>
+              <li>Integração com PHR</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Agendamento funcional, laudos acessíveis, integração com prontuário OK.</p>
+          </div>
+          <a href="/centro-de-testes/" target="_blank" class="btn btn-primary btn-full">Abrir Centro de Testes</a>
+        </div>
+        
+        <!-- Verificação de Receita -->
+        <div class="card" data-role="patient">
+          <div class="card-header">
+            <h3 class="card-title">Verificação de Receita</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-green">QR Code</span>
+              <span class="card-badge badge-patient">Paciente</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Sistema de verificação farmacêutica de prescrições digitais via QR Code.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Escaneamento de QR Code</li>
+              <li>Validação de autenticidade</li>
+              <li>Exibição de dados da receita</li>
+              <li>Verificação de validade</li>
+              <li>Status de uso (não usada/usada)</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>QR Code validado, dados exibidos corretamente, status atualizado OK.</p>
+          </div>
+          <a href="/verify-rx.html" target="_blank" class="btn btn-primary btn-full">Abrir Verificação</a>
+        </div>
+        
+      </div>
+    </section>
+    
+    <!-- Fluxo Médico End-to-End -->
+    <section class="section">
+      <h2 class="section-title">👨‍⚕️ Fluxo Médico End-to-End</h2>
+      <div class="cards-grid">
+        
+        <!-- Como Funciona Médico -->
+        <div class="card" data-role="doctor">
+          <div class="card-header">
+            <h3 class="card-title">Como Funciona (Médico)</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Guia</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página explicativa sobre o funcionamento da plataforma para médicos.
+          </p>
+          <div class="card-steps">
+            <h4>📋 Passos explicados:</h4>
+            <ul>
+              <li>1. Fazer cadastro de médico</li>
+              <li>2. Acessar Dashboard (BIDs pendentes)</li>
+              <li>3. Aceitar BID ou agendar horário</li>
+              <li>4. Abrir Sala da Consulta</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Fluxo claro, links funcionais, botões para cadastro e dashboard OK.</p>
+          </div>
+          <a href="/medico/como-funciona.html" target="_blank" class="btn btn-primary btn-full">Abrir Como Funciona</a>
+        </div>
+        
+        <!-- Dashboard Médico -->
+        <div class="card" data-role="doctor">
+          <div class="card-header">
+            <h3 class="card-title">Dashboard Médico</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Central</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Painel central do médico com BIDs pendentes, agenda e métricas.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Lista de BIDs pendentes</li>
+              <li>Aceitar/Rejeitar BID</li>
+              <li>Ver detalhes do paciente</li>
+              <li>Próximas consultas agendadas</li>
+              <li>Métricas de atendimento</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>BIDs exibidos, ações funcionam, navegação para consulta OK, métricas atualizadas.</p>
+          </div>
+          <a href="/dashboard/" target="_blank" class="btn btn-primary btn-full">Abrir Dashboard</a>
+        </div>
+        
+        <!-- Agenda -->
+        <div class="card" data-role="doctor">
+          <div class="card-header">
+            <h3 class="card-title">Agenda</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Calendário</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Sistema de agendamento e gerenciamento de horários do médico.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Visualização de calendário</li>
+              <li>Agendar novos horários</li>
+              <li>Bloquear horários indisponíveis</li>
+              <li>Ver consultas confirmadas</li>
+              <li>Notificações de agendamentos</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Calendário funcional, agendamentos salvos, bloqueios funcionam, navegação OK.</p>
+          </div>
+          <a href="/agenda/" target="_blank" class="btn btn-primary btn-full">Abrir Agenda</a>
+        </div>
+        
+        <!-- Meus Pacientes -->
+        <div class="card" data-role="doctor">
+          <div class="card-header">
+            <h3 class="card-title">Meus Pacientes</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Gestão</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Lista de pacientes atendidos com acesso a prontuários e histórico.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Lista completa de pacientes</li>
+              <li>Buscar paciente por nome/ID</li>
+              <li>Acessar prontuário (PHR)</li>
+              <li>Ver histórico de consultas</li>
+              <li>Adicionar anotações médicas</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Lista carregada, busca funciona, prontuários acessíveis, anotações salvas.</p>
+          </div>
+          <a href="/meus-pacientes/" target="_blank" class="btn btn-primary btn-full">Abrir Meus Pacientes</a>
+        </div>
+        
+        <!-- Perfil Médico -->
+        <div class="card" data-role="doctor">
+          <div class="card-header">
+            <h3 class="card-title">Perfil Médico</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Configurações</span>
+              <span class="card-badge badge-doctor">Médico</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página de configurações e gerenciamento do perfil profissional.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Editar dados do perfil</li>
+              <li>Atualizar especialidades</li>
+              <li>Configurar valores de consulta</li>
+              <li>Upload de documentos CRM</li>
+              <li>Preferências de notificação</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Dados atualizados, uploads funcionam, configurações salvas, validação OK.</p>
+          </div>
+          <a href="/medico/" target="_blank" class="btn btn-primary btn-full">Abrir Perfil</a>
+        </div>
+        
+      </div>
+    </section>
+    
+    <!-- Páginas Gerais -->
+    <section class="section">
+      <h2 class="section-title">📄 Páginas Gerais</h2>
+      <div class="cards-grid">
+        
+        <!-- Como Funciona Geral -->
+        <div class="card" data-role="both">
+          <div class="card-header">
+            <h3 class="card-title">Como Funciona (Geral)</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-purple">Informação</span>
+              <span class="card-badge badge-both">Ambos</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página informativa geral sobre a plataforma TeleMed para visitantes.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Explicação da plataforma</li>
+              <li>Diferenciais e benefícios</li>
+              <li>Como começar (paciente/médico)</li>
+              <li>Links de navegação</li>
+              <li>FAQ básico</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Informações claras, CTAs funcionais, navegação intuitiva, FAQ útil.</p>
+          </div>
+          <a href="/como-funciona/" target="_blank" class="btn btn-primary btn-full">Abrir Como Funciona</a>
+        </div>
+        
+        <!-- Preços -->
+        <div class="card" data-role="both">
+          <div class="card-header">
+            <h3 class="card-title">Preços</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-green">Comercial</span>
+              <span class="card-badge badge-both">Ambos</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Página com modelos de precificação e planos disponíveis na plataforma.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Planos para pacientes</li>
+              <li>Planos para médicos</li>
+              <li>Tabela comparativa</li>
+              <li>Botões de contratação</li>
+              <li>FAQ de preços</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Preços claros, comparações visíveis, CTAs funcionam, informações completas.</p>
+          </div>
+          <a href="/precos/" target="_blank" class="btn btn-primary btn-full">Abrir Preços</a>
+        </div>
+        
+        <!-- Termos e Privacidade -->
+        <div class="card" data-role="both">
+          <div class="card-header">
+            <h3 class="card-title">Termos e Privacidade</h3>
+            <div class="card-badges">
+              <span class="card-badge badge-blue">Legal</span>
+              <span class="card-badge badge-both">Ambos</span>
+            </div>
+          </div>
+          <p class="card-description">
+            Documentos legais: Termos de Uso, Política de Privacidade e LGPD.
+          </p>
+          <div class="card-steps">
+            <h4>📋 O que testar:</h4>
+            <ul>
+              <li>Termos de Uso completos</li>
+              <li>Política de Privacidade</li>
+              <li>Compliance LGPD</li>
+              <li>Seções navegáveis</li>
+              <li>Data de última atualização</li>
+            </ul>
+          </div>
+          <div class="card-success">
+            <h4>✅ Critério de Sucesso:</h4>
+            <p>Documentos completos, navegação por seções funciona, compliance visível.</p>
+          </div>
+          <a href="/termos-privacidade.html" target="_blank" class="btn btn-primary btn-full">Abrir Termos</a>
+        </div>
+        
+      </div>
+    </section>
+    
     <!-- Plano B -->
     <section class="section">
       <div class="plan-b">
