@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tour Guiado - TeleMed BidConnect | Guia do Testador</title>
   <meta name="description" content="Guia passo a passo para testar todos os recursos da plataforma TeleMed, incluindo BidConnect, Prescrição, Dr. AI e MedicalDesk.">
+  
+  <!-- 🔧 IMPORTANTE: garante que todos os href absolutos funcionem mesmo se o arquivo estiver em subpastas -->
+  <base href="/" />
+  
   <style>
     * {
       margin: 0;
@@ -1576,5 +1580,169 @@
       });
     }
   </script>
+
+  <!-- 🔍 Utilitários de QA: verificador de links e avisos amigáveis -->
+  <script>
+    /**
+     * Verifica e padroniza URLs para lidar com:
+     *  - diretórios que precisam de /index.html (ex.: /como-funciona/)
+     *  - remoção de duplos // e espaços
+     */
+    function normalizeHref(href) {
+      try {
+        const url = new URL(href, location.origin);
+        // Normaliza espaços acidentais
+        url.pathname = url.pathname.replace(/\s+/g, '-').replace(/\/{2,}/g, '/');
+
+        // Se termina com "/", tentamos /index.html
+        if (url.pathname.endsWith('/')) {
+          url.pathname = url.pathname + 'index.html';
+        }
+
+        return url.toString();
+      } catch (e) {
+        return href;
+      }
+    }
+
+    /**
+     * Intercepta cliques em links externos (target=_blank) para:
+     *  - checar se o recurso existe (HEAD → 200)
+     *  - alertar se o arquivo/rota não está no build, sem "cair" na Landing
+     */
+    function installLinkGuard() {
+      const links = Array.from(document.querySelectorAll('a[target="_blank"][href]'));
+      links.forEach(a => {
+        a.addEventListener('click', async (ev) => {
+          // Só guard se for link do mesmo host
+          const rawHref = a.getAttribute('href');
+          const normalized = normalizeHref(rawHref);
+          const url = new URL(normalized, location.href);
+
+          // Evita bloquear links externos (cdn, docs, etc.)
+          const sameOrigin = url.origin === location.origin;
+          if (!sameOrigin) return;
+
+          ev.preventDefault(); // bloqueia a navegação até checar
+
+          try {
+            // HEAD é rápido e não baixa o corpo
+            const res = await fetch(url, { method: 'HEAD', redirect: 'manual' });
+
+            if (res.ok) {
+              // Abre se existir
+              window.open(url.href, '_blank', 'noopener,noreferrer');
+            } else {
+              const suggestion = suggestMissingFile(url.pathname);
+              alert([
+                '⚠️ Página não encontrada no build:',
+                '→ ' + url.pathname,
+                '',
+                'Como corrigir agora:',
+                '1) Gere o arquivo/rota no build.',
+                '2) Sugestão de arquivo: ' + suggestion,
+                '',
+                'Dica: crie um stub mínimo só com <h1> para destravar os testes.'
+              ].join('\n'));
+              console.warn('Link ausente:', url.href, 'status:', res.status);
+            }
+          } catch (err) {
+            alert('⚠️ Não foi possível validar o link: ' + url.pathname + '\nVerifique se o servidor está rodando.');
+            console.error('Erro ao checar link', url.href, err);
+          }
+        }, { capture: true });
+      });
+    }
+
+    /**
+     * Sugere um arquivo correspondente ao caminho clicado
+     * - /como-funciona/ → /como-funciona/index.html
+     * - /patient/phr → /patient/phr.html
+     */
+    function suggestMissingFile(pathname) {
+      // Se é diretório, sugere index.html
+      if (pathname.endsWith('/')) return pathname + 'index.html';
+
+      // Se não tem extensão, sugere .html
+      if (!/\.[a-z0-9]+$/i.test(pathname)) return pathname + '.html';
+
+      return pathname;
+    }
+
+    /**
+     * Auditoria rápida: lista no console o status (200/404) de todos os links do Tour
+     * Execute automaticamente ao carregar a página para facilitar QA.
+     */
+    async function auditLinksOnLoad() {
+      const anchors = Array.from(document.querySelectorAll('a[href]'));
+      const rows = [];
+
+      for (const a of anchors) {
+        const href = a.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+
+        const url = new URL(normalizeHref(href), location.origin);
+        // Só audita links do mesmo host
+        if (url.origin !== location.origin) continue;
+
+        try {
+          const res = await fetch(url, { method: 'HEAD', redirect: 'manual' });
+          rows.push({
+            text: (a.textContent || '').trim().slice(0, 60),
+            href,
+            normalized: url.pathname,
+            status: res.status,
+          });
+        } catch (e) {
+          rows.push({ text: (a.textContent || '').trim().slice(0, 60), href, normalized: url.pathname, status: 'ERR' });
+        }
+      }
+
+      if (rows.length) {
+        // Mostra primeiro as linhas problemáticas
+        rows.sort((a, b) => (a.status === 200 ? 1 : -1));
+        console.group('🔎 Auditoria de Links do Tour (HEAD)');
+        console.table(rows);
+        console.groupEnd();
+
+        const bad = rows.filter(r => r.status !== 200);
+        if (bad.length) {
+          console.warn('⚠️ Links ausentes/inesperados detectados (%d). Veja a tabela acima.', bad.length);
+        } else {
+          console.info('✅ Todos os links retornaram 200 (HEAD).');
+        }
+      }
+    }
+
+    // Instala guardas e audita na carga
+    installLinkGuard();
+    auditLinksOnLoad();
+  </script>
+
+  <!-- 🔧 NOTAS DE BUILD (TODO):
+    Garanta estes arquivos no seu build/dist para que TODOS os cards funcionem:
+    - /auth/register.html
+    - /auth/login.html
+    - /bidconnect-standalone.html
+    - /patient/waiting-room.html
+    - /patient/phr.html
+    - /medicaldesk/index.html
+    - /medicaldesk/agenda.html
+    - /como-funciona/index.html   (pois você usa /como-funciona/)
+    - /precos/index.html          (pois você usa /precos/)
+    - /termos-privacidade.html
+
+    Se o projeto for SPA (React/Vite):
+    - Não use .html por rota; use rotas do router (ex.: /patient/waiting-room) e mantenha um rewrite único para /index.html.
+    - Caso mantenha HTMLs estáticos (MPA), REMOVA rewrites globais do servidor (Netlify/Vercel/Nginx) que joguem tudo para /index.html,
+      ou eles vão mascarar 404 e "parecer" que caiu na Landing.
+
+    NGINX (MPA) exemplo:
+      location / {
+        try_files $uri =404;
+      }
+
+    Netlify (MPA): evite "/* /index.html 200" na raiz. Limite apenas às rotas SPA, se existirem.
+  -->
 </body>
 </html>
