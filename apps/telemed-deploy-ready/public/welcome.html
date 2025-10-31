@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bem-vindo ao TeleMed Platform - Guia do Testador</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --ok: #10b981;
+      --purple: #8b5cf6;
+      --orange: #f59e0b;
+      --border: #334155;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+    
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    
+    .hero-content {
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      padding: 40px 20px;
+      max-width: 900px;
+    }
+    
+    .logo {
+      font-size: 72px;
+      margin-bottom: 16px;
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--accent-light), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-subtitle {
+      font-size: 22px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+    
+    .hero-badges {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+    
+    .badge {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .badge-beta {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--orange);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .badge-free {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--ok);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .badge-interactive {
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--purple);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    
+    .cta-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(59, 130, 246, 0.6);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+    }
+    
+    .scroll-indicator {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translate(-50%, 0); }
+      50% { transform: translate(-50%, 10px); }
+    }
+    
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 20px;
+    }
+    
+    /* Section */
+    .section {
+      margin-bottom: 80px;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    
+    .section-header h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    
+    .section-header p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+    }
+    
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    
+    .feature-card h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    
+    .feature-card p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    
+    /* Journey Cards */
+    .journey-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-top: 32px;
+    }
+    
+    .journey-card {
+      background: linear-gradient(135deg, var(--card) 0%, rgba(30, 41, 59, 0.8) 100%);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .journey-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--purple));
+    }
+    
+    .journey-card.patient::before {
+      background: linear-gradient(90deg, var(--ok), var(--accent));
+    }
+    
+    .journey-card h3 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .journey-card .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    
+    .journey-steps {
+      list-style: none;
+      margin-bottom: 24px;
+    }
+    
+    .journey-steps li {
+      padding: 12px 0;
+      padding-left: 32px;
+      position: relative;
+      color: var(--text);
+      font-size: 15px;
+    }
+    
+    .journey-steps li::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 0;
+      top: 12px;
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    
+    .journey-card.patient .journey-steps li::before {
+      background: var(--ok);
+    }
+    
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+    
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 48px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-light), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    /* How It Works */
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-top: 32px;
+    }
+    
+    .how-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    
+    .how-number {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 auto 16px;
+    }
+    
+    .how-card h4 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    
+    .how-card p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    
+    /* Final CTA */
+    .final-cta {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border: 2px solid var(--accent);
+      border-radius: 20px;
+      padding: 60px 40px;
+      text-align: center;
+      margin-top: 80px;
+    }
+    
+    .final-cta h2 {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    
+    .final-cta p {
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 32px;
+      }
+      
+      .hero-subtitle {
+        font-size: 18px;
+      }
+      
+      .btn {
+        padding: 12px 24px;
+        font-size: 16px;
+      }
+      
+      .section-header h2 {
+        font-size: 28px;
+      }
+      
+      .final-cta h2 {
+        font-size: 28px;
+      }
+      
+      .journey-grid,
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="logo">🏥</div>
+      <h1>Bem-vindo ao TeleMed Platform</h1>
+      <p class="hero-subtitle">
+        Plataforma brasileira de telemedicina com precificação dinâmica BidConnect, 
+        integração médica avançada e ferramentas de IA para triagem inteligente
+      </p>
+      
+      <div class="hero-badges">
+        <span class="badge badge-beta">🧪 BETA Testing</span>
+        <span class="badge badge-free">✨ Gratuito</span>
+        <span class="badge badge-interactive">🎯 Guia Interativo</span>
+      </div>
+      
+      <div class="cta-group">
+        <a href="#comece" class="btn btn-primary" data-testid="button-start-welcome">
+          🚀 Começar Agora
+        </a>
+        <a href="#sobre" class="btn btn-secondary" data-testid="button-learn-more">
+          📖 Saiba Mais
+        </a>
+      </div>
+    </div>
+    
+    <div class="scroll-indicator">
+      <span>Role para explorar</span>
+      <span style="font-size: 24px;">↓</span>
+    </div>
+  </section>
+
+  <div class="container">
+    
+    <!-- O QUE É O TELEMED -->
+    <section id="sobre" class="section">
+      <div class="section-header">
+        <h2>💡 O que é o TeleMed?</h2>
+        <p>Uma plataforma completa de telemedicina que revoluciona a forma como pacientes e médicos se conectam</p>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">💰</span>
+          <h3>BidConnect</h3>
+          <p>Sistema inovador de precificação dinâmica onde pacientes propõem valores e médicos aceitam em tempo real. Três modelos: Conservador, Sugestivo (IA) e Dinâmico.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🏥</span>
+          <h3>MedicalDesk</h3>
+          <p>Plataforma integrada de gestão clínica com prontuário eletrônico, agenda médica, prescrição digital em 90s e muito mais.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🤖</span>
+          <h3>Dr. AI</h3>
+          <p>Sistema de triagem médica com IA, detecção de Red Flags, sugestão de especialidades e total conformidade LGPD.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">📋</span>
+          <h3>PHR Completo</h3>
+          <p>Personal Health Record com histórico de consultas, prescrições, exames e documentos médicos acessíveis a qualquer momento.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🔐</span>
+          <h3>Segurança Total</h3>
+          <p>Autenticação JWT, criptografia end-to-end, compliance LGPD e ANVISA, validação CFM e proteção de dados sensíveis.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h3>Tempo Real</h3>
+          <p>Consultas por vídeo, chat ao vivo, notificações instantâneas, polling automático e sincronização entre dispositivos.</p>
+        </div>
+      </div>
+      
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value">15+</div>
+          <div class="stat-label">Features Testáveis</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Modelos BidConnect</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Offline Capable</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Jornadas Completas</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARA QUEM É -->
+    <section class="section">
+      <div class="section-header">
+        <h2>👥 Para quem é este teste?</h2>
+        <p>Este guia foi criado para diferentes perfis de testadores</p>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🧪</span>
+          <h3>QA & Testadores</h3>
+          <p>Validar funcionalidades, reportar bugs, testar edge cases e garantir qualidade antes do deploy.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">👨‍💼</span>
+          <h3>Stakeholders</h3>
+          <p>Entender o produto, avaliar features, tomar decisões estratégicas e acompanhar evolução.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">💻</span>
+          <h3>Desenvolvedores</h3>
+          <p>Validar integrações, testar APIs, verificar performance e debugar problemas técnicos.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🎨</span>
+          <h3>Designers UX/UI</h3>
+          <p>Avaliar fluxos de usuário, validar interfaces, testar acessibilidade e sugerir melhorias.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">👨‍⚕️</span>
+          <h3>Profissionais da Saúde</h3>
+          <p>Validar compliance médico, testar workflows clínicos e avaliar usabilidade para o dia a dia.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">📊</span>
+          <h3>Product Managers</h3>
+          <p>Coletar feedback, priorizar features, validar hipóteses e medir satisfação do usuário.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLUXOS RECOMENDADOS -->
+    <section id="comece" class="section">
+      <div class="section-header">
+        <h2>🗺️ Fluxos Recomendados</h2>
+        <p>Escolha sua jornada e siga o passo a passo para uma experiência completa</p>
+      </div>
+      
+      <div class="journey-grid">
+        <!-- Jornada Paciente -->
+        <div class="journey-card patient">
+          <h3>
+            <span>🧑‍🦽</span>
+            Jornada do Paciente
+          </h3>
+          <p class="subtitle">Tempo estimado: 20-30 minutos</p>
+          
+          <ol class="journey-steps">
+            <li data-step="1">Cadastro de Paciente</li>
+            <li data-step="2">Login na Plataforma</li>
+            <li data-step="3">Testar 3 Modelos BidConnect</li>
+            <li data-step="4">Sala de Espera</li>
+            <li data-step="5">Entrar em Consulta (Demo)</li>
+            <li data-step="6">Acessar PHR e Histórico</li>
+            <li data-step="7">Usar Dr. AI (Opcional)</li>
+          </ol>
+          
+          <a href="/public/tester-guide.html" class="btn btn-primary" data-testid="button-patient-journey" style="width: 100%; justify-content: center;">
+            Iniciar Jornada Paciente →
+          </a>
+        </div>
+        
+        <!-- Jornada Médico -->
+        <div class="journey-card doctor">
+          <h3>
+            <span>👨‍⚕️</span>
+            Jornada do Médico
+          </h3>
+          <p class="subtitle">Tempo estimado: 25-35 minutos</p>
+          
+          <ol class="journey-steps">
+            <li data-step="1">Cadastro de Médico (CRM)</li>
+            <li data-step="2">Login na Plataforma</li>
+            <li data-step="3">Dashboard e BIDs Pendentes</li>
+            <li data-step="4">Gerenciar Agenda</li>
+            <li data-step="5">Aceitar BID e Consulta</li>
+            <li data-step="6">MedicalDesk Integrado</li>
+            <li data-step="7">Gerar Prescrição 90s</li>
+          </ol>
+          
+          <a href="/public/tester-guide.html" class="btn btn-primary" data-testid="button-doctor-journey" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #10b981, #059669);">
+            Iniciar Jornada Médico →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMO FUNCIONA O TESTE -->
+    <section class="section">
+      <div class="section-header">
+        <h2>🎯 Como Funciona o Guia Interativo</h2>
+        <p>Um sistema completo para tornar seus testes mais eficientes e organizados</p>
+      </div>
+      
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-number">1</div>
+          <h4>Cards Interativos</h4>
+          <p>Cada funcionalidade tem um card com descrição, tempo estimado e links diretos</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">2</div>
+          <h4>Marcar como Testado</h4>
+          <p>Checkbox em cada card salva seu progresso automaticamente no navegador</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">3</div>
+          <h4>Reportar Bugs</h4>
+          <p>Botão 🐛 em cada card gera JSON formatado para GitHub Issues</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">4</div>
+          <h4>Filtros Inteligentes</h4>
+          <p>Filtre por Paciente, Médico, BidConnect, Prioridade ou Não Testado</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">5</div>
+          <h4>Busca Global</h4>
+          <p>Procure por palavras-chave, tags ou nomes de features instantaneamente</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">6</div>
+          <h4>Progresso Visual</h4>
+          <p>Barra de progresso mostra quantos testes foram concluídos em tempo real</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">7</div>
+          <h4>Dados Pré-Configurados</h4>
+          <p>Credenciais de teste com botões de copiar para agilizar cadastros</p>
+        </div>
+        
+        <div class="how-card">
+          <div class="how-number">8</div>
+          <h4>Modo Escuro</h4>
+          <p>Toggle de tema claro/escuro para conforto visual durante testes longos</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DICAS IMPORTANTES -->
+    <section class="section">
+      <div class="section-header">
+        <h2>💡 Dicas para um Teste Eficaz</h2>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">⏱️</span>
+          <h3>Respeite os Tempos</h3>
+          <p>Cada card indica tempo estimado. Use-o para planejar sua sessão de testes e evitar fadiga.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">📝</span>
+          <h3>Anote Descobertas</h3>
+          <p>Use o sistema de bug report ou mantenha um documento paralelo com observações detalhadas.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🔄</span>
+          <h3>Teste Cenários Reais</h3>
+          <p>Simule casos de uso reais, não apenas o "happy path". Teste erros, timeouts e casos extremos.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">📱</span>
+          <h3>Múltiplos Dispositivos</h3>
+          <p>Se possível, teste em desktop, tablet e mobile para validar responsividade.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🌐</span>
+          <h3>Diferentes Navegadores</h3>
+          <p>Chrome, Firefox, Safari e Edge podem apresentar comportamentos distintos.</p>
+        </div>
+        
+        <div class="feature-card">
+          <span class="feature-icon">🤝</span>
+          <h3>Compartilhe Feedback</h3>
+          <p>Feedback construtivo ajuda a melhorar o produto. Use o sistema de reports ou contato direto.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <div class="final-cta">
+      <h2>🚀 Pronto para começar?</h2>
+      <p>
+        Abra o Guia Interativo e comece a explorar todas as funcionalidades do TeleMed Platform.
+        Seu feedback é essencial para construirmos a melhor plataforma de telemedicina do Brasil!
+      </p>
+      
+      <div class="cta-group">
+        <a href="/public/tester-guide.html" class="btn btn-primary" data-testid="button-open-guide">
+          🧪 Abrir Guia Interativo
+        </a>
+        <a href="/public/tour.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" data-testid="button-open-tour">
+          📖 Tour Completo
+        </a>
+        <a href="/" class="btn btn-secondary" data-testid="button-back-home">
+          🏠 Voltar ao Início
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  // Smooth scroll para âncoras
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+
+  // Tracking de progresso de scroll (opcional - para analytics)
+  let maxScroll = 0;
+  window.addEventListener('scroll', () => {
+    const scrollPercent = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    if (scrollPercent > maxScroll) {
+      maxScroll = scrollPercent;
+    }
+  });
+  
+  window.addEventListener('beforeunload', () => {
+    localStorage.setItem('tm_welcome_scroll', Math.round(maxScroll));
+  });
+  </script>
+</body>
+</html>
