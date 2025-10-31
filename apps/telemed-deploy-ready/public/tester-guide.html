@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guia Interativo do Testador - TeleMed Platform</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #2563eb;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --critical: #ef4444;
+      --border: #e2e8f0;
+      --purple: #8b5cf6;
+      --green: #10b981;
+    }
+    
+    html[data-theme="dark"] {
+      --bg: #0b1220;
+      --card: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #60a5fa;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --critical: #f87171;
+      --border: #1f2937;
+      --purple: #a78bfa;
+      --green: #34d399;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+    
+    /* Header */
+    .tg-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .tg-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .tg-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+    
+    .tg-header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    #tg-search {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 8px;
+      min-width: 280px;
+      font-size: 14px;
+    }
+    
+    #tg-search:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    #tg-dark-toggle, #tg-demo-mode {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    #tg-dark-toggle:hover, #tg-demo-mode:hover {
+      background: var(--bg);
+      border-color: var(--accent);
+    }
+    
+    /* Progress Bar */
+    .tg-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .tg-progress-bar {
+      flex: 1;
+      height: 10px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    
+    .tg-progress-fill {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--ok), var(--accent));
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    
+    .tg-progress-text {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    
+    .tg-progress-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    
+    /* Filters */
+    .tg-filters {
+      display: flex;
+      gap: 8px;
+      padding: 16px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    
+    .filter-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    
+    /* Grid */
+    .tg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      padding: 20px;
+    }
+    
+    /* Card */
+    .tg-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid transparent;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+    
+    .tg-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .tg-card.tested {
+      opacity: 0.7;
+      border-left-color: var(--ok);
+    }
+    
+    .tg-card.has-bug {
+      border-left-color: var(--critical);
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+    }
+    
+    .tg-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .tg-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text);
+    }
+    
+    .tg-card-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    
+    .tg-card-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    
+    .badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .badge-patient {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .badge-doctor {
+      background: #fce7f3;
+      color: #9f1239;
+    }
+    
+    .badge-both {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+    
+    .badge-priority {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    html[data-theme="dark"] .badge-patient {
+      background: #1e3a8a;
+      color: #bfdbfe;
+    }
+    
+    html[data-theme="dark"] .badge-doctor {
+      background: #831843;
+      color: #fbcfe8;
+    }
+    
+    html[data-theme="dark"] .badge-both {
+      background: #581c87;
+      color: #e9d5ff;
+    }
+    
+    html[data-theme="dark"] .badge-priority {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+    
+    .tg-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    
+    /* Card Actions */
+    .tg-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .tg-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .tg-check input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--ok);
+    }
+    
+    .tg-action-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .tg-btn {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--text);
+      background: var(--bg);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .tg-btn:hover {
+      border-color: var(--accent);
+      background: var(--card);
+    }
+    
+    .tg-btn-bug {
+      color: var(--critical);
+      border-color: var(--critical);
+    }
+    
+    .tg-btn-bug:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+    
+    .tg-last-tested {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    /* Test Data Section */
+    .tg-test-data {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px;
+    }
+    
+    .tg-test-data h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    
+    .tg-data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    
+    .tg-data-item {
+      padding: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    
+    .tg-data-item strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    
+    .tg-data-item code {
+      background: var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      color: var(--accent);
+    }
+    
+    .tg-copy-btn {
+      margin-left: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .tg-copy-btn:hover {
+      background: var(--bg);
+    }
+    
+    /* Modal */
+    #tg-bug-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    #tg-bug-modal[hidden] {
+      display: none;
+    }
+    
+    .tg-modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      max-width: 520px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .tg-modal h3 {
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+    
+    .tg-modal label {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .tg-modal select,
+    .tg-modal textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    
+    .tg-modal textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .tg-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    
+    .tg-modal-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .tg-modal-btn:hover {
+      background: var(--bg);
+    }
+    
+    .tg-modal-btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    
+    .tg-modal-btn-primary:hover {
+      opacity: 0.9;
+    }
+    
+    /* Section Headers */
+    .tg-section {
+      margin: 24px 20px 12px;
+    }
+    
+    .tg-section h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .tg-section p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    
+    /* Links */
+    .tg-links {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .tg-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      #tg-search {
+        min-width: 200px;
+      }
+      
+      .tg-header-top {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="tg-header">
+    <div class="tg-header-top">
+      <h1>🧪 Guia Interativo do Testador TeleMed</h1>
+      <div class="tg-header-actions">
+        <input id="tg-search" type="search" placeholder="🔍 Buscar testes, features, tags..." aria-label="Buscar testes">
+        <button id="tg-dark-toggle" aria-label="Alternar tema escuro/claro">🌓</button>
+        <button id="tg-demo-mode" aria-label="Modo apresentação">🖥️ Demo</button>
+      </div>
+    </div>
+    <div class="tg-progress">
+      <div class="tg-progress-bar">
+        <span class="tg-progress-fill" id="tg-progress-fill"></span>
+      </div>
+      <div class="tg-progress-text">
+        <strong><span id="tg-progress-count">0</span>/<span id="tg-progress-total">0</span></strong> testes concluídos
+      </div>
+    </div>
+  </header>
+
+  <div class="tg-filters">
+    <button class="filter-btn active" data-filter="all">👥 Todos</button>
+    <button class="filter-btn" data-filter="patient">🧑‍🦽 Paciente</button>
+    <button class="filter-btn" data-filter="doctor">👨‍⚕️ Médico</button>
+    <button class="filter-btn" data-filter="integration">🔗 Integrações</button>
+    <button class="filter-btn" data-filter="bidconnect">💰 BidConnect</button>
+    <button class="filter-btn" data-filter="priority">🔴 Alta Prioridade</button>
+    <button class="filter-btn" data-filter="untested">⚠️ Não Testado</button>
+  </div>
+
+  <!-- AUTHENTICATION -->
+  <div class="tg-section">
+    <h2>🔐 Autenticação</h2>
+    <p>Sistema de cadastro e login para pacientes e médicos</p>
+  </div>
+
+  <section id="tg-tests" class="tg-grid">
+    <!-- Cadastro Paciente -->
+    <article class="tg-card" data-tags="autenticação,cadastro,paciente,patient" data-id="cadastro-paciente" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>Cadastro de Paciente</h3>
+          <div class="tg-card-meta">⏱️ 2–3 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+        </div>
+      </div>
+      <p>Fluxo completo de registro: nome, email, CPF, telefone. Validação de campos e criação de Patient ID único.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="cadastro-paciente">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/auth/register.html" target="_blank" rel="noopener noreferrer">▶️ Abrir Cadastro</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="cadastro-paciente">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="cadastro-paciente"></time>
+      </div>
+    </article>
+
+    <!-- Cadastro Médico -->
+    <article class="tg-card" data-tags="autenticação,cadastro,médico,doctor,crm" data-id="cadastro-medico" data-role="doctor">
+      <div class="tg-card-header">
+        <div>
+          <h3>Cadastro de Médico</h3>
+          <div class="tg-card-meta">⏱️ 3–4 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-doctor">Médico</span>
+        </div>
+      </div>
+      <p>Registro médico com validação de CRM, especialidade, dados profissionais e aceite de termos CFM.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="cadastro-medico">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/auth/register.html" target="_blank" rel="noopener noreferrer">▶️ Abrir Cadastro</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="cadastro-medico">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="cadastro-medico"></time>
+      </div>
+    </article>
+
+    <!-- Login -->
+    <article class="tg-card" data-tags="autenticação,login,both" data-id="login" data-role="both">
+      <div class="tg-card-header">
+        <div>
+          <h3>Login Universal</h3>
+          <div class="tg-card-meta">⏱️ 1–2 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-both">Ambos</span>
+        </div>
+      </div>
+      <p>Login com email/senha, redirecionamento por papel (paciente → sala de espera, médico → dashboard).</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="login">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/auth/login.html" target="_blank" rel="noopener noreferrer">▶️ Abrir Login</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="login">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="login"></time>
+      </div>
+    </article>
+  </section>
+
+  <!-- BIDCONNECT -->
+  <div class="tg-section">
+    <h2>💰 BidConnect - Modelos de Precificação</h2>
+    <p>Três estratégias de matching médico-paciente com demos standalone offline</p>
+  </div>
+
+  <section class="tg-grid">
+    <!-- BidConnect Conservador -->
+    <article class="tg-card" data-tags="bidconnect,conservador,precificação,patient,priority" data-id="bid-conservador" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>BidConnect Conservador</h3>
+          <div class="tg-card-meta">⏱️ 3–5 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+          <span class="badge badge-priority">Prioridade</span>
+        </div>
+      </div>
+      <p>Paciente escolhe valor fixo (ex: R$ 140 → R$ 180). Busca médicos compatíveis. Aceita ou aumenta valor.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="bid-conservador">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer">▶️ Abrir Demo</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="bid-conservador">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="bid-conservador"></time>
+      </div>
+    </article>
+
+    <!-- BidConnect Sugestivo IA -->
+    <article class="tg-card" data-tags="bidconnect,sugestivo,ia,ai,precificação,patient,priority" data-id="bid-sugestivo" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>BidConnect Sugestivo (IA)</h3>
+          <div class="tg-card-meta">⏱️ 3–5 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+          <span class="badge badge-priority">Prioridade</span>
+        </div>
+      </div>
+      <p>Sistema sugere valor otimizado (ex: R$ 195 com 85% de match). Card roxo de sugestão IA com aceitar/rejeitar.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="bid-sugestivo">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/bidconnect-standalone.html?model=suggestive" target="_blank" rel="noopener noreferrer">▶️ Abrir Demo</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="bid-sugestivo">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="bid-sugestivo"></time>
+      </div>
+    </article>
+
+    <!-- BidConnect Dinâmico -->
+    <article class="tg-card" data-tags="bidconnect,dinâmico,dynamic,precificação,patient,priority" data-id="bid-dinamico" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>BidConnect Dinâmico</h3>
+          <div class="tg-card-meta">⏱️ 3–5 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+          <span class="badge badge-priority">Prioridade</span>
+        </div>
+      </div>
+      <p>Grid de faixas: Econômico / Padrão / Rápido / Premium. Escolhe faixa e vê médicos disponíveis em tempo real.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="bid-dinamico">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/bidconnect-standalone.html?model=dynamic" target="_blank" rel="noopener noreferrer">▶️ Abrir Demo</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="bid-dinamico">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="bid-dinamico"></time>
+      </div>
+    </article>
+  </section>
+
+  <!-- PATIENT FLOW -->
+  <div class="tg-section">
+    <h2>🧑‍🦽 Fluxo do Paciente</h2>
+    <p>Jornada end-to-end do paciente desde cadastro até consulta</p>
+  </div>
+
+  <section class="tg-grid">
+    <!-- Sala de Espera -->
+    <article class="tg-card" data-tags="paciente,patient,espera,waiting,consulta" data-id="sala-espera" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>Sala de Espera</h3>
+          <div class="tg-card-meta">⏱️ 2–4 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+        </div>
+      </div>
+      <p>Polling automático de status. Exibe "Aguardando médico..." → "Médico conectado!" → Redireciona para consulta.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="sala-espera">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/patient/waiting-room.html" target="_blank" rel="noopener noreferrer">▶️ Abrir Sala</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="sala-espera">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="sala-espera"></time>
+      </div>
+    </article>
+
+    <!-- PHR -->
+    <article class="tg-card" data-tags="paciente,patient,phr,prontuário,histórico" data-id="phr" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>PHR - Prontuário Pessoal</h3>
+          <div class="tg-card-meta">⏱️ 3–5 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+        </div>
+      </div>
+      <p>Histórico completo: consultas, prescrições, exames, documentos. Downloads em PDF, navegação por data.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="phr">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/patient/phr.html" target="_blank" rel="noopener noreferrer">▶️ Abrir PHR</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="phr">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="phr"></time>
+      </div>
+    </article>
+
+    <!-- Consulta Demo -->
+    <article class="tg-card" data-tags="paciente,patient,consulta,chat,tabs" data-id="consulta-demo" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>Consulta (Demo)</h3>
+          <div class="tg-card-meta">⏱️ 4–6 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+        </div>
+      </div>
+      <p>Interface com 4 tabs: Chat, Atendimento, Exames, Receitas. Redirecionamento para MedicalDesk via JWT.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="consulta-demo">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer">▶️ Abrir Consulta</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="consulta-demo">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="consulta-demo"></time>
+      </div>
+    </article>
+  </section>
+
+  <!-- DOCTOR FLOW -->
+  <div class="tg-section">
+    <h2>👨‍⚕️ Fluxo do Médico</h2>
+    <p>Dashboard, agenda e gestão de pacientes via MedicalDesk</p>
+  </div>
+
+  <section class="tg-grid">
+    <!-- Dashboard Médico -->
+    <article class="tg-card" data-tags="médico,doctor,dashboard,bids,pendentes" data-id="dashboard-medico" data-role="doctor">
+      <div class="tg-card-header">
+        <div>
+          <h3>Dashboard Médico</h3>
+          <div class="tg-card-meta">⏱️ 3–5 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-doctor">Médico</span>
+        </div>
+      </div>
+      <p>Lista de BIDs pendentes, métricas de atendimento, ações de aceitar/rejeitar, navegação para consulta.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="dashboard-medico">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/medicaldesk/index.html" target="_blank" rel="noopener noreferrer">▶️ Abrir Dashboard</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="dashboard-medico">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="dashboard-medico"></time>
+      </div>
+    </article>
+
+    <!-- Agenda -->
+    <article class="tg-card" data-tags="médico,doctor,agenda,calendar,horários" data-id="agenda-medico" data-role="doctor">
+      <div class="tg-card-header">
+        <div>
+          <h3>Agenda Médica</h3>
+          <div class="tg-card-meta">⏱️ 3–4 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-doctor">Médico</span>
+        </div>
+      </div>
+      <p>Calendário interativo, gerenciamento de horários disponíveis, bloqueios, agendamentos futuros.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="agenda-medico">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/medicaldesk/agenda.html" target="_blank" rel="noopener noreferrer">▶️ Abrir Agenda</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="agenda-medico">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="agenda-medico"></time>
+      </div>
+    </article>
+  </section>
+
+  <!-- INTEGRATIONS -->
+  <div class="tg-section">
+    <h2>🔗 Integrações e Features</h2>
+    <p>MedicalDesk, Prescrição Digital, Alertas e Dr. AI</p>
+  </div>
+
+  <section class="tg-grid">
+    <!-- MedicalDesk Health -->
+    <article class="tg-card" data-tags="integração,integration,medicaldesk,health,proxy,priority" data-id="medicaldesk-health" data-role="both">
+      <div class="tg-card-header">
+        <div>
+          <h3>MedicalDesk Health</h3>
+          <div class="tg-card-meta">⏱️ 1 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-both">Ambos</span>
+          <span class="badge badge-priority">Prioridade</span>
+        </div>
+      </div>
+      <p>Endpoint de health check: deve retornar <code>{ "ok": true }</code>. Valida proxy e conexão com MedicalDesk.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="medicaldesk-health">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/medicaldesk/health" target="_blank" rel="noopener noreferrer">▶️ Testar Health</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="medicaldesk-health">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="medicaldesk-health"></time>
+      </div>
+    </article>
+
+    <!-- Prescrição Digital -->
+    <article class="tg-card" data-tags="prescrição,prescription,pdf,anvisa,cfm" data-id="prescricao-digital" data-role="doctor">
+      <div class="tg-card-header">
+        <div>
+          <h3>Prescrição Digital (90s)</h3>
+          <div class="tg-card-meta">⏱️ 2–3 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-doctor">Médico</span>
+        </div>
+      </div>
+      <p>Gera PDF profissional em <90s, com QR Code de verificação, template CFM-compliant, validação ANVISA.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="prescricao-digital">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/prescricao" target="_blank" rel="noopener noreferrer">▶️ Abrir Prescrição</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="prescricao-digital">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="prescricao-digital"></time>
+      </div>
+    </article>
+
+    <!-- Alertas Clínicos -->
+    <article class="tg-card" data-tags="alertas,alerts,warnings,clinical" data-id="alertas-clinicos" data-role="both">
+      <div class="tg-card-header">
+        <div>
+          <h3>Alertas Clínicos</h3>
+          <div class="tg-card-meta">⏱️ 2–3 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-both">Ambos</span>
+        </div>
+      </div>
+      <p>Sistema de alertas com severidade (crítico/médio/baixo), timestamp, racional médico e ações sugeridas.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="alertas-clinicos">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/alertas" target="_blank" rel="noopener noreferrer">▶️ Abrir Alertas</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="alertas-clinicos">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="alertas-clinicos"></time>
+      </div>
+    </article>
+
+    <!-- Dr. AI Medical Triage -->
+    <article class="tg-card" data-tags="dr-ai,ai,triagem,triage,lgpd,redflags" data-id="dr-ai-triage" data-role="patient">
+      <div class="tg-card-header">
+        <div>
+          <h3>Dr. AI Medical Triage</h3>
+          <div class="tg-card-meta">⏱️ 3–5 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-patient">Paciente</span>
+        </div>
+      </div>
+      <p>Sistema de triagem com pattern-matching, Red Flags em vermelho, sugestão de especialidade, LGPD-compliant.</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="dr-ai-triage">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/dr-ai" target="_blank" rel="noopener noreferrer">▶️ Abrir Dr. AI</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="dr-ai-triage">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="dr-ai-triage"></time>
+      </div>
+    </article>
+
+    <!-- Landing Page -->
+    <article class="tg-card" data-tags="landing,homepage,marketing" data-id="landing-page" data-role="both">
+      <div class="tg-card-header">
+        <div>
+          <h3>Landing Page</h3>
+          <div class="tg-card-meta">⏱️ 2–3 min</div>
+        </div>
+        <div class="tg-card-badges">
+          <span class="badge badge-both">Ambos</span>
+        </div>
+      </div>
+      <p>Página inicial com menu dropdown, links para tours, botões de cadastro e login, seções "Como Funciona".</p>
+      <div class="tg-actions">
+        <label class="tg-check">
+          <input type="checkbox" class="tg-test-checkbox" data-test-id="landing-page">
+          <span>✓ Marcar como testado</span>
+        </label>
+        <div class="tg-action-buttons">
+          <a class="tg-btn" href="/" target="_blank" rel="noopener noreferrer">▶️ Abrir Landing</a>
+          <button class="tg-btn tg-btn-bug tg-bug-btn" data-test-id="landing-page">🐛 Bug</button>
+        </div>
+        <time class="tg-last-tested" data-test-id="landing-page"></time>
+      </div>
+    </article>
+  </section>
+
+  <!-- TEST DATA -->
+  <section class="tg-test-data">
+    <h2>🔑 Dados de Teste Pré-Configurados</h2>
+    <div class="tg-data-grid">
+      <div class="tg-data-item">
+        <strong>👤 Paciente Teste:</strong>
+        <div>
+          <code id="tg-paciente-email">paciente@test.com</code>
+          <button class="tg-copy-btn" data-copy="#tg-paciente-email">📋</button>
+        </div>
+        <div style="margin-top:8px">
+          <code id="tg-paciente-cpf">123.456.789-00</code>
+          <button class="tg-copy-btn" data-copy="#tg-paciente-cpf">📋</button>
+        </div>
+      </div>
+      
+      <div class="tg-data-item">
+        <strong>👨‍⚕️ Médico Teste:</strong>
+        <div>
+          <code id="tg-medico-email">medico@test.com</code>
+          <button class="tg-copy-btn" data-copy="#tg-medico-email">📋</button>
+        </div>
+        <div style="margin-top:8px">
+          <code id="tg-medico-crm">CRM 12345-SP</code>
+          <button class="tg-copy-btn" data-copy="#tg-medico-crm">📋</button>
+        </div>
+      </div>
+      
+      <div class="tg-data-item">
+        <strong>🔐 Senhas (ambos):</strong>
+        <div>
+          <code id="tg-senha">Test@2025</code>
+          <button class="tg-copy-btn" data-copy="#tg-senha">📋</button>
+        </div>
+      </div>
+      
+      <div class="tg-data-item">
+        <strong>🆔 Consultation ID Demo:</strong>
+        <div>
+          <code id="tg-consult-id">CONS-DEMO-12345</code>
+          <button class="tg-copy-btn" data-copy="#tg-consult-id">📋</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUG MODAL -->
+  <div id="tg-bug-modal" hidden>
+    <div class="tg-modal">
+      <h3>🐛 Reportar Bug</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">
+        Card: <strong id="tg-bug-target"></strong>
+      </p>
+      
+      <label>
+        Severidade:
+        <select id="tg-bug-sev">
+          <option>🔴 Crítico - Bloqueia funcionalidade principal</option>
+          <option>🟠 Alto - Funcionalidade prejudicada</option>
+          <option>🟡 Médio - Problema visual ou UX</option>
+          <option>🟢 Baixo - Melhoria sugerida</option>
+        </select>
+      </label>
+      
+      <label style="margin-top:12px">
+        Descrição do problema:
+        <textarea id="tg-bug-desc" placeholder="Descreva o que aconteceu, passos para reproduzir, comportamento esperado vs atual..."></textarea>
+      </label>
+      
+      <div class="tg-modal-actions">
+        <button class="tg-modal-btn" id="tg-bug-cancel">Cancelar</button>
+        <button class="tg-modal-btn tg-modal-btn-primary" id="tg-bug-send">💾 Gerar JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    const KEY = 'tm_test_progress_v2';
+    const BUG_KEY = 'tm_bug_reports_v2';
+    
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+    
+    // =========================
+    // DARK MODE
+    // =========================
+    const applyTheme = (dark) => {
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      localStorage.setItem('tg_dark', dark);
+    };
+    
+    const startDark = localStorage.getItem('tg_dark') === 'true' || 
+                      window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    applyTheme(startDark);
+    
+    $('#tg-dark-toggle').onclick = () => {
+      const next = document.documentElement.getAttribute('data-theme') !== 'dark';
+      applyTheme(next);
+    };
+    
+    // =========================
+    // DEMO MODE (Fullscreen)
+    // =========================
+    $('#tg-demo-mode').onclick = async () => {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    };
+    
+    // =========================
+    // STATE & PROGRESS
+    // =========================
+    const state = JSON.parse(localStorage.getItem(KEY) || '{}');
+    const cards = $$('.tg-card');
+    $('#tg-progress-total').textContent = String(cards.length);
+    
+    // Preenche checkboxes e timestamps
+    $$('.tg-test-checkbox').forEach(cb => {
+      const id = cb.dataset.testId;
+      const saved = state[id];
+      
+      if (saved?.checked) {
+        cb.checked = true;
+        const card = cb.closest('.tg-card');
+        card?.classList.add('tested');
+        
+        const timeEl = $(`.tg-last-tested[data-test-id="${id}"]`);
+        if (timeEl) {
+          const date = new Date(saved.ts);
+          timeEl.textContent = `Último teste: ${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
+        }
+      }
+      
+      cb.addEventListener('change', () => {
+        const now = new Date().toISOString();
+        state[id] = { checked: cb.checked, ts: now };
+        localStorage.setItem(KEY, JSON.stringify(state));
+        
+        const card = cb.closest('.tg-card');
+        card?.classList.toggle('tested', cb.checked);
+        
+        const timeEl = $(`.tg-last-tested[data-test-id="${id}"]`);
+        if (timeEl) {
+          if (cb.checked) {
+            const date = new Date(now);
+            timeEl.textContent = `Último teste: ${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
+          } else {
+            timeEl.textContent = '';
+          }
+        }
+        
+        renderProgress();
+      });
+    });
+    
+    function renderProgress() {
+      const total = cards.length;
+      const done = Object.values(state).filter(x => x.checked).length;
+      $('#tg-progress-count').textContent = String(done);
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      $('#tg-progress-fill').style.width = pct + '%';
+    }
+    renderProgress();
+    
+    // =========================
+    // SEARCH
+    // =========================
+    $('#tg-search').addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      cards.forEach(c => {
+        const haystack = (c.textContent || '').toLowerCase() + ' ' + (c.dataset.tags || '');
+        c.style.display = haystack.includes(q) ? '' : 'none';
+      });
+    });
+    
+    // =========================
+    // FILTERS
+    // =========================
+    $$('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Toggle active
+        $$('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const filter = btn.dataset.filter;
+        
+        if (filter === 'all') {
+          cards.forEach(c => c.style.display = '');
+        } else if (filter === 'patient') {
+          cards.forEach(c => {
+            c.style.display = c.dataset.role === 'patient' || c.dataset.role === 'both' ? '' : 'none';
+          });
+        } else if (filter === 'doctor') {
+          cards.forEach(c => {
+            c.style.display = c.dataset.role === 'doctor' || c.dataset.role === 'both' ? '' : 'none';
+          });
+        } else if (filter === 'integration') {
+          cards.forEach(c => {
+            c.style.display = c.dataset.tags.includes('integração') || c.dataset.tags.includes('integration') ? '' : 'none';
+          });
+        } else if (filter === 'bidconnect') {
+          cards.forEach(c => {
+            c.style.display = c.dataset.tags.includes('bidconnect') ? '' : 'none';
+          });
+        } else if (filter === 'priority') {
+          cards.forEach(c => {
+            c.style.display = c.dataset.tags.includes('priority') ? '' : 'none';
+          });
+        } else if (filter === 'untested') {
+          cards.forEach(c => {
+            const id = c.dataset.id;
+            const tested = state[id]?.checked;
+            c.style.display = !tested ? '' : 'none';
+          });
+        }
+      });
+    });
+    
+    // =========================
+    // COPY BUTTONS
+    // =========================
+    $$('[data-copy]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sel = btn.getAttribute('data-copy');
+        const el = $(sel);
+        const text = el?.textContent?.trim() || '';
+        
+        navigator.clipboard?.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = '✅';
+          setTimeout(() => btn.textContent = orig, 1200);
+        });
+      });
+    });
+    
+    // =========================
+    // BUG REPORT
+    // =========================
+    const bugState = JSON.parse(localStorage.getItem(BUG_KEY) || '[]');
+    let currentTarget = '';
+    
+    $$('.tg-bug-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        currentTarget = b.dataset.testId;
+        $('#tg-bug-target').textContent = currentTarget;
+        $('#tg-bug-modal').hidden = false;
+        $('#tg-bug-desc').value = '';
+      });
+    });
+    
+    $('#tg-bug-cancel').onclick = () => $('#tg-bug-modal').hidden = true;
+    
+    $('#tg-bug-send').onclick = () => {
+      const report = {
+        id: 'bug_' + Math.random().toString(36).slice(2, 8),
+        testId: currentTarget,
+        severity: $('#tg-bug-sev').value,
+        description: $('#tg-bug-desc').value.trim(),
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      };
+      
+      bugState.push(report);
+      localStorage.setItem(BUG_KEY, JSON.stringify(bugState));
+      
+      // Marca card como "has-bug"
+      const card = $(`.tg-card[data-id="${currentTarget}"]`);
+      card?.classList.add('has-bug');
+      
+      // Download JSON
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${report.id}.json`;
+      a.click();
+      
+      $('#tg-bug-modal').hidden = true;
+      
+      alert('✅ Bug reportado! JSON baixado com sucesso. Anexe no GitHub ou envie para a equipe.');
+    };
+    
+    // Marcar cards que já têm bugs reportados
+    bugState.forEach(bug => {
+      const card = $(`.tg-card[data-id="${bug.testId}"]`);
+      card?.classList.add('has-bug');
+    });
+  })();
+  </script>
+</body>
+</html>
