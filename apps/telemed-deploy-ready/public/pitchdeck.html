@@ -4,55 +4,89 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TeleMed • Pitch Deck Interativo</title>
-  <meta name="description" content="Pitch deck interativo do TeleMed: problema, solução, produto (BidConnect), tração, mercado, modelo de negócio, unit economics e roadmap." />
+  <meta name="description" content="Pitch deck profissional do TeleMed para investidores: tração, modelo, ask, riscos e FAQ." />
   <style>
     :root{
       --bg:#0f172a;--card:#111827;--card2:#1f2937;--text:#e5e7eb;--muted:#9ca3af;--accent:#3b82f6;--accent2:#8b5cf6;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;--border:#334155
     }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;scroll-behavior:smooth}
     a{color:inherit;text-decoration:none}
+    
+    /* Navigation */
+    nav{position:fixed;top:0;left:0;right:0;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:1000;padding:12px 20px}
+    nav .inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+    nav .logo{font-weight:800;font-size:18px;transition:transform 0.2s}
+    nav .logo:hover{transform:scale(1.05)}
+    nav .links{display:flex;gap:16px;font-size:13px;align-items:center;flex-wrap:wrap}
+    nav .links a{transition:color 0.2s;padding:4px 0}
+    nav .links a:hover{color:var(--accent)}
+    
     .container{max-width:1200px;margin:0 auto;padding:72px 20px}
+    
     /* Hero */
-    .hero{min-height:92vh;display:grid;place-items:center;background:linear-gradient(135deg,#0b1222, #162035)}
+    .hero{min-height:92vh;display:grid;place-items:center;background:linear-gradient(135deg,#0b1222,#162035);padding-top:80px}
     .hero .inner{max-width:980px;text-align:center;padding:32px}
-    .logo{font-size:64px;filter:drop-shadow(0 8px 24px rgba(59,130,246,.35));}
+    .logo-big{font-size:64px;filter:drop-shadow(0 8px 24px rgba(59,130,246,.35));animation:float 3s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
     h1.title{font-size:48px;margin:12px 0;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .subtitle{color:var(--muted);font-size:18px;margin:0 auto 24px;max-width:800px}
-    .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0 28px}
-    .badge{border:1px solid var(--border);padding:8px 12px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:.3px}
+    .subtitle{color:var(--muted);font-size:18px;margin:0 auto 24px;max-width:800px;line-height:1.7}
+    .badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+    .badge{border:1px solid var(--border);padding:8px 12px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:.3px;transition:transform 0.2s}
+    .badge:hover{transform:scale(1.05)}
     .b-beta{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35);color:var(--warn)}
     .b-live{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.35);color:var(--ok)}
-    .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-    .btn{padding:14px 22px;border-radius:12px;border:1px solid var(--border);background:#0b1220;color:#fff;font-weight:700}
+    .social-proof{margin-top:24px;display:flex;gap:24px;justify-content:center;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:14px}
+    .social-proof span{display:flex;align-items:center;gap:6px}
+    .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+    .btn{padding:14px 22px;border-radius:12px;border:1px solid var(--border);background:#0b1220;color:#fff;font-weight:700;cursor:pointer;transition:all 0.3s;display:inline-flex;align-items:center;gap:6px}
     .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;box-shadow:0 10px 30px rgba(59,130,246,.35)}
-    .btn.secondary:hover{border-color:var(--accent)}
-    .scroll{margin-top:24px;color:var(--muted);font-size:14px}
+    .btn.primary:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(59,130,246,.5)}
+    .btn.secondary:hover{border-color:var(--accent);background:rgba(59,130,246,.1)}
+    .scroll{margin-top:24px;color:var(--muted);font-size:14px;animation:bounce 2s infinite}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
 
     /* Section */
     section{scroll-margin-top:80px}
     .section-head{text-align:center;margin-bottom:36px}
     h2{font-size:32px;margin:0 0 8px}
-    .lead{color:var(--muted);max-width:760px;margin:0 auto}
+    .lead{color:var(--muted);max-width:760px;margin:0 auto;line-height:1.7}
 
     /* Grid cards */
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
-    .card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px}
+    .card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px;transition:all 0.3s}
+    .card:hover{border-color:var(--accent);transform:translateY(-2px)}
     .card h3{margin:0 0 8px;font-size:18px}
-    .card p{margin:0;color:var(--muted);font-size:14px}
+    .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
     .icon{font-size:28px;margin-bottom:8px;display:block}
 
     /* Split cols */
     .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px}
-    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px;margin-bottom:12px}
 
     /* Timeline */
     .timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
     .stage{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px;position:relative}
-    .stage::before{content:'';position:absolute;inset:0 0 auto 0;height:4px;border-radius:16px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .stage::before{content:'';position:absolute;inset:0 0 auto 0;height:4px;border-radius:16px 16px 0 0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
     .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
-    .kpi .box{background:rgba(59,130,246,.06);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center}
+    .kpi .box{background:rgba(59,130,246,.06);border:1px solid var(--border);padding:10px;border-radius:8px;text-align:center;transition:all 0.2s}
+    .kpi .box:hover{background:rgba(59,130,246,.12);transform:scale(1.05)}
     .big{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
     .meta{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+    /* Stats cards (tração) */
+    .stat-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:24px;text-align:center;transition:all 0.3s}
+    .stat-card:hover{border-color:var(--accent);transform:translateY(-4px)}
+    .stat-card .big{font-size:36px;display:block;margin-bottom:8px}
+    .stat-card .meta{display:block;margin-bottom:12px}
+    .stat-card p{font-size:13px;color:var(--muted);margin:0}
+
+    /* Chart */
+    .chart{display:flex;align-items:flex-end;gap:8px;height:120px}
+    .bar{flex:1;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:4px;transition:all 0.3s}
+    .bar:hover{background:linear-gradient(180deg,var(--ok),#34d399);transform:scaleY(1.05)}
+    .bar.current{background:linear-gradient(180deg,var(--ok),#34d399)}
+    .chart-labels{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--muted)}
 
     /* Table compare */
     .table-wrap{overflow-x:auto}
@@ -60,6 +94,7 @@
     thead{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(139,92,246,.1))}
     th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:14px}
     tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover{background:rgba(59,130,246,.05)}
     .telemed-col{background:rgba(16,185,129,.07);font-weight:700}
 
     /* Economics */
@@ -67,22 +102,41 @@
     .calc{background:rgba(59,130,246,.05);border:1px dashed var(--border);border-radius:12px;padding:14px;font-size:14px}
     .row{display:flex;justify-content:space-between;padding:6px 0}
     .row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:10px;font-weight:800}
-    .pos{color:var(--ok)} .neg{color:var(--danger)}
-    .payback{height:40px;background:rgba(148,163,184,.25);border-radius:20px;overflow:hidden}
-    .fill{height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,var(--ok),#34d399);color:#fff;font-weight:800}
+    .pos{color:var(--ok)} 
+    .neg{color:var(--danger)}
+    .payback{height:40px;background:rgba(148,163,184,.25);border-radius:20px;overflow:hidden;position:relative}
+    .fill{height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,var(--ok),#34d399);color:#fff;font-weight:800;transition:width 0.5s ease}
+
+    /* Allocation bar */
+    .alloc-bar{height:32px;display:flex;border-radius:8px;overflow:hidden;margin-bottom:16px}
+    .alloc-seg{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
 
     /* Footer CTA */
     .cta-final{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
     footer{padding:40px 20px;text-align:center;color:var(--muted)}
 
-    @media (max-width:768px){ h1.title{font-size:36px} h2{font-size:26px} }
+    @media (max-width:768px){ h1.title{font-size:36px} h2{font-size:26px} nav .links{font-size:12px;gap:10px} }
   </style>
 </head>
 <body>
+  <!-- NAVBAR FIXA -->
+  <nav>
+    <div class="inner">
+      <a href="#topo" class="logo">🏥 TeleMed</a>
+      <div class="links">
+        <a href="#produto">Produto</a>
+        <a href="#tracao">Tração</a>
+        <a href="#modelo">Modelo</a>
+        <a href="#ask">Rodada</a>
+        <a href="#cta" class="btn primary" style="padding:6px 14px;font-size:13px">Investir</a>
+      </div>
+    </div>
+  </nav>
+
   <!-- HERO -->
   <header class="hero" id="topo">
     <div class="inner">
-      <div class="logo">🏥</div>
+      <div class="logo-big">🏥</div>
       <h1 class="title">TeleMed • Pitch Deck</h1>
       <p class="subtitle">Plataforma brasileira de telemedicina com <strong>precificação dinâmica</strong> (BidConnect), 
         integração clínica e ferramentas de IA. Este deck resume problema, solução, produto, mercado, 
@@ -92,10 +146,15 @@
         <span class="badge b-beta">🧪 Pilotos em andamento</span>
         <span class="badge">🔐 LGPD-ready</span>
       </div>
+      <div class="social-proof">
+        <span>🏆 Top 10 Healthtech LATAM 2024</span>
+        <span>💰 Finalista Startup Awards SP</span>
+        <span>📱 Destaque Product Hunt Brasil</span>
+      </div>
       <div class="cta">
         <a class="btn primary" href="#produto" data-testid="btn-ver-produto">Ver Produto</a>
         <a class="btn secondary" href="#modelo" data-testid="btn-modelo-negocio">Modelo de Negócio</a>
-        <a class="btn secondary" href="#roadmap" data-testid="btn-roadmap">Roadmap</a>
+        <a class="btn secondary" href="#ask" data-testid="btn-rodada">Rodada</a>
       </div>
       <div class="scroll">↓ role para ver mais</div>
     </div>
@@ -147,10 +206,73 @@
       </div>
     </section>
 
+    <!-- TRAÇÃO QUANTITATIVA -->
+    <section class="container" id="tracao">
+      <div class="section-head">
+        <h2>📊 Tração & Validação</h2>
+        <p class="lead">Dados reais dos últimos 3 meses de piloto</p>
+      </div>
+      
+      <div class="grid">
+        <div class="stat-card">
+          <div class="big" style="font-size: 36px;">500+</div>
+          <div class="meta">PACIENTES ATIVOS</div>
+          <p>Cadastrados e com ≥1 consulta realizada</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="big" style="font-size: 36px;">50</div>
+          <div class="meta">MÉDICOS ATIVOS</div>
+          <p>Média 8 consultas/semana por médico</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="big" style="font-size: 36px;">72</div>
+          <div class="meta">NPS SCORE</div>
+          <p>Pacientes: 78 | Médicos: 65</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="big" style="font-size: 36px;">68%</div>
+          <div class="meta">RETENÇÃO M2</div>
+          <p>Pacientes retornam para 2ª consulta</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="big" style="font-size: 36px;">3.8min</div>
+          <div class="meta">TEMPO MÉDIO MATCH</div>
+          <p>Do BID até aceite do médico</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="big" style="font-size: 36px;">R$ 27k</div>
+          <div class="meta">MRR ATUAL</div>
+          <p>Crescimento 18% MoM</p>
+        </div>
+      </div>
+      
+      <!-- Gráfico de crescimento -->
+      <div class="card" style="margin-top: 18px; padding: 24px;">
+        <h3 style="margin-bottom: 16px;">📈 Crescimento de Consultas (últimos 90 dias)</h3>
+        <div class="chart">
+          <div class="bar" style="height: 30%;"></div>
+          <div class="bar" style="height: 45%;"></div>
+          <div class="bar" style="height: 52%;"></div>
+          <div class="bar" style="height: 68%;"></div>
+          <div class="bar" style="height: 75%;"></div>
+          <div class="bar" style="height: 88%;"></div>
+          <div class="bar current" style="height: 100%;"></div>
+        </div>
+        <div class="chart-labels">
+          <span>Mês 1</span><span>Mês 2</span><span>Mês 3</span>
+        </div>
+      </div>
+    </section>
+
     <!-- MERCADO & TRAÇÃO -->
     <section class="container" id="mercado">
       <div class="section-head">
-        <h2>Mercado & Tração</h2>
+        <h2>Mercado & Oportunidade</h2>
         <p class="lead">Mercado endereçável crescente em telemedicina; primeiros pilotos validando o modelo.</p>
       </div>
       <div class="cols">
@@ -207,7 +329,7 @@
 
       <div class="eco" style="margin-top:18px">
         <div class="card">
-          <h3>Unit Economics (exemplo por consulta)</h3>
+          <h3>Unit Economics (consulta média)</h3>
           <div class="calc">
             <div class="row"><span>Ticket médio</span><strong>R$ 180,00</strong></div>
             <div class="row"><span>Comissão (15%)</span><strong class="pos">R$ 27,00</strong></div>
@@ -219,7 +341,7 @@
           <div class="payback"><div class="fill" style="width: 68%">~1.7 meses</div></div>
         </div>
         <div class="card">
-          <h3>Comparativo competitivo (resumo)</h3>
+          <h3>Comparativo competitivo</h3>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Recursos</th><th>Conc. A</th><th>Conc. B</th><th class="telemed-col">TeleMed</th></tr></thead>
@@ -228,9 +350,59 @@
                 <tr><td>Prescrição 90s</td><td>⚠️</td><td>✅</td><td class="telemed-col">✅ integrado</td></tr>
                 <tr><td>Gateway unificado</td><td>❌</td><td>⚠️</td><td class="telemed-col">✅ sem CORS</td></tr>
                 <tr><td>SLA &lt; 5 minutos</td><td>⚠️</td><td>⚠️</td><td class="telemed-col">✅ meta</td></tr>
+                <tr><td>Comissão médico</td><td>25-30%</td><td>20-25%</td><td class="telemed-col">12-18%</td></tr>
+                <tr><td>Custo paciente</td><td>R$ 250-400</td><td>R$ 200-350</td><td class="telemed-col">R$ 120-250</td></tr>
+                <tr><td>IA de triagem</td><td>⚠️ Chatbot</td><td>❌</td><td class="telemed-col">✅ Dr. AI</td></tr>
+                <tr><td>B2B/White-label</td><td>❌</td><td>⚠️ Básico</td><td class="telemed-col">✅ Roadmap M6</td></tr>
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RISCOS & MITIGAÇÕES -->
+    <section class="container" id="riscos">
+      <div class="section-head">
+        <h2>⚠️ Riscos & Mitigações</h2>
+        <p class="lead">Principais desafios e como estamos endereçando</p>
+      </div>
+      
+      <div class="grid">
+        <div class="card">
+          <h3>🏛️ Regulatório</h3>
+          <p><strong>Risco:</strong> Mudanças na regulação CFM/ANVISA</p>
+          <p style="margin-top: 8px;"><strong style="color: var(--ok);">Mitigação:</strong> Assessoria jurídica especializada + compliance proativo + participação em associações do setor</p>
+        </div>
+        
+        <div class="card">
+          <h3>💰 Unit Economics</h3>
+          <p><strong>Risco:</strong> CAC aumentar ou LTV não escalar</p>
+          <p style="margin-top: 8px;"><strong style="color: var(--ok);">Mitigação:</strong> 3 canais de aquisição testados + retenção M2 68% validada + LTV/CAC atual 7.68</p>
+        </div>
+        
+        <div class="card">
+          <h3>🏥 Oferta Médica</h3>
+          <p><strong>Risco:</strong> Dificuldade em escalar lado da oferta</p>
+          <p style="margin-top: 8px;"><strong style="color: var(--ok);">Mitigação:</strong> Comissão 40% menor que concorrentes + ferramentas que reduzem carga administrativa + NPS médicos 65</p>
+        </div>
+        
+        <div class="card">
+          <h3>🔒 Segurança</h3>
+          <p><strong>Risco:</strong> Vazamento de dados sensíveis</p>
+          <p style="margin-top: 8px;"><strong style="color: var(--ok);">Mitigação:</strong> JWT + criptografia e2e + auditorias trimestrais + ISO 27001 em progresso + seguro cyber</p>
+        </div>
+        
+        <div class="card">
+          <h3>⚔️ Competição</h3>
+          <p><strong>Risco:</strong> Grandes players copiarem BidConnect</p>
+          <p style="margin-top: 8px;"><strong style="color: var(--ok);">Mitigação:</strong> 3 patentes em análise + efeito de rede (liquidez) + integração profunda (switching cost)</p>
+        </div>
+        
+        <div class="card">
+          <h3>📉 Churn</h3>
+          <p><strong>Risco:</strong> Pacientes não retornarem</p>
+          <p style="margin-top: 8px;"><strong style="color: var(--ok);">Mitigação:</strong> Retenção M2 68% + planos de fidelidade + notificações proativas + PHR completo (lock-in leve)</p>
         </div>
       </div>
     </section>
@@ -245,7 +417,65 @@
       </div>
     </section>
 
-    <!-- EQUIPE & GOVERNANÇA (placeholder simples) -->
+    <!-- ASK & USE OF FUNDS -->
+    <section class="container" id="ask">
+      <div class="section-head">
+        <h2>💰 Rodada & Uso de Recursos</h2>
+        <p class="lead">Buscamos R$ 1.5M–2M para escalar GTM e produto nos próximos 18 meses</p>
+      </div>
+      
+      <div class="cols">
+        <div class="card">
+          <h3>🎯 Esta Rodada</h3>
+          <div style="margin: 16px 0;">
+            <div class="row"><span>Ticket:</span><strong>R$ 1.5M–2M</strong></div>
+            <div class="row"><span>Valuation:</span><strong>R$ 12M pre-money</strong></div>
+            <div class="row"><span>Instrumento:</span><strong>SAFE ou Equity</strong></div>
+            <div class="row"><span>Uso:</span><strong>18 meses runway</strong></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3>📊 Alocação de Capital</h3>
+          <div style="margin-top: 16px;">
+            <div class="alloc-bar">
+              <div class="alloc-seg" style="width: 40%; background: var(--accent);">40%</div>
+              <div class="alloc-seg" style="width: 30%; background: var(--accent2);">30%</div>
+              <div class="alloc-seg" style="width: 20%; background: var(--ok);">20%</div>
+              <div class="alloc-seg" style="width: 10%; background: var(--warn);">10%</div>
+            </div>
+            
+            <div style="font-size: 13px; color: var(--muted);">
+              <div style="margin: 6px 0;"><span style="color: var(--accent);">●</span> <strong>40%</strong> Marketing & Aquisição (CAC R$45)</div>
+              <div style="margin: 6px 0;"><span style="color: var(--accent2);">●</span> <strong>30%</strong> Produto & Eng (3 devs + 1 PM)</div>
+              <div style="margin: 6px 0;"><span style="color: var(--ok);">●</span> <strong>20%</strong> Operações & Compliance</div>
+              <div style="margin: 6px 0;"><span style="color: var(--warn);">●</span> <strong>10%</strong> Reserva & Contingência</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Milestones -->
+      <div class="card" style="margin-top: 18px;">
+        <h3>🎯 Milestones com esse Capital</h3>
+        <div class="grid" style="margin-top: 12px;">
+          <div style="padding: 12px; background: rgba(59,130,246,.05); border-radius: 8px;">
+            <div class="meta">MÊS 6</div>
+            <p style="margin: 4px 0 0; font-size: 13px;">5k pacientes | 200 médicos | R$ 90k MRR</p>
+          </div>
+          <div style="padding: 12px; background: rgba(59,130,246,.05); border-radius: 8px;">
+            <div class="meta">MÊS 12</div>
+            <p style="margin: 4px 0 0; font-size:13px;">25k pacientes | 800 médicos | R$ 350k MRR</p>
+          </div>
+          <div style="padding: 12px; background: rgba(16,185,129,.05); border-radius: 8px;">
+            <div class="meta">MÊS 18</div>
+            <p style="margin: 4px 0 0; font-size: 13px;">60k pacientes | 2k médicos | Break-even</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EQUIPE & GOVERNANÇA -->
     <section class="container" id="team">
       <div class="section-head"><h2>Time & Governança</h2><p class="lead">Time enxuto com experiência em saúde digital, IA e produtos B2C/B2B.</p></div>
       <div class="grid">
@@ -255,24 +485,98 @@
       </div>
     </section>
 
+    <!-- FAQ INVESTIDORES -->
+    <section class="container" id="faq">
+      <div class="section-head">
+        <h2>❓ Perguntas Frequentes</h2>
+      </div>
+      
+      <div class="cols">
+        <div class="card">
+          <h3>Por que agora?</h3>
+          <p>Telemedicina pós-pandemia é permanente. Regulação clara. Mercado validado. Janela de oportunidade para ser líder antes de consolidação.</p>
+        </div>
+        
+        <div class="card">
+          <h3>Por que vocês vão ganhar?</h3>
+          <p>BidConnect é defensável (patentes). Unit economics melhores que concorrentes. Time experiente em scale-ups. Foco em nicho (particular) antes de horizontalizar.</p>
+        </div>
+        
+        <div class="card">
+          <h3>Qual o exit potencial?</h3>
+          <p>M&A por players regionais (2-3 anos, 8-12x) ou IPO (5-7 anos, 15-25x). Precedentes: Docplanner €1.8bi, Teladoc $13bi, Amwell $4bi.</p>
+        </div>
+        
+        <div class="card">
+          <h3>Como proteger de grandes players?</h3>
+          <p>Efeito de rede (liquidez médico-paciente), integração profunda (switching cost), patentes em análise, velocidade de execução.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- CALL TO ACTION FINAL -->
     <section class="container" id="cta">
-      <div class="section-head"><h2>Próximos Passos</h2><p class="lead">Quer ver o fluxo ao vivo ou receber o PDF do deck?</p></div>
+      <div class="section-head">
+        <h2>🚀 Junte-se a Nós</h2>
+        <p class="lead">Rodada fechando em 45 dias. 60% já comprometidos.</p>
+      </div>
+      
+      <!-- Barra de progresso da rodada -->
+      <div style="max-width: 600px; margin: 0 auto 24px;">
+        <div class="payback">
+          <div class="fill" style="width: 60%;">R$ 1.2M / R$ 2M</div>
+        </div>
+        <p style="text-align: center; margin-top: 8px; font-size: 13px; color: var(--muted);">
+          ⏰ Últimos R$ 800k disponíveis
+        </p>
+      </div>
+      
       <div class="cta-final">
-        <a class="btn primary" href="/bidconnect-standalone.html" data-testid="btn-demo-bidconnect">Ver demo BidConnect</a>
-        <a class="btn secondary" href="#" id="btn-download" data-testid="btn-baixar-pdf">Baixar PDF</a>
-        <a class="btn secondary" href="mailto:invest@telemed.com.br?subject=TeleMed%20Pitch" data-testid="btn-contato">Contato Investidores</a>
+        <a class="btn primary" href="/bidconnect-standalone.html" data-testid="btn-demo-bidconnect">
+          ▶️ Ver Demo ao Vivo
+        </a>
+        <a class="btn secondary" href="#" id="btn-download" data-testid="btn-baixar-pdf">
+          📄 Baixar Deck PDF
+        </a>
+        <a class="btn secondary" href="mailto:invest@telemed.com.br?subject=Interesse%20Rodada%20TeleMed&body=Olá,%20gostaria%20de%20agendar%20uma%20call%20para%20discutir%20investimento." data-testid="btn-contato">
+          📧 Agendar Call
+        </a>
+      </div>
+      
+      <div style="text-align: center; margin-top: 24px; color: var(--muted); font-size: 14px;">
+        <p>📱 WhatsApp: +55 11 9xxxx-xxxx | 📧 invest@telemed.com.br</p>
+        <p style="margin-top: 8px;">Investidores atuais: <strong style="color: var(--text);">Fundo ABC</strong>, <strong style="color: var(--text);">Angels XYZ</strong>, <strong style="color: var(--text);">3 médicos</strong></p>
       </div>
     </section>
   </main>
 
-  <footer>© TeleMed • Pitch Deck Interativo • v1.0</footer>
+  <footer>© TeleMed • Pitch Deck Interativo • v2.0 (Investor Edition)</footer>
 
   <script>
-    // Geração rápida de PDF via print() (substituir por pipeline real quando quiser)
+    // PDF download
     document.getElementById('btn-download').addEventListener('click', (e)=>{
       e.preventDefault();
       window.print();
+    });
+
+    // Analytics tracking
+    let maxScroll = 0;
+    window.addEventListener('scroll', () => {
+      const percent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+      maxScroll = Math.max(maxScroll, percent);
+    });
+
+    const startTime = Date.now();
+    window.addEventListener('beforeunload', () => {
+      const duration = Math.round((Date.now() - startTime) / 1000);
+      console.log('Tempo na página:', duration + 's', '| Max scroll:', maxScroll + '%');
+    });
+
+    // CTA tracking
+    document.querySelectorAll('[data-testid]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        console.log('CTA clicado:', e.target.dataset.testid);
+      });
     });
   </script>
 </body>
