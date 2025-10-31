@@ -38,11 +38,11 @@
       <p class="lead">Tour compacto com links diretos. Abra em tela cheia e siga os cards na ordem. <a href="/public/tour.html" style="color:#93c5fd">Ver versão completa →</a></p>
       <div class="actions">
         <a class="btn primary" target="_blank" href="/" data-testid="quick-tour-landing">Abrir Landing</a>
-        <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="quick-tour-conservative">Conservador</a>
-        <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive" data-testid="quick-tour-suggestive">Sugestivo (IA)</a>
-        <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic" data-testid="quick-tour-dynamic">Dinâmico</a>
-        <a class="btn" target="_blank" href="/prescricao" data-testid="quick-tour-prescricao">Prescrição 90s</a>
-        <a class="btn" target="_blank" href="/alertas" data-testid="quick-tour-alertas">Alertas Clínicos</a>
+        <a class="btn" target="_blank" href="/cadastro.html" data-testid="quick-tour-cadastro">Cadastro</a>
+        <a class="btn" target="_blank" href="/auth/login.html" data-testid="quick-tour-login">Login</a>
+        <a class="btn" target="_blank" href="/dashboard/" data-testid="quick-tour-dashboard">Dashboard</a>
+        <a class="btn" target="_blank" href="/agenda/" data-testid="quick-tour-agenda">Agenda</a>
+        <a class="btn" target="_blank" href="/phr.html" data-testid="quick-tour-phr">PHR</a>
         <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="quick-tour-health">Health</a>
       </div>
     </header>
@@ -56,24 +56,31 @@
       <div class="grid" style="margin-top:10px">
         <div class="card">
           <h3 style="margin:0 0 6px">🧑‍🦽 Sou <b>Paciente</b></h3>
+          <p style="margin:0 0 6px;color:var(--muted);font-size:13px"><b>Fluxo End-to-End:</b></p>
           <ul>
-            <li><b>Começar:</b> Landing → <span class="mono">BidConnect (BETA)</span>.</li>
-            <li><b>Passo 1:</b> <a class="btn" target="_blank" href="/pricing-models.html?model=conservative" data-testid="role-patient-conservative">Conservador</a> — teste <b>R$140</b> e <b>R$180</b>, aceite um médico (gera <span class="mono">consultation_id</span>).</li>
-            <li><b>Passo 2 (opcional):</b> <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive" data-testid="role-patient-suggestive">Sugestivo (IA)</a> — peça a <b>Sugestão R$195</b> e aceite.</li>
-            <li><b>Passo 3 (visão de mercado):</b> <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic" data-testid="role-patient-dynamic">Dinâmico</a> — veja faixas e escolha <b>Rápido</b>.</li>
-            <li><b>Passo 4 (entregável):</b> <a class="btn" target="_blank" href="/prescricao" data-testid="role-patient-prescricao">Prescrição 90s</a> — revisar e exportar PDF.</li>
-            <li><b>Complemento:</b> <a class="btn" target="_blank" href="/alertas" data-testid="role-patient-alertas">Alertas Clínicos</a> — triagem/segurança (apoio, não obrigatório).</li>
+            <li><b>1. Cadastro:</b> <a class="btn" target="_blank" href="/cadastro.html" data-testid="role-patient-cadastro">Cadastro</a> → criar conta.</li>
+            <li><b>2. Login:</b> <a class="btn" target="_blank" href="/auth/login.html" data-testid="role-patient-login">Login</a> → autenticar.</li>
+            <li><b>3. Pedido:</b> <a class="btn" target="_blank" href="/paciente/pedido.html" data-testid="role-patient-pedido">Fazer Pedido</a> → criar BID.</li>
+            <li><b>4. Espera:</b> <a class="btn" target="_blank" href="/sala-de-espera/" data-testid="role-patient-espera">Sala de Espera</a> → aguardar médico.</li>
+            <li><b>5. Consulta:</b> <a class="btn" target="_blank" href="/consulta/" data-testid="role-patient-consulta">Consulta</a> → atendimento.</li>
+            <li><b>6. PHR:</b> <a class="btn" target="_blank" href="/phr.html" data-testid="role-patient-phr">Prontuário</a> → histórico.</li>
+            <li><b>7. Exames:</b> <a class="btn" target="_blank" href="/centro-de-testes/" data-testid="role-patient-testes">Centro de Testes</a> → agendar.</li>
           </ul>
+          <p style="margin:6px 0 0;color:var(--muted);font-size:13px"><b>Demos BidConnect:</b> <a class="btn" target="_blank" href="/pricing-models.html?model=conservative">Conservador</a> <a class="btn purple" target="_blank" href="/pricing-models.html?model=suggestive">Sugestivo (IA)</a> <a class="btn green" target="_blank" href="/pricing-models.html?model=dynamic">Dinâmico</a></p>
         </div>
         <div class="card">
           <h3 style="margin:0 0 6px">👨‍⚕️ Sou <b>Médico</b></h3>
+          <p style="margin:0 0 6px;color:var(--muted);font-size:13px"><b>Fluxo End-to-End:</b></p>
           <ul>
-            <li><b>Começar:</b> <a class="btn" target="_blank" href="/medicaldesk" data-testid="role-doctor-medicaldesk">MedicalDesk</a> (se ativo) e <a class="btn green" target="_blank" href="/medicaldesk/health" data-testid="role-doctor-health">Health</a> (deve dar <span class="mono">{ok:true}</span>).</li>
-            <li><b>Visão operacional:</b> dashboard/contadores no MedicalDesk.</li>
-            <li><b>Protocolos & segurança:</b> <a class="btn" target="_blank" href="/alertas" data-testid="role-doctor-alertas">Alertas</a> — políticas e níveis de severidade.</li>
-            <li><b>Fluxo de atendimento:</b> paciente gera <span class="mono">consultation_id</span> no BidConnect → aparece em sua fila (quando integrado).</li>
-            <li><b>Entregáveis:</b> <a class="btn" target="_blank" href="/prescricao" data-testid="role-doctor-prescricao">Prescrição 90s</a> para revisão/assinatura.</li>
+            <li><b>1. Cadastro:</b> <a class="btn" target="_blank" href="/public/cadastro-medico.html" data-testid="role-doctor-cadastro">Cadastro Médico</a> → criar conta CRM.</li>
+            <li><b>2. Login:</b> <a class="btn" target="_blank" href="/auth/login.html" data-testid="role-doctor-login">Login</a> → autenticar.</li>
+            <li><b>3. Dashboard:</b> <a class="btn" target="_blank" href="/dashboard/" data-testid="role-doctor-dashboard">Dashboard</a> → ver BIDs pendentes.</li>
+            <li><b>4. Agenda:</b> <a class="btn" target="_blank" href="/agenda/" data-testid="role-doctor-agenda">Agenda</a> → gerenciar horários.</li>
+            <li><b>5. Pacientes:</b> <a class="btn" target="_blank" href="/meus-pacientes/" data-testid="role-doctor-pacientes">Meus Pacientes</a> → prontuários.</li>
+            <li><b>6. Consulta:</b> <a class="btn" target="_blank" href="/consulta/" data-testid="role-doctor-consulta">Consulta</a> → atendimento.</li>
+            <li><b>7. Perfil:</b> <a class="btn" target="_blank" href="/medico/" data-testid="role-doctor-perfil">Perfil</a> → configurações.</li>
           </ul>
+          <p style="margin:6px 0 0;color:var(--muted);font-size:13px"><b>Integrações:</b> <a class="btn green" target="_blank" href="/medicaldesk/health">MedicalDesk</a> <a class="btn" target="_blank" href="/prescricao">Prescrição 90s</a> <a class="btn" target="_blank" href="/alertas">Alertas</a></p>
         </div>
       </div>
       <div class="tiny" style="margin-top:6px">Nota: o <b>Assistente Dr. AI</b> (quando disponível em <span class="mono">/dr-ai</span>) é <b>complementar</b> à triagem — não é obrigatório no fluxo básico do paciente.</div>
