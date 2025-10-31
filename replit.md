@@ -39,6 +39,7 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
 -   **Testes Automatizados**: Playwright Smoke Tests com 6 cenários críticos.
 -   **CI/CD**: GitHub Actions com Playwright para testes E2E em PRs/pushes.
 -   **Mock Auction Standalone**: Serviço mock independente para leilão/precificação, melhorando telemetria e flexibilidade de deploy.
+-   **Guia Interativo do Testador**: Mini-plataforma QA em `apps/telemed-deploy-ready/public/tester-guide.html` com checklist persistente (localStorage), progresso gamificado, busca global, filtros avançados (Paciente/Médico/Integrações/Prioridade/Não Testado), dark mode, bug report com export JSON, dados de teste pré-configurados com copy-to-clipboard, e modo apresentação fullscreen.
 
 ## BidConnect - Precificação Dinâmica
 -   **3 Modelos Implementados**: Conservador (azul), Sugestivo com IA (roxo), Dinâmico (verde)
@@ -48,8 +49,9 @@ A plataforma é composta por um monorepo com cinco microserviços Dockerizados, 
     -   `ROTEIRO-DEMO.md`: Script passo a passo para apresentações (8-10 min)
     -   `TOGGLES-MOCK-REAL.md`: Guia completo de comandos mock/real + fallback de emergência
     -   `GUIA-TESTES-COMPLETO.md`: Manual de testes QA com 25+ cenários e screenshots ASCII
-    -   `apps/telemed-deploy-ready/public/tour.html`: Guia interativo completo com toggle Paciente/Médico, badges coloridos e navegação por papel
-    -   `apps/telemed-deploy-ready/public/tour-quick.html`: Versão compacta dark para testes rápidos com links diretos no topo
+    -   `apps/telemed-deploy-ready/public/tour.html`: Guia estático completo (56KB) com 27 cards, toggle Paciente/Médico, badges coloridos, navegação por papel e 42 links mapeados para rotas reais
+    -   `apps/telemed-deploy-ready/public/tour-quick.html`: Versão compacta dark (14KB) para testes rápidos com links diretos no topo
+    -   `apps/telemed-deploy-ready/public/tester-guide.html`: **[NOVO]** Guia Interativo do Testador - mini-plataforma QA com 15 cards testáveis, checklist persistente, progresso visual, busca em tempo real, filtros avançados, dark mode, bug report com JSON export, dados de teste copy-to-clipboard, e modo apresentação fullscreen
 -   **Testes E2E**: Playwright validando os 3 modelos (Conservador R$140→R$180, Sugestivo com card de sugestão IA, Dinâmico com grid de faixas)
 -   **Diferenciação Visual**: Badges coloridos, botões temáticos, emojis (sem Lucide Icons - compatibilidade React 18)
 -   **Navegação**: Dropdown menu na landing com 2 opções de tour (Completo + Rápido), banner roxo visível com ambos os links
