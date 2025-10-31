@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bem-vindo ao TeleMed – Guia do Testador</title>
+  <meta name="description" content="Página de boas-vindas do Teste TeleMed: fluxos recomendados, links rápidos e visão geral do produto."/>
+  <style>
+    :root{
+      /* Branding TeleMed */
+      --tm-bg:#0b1220;
+      --tm-card:#121b2e;
+      --tm-text:#eef2f7;
+      --tm-muted:#9fb1c9;
+      --tm-primary:#0ea5e9;   /* azul TeleMed */
+      --tm-primary-2:#38bdf8; /* azul claro */
+      --tm-green:#10b981;
+      --tm-purple:#8b5cf6;
+      --tm-orange:#f59e0b;
+      --tm-border:#1f2a44;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--tm-bg);color:var(--tm-text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:inherit;text-decoration:none}
+    .hero{
+      min-height:92vh;display:flex;align-items:center;justify-content:center;position:relative;
+      background:radial-gradient(60rem 60rem at 10% 20%,rgba(14,165,233,.18),transparent 50%),
+                 radial-gradient(50rem 50rem at 90% 80%,rgba(139,92,246,.15),transparent 50%),
+                 linear-gradient(160deg,#0b1220,#0f172a 60%)
+    }
+    .hero-wrap{max-width:980px;padding:48px 20px;text-align:center;position:relative;z-index:1}
+    .logo{font-size:64px;filter:drop-shadow(0 6px 18px rgba(14,165,233,.35));margin-bottom:8px}
+    h1{font-size:44px;font-weight:800;letter-spacing:.2px;margin-bottom:10px;
+      background:linear-gradient(135deg,var(--tm-primary-2),var(--tm-purple));
+      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .hero-sub{font-size:19px;color:var(--tm-muted);margin:0 auto 24px;max-width:820px}
+    .badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0 32px}
+    .badge{font-size:13px;font-weight:700;padding:8px 12px;border-radius:999px;border:1px solid var(--tm-border);display:inline-flex;gap:6px;align-items:center}
+    .b-beta{background:rgba(245,158,11,.16);color:var(--tm-orange);border-color:rgba(245,158,11,.35)}
+    .b-free{background:rgba(16,185,129,.14);color:var(--tm-green);border-color:rgba(16,185,129,.35)}
+    .b-int{background:rgba(139,92,246,.16);color:var(--tm-purple);border-color:rgba(139,92,246,.35)}
+    .cta{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+    .btn{border:none;cursor:pointer;border-radius:12px;padding:14px 22px;font-weight:800;letter-spacing:.2px;transition:transform .2s,box-shadow .2s}
+    .btn-primary{background:linear-gradient(135deg,var(--tm-primary),var(--tm-primary-2));color:#fff;box-shadow:0 10px 26px rgba(14,165,233,.35)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(14,165,233,.5)}
+    .btn-ghost{background:rgba(255,255,255,.03);border:1px solid var(--tm-border);color:var(--tm-text)}
+    .btn-ghost:hover{border-color:var(--tm-primary)}
+    .scroll{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--tm-muted);opacity:.9}
+
+    .container{max-width:1200px;margin:0 auto;padding:70px 20px}
+    .section{margin-bottom:76px}
+    .section h2{text-align:center;font-size:34px;margin-bottom:10px}
+    .section p.lead{text-align:center;color:var(--tm-muted);max-width:760px;margin:0 auto 24px}
+    .grid{display:grid;gap:20px}
+    @media(min-width:780px){.grid.cols-3{grid-template-columns:repeat(3,1fr)}.grid.cols-2{grid-template-columns:repeat(2,1fr)}.grid.cols-4{grid-template-columns:repeat(4,1fr)}}
+    .card{background:var(--tm-card);border:1px solid var(--tm-border);border-radius:16px;padding:22px;transition:border-color .2s,transform .2s,box-shadow .2s}
+    .card:hover{border-color:var(--tm-primary);transform:translateY(-2px);box-shadow:0 10px 26px rgba(14,165,233,.15)}
+    .card .icon{font-size:28px;margin-bottom:10px;display:block}
+    .card h3{font-size:18px;margin-bottom:8px}
+    .muted{color:var(--tm-muted)}
+    .journey{position:relative;overflow:hidden;padding:26px}
+    .journey::before{content:'';position:absolute;left:0;top:0;height:4px;width:100%;
+      background:linear-gradient(90deg,var(--tm-primary-2),var(--tm-purple))}
+    .journey.patient::before{background:linear-gradient(90deg,var(--tm-green),var(--tm-primary))}
+    .steps{margin:10px 0 18px;padding-left:28px}
+    .steps li{margin:8px 0}
+    .btn-full{display:block;width:100%;text-align:center;margin-top:6px}
+    .stats{margin-top:26px}
+    .stat{background:var(--tm-card);border:1px solid var(--tm-border);border-radius:14px;padding:18px;text-align:center}
+    .stat .val{font-size:36px;font-weight:900;
+      background:linear-gradient(135deg,var(--tm-primary-2),var(--tm-purple));
+      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .final{background:linear-gradient(135deg,rgba(14,165,233,.12),rgba(139,92,246,.12));border:1px solid var(--tm-primary);
+      border-radius:18px;padding:40px;text-align:center}
+    .final h3{font-size:28px;margin-bottom:8px}
+    .final p{max-width:660px;margin:0 auto 18px;color:var(--tm-muted)}
+  </style>
+</head>
+<body>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-wrap">
+      <div class="logo" aria-hidden="true">🏥</div>
+      <h1>Bem-vindo ao TeleMed</h1>
+      <p class="hero-sub">
+        Plataforma brasileira de telemedicina com <strong>precificação dinâmica (BidConnect)</strong>,
+        integração clínica e recursos de <strong>IA</strong> para triagem e segurança.
+      </p>
+
+      <div class="badges">
+        <span class="badge b-beta">🧪 Beta Testing</span>
+        <span class="badge b-free">✨ Gratuito</span>
+        <span class="badge b-int">🎯 Guia Interativo</span>
+      </div>
+
+      <div class="cta">
+        <a class="btn btn-primary" href="#comece" data-testid="btn-comecar-agora">🚀 Começar Agora</a>
+        <a class="btn btn-ghost" href="#sobre" data-testid="btn-saiba-mais">📖 Saiba Mais</a>
+        <a class="btn btn-ghost" href="/bidconnect-standalone.html" data-testid="btn-demo-bidconnect">💰 Ver Demo do BidConnect</a>
+      </div>
+    </div>
+    <div class="scroll">↓ role para explorar</div>
+  </section>
+
+  <main class="container">
+    <!-- O QUE É -->
+    <section id="sobre" class="section">
+      <h2>💡 O que é o TeleMed?</h2>
+      <p class="lead">Uma plataforma completa que conecta pacientes e médicos com transparência, velocidade e segurança.</p>
+
+      <div class="grid cols-3" style="margin-top:18px">
+        <div class="card">
+          <span class="icon">💰</span>
+          <h3>BidConnect</h3>
+          <p class="muted">Três modelos de precificação (Conservador, Sugestivo IA, Dinâmico) que equilibram tempo de espera e valor.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🏥</span>
+          <h3>MedicalDesk</h3>
+          <p class="muted">Agenda, prontuário, prescrição 90s e integração clínica fluida.</p>
+        </div>
+        <div class="card">
+          <span class="icon">🤖</span>
+          <h3>Dr. AI</h3>
+          <p class="muted">Triagem inteligente com red flags e recomendações, respeitando LGPD.</p>
+        </div>
+      </div>
+
+      <div class="grid cols-4 stats">
+        <div class="stat"><div class="val">15+</div><div class="muted">Features testáveis</div></div>
+        <div class="stat"><div class="val">3</div><div class="muted">Modelos BidConnect</div></div>
+        <div class="stat"><div class="val">100%</div><div class="muted">Modo Demo/Mock</div></div>
+        <div class="stat"><div class="val">2</div><div class="muted">Jornadas completas</div></div>
+      </div>
+    </section>
+
+    <!-- FLUXOS RECOMENDADOS -->
+    <section id="comece" class="section">
+      <h2>🗺️ Fluxos Recomendados</h2>
+      <p class="lead">Escolha sua jornada e siga o passo-a-passo.</p>
+
+      <div class="grid cols-2" style="margin-top:18px">
+        <div class="card journey patient">
+          <h3>🧑‍🦽 Jornada do Paciente</h3>
+          <ul class="steps">
+            <li>Cadastro e Login</li>
+            <li>Testar 3 modelos do BidConnect</li>
+            <li>Sala de espera e consulta (demo)</li>
+            <li>PHR e histórico</li>
+          </ul>
+          <a class="btn btn-primary btn-full" href="/tester-guide.html?filter=patient" data-testid="btn-jornada-paciente">Iniciar Jornada Paciente →</a>
+        </div>
+
+        <div class="card journey">
+          <h3>👨‍⚕️ Jornada do Médico</h3>
+          <ul class="steps">
+            <li>Cadastro (CRM) e Login</li>
+            <li>Dashboard e BIDs pendentes</li>
+            <li>Agenda/MedicalDesk</li>
+            <li>Prescrição 90s</li>
+          </ul>
+          <a class="btn btn-primary btn-full" href="/tester-guide.html?filter=doctor" style="background:linear-gradient(135deg,var(--tm-green),#059669)" data-testid="btn-jornada-medico">Iniciar Jornada Médico →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- DICAS -->
+    <section class="section">
+      <h2>💡 Dicas para um Teste Eficaz</h2>
+      <div class="grid cols-3" style="margin-top:18px">
+        <div class="card"><span class="icon">⏱️</span><h3>Tempo</h3><p class="muted">Use os tempos estimados dos cards do guia para planejar sua sessão.</p></div>
+        <div class="card"><span class="icon">📝</span><h3>Registro</h3><p class="muted">Reporte bugs pelo guia ou anote observações para a squad.</p></div>
+        <div class="card"><span class="icon">📱</span><h3>Device</h3><p class="muted">Valide em desktop e mobile (Chrome/Safari/Firefox).</p></div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="final">
+      <h3>🚀 Pronto para Começar?</h3>
+      <p>Seu feedback ajuda a lapidar a melhor experiência de telemedicina do Brasil.</p>
+      <div class="cta" style="margin-top:10px">
+        <a class="btn btn-primary" href="/tester-guide.html" data-testid="btn-abrir-guia">🧪 Abrir Guia Interativo</a>
+        <a class="btn btn-ghost" href="/" data-testid="btn-voltar-home">🏠 Voltar para a Landing</a>
+        <a class="btn btn-ghost" href="/bidconnect-standalone.html" data-testid="btn-demo-bidconnect-final">💰 Demo do BidConnect</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click',e=>{
+        const id=a.getAttribute('href');
+        if(id.length>1){
+          e.preventDefault();
+          document.querySelector(id)?.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+      });
+    });
+  </script>
+</body>
+</html>
