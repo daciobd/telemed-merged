@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoke Test - TeleMed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    h1 { color: #667eea; margin-bottom: 10px; }
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    .btn:hover { background: #5568d3; transform: scale(1.05); }
+    #results {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      min-height: 200px;
+    }
+    .test-line {
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    .test-pass { background: #ecfdf5; color: #065f46; }
+    .test-fail { background: #fee2e2; color: #991b1b; }
+    .summary {
+      background: #f0f9ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #667eea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧪 Smoke Test - Páginas & Redirects</h1>
+      <p>Validação automática de páginas canônicas e stubs</p>
+      <button class="btn" onclick="runTests()">▶️ Executar Testes</button>
+    </header>
+    
+    <div id="results"></div>
+  </div>
+
+  <script>
+    async function runTests() {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<p style="text-align: center; color: #667eea;">⏳ Executando testes...</p>';
+      
+      const pages = [
+        { url: '/consulta.html', desc: '💊 Consulta Médica (REAL)', expected: 200 },
+        { url: '/sala-de-espera.html', desc: '⏳ Sala de Espera (REAL)', expected: 200 },
+        { url: '/phr.html', desc: '📋 PHR (REAL)', expected: 200 },
+        { url: '/dashboard-piloto.html', desc: '📊 Dashboard Piloto (REAL)', expected: 200 },
+        { url: '/agenda.html', desc: '📅 Agenda (REAL)', expected: 200 },
+        { url: '/bidconnect-standalone.html?model=conservative', desc: '💰 BidConnect (REAL)', expected: 200 },
+        { url: '/index.html', desc: '🏠 Landing (REAL)', expected: 200 },
+        { url: '/patient/waiting-room.html', desc: '🔁 Stub → Sala Espera', expected: 301, redirect: '/sala-de-espera.html' },
+        { url: '/patient/phr.html', desc: '🔁 Stub → PHR', expected: 301, redirect: '/phr.html' },
+        { url: '/medicaldesk-demo/index.html', desc: '🔁 Stub → Dashboard', expected: 301, redirect: '/dashboard-piloto.html' },
+        { url: '/medicaldesk-demo/agenda.html', desc: '🔁 Stub → Agenda', expected: 301, redirect: '/agenda.html' },
+      ];
+
+      let html = '<h3 style="margin-bottom: 15px; color: #667eea;">📊 Resultados:</h3>';
+      const results = [];
+      
+      for (const page of pages) {
+        try {
+          const response = await fetch(page.url, { method: 'GET', redirect: 'manual' });
+          const status = response.status;
+          const location = response.headers.get('location') || '';
+          const ok = status === page.expected && (!page.redirect || location === page.redirect);
+          const icon = ok ? '✅' : '❌';
+          const cssClass = ok ? 'test-pass' : 'test-fail';
+          
+          let statusText = `${icon} ${status}`;
+          if (page.expected === 301) {
+            statusText += ` → ${location || '(sem redirect)'}`;
+          }
+          
+          html += `<div class="${cssClass} test-line">${statusText.padEnd(50)} ${page.desc}</div>`;
+          results.push({ ok, status, expected: page.expected });
+        } catch (error) {
+          html += `<div class="test-fail test-line">❌ ERR ${page.desc} (${error.message})</div>`;
+          results.push({ ok: false, status: 'ERROR', expected: page.expected });
+        }
+      }
+      
+      const total = results.length;
+      const passed = results.filter(r => r.ok).length;
+      const failed = total - passed;
+      const percentage = Math.round((passed/total)*100);
+      
+      html += `
+        <div class="summary">
+          <h4 style="margin-bottom: 10px;">📊 RESUMO:</h4>
+          <p><strong>Total:</strong> ${total}</p>
+          <p><strong>✅ Passou:</strong> ${passed}</p>
+          <p><strong>❌ Falhou:</strong> ${failed}</p>
+          <p><strong>Taxa de Sucesso:</strong> ${percentage}%</p>
+          ${failed === 0 ? '<p style="margin-top: 10px; color: #059669; font-weight: 600;">🎉 TODOS OS TESTES PASSARAM!</p>' : '<p style="margin-top: 10px; color: #dc2626; font-weight: 600;">⚠️ ALGUNS TESTES FALHARAM</p>'}
+        </div>
+      `;
+      
+      resultsDiv.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

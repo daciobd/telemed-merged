@@ -391,6 +391,31 @@ if (MD_ENABLED && MD_BASE) {
   console.log(`🏥 MedicalDesk proxy: DISABLED (enabled=${MD_ENABLED}, url=${!!MD_BASE})`);
 }
 
+// ===== REDIRECTS DOS STUBS QA PARA PÁGINAS REAIS =====
+// Redirects 301 permanentes dos stubs de QA para páginas canônicas reais
+// Garante que bookmarks antigos e links do tour.html funcionem corretamente
+app.get('/patient/waiting-room.html', (req, res) => {
+  console.log('[REDIRECT 301] /patient/waiting-room.html → /sala-de-espera.html');
+  res.redirect(301, '/sala-de-espera.html');
+});
+
+app.get('/patient/phr.html', (req, res) => {
+  console.log('[REDIRECT 301] /patient/phr.html → /phr.html');
+  res.redirect(301, '/phr.html');
+});
+
+app.get('/medicaldesk-demo/index.html', (req, res) => {
+  console.log('[REDIRECT 301] /medicaldesk-demo/index.html → /dashboard-piloto.html');
+  res.redirect(301, '/dashboard-piloto.html');
+});
+
+app.get('/medicaldesk-demo/agenda.html', (req, res) => {
+  console.log('[REDIRECT 301] /medicaldesk-demo/agenda.html → /agenda.html');
+  res.redirect(301, '/agenda.html');
+});
+
+console.log('🔁 Redirects 301 configurados: stubs QA → páginas reais');
+
 // ===== SERVE FRONTEND ESTÁTICO =====
 // IMPORTANTE: express.static DEVE vir DEPOIS do proxy MedicalDesk e ANTES do SPA Fallback!
 const frontendPathHere = path.join(__dirname, '../../telemed-deploy-ready');

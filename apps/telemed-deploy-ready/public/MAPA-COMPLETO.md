@@ -2,6 +2,27 @@
 
 ## 📍 Onde Estão as Páginas?
 
+### 📋 **Tabela Canônica - URLs e Redirects**
+
+| Fluxo | URL Canônica | Alias (Stub) | Status |
+|-------|-------------|--------------|--------|
+| Consulta | `/consulta.html` | - | ✅ REAL |
+| Sala de Espera | `/sala-de-espera.html` | `/patient/waiting-room.html` → 301 | ✅ REAL |
+| PHR (Prontuário) | `/phr.html` | `/patient/phr.html` → 301 | ✅ REAL |
+| Dashboard Piloto | `/dashboard-piloto.html` | `/medicaldesk-demo/index.html` → 301 | ✅ REAL |
+| Agenda Médica | `/agenda.html` | `/medicaldesk-demo/agenda.html` → 301 | ✅ REAL |
+| BidConnect | `/bidconnect-standalone.html` | - | ✅ REAL |
+| Landing Page | `/index.html` | `/` | ✅ REAL |
+| Login | `/auth/login.html` | - | ✅ REAL |
+| Cadastro | `/auth/register.html` | - | 🔧 STUB (dev) |
+
+**Legenda:**
+- ✅ **REAL**: Página de produção completa e funcional
+- 🔧 **STUB**: Placeholder para desenvolvimento/QA
+- **→ 301**: Redirect permanente (HTTP 301)
+
+---
+
 ### ✅ **PÁGINAS REAIS (Produção)**
 
 Todas as páginas principais estão em `apps/telemed-deploy-ready/`:

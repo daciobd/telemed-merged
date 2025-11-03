@@ -5,200 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tour Guiado - TeleMed BidConnect | Guia do Testador</title>
   <meta name="description" content="Guia passo a passo para testar todos os recursos da plataforma TeleMed, incluindo BidConnect, Prescrição, Dr. AI e MedicalDesk.">
-  
-  <!-- 🔧 IMPORTANTE: garante que todos os href absolutos funcionem mesmo se o arquivo estiver em subpastas -->
   <base href="/" />
-  
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #333;
-      padding: 20px;
-      line-height: 1.6;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    header {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    
-    header h1 {
-      color: #667eea;
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-    }
-    
-    header p {
-      color: #666;
-      font-size: 1.1rem;
-    }
-    
-    .badge {
-      display: inline-block;
-      background: #10b981;
-      color: white;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-left: 10px;
-    }
-    
-    /* Toggle de Papéis */
-    .role-toggle {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    
-    .role-toggle h3 {
-      color: #667eea;
-      margin-bottom: 15px;
-      font-size: 1.3rem;
-    }
-    
-    .role-buttons {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    
-    .role-btn {
-      padding: 12px 30px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      background: white;
-      color: #666;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .role-btn:hover {
-      border-color: #667eea;
-      transform: scale(1.05);
-    }
-    
-    .role-btn.active {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
-    
-    .role-btn.patient.active {
-      background: #10b981;
-      border-color: #10b981;
-    }
-    
-    .role-btn.doctor.active {
-      background: #3b82f6;
-      border-color: #3b82f6;
-    }
-    
-    /* Acessibilidade - Navegação por teclado */
-    .btn:focus-visible,
-    .role-btn:focus-visible,
-    a.btn:focus-visible,
-    .role-link:focus-visible {
-      outline: 3px solid #f59e0b;
-      outline-offset: 2px;
-    }
-    
-    .section {
-      margin-bottom: 30px;
-    }
-    
-    .section-title {
-      color: white;
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 30px;
-      background: white;
-      border-radius: 2px;
-    }
-    
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-    }
-    
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
-    }
-    
-    .card.hidden {
-      display: none;
-    }
-    
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 12px rgba(0,0,0,0.15);
-    }
-    
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    
-    .card-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #333;
-    }
-    
-    .card-badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    
-    .card-badge {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; padding: 20px; line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; }
+    header h1 { color: #667eea; font-size: 2.5rem; margin-bottom: 10px; }
+    header p { color: #666; font-size: 1.1rem; }
+    .badge { display: inline-block; background: #10b981; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-left: 10px; }
+    .role-toggle { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; }
+    .role-toggle h3 { color: #667eea; margin-bottom: 15px; font-size: 1.3rem; }
+    .role-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+    .role-btn { padding: 12px 30px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; color: #666; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; }
+    .role-btn:hover { border-color: #667eea; transform: scale(1.05); }
+    .role-btn.active { background: #667eea; color: white; border-color: #667eea; }
+    .role-btn.patient.active { background: #10b981; border-color: #10b981; }
+    .role-btn.doctor.active { background: #3b82f6; border-color: #3b82f6; }
+    .btn:focus-visible, .role-btn:focus-visible, a.btn:focus-visible, .role-link:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+    .section { margin-bottom: 30px; }
+    .section-title { color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .section-title::before { content: ''; width: 4px; height: 30px; background: white; border-radius: 2px; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s; }
+    .card.hidden { display: none; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 8px 12px rgba(0,0,0,0.15); }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .card-title { font-size: 1.3rem; font-weight: 700; color: #333; }
+    .card-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .card-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
     .badge-blue { background: #dbeafe; color: #2563eb; }
     .badge-purple { background: #ede9fe; color: #7c3aed; }
     .badge-green { background: #d1fae5; color: #16a34a; }
@@ -207,309 +42,55 @@
     .badge-patient { background: #d1fae5; color: #059669; }
     .badge-doctor { background: #dbeafe; color: #2563eb; }
     .badge-both { background: #f3e8ff; color: #7c3aed; }
-    
-    .card-description {
-      color: #666;
-      margin-bottom: 15px;
-      font-size: 0.95rem;
-    }
-    
-    .card-steps {
-      background: #f9fafb;
-      border-left: 3px solid #667eea;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border-radius: 4px;
-    }
-    
-    .card-steps h4 {
-      color: #667eea;
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-    
-    .card-steps ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    
-    .card-steps li {
-      padding: 4px 0;
-      font-size: 0.9rem;
-      color: #555;
-    }
-    
-    .card-steps li::before {
-      content: '✓ ';
-      color: #10b981;
-      font-weight: 700;
-      margin-right: 5px;
-    }
-    
-    .card-success {
-      background: #ecfdf5;
-      border-left: 3px solid #10b981;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border-radius: 4px;
-    }
-    
-    .card-success h4 {
-      color: #10b981;
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-      font-weight: 600;
-    }
-    
-    .card-success p {
-      font-size: 0.9rem;
-      color: #555;
-      margin: 0;
-    }
-    
-    .btn {
-      display: inline-block;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      text-decoration: none;
-      text-align: center;
-      transition: all 0.2s;
-      cursor: pointer;
-      border: none;
-      font-size: 1rem;
-    }
-    
-    .btn-primary {
-      background: #667eea;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #5568d3;
-      transform: scale(1.05);
-    }
-    
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #374151;
-    }
-    
-    .btn-secondary:hover {
-      background: #d1d5db;
-    }
-    
-    .btn-full {
-      width: 100%;
-      margin-top: 10px;
-    }
-    
-    /* Guia por Papéis - Cards grandes */
-    .role-guide {
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    
-    .role-guide h2 {
-      color: #667eea;
-      font-size: 1.8rem;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    
-    .role-guide-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 25px;
-    }
-    
-    .role-card {
-      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 25px;
-      transition: all 0.3s ease;
-    }
-    
-    .role-card:hover {
-      border-color: #667eea;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.15);
-    }
-    
-    .role-card.patient {
-      border-color: #10b981;
-    }
-    
-    .role-card.doctor {
-      border-color: #3b82f6;
-    }
-    
-    .role-card h3 {
-      font-size: 1.5rem;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .role-card.patient h3 {
-      color: #10b981;
-    }
-    
-    .role-card.doctor h3 {
-      color: #3b82f6;
-    }
-    
-    .role-card p {
-      color: #666;
-      margin-bottom: 20px;
-      font-size: 0.95rem;
-    }
-    
-    .role-steps {
-      background: white;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-    }
-    
-    .role-steps h4 {
-      font-size: 1rem;
-      margin-bottom: 12px;
-      color: #333;
-    }
-    
-    .role-steps ol {
-      margin-left: 20px;
-      color: #555;
-    }
-    
-    .role-steps li {
-      margin-bottom: 8px;
-      font-size: 0.9rem;
-    }
-    
-    .role-links {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    
-    .role-link {
-      display: inline-block;
-      padding: 10px 16px;
-      background: #f3f4f6;
-      border-radius: 8px;
-      text-decoration: none;
-      color: #374151;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-      text-align: center;
-    }
-    
-    .role-link:hover {
-      background: #e5e7eb;
-      transform: translateX(5px);
-    }
-    
-    .role-card.patient .role-link:hover {
-      background: #d1fae5;
-      color: #059669;
-    }
-    
-    .role-card.doctor .role-link:hover {
-      background: #dbeafe;
-      color: #2563eb;
-    }
-    
-    .plan-b {
-      background: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      border: 3px dashed #ef4444;
-    }
-    
-    .plan-b h2 {
-      color: #ef4444;
-      font-size: 1.8rem;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .plan-b-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    
-    .plan-b-item {
-      background: #fef2f2;
-      padding: 15px;
-      border-radius: 8px;
-      border-left: 4px solid #ef4444;
-    }
-    
-    .plan-b-item h3 {
-      color: #dc2626;
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-    }
-    
-    .plan-b-item p {
-      color: #666;
-      font-size: 0.9rem;
-      margin: 5px 0;
-    }
-    
-    .plan-b-item code {
-      background: white;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      color: #dc2626;
-      font-family: 'Courier New', monospace;
-    }
-    
-    footer {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      margin-top: 30px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    
-    footer p {
-      color: #666;
-      font-size: 0.9rem;
-    }
-    
+    .card-description { color: #666; margin-bottom: 15px; font-size: 0.95rem; }
+    .card-steps { background: #f9fafb; border-left: 3px solid #667eea; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px; }
+    .card-steps h4 { color: #667eea; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600; }
+    .card-steps ul { list-style: none; padding-left: 0; }
+    .card-steps li { padding: 4px 0; font-size: 0.9rem; color: #555; }
+    .card-steps li::before { content: '✓ '; color: #10b981; font-weight: 700; margin-right: 5px; }
+    .card-success { background: #ecfdf5; border-left: 3px solid #10b981; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px; }
+    .card-success h4 { color: #10b981; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600; }
+    .card-success p { font-size: 0.9rem; color: #555; margin: 0; }
+    .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; text-align: center; transition: all 0.2s; cursor: pointer; border: none; font-size: 1rem; }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5568d3; transform: scale(1.05); }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-full { width: 100%; margin-top: 10px; }
+    .role-guide { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
+    .role-guide h2 { color: #667eea; font-size: 1.8rem; margin-bottom: 20px; text-align: center; }
+    .role-guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+    .role-card { background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%); border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; transition: all 0.3s ease; }
+    .role-card:hover { border-color: #667eea; transform: translateY(-3px); box-shadow: 0 8px 16px rgba(102, 126, 234, 0.15); }
+    .role-card.patient { border-color: #10b981; }
+    .role-card.doctor { border-color: #3b82f6; }
+    .role-card h3 { font-size: 1.5rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .role-card.patient h3 { color: #10b981; }
+    .role-card.doctor h3 { color: #3b82f6; }
+    .role-card p { color: #666; margin-bottom: 20px; font-size: 0.95rem; }
+    .role-steps { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+    .role-steps h4 { font-size: 1rem; margin-bottom: 12px; color: #333; }
+    .role-steps ol { margin-left: 20px; color: #555; }
+    .role-steps li { margin-bottom: 8px; font-size: 0.9rem; }
+    .role-links { display: flex; flex-direction: column; gap: 10px; }
+    .role-link { display: inline-block; padding: 10px 16px; background: #f3f4f6; border-radius: 8px; text-decoration: none; color: #374151; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; text-align: center; }
+    .role-link:hover { background: #e5e7eb; transform: translateX(5px); }
+    .role-card.patient .role-link:hover { background: #d1fae5; color: #059669; }
+    .role-card.doctor .role-link:hover { background: #dbeafe; color: #2563eb; }
+    .plan-b { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 3px dashed #ef4444; }
+    .plan-b h2 { color: #ef4444; font-size: 1.8rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .plan-b-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+    .plan-b-item { background: #fef2f2; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; }
+    .plan-b-item h3 { color: #dc2626; font-size: 1.1rem; margin-bottom: 10px; }
+    .plan-b-item p { color: #666; font-size: 0.9rem; margin: 5px 0; }
+    .plan-b-item code { background: white; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #dc2626; font-family: 'Courier New', monospace; }
+    footer { background: white; padding: 20px; border-radius: 12px; text-align: center; margin-top: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    footer p { color: #666; font-size: 0.9rem; }
     @media (max-width: 768px) {
-      header h1 {
-        font-size: 1.8rem;
-      }
-      
-      .cards-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .plan-b-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .role-guide-grid {
-        grid-template-columns: 1fr;
-      }
+      header h1 { font-size: 1.8rem; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .plan-b-grid { grid-template-columns: 1fr; }
+      .role-guide-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -519,8 +100,7 @@
       <h1>🧪 Tour Guiado TeleMed <span class="badge">BETA</span></h1>
       <p>Guia completo do testador - Explore todas as funcionalidades da plataforma</p>
     </header>
-    
-    <!-- Toggle de Papéis -->
+
     <div class="role-toggle">
       <h3>Filtrar por Papel</h3>
       <div class="role-buttons">
@@ -529,17 +109,16 @@
         <button class="role-btn doctor" onclick="filterByRole('doctor', this)">👨‍⚕️ Médico</button>
       </div>
     </div>
-    
-    <!-- Guia por Papéis -->
+
     <div class="role-guide">
       <h2>📚 Guia por Papéis</h2>
       <div class="role-guide-grid">
-        
+
         <!-- Paciente -->
         <div class="role-card patient">
           <h3>🧑‍🦽 Fluxo do Paciente</h3>
           <p>Passos recomendados para testar a jornada completa do paciente na plataforma.</p>
-          
+
           <div class="role-steps">
             <h4>📋 Fluxo End-to-End Completo:</h4>
             <ol>
@@ -553,7 +132,7 @@
               <li><strong>Centro de Testes</strong> - Agendar exames</li>
             </ol>
           </div>
-          
+
           <div class="role-steps" style="margin-top: 15px;">
             <h4>💰 Fluxo BidConnect (Demo):</h4>
             <ol>
@@ -563,27 +142,27 @@
               <li><strong>Dr. AI (Opcional)</strong> - Triagem complementar</li>
             </ol>
           </div>
-          
+
           <div class="role-links">
             <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="role-link">1️⃣ Cadastro Paciente</a>
             <a href="/auth/login.html" target="_blank" rel="noopener noreferrer" class="role-link">2️⃣ Login</a>
             <a href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer" class="role-link">3️⃣ Fazer Pedido (BidConnect)</a>
-            <a href="/patient/waiting-room.html" target="_blank" rel="noopener noreferrer" class="role-link">4️⃣ Sala de Espera</a>
-            <a href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer" class="role-link">5️⃣ Consulta (Demo)</a>
-            <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="role-link">6️⃣ PHR (Prontuário)</a>
-            <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="role-link">7️⃣ Centro de Testes (via PHR)</a>
+            <a href="/sala-de-espera.html" target="_blank" rel="noopener noreferrer" class="role-link">4️⃣ Sala de Espera</a>
+            <a href="/consulta.html" target="_blank" rel="noopener noreferrer" class="role-link">5️⃣ Consulta (Demo)</a>
+            <a href="/phr.html" target="_blank" rel="noopener noreferrer" class="role-link">6️⃣ PHR (Prontuário)</a>
+            <a href="/phr.html#centro-testes" target="_blank" rel="noopener noreferrer" class="role-link">7️⃣ Centro de Testes (via PHR)</a>
           </div>
-          
+
           <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
             <strong>💡 Dica:</strong> Para testar os <strong>3 modelos BidConnect</strong>, use a seção "💰 BidConnect — Precificação Dinâmica" abaixo. O <strong>Dr. AI</strong> é uma ferramenta de triagem complementar.
           </p>
         </div>
-        
+
         <!-- Médico -->
         <div class="role-card doctor">
           <h3>👨‍⚕️ Fluxo do Médico</h3>
           <p>Passos recomendados para testar as funcionalidades disponíveis para médicos.</p>
-          
+
           <div class="role-steps">
             <h4>📋 Fluxo End-to-End Completo:</h4>
             <ol>
@@ -597,7 +176,7 @@
               <li><strong>Meus Pacientes</strong> - Gerenciar prontuários</li>
             </ol>
           </div>
-          
+
           <div class="role-steps" style="margin-top: 15px;">
             <h4>🏥 Integrações (Demo):</h4>
             <ol>
@@ -606,25 +185,25 @@
               <li><strong>Prescrição 90s</strong> - Geração rápida de receitas</li>
             </ol>
           </div>
-          
+
           <div class="role-links">
             <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="role-link">1️⃣ Cadastro Médico</a>
             <a href="/auth/login.html" target="_blank" rel="noopener noreferrer" class="role-link">2️⃣ Login</a>
-            <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="role-link">3️⃣ Dashboard</a>
-            <a href="/medicaldesk-demo/agenda.html" target="_blank" rel="noopener noreferrer" class="role-link">4️⃣ Agenda</a>
-            <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="role-link">5️⃣ Meus Pacientes</a>
-            <a href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer" class="role-link">6️⃣ Consulta (Demo)</a>
-            <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="role-link">7️⃣ Perfil Médico</a>
+            <a href="/dashboard-piloto.html" target="_blank" rel="noopener noreferrer" class="role-link">3️⃣ Dashboard</a>
+            <a href="/agenda.html" target="_blank" rel="noopener noreferrer" class="role-link">4️⃣ Agenda</a>
+            <a href="/dashboard-piloto.html#pacientes" target="_blank" rel="noopener noreferrer" class="role-link">5️⃣ Meus Pacientes</a>
+            <a href="/consulta.html" target="_blank" rel="noopener noreferrer" class="role-link">6️⃣ Consulta (Demo)</a>
+            <a href="/dashboard-piloto.html#perfil" target="_blank" rel="noopener noreferrer" class="role-link">7️⃣ Perfil Médico</a>
           </div>
-          
+
           <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
             <strong>💡 Dica:</strong> Para testar <strong>MedicalDesk</strong> e <strong>Prescrição 90s</strong>, veja as seções "🏥 Consulta e Integração" e "🛠️ Ferramentas" abaixo.
           </p>
         </div>
-        
+
       </div>
     </div>
-    
+
     <!-- Landing Page -->
     <section class="section">
       <h2 class="section-title">🏠 Página Inicial</h2>
@@ -637,14 +216,14 @@
               <span class="card-badge badge-both">Todos</span>
             </div>
           </div>
-          
+
           <div style="background: #f0f9ff; border-left: 3px solid #3b82f6; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
             <h4 style="color: #3b82f6; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600;">🎯 O que é:</h4>
             <p style="font-size: 0.9rem; color: #555; margin: 0;">
               Página inicial da plataforma TeleMed que serve como hub central para acessar todas as funcionalidades. Apresenta o dropdown de navegação "Começar Demo ▾" com acesso rápido aos 3 modelos BidConnect e outras demos.
             </p>
           </div>
-          
+
           <div style="background: #fef3c7; border-left: 3px solid #f59e0b; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
             <h4 style="color: #f59e0b; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600;">🧭 Como navegar:</h4>
             <ul style="list-style: none; padding-left: 0; margin: 0;">
@@ -654,7 +233,7 @@
               <li style="padding: 4px 0; font-size: 0.9rem; color: #555;">✓ Último item: "🧪 Guia do Testador"</li>
             </ul>
           </div>
-          
+
           <div style="background: #f0fdf4; border-left: 3px solid #10b981; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
             <h4 style="color: #10b981; font-size: 0.9rem; margin-bottom: 8px; font-weight: 600;">👥 Qual fluxo seguir:</h4>
             <p style="font-size: 0.9rem; color: #555; margin: 0;">
@@ -662,7 +241,7 @@
               <strong>Médico:</strong> Começar pelo MedicalDesk → Consulta → Prescrição
             </p>
           </div>
-          
+
           <div class="card-steps">
             <h4>📋 O que testar:</h4>
             <ul>
@@ -673,7 +252,7 @@
               <li>Indicador de status MedicalDesk (MD)</li>
             </ul>
           </div>
-          
+
           <div class="card-success">
             <h4>✅ Critério de Sucesso:</h4>
             <p>Menu dropdown funciona perfeitamente, todas as opções clicáveis, navegação fluida sem fechar ao mover mouse.</p>
@@ -682,13 +261,12 @@
         </div>
       </div>
     </section>
-    
-    <!-- BidConnect Modelos -->
+
+    <!-- BidConnect -->
     <section class="section">
       <h2 class="section-title">💰 BidConnect — Precificação Dinâmica</h2>
       <div class="cards-grid">
-        
-        <!-- Conservador -->
+
         <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Conservador</h3>
@@ -697,9 +275,7 @@
               <span class="card-badge badge-patient">Paciente</span>
             </div>
           </div>
-          <p class="card-description">
-            Modelo tradicional onde o paciente propõe o valor e o sistema busca médicos disponíveis.
-          </p>
+          <p class="card-description">Modelo tradicional onde o paciente propõe o valor e o sistema busca médicos disponíveis.</p>
           <div class="card-steps">
             <h4>📋 O que testar:</h4>
             <ul>
@@ -716,8 +292,7 @@
           </div>
           <a href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Conservador</a>
         </div>
-        
-        <!-- Sugestivo IA -->
+
         <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Sugestivo (IA)</h3>
@@ -726,9 +301,7 @@
               <span class="card-badge badge-patient">Paciente</span>
             </div>
           </div>
-          <p class="card-description">
-            IA recomenda o melhor preço com card de sugestão inteligente e probabilidade de sucesso.
-          </p>
+          <p class="card-description">IA recomenda o melhor preço com card de sugestão inteligente e probabilidade de sucesso.</p>
           <div class="card-steps">
             <h4>📋 O que testar:</h4>
             <ul>
@@ -745,1004 +318,8 @@
           </div>
           <a href="/bidconnect-standalone.html?model=suggestive" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Sugestivo (IA)</a>
         </div>
-        
-        <!-- Dinâmico -->
+
         <div class="card" data-role="patient">
           <div class="card-header">
             <h3 class="card-title">Dinâmico</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">Verde</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Grid transparente com 4 faixas de preço mostrando disponibilidade antes de buscar.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Grid de 4 faixas visível</li>
-              <li>Slider muda borda verde da faixa</li>
-              <li>Econômico: 0⚡•2📅 (inativo)</li>
-              <li>Rápido R$ 190: 3⚡•8📅 (ativo)</li>
-              <li>Botão "Atender Agora" verde</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>4 faixas coloridas, borda verde move com slider, botões VERDES (#16a34a), 3 médicos em R$ 190.</p>
-          </div>
-          <a href="/bidconnect-standalone.html?model=dynamic" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Dinâmico</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Consulta e Integração -->
-    <section class="section">
-      <h2 class="section-title">🏥 Consulta e Integração</h2>
-      <div class="cards-grid">
-        
-        <!-- Página de Consulta -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Página de Consulta</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Atendimento</span>
-              <span class="card-badge badge-both">Todos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Interface modernizada com tabs (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Tabs funcionais e responsivas</li>
-              <li>Chat flutuante operacional</li>
-              <li>Dados do paciente visíveis</li>
-              <li>Botão "Abrir MedicalDesk"</li>
-              <li>Redirecionamento 302 funciona</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>4 tabs clicáveis, MedicalDesk abre em nova aba com sessão JWT, dados do paciente carregam.</p>
-          </div>
-          <a href="/patient/waiting-room.html?id=CONS-DEMO-12345" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Consulta (Demo)</a>
-        </div>
-        
-        <!-- MedicalDesk -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">MedicalDesk</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-purple">Integração</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Plataforma externa de gestão clínica integrada via proxy com autenticação JWT.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Redirecionamento da consulta</li>
-              <li>Sessão JWT válida (sem login)</li>
-              <li>Interface MedicalDesk carrega</li>
-              <li>Dados sincronizados</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Abre em nova aba, não pede login, interface completa carrega, dados do paciente aparecem.</p>
-          </div>
-          <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir MedicalDesk</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Ferramentas Clínicas -->
-    <section class="section">
-      <h2 class="section-title">🩺 Ferramentas Clínicas</h2>
-      <div class="cards-grid">
-        
-        <!-- Dr. AI -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Dr. AI Medical Triage</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-yellow">IA</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Sistema de triagem médica com IA, pattern-matching e detecção de Red Flags (LGPD-compliant). <strong>Ferramenta complementar</strong>, não obrigatória.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Interface de sintomas funciona</li>
-              <li>Pattern-matching responde</li>
-              <li>Red Flags destacados</li>
-              <li>Sugestões de especialidade</li>
-              <li>Conformidade LGPD visível</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Triagem completa, Red Flags em vermelho, especialidade sugerida, aviso LGPD no rodapé.</p>
-          </div>
-          <a href="/dr-ai" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Dr. AI</a>
-        </div>
-        
-        <!-- Alertas Clínicos -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Alertas Clínicos</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-red">Urgente</span>
-              <span class="card-badge badge-both">Todos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Sistema de notificações e alertas médicos em tempo real para situações críticas.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Alertas aparecem corretamente</li>
-              <li>Cores por prioridade (vermelho/amarelo)</li>
-              <li>Notificações em tempo real</li>
-              <li>Filtros funcionam</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Alertas visíveis, cores distintas por prioridade, timestamp correto, ações disponíveis.</p>
-          </div>
-          <a href="/alertas" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Alertas</a>
-        </div>
-        
-        <!-- Prescrição Digital -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Prescrição em 90s</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">Rápido</span>
-              <span class="card-badge badge-both">Todos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Sistema de prescrição digital ANVISA-compliant com geração de PDF e verificação farmacêutica.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Formulário completo funciona</li>
-              <li>Validação ANVISA ativa</li>
-              <li>Geração de PDF (90s)</li>
-              <li>QR Code de verificação</li>
-              <li>Template CFM-compliant</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>PDF gerado em <90s, QR Code funciona, template profissional, validação ANVISA OK.</p>
-          </div>
-          <a href="/prescricao" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Prescrição</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Autenticação -->
-    <section class="section">
-      <h2 class="section-title">🔐 Autenticação</h2>
-      <div class="cards-grid">
-        
-        <!-- Cadastro Paciente -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Cadastro de Paciente</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">Registro</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Formulário de registro para novos pacientes na plataforma TeleMed.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Formulário de cadastro completo</li>
-              <li>Campos obrigatórios funcionam</li>
-              <li>Validação de CPF/email</li>
-              <li>Geração de Patient ID</li>
-              <li>Redirecionamento para página de sucesso</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Cadastro realizado, Patient ID gerado, link para fazer pedido de consulta funciona.</p>
-          </div>
-          <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Cadastro Paciente</a>
-        </div>
-        
-        <!-- Cadastro Médico -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">Cadastro de Médico</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Registro</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Formulário de registro para médicos com validação de CRM.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Formulário médico completo</li>
-              <li>Validação de CRM/especialidade</li>
-              <li>Upload de documentos (opcional)</li>
-              <li>Link para demo médico</li>
-              <li>Link "Já tenho cadastro"</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Cadastro médico concluído, botões de navegação funcionam, validação CRM OK.</p>
-          </div>
-          <a href="/auth/register.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Cadastro Médico</a>
-        </div>
-        
-        <!-- Login -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Login</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-purple">Acesso</span>
-              <span class="card-badge badge-both">Ambos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página de autenticação para pacientes e médicos acessarem a plataforma.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Formulário de login funciona</li>
-              <li>Validação de credenciais</li>
-              <li>Link "Esqueci minha senha"</li>
-              <li>Link para cadastro</li>
-              <li>Redirecionamento pós-login</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Login funcional, mensagens de erro claras, redirecionamento correto por papel.</p>
-          </div>
-          <a href="/auth/login.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Login</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Fluxo Paciente End-to-End -->
-    <section class="section">
-      <h2 class="section-title">🧑‍🦽 Fluxo Paciente End-to-End</h2>
-      <div class="cards-grid">
-        
-        <!-- Como Funciona Paciente -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Como Funciona (Paciente)</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">Guia</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página explicativa sobre o funcionamento da plataforma para pacientes.
-          </p>
-          <div class="card-steps">
-            <h4>📋 Passos explicados:</h4>
-            <ul>
-              <li>1. Fazer cadastro</li>
-              <li>2. Criar pedido de consulta (BID)</li>
-              <li>3. Aguardar na Sala de Espera</li>
-              <li>4. Entrar na Sala da Consulta</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Instruções claras, botão "Fazer cadastro" funciona, fluxo visual compreensível.</p>
-          </div>
-          <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Como Funciona (Landing)</a>
-        </div>
-        
-        <!-- Fazer Pedido -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Fazer Pedido de Consulta</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">Pedido</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Formulário para criar um novo pedido de consulta médica (BID).
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Patient ID preenchido automaticamente</li>
-              <li>Seleção de especialidade</li>
-              <li>Definir valor máximo (R$)</li>
-              <li>Escolher tipo (imediata/agendada)</li>
-              <li>Botão "Enviar Pedido" funciona</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Pedido criado, redirecionamento para Sala de Espera, Patient ID preservado.</p>
-          </div>
-          <a href="/bidconnect-standalone.html?model=conservative" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Fazer Pedido (BidConnect)</a>
-        </div>
-        
-        <!-- Sala de Espera -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Sala de Espera</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-yellow">Aguardando</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página onde paciente aguarda até médico aceitar ou agendar a consulta.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Status "Aguardando médico" visível</li>
-              <li>Indicador de tempo de espera</li>
-              <li>Notificação quando aceito</li>
-              <li>Botão para entrar na consulta</li>
-              <li>Opção de cancelar pedido</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Polling funciona, mudança de status detectada, navegação para consulta OK.</p>
-          </div>
-          <a href="/patient/waiting-room.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Sala de Espera</a>
-        </div>
-        
-        <!-- PHR -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">PHR (Prontuário)</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Histórico</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Personal Health Record - Histórico médico e consultas anteriores do paciente.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Lista de consultas anteriores</li>
-              <li>Prescrições recebidas</li>
-              <li>Exames realizados</li>
-              <li>Filtros por data/especialidade</li>
-              <li>Download de documentos</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Histórico completo exibido, downloads funcionam, navegação entre seções OK.</p>
-          </div>
-          <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir PHR</a>
-        </div>
-        
-        <!-- Centro de Testes -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Centro de Testes</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-purple">Laboratório</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Interface para agendamento e visualização de resultados de exames laboratoriais.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Agendar novos exames</li>
-              <li>Ver resultados disponíveis</li>
-              <li>Download de laudos</li>
-              <li>Histórico de exames</li>
-              <li>Integração com PHR</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Agendamento funcional, laudos acessíveis, integração com prontuário OK.</p>
-          </div>
-          <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Centro de Testes (via PHR)</a>
-        </div>
-        
-        <!-- Verificação de Receita -->
-        <div class="card" data-role="patient">
-          <div class="card-header">
-            <h3 class="card-title">Verificação de Receita</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">QR Code</span>
-              <span class="card-badge badge-patient">Paciente</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Sistema de verificação farmacêutica de prescrições digitais via QR Code.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Escaneamento de QR Code</li>
-              <li>Validação de autenticidade</li>
-              <li>Exibição de dados da receita</li>
-              <li>Verificação de validade</li>
-              <li>Status de uso (não usada/usada)</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>QR Code validado, dados exibidos corretamente, status atualizado OK.</p>
-          </div>
-          <a href="/patient/phr.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Verificação (via PHR)</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Fluxo Médico End-to-End -->
-    <section class="section">
-      <h2 class="section-title">👨‍⚕️ Fluxo Médico End-to-End</h2>
-      <div class="cards-grid">
-        
-        <!-- Como Funciona Médico -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">Como Funciona (Médico)</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Guia</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página explicativa sobre o funcionamento da plataforma para médicos.
-          </p>
-          <div class="card-steps">
-            <h4>📋 Passos explicados:</h4>
-            <ul>
-              <li>1. Fazer cadastro de médico</li>
-              <li>2. Acessar Dashboard (BIDs pendentes)</li>
-              <li>3. Aceitar BID ou agendar horário</li>
-              <li>4. Abrir Sala da Consulta</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Fluxo claro, links funcionais, botões para cadastro e dashboard OK.</p>
-          </div>
-          <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Como Funciona (Landing)</a>
-        </div>
-        
-        <!-- Dashboard Médico -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">Dashboard Médico</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Central</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Painel central do médico com BIDs pendentes, agenda e métricas.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Lista de BIDs pendentes</li>
-              <li>Aceitar/Rejeitar BID</li>
-              <li>Ver detalhes do paciente</li>
-              <li>Próximas consultas agendadas</li>
-              <li>Métricas de atendimento</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>BIDs exibidos, ações funcionam, navegação para consulta OK, métricas atualizadas.</p>
-          </div>
-          <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Dashboard</a>
-        </div>
-        
-        <!-- Agenda -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">Agenda</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-purple">Calendário</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Sistema de agendamento e gerenciamento de horários do médico.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Visualização de calendário</li>
-              <li>Agendar novos horários</li>
-              <li>Bloquear horários indisponíveis</li>
-              <li>Ver consultas confirmadas</li>
-              <li>Notificações de agendamentos</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Calendário funcional, agendamentos salvos, bloqueios funcionam, navegação OK.</p>
-          </div>
-          <a href="/medicaldesk-demo/agenda.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Agenda</a>
-        </div>
-        
-        <!-- Meus Pacientes -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">Meus Pacientes</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Gestão</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Lista de pacientes atendidos com acesso a prontuários e histórico.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Lista completa de pacientes</li>
-              <li>Buscar paciente por nome/ID</li>
-              <li>Acessar prontuário (PHR)</li>
-              <li>Ver histórico de consultas</li>
-              <li>Adicionar anotações médicas</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Lista carregada, busca funciona, prontuários acessíveis, anotações salvas.</p>
-          </div>
-          <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Meus Pacientes (Dashboard)</a>
-        </div>
-        
-        <!-- Perfil Médico -->
-        <div class="card" data-role="doctor">
-          <div class="card-header">
-            <h3 class="card-title">Perfil Médico</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-purple">Configurações</span>
-              <span class="card-badge badge-doctor">Médico</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página de configurações e gerenciamento do perfil profissional.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Editar dados do perfil</li>
-              <li>Atualizar especialidades</li>
-              <li>Configurar valores de consulta</li>
-              <li>Upload de documentos CRM</li>
-              <li>Preferências de notificação</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Dados atualizados, uploads funcionam, configurações salvas, validação OK.</p>
-          </div>
-          <a href="/medicaldesk-demo/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-full">Abrir Perfil (Dashboard)</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Páginas Gerais -->
-    <section class="section">
-      <h2 class="section-title">📄 Páginas Gerais</h2>
-      <div class="cards-grid">
-        
-        <!-- Como Funciona Geral -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Como Funciona (Geral)</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-purple">Informação</span>
-              <span class="card-badge badge-both">Ambos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página informativa geral sobre a plataforma TeleMed para visitantes.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Explicação da plataforma</li>
-              <li>Diferenciais e benefícios</li>
-              <li>Como começar (paciente/médico)</li>
-              <li>Links de navegação</li>
-              <li>FAQ básico</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Informações claras, CTAs funcionais, navegação intuitiva, FAQ útil.</p>
-          </div>
-          <a href="/como-funciona/" target="_blank" class="btn btn-primary btn-full">Abrir Como Funciona</a>
-        </div>
-        
-        <!-- Preços -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Preços</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-green">Comercial</span>
-              <span class="card-badge badge-both">Ambos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Página com modelos de precificação e planos disponíveis na plataforma.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Planos para pacientes</li>
-              <li>Planos para médicos</li>
-              <li>Tabela comparativa</li>
-              <li>Botões de contratação</li>
-              <li>FAQ de preços</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Preços claros, comparações visíveis, CTAs funcionam, informações completas.</p>
-          </div>
-          <a href="/precos/" target="_blank" class="btn btn-primary btn-full">Abrir Preços</a>
-        </div>
-        
-        <!-- Termos e Privacidade -->
-        <div class="card" data-role="both">
-          <div class="card-header">
-            <h3 class="card-title">Termos e Privacidade</h3>
-            <div class="card-badges">
-              <span class="card-badge badge-blue">Legal</span>
-              <span class="card-badge badge-both">Ambos</span>
-            </div>
-          </div>
-          <p class="card-description">
-            Documentos legais: Termos de Uso, Política de Privacidade e LGPD.
-          </p>
-          <div class="card-steps">
-            <h4>📋 O que testar:</h4>
-            <ul>
-              <li>Termos de Uso completos</li>
-              <li>Política de Privacidade</li>
-              <li>Compliance LGPD</li>
-              <li>Seções navegáveis</li>
-              <li>Data de última atualização</li>
-            </ul>
-          </div>
-          <div class="card-success">
-            <h4>✅ Critério de Sucesso:</h4>
-            <p>Documentos completos, navegação por seções funciona, compliance visível.</p>
-          </div>
-          <a href="/termos-privacidade.html" target="_blank" class="btn btn-primary btn-full">Abrir Termos</a>
-        </div>
-        
-      </div>
-    </section>
-    
-    <!-- Plano B -->
-    <section class="section">
-      <div class="plan-b">
-        <h2>🚨 Plano B — Sem Rede / Palco</h2>
-        <p style="color: #666; margin-bottom: 20px;">
-          Se algo falhar durante a apresentação ou testes offline, use estas soluções de emergência.
-        </p>
-        
-        <div class="plan-b-grid">
-          
-          <div class="plan-b-item">
-            <h3>🌐 BidConnect Offline</h3>
-            <p><strong>Problema:</strong> Upstream não responde</p>
-            <p><strong>Solução:</strong> Ativar mock embutido</p>
-            <p><code>USE_LOCAL_AUCTION_MOCK=true</code></p>
-            <p style="margin-top: 10px; font-size: 0.85rem;">
-              ⏱️ Tempo: 30 segundos (restart automático)
-            </p>
-          </div>
-          
-          <div class="plan-b-item">
-            <h3>🔄 Reiniciar Servidor</h3>
-            <p><strong>Problema:</strong> Página não carrega</p>
-            <p><strong>Solução:</strong> Hard refresh ou restart</p>
-            <p><code>Ctrl+Shift+R</code> (navegador)</p>
-            <p><code>pkill node</code> (terminal)</p>
-          </div>
-          
-          <div class="plan-b-item">
-            <h3>📊 Ver Logs</h3>
-            <p><strong>Problema:</strong> Erro desconhecido</p>
-            <p><strong>Solução:</strong> Verificar console</p>
-            <p><code>F12</code> → Console</p>
-            <p><code>tail -f /tmp/logs/*.log</code></p>
-          </div>
-          
-          <div class="plan-b-item">
-            <h3>🎬 Demo Standalone</h3>
-            <p><strong>Problema:</strong> Sistema todo offline</p>
-            <p><strong>Solução:</strong> Abrir HTML direto</p>
-            <p>Navegue até <code>/bidconnect-standalone.html</code></p>
-            <p style="margin-top: 10px; font-size: 0.85rem;">
-              ✅ Funciona 100% offline (zero network)
-            </p>
-          </div>
-          
-          <div class="plan-b-item">
-            <h3>🔍 Health Check</h3>
-            <p><strong>Problema:</strong> Não sei qual modo ativo</p>
-            <p><strong>Solução:</strong> Verificar health endpoint</p>
-            <p><code>/api/auction/health</code></p>
-            <p style="margin-top: 10px; font-size: 0.85rem;">
-              Retorna: "MOCK" ou "UPSTREAM PROXY"
-            </p>
-          </div>
-          
-          <div class="plan-b-item">
-            <h3>📱 Dropdown Não Abre</h3>
-            <p><strong>Problema:</strong> Menu dropdown trava</p>
-            <p><strong>Solução:</strong> Usar navegação direta</p>
-            <p>Use os links deste guia (abre nova aba)</p>
-            <p style="margin-top: 10px; font-size: 0.85rem;">
-              ✅ Bypass completo do dropdown
-            </p>
-          </div>
-          
-        </div>
-        
-        <div style="margin-top: 30px; padding: 20px; background: white; border-radius: 8px;">
-          <h3 style="color: #dc2626; margin-bottom: 15px;">📞 Contatos de Emergência</h3>
-          <p style="color: #666; margin-bottom: 10px;">
-            <strong>Desenvolvedor:</strong> [Seu contato aqui]
-          </p>
-          <p style="color: #666; margin-bottom: 10px;">
-            <strong>Documentação:</strong> Ver <code>ROTEIRO-DEMO.md</code> e <code>TOGGLES-MOCK-REAL.md</code>
-          </p>
-          <p style="color: #666;">
-            <strong>Testes Completos:</strong> Ver <code>GUIA-TESTES-COMPLETO.md</code> (25+ cenários)
-          </p>
-        </div>
-      </div>
-    </section>
-    
-    <footer>
-      <p>
-        <strong>TeleMed Platform</strong> — Versão BETA | Plataforma de Telemedicina Brasileira
-      </p>
-      <p style="margin-top: 10px; font-size: 0.85rem;">
-        📚 Documentação completa disponível em <code>/ROTEIRO-DEMO.md</code>, <code>/TOGGLES-MOCK-REAL.md</code> e <code>/GUIA-TESTES-COMPLETO.md</code>
-      </p>
-      <p style="margin-top: 15px;">
-        <a href="/" style="color: #667eea; text-decoration: none; font-weight: 600;">← Voltar para Landing Page</a>
-      </p>
-    </footer>
-  </div>
-  
-  <script>
-    // Função de filtro por papel
-    function filterByRole(role, element) {
-      const cards = document.querySelectorAll('.card[data-role]');
-      const buttons = document.querySelectorAll('.role-btn');
-      
-      // Atualizar botões ativos
-      buttons.forEach(btn => btn.classList.remove('active'));
-      if (element) element.classList.add('active');
-      
-      // Filtrar cards
-      cards.forEach(card => {
-        const cardRole = card.getAttribute('data-role');
-        
-        if (role === 'all') {
-          card.classList.remove('hidden');
-        } else if (cardRole === role || cardRole === 'both') {
-          card.classList.remove('hidden');
-        } else {
-          card.classList.add('hidden');
-        }
-      });
-    }
-  </script>
-
-  <!-- 🔍 Utilitários de QA: verificador de links e avisos amigáveis -->
-  <script>
-    /**
-     * Verifica e padroniza URLs para lidar com:
-     *  - diretórios que precisam de /index.html (ex.: /como-funciona/)
-     *  - remoção de duplos // e espaços
-     */
-    function normalizeHref(href) {
-      try {
-        const url = new URL(href, location.origin);
-        // Normaliza espaços acidentais
-        url.pathname = url.pathname.replace(/\s+/g, '-').replace(/\/{2,}/g, '/');
-
-        // Se termina com "/", tentamos /index.html
-        if (url.pathname.endsWith('/')) {
-          url.pathname = url.pathname + 'index.html';
-        }
-
-        return url.toString();
-      } catch (e) {
-        return href;
-      }
-    }
-
-    /**
-     * Intercepta cliques em links externos (target=_blank) para:
-     *  - checar se o recurso existe (HEAD → 200)
-     *  - alertar se o arquivo/rota não está no build, sem "cair" na Landing
-     */
-    function installLinkGuard() {
-      const links = Array.from(document.querySelectorAll('a[target="_blank"][href]'));
-      links.forEach(a => {
-        a.addEventListener('click', async (ev) => {
-          // Só guard se for link do mesmo host
-          const rawHref = a.getAttribute('href');
-          const normalized = normalizeHref(rawHref);
-          const url = new URL(normalized, location.href);
-
-          // Evita bloquear links externos (cdn, docs, etc.)
-          const sameOrigin = url.origin === location.origin;
-          if (!sameOrigin) return;
-
-          ev.preventDefault(); // bloqueia a navegação até checar
-
-          try {
-            // HEAD é rápido e não baixa o corpo
-            const res = await fetch(url, { method: 'HEAD', redirect: 'manual' });
-
-            if (res.ok) {
-              // Abre se existir
-              window.open(url.href, '_blank', 'noopener,noreferrer');
-            } else {
-              const suggestion = suggestMissingFile(url.pathname);
-              alert([
-                '⚠️ Página não encontrada no build:',
-                '→ ' + url.pathname,
-                '',
-                'Como corrigir agora:',
-                '1) Gere o arquivo/rota no build.',
-                '2) Sugestão de arquivo: ' + suggestion,
-                '',
-                'Dica: crie um stub mínimo só com <h1> para destravar os testes.'
-              ].join('\n'));
-              console.warn('Link ausente:', url.href, 'status:', res.status);
-            }
-          } catch (err) {
-            alert('⚠️ Não foi possível validar o link: ' + url.pathname + '\nVerifique se o servidor está rodando.');
-            console.error('Erro ao checar link', url.href, err);
-          }
-        }, { capture: true });
-      });
-    }
-
-    /**
-     * Sugere um arquivo correspondente ao caminho clicado
-     * - /como-funciona/ → /como-funciona/index.html
-     * - /patient/phr → /patient/phr.html
-     */
-    function suggestMissingFile(pathname) {
-      // Se é diretório, sugere index.html
-      if (pathname.endsWith('/')) return pathname + 'index.html';
-
-      // Se não tem extensão, sugere .html
-      if (!/\.[a-z0-9]+$/i.test(pathname)) return pathname + '.html';
-
-      return pathname;
-    }
-
-    /**
-     * Auditoria rápida: lista no console o status (200/404) de todos os links do Tour
-     * Execute automaticamente ao carregar a página para facilitar QA.
-     */
-    async function auditLinksOnLoad() {
-      const anchors = Array.from(document.querySelectorAll('a[href]'));
-      const rows = [];
-
-      for (const a of anchors) {
-        const href = a.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) continue;
-
-        const url = new URL(normalizeHref(href), location.origin);
-        // Só audita links do mesmo host
-        if (url.origin !== location.origin) continue;
-
-        try {
-          const res = await fetch(url, { method: 'HEAD', redirect: 'manual' });
-          rows.push({
-            text: (a.textContent || '').trim().slice(0, 60),
-            href,
-            normalized: url.pathname,
-            status: res.status,
-          });
-        } catch (e) {
-          rows.push({ text: (a.textContent || '').trim().slice(0, 60), href, normalized: url.pathname, status: 'ERR' });
-        }
-      }
-
-      if (rows.length) {
-        // Mostra primeiro as linhas problemáticas
-        rows.sort((a, b) => (a.status === 200 ? 1 : -1));
-        console.group('🔎 Auditoria de Links do Tour (HEAD)');
-        console.table(rows);
-        console.groupEnd();
-
-        const bad = rows.filter(r => r.status !== 200);
-        if (bad.length) {
-          console.warn('⚠️ Links ausentes/inesperados detectados (%d). Veja a tabela acima.', bad.length);
-        } else {
-          console.info('✅ Todos os links retornaram 200 (HEAD).');
-        }
-      }
-    }
-
-    // Instala guardas e audita na carga
-    installLinkGuard();
-    auditLinksOnLoad();
-  </script>
-
-  <!-- 🔧 NOTAS DE BUILD (TODO):
-    Garanta estes arquivos no seu build/dist para que TODOS os cards funcionem:
-    - /auth/register.html
-    - /auth/login.html
-    - /bidconnect-standalone.html
-    - /patient/waiting-room.html
-    - /patient/phr.html
-    - /medicaldesk-demo/index.html
-    - /medicaldesk-demo/agenda.html
-    - /como-funciona/index.html   (pois você usa /como-funciona/)
-    - /precos/index.html          (pois você usa /precos/)
-    - /termos-privacidade.html
-
-    Se o projeto for SPA (React/Vite):
-    - Não use .html por rota; use rotas do router (ex.: /patient/waiting-room) e mantenha um rewrite único para /index.html.
-    - Caso mantenha HTMLs estáticos (MPA), REMOVA rewrites globais do servidor (Netlify/Vercel/Nginx) que joguem tudo para /index.html,
-      ou eles vão mascarar 404 e "parecer" que caiu na Landing.
-
-    NGINX (MPA) exemplo:
-      location / {
-        try_files $uri =404;
-      }
-
-    Netlify (MPA): evite "/* /index.html 200" na raiz. Limite apenas às rotas SPA, se existirem.
-  -->
-</body>
-</html>
+            <
