@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <base href="/">
+  <meta charset="utf-8" />
+  <title>Centro de Testes – TeleMed</title>
+  <meta name="description" content="Avaliações padronizadas: ansiedade (GAD-7), depressão (PHQ-9) e mais." />
+  <meta name="robots" content="index,follow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="https://telemed.pro/centro-de-testes" />
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Centro de Testes — TeleMed">
+  <meta property="og:description" content="Avaliações padronizadas: ansiedade (GAD-7), depressão (PHQ-9) e mais.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://telemed.pro/centro-de-testes">
+  
+  <link rel="stylesheet" href="/css/theme-telemed.css">
+  <style>
+    .header{text-align:center;margin-bottom:2rem}
+    .header h1{font-size:2.5rem;margin:0 0 0.5rem;color:#1f2937}
+    .header p{font-size:1.2rem;color:#6b7280;max-width:600px;margin:0 auto}
+    .back-link{display:inline-block;margin-bottom:1rem;color:#0ea5e9;text-decoration:none}
+    .back-link:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/dashboard/" class="back-link">← Voltar ao Dashboard</a>
+    
+    <header class="header">
+      <h1>Centro de Testes</h1>
+      <p>Escolha um protocolo e comece a avaliação padronizada de saúde mental.</p>
+    </header>
+
+    <main class="grid cards">
+      <div class="card">
+        <div class="card-header">Ansiedade (GAD-7)</div>
+        <div class="card-body">
+          <p>Rastreamento de transtorno de ansiedade generalizada. Escala validada internacionalmente.</p>
+          <a class="btn btn-primary" href="/triagem-psiquiatrica?teste=gad7">Iniciar GAD-7</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">Depressão (PHQ-9)</div>
+        <div class="card-body">
+          <p>Severidade de sintomas depressivos. Ferramenta amplamente utilizada na prática clínica.</p>
+          <a class="btn btn-primary" href="/triagem-psiquiatrica?teste=phq9">Iniciar PHQ-9</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">TDAH (ASRS-18)</div>
+        <div class="card-body">
+          <p>Rastreamento de sintomas de TDAH em adultos. Baseado nos critérios do DSM-5.</p>
+          <a class="btn btn-primary" href="/triagem-psiquiatrica?teste=asrs18">Iniciar ASRS-18</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">Stress (PSS-10)</div>
+        <div class="card-body">
+          <p>Escala de Estresse Percebido. Avalia o nível de estresse percebido nas últimas semanas.</p>
+          <a class="btn btn-primary" href="/triagem-psiquiatrica?teste=pss10">Iniciar PSS-10</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">Bipolaridade (MDQ)</div>
+        <div class="card-body">
+          <p>Questionário de Transtorno do Humor. Triagem para episódios maníacos ou hipomaníacos.</p>
+          <a class="btn btn-primary" href="/triagem-psiquiatrica?teste=mdq">Iniciar MDQ</a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">Triagem com IA</div>
+        <div class="card-body">
+          <p>Avaliação psiquiátrica assistida por inteligência artificial com múltiplas escalas.</p>
+          <a class="btn btn-primary" href="/dr-ai/">Iniciar Dr. AI</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="container" style="padding:24px 16px 48px;color:#6b7280;text-align:center;border-top:1px solid #e5e7eb;margin-top:3rem">
+      <small>⚠️ Resultados são indicativos e não substituem avaliação médica especializada.</small>
+    </footer>
+  </div>
+
+  <!-- Tour multi-página -->
+  <script>
+(function(){
+  const $ = (s)=>document.querySelector(s);
+  const overlay = $("#tourOverlay"), spot = $("#tourSpot"), tip = $("#tourTip");
+  const tipTitle = $("#tourTitle"), tipText = $("#tourText");
+  const btnNext = $("#tourNext"), btnSkip = $("#tourSkip");
+
+  const tours = {
+    paciente: [
+      { token:'dashboard',     sel:'a[href*="agenda"]',           t:'Agenda',            d:'Confira seus horários e próximas consultas.' },
+      { token:'agenda',        sel:'a[href*="sala-de-espera"]',   t:'Sala de Espera',    d:'Teste câmera/microfone e aguarde o chamado.' },
+      { token:'sala-de-espera',sel:'a[href*="consulta"]',         t:'Consulta Online',   d:'Entre com 1 clique na sala de vídeo segura.' },
+      { token:'consulta',      sel:'a[href*="registro-saude"]',   t:'Registro de Saúde', d:'Envie exames e veja seu histórico organizado.' },
+      { token:'registro-saude',sel:'a[href*="paciente"]',         t:'Área do Paciente',  d:'Gerencie documentos, prescrições e dados.' }
+    ],
+    medico: [
+      { token:'dashboard',     sel:'a[href*="dashboard"]',        t:'Dashboard',         d:'Visão geral, atalhos para pacientes e laudos.' },
+      { token:'dashboard',     sel:'a[href*="agenda"]',           t:'Agenda',            d:'Gerencie horários, confirmações e atendimentos.' },
+      { token:'agenda',        sel:'a[href*="medico"]',           t:'Perfil Médico',     d:'Ajuste dados profissionais e configurações.' },
+      { token:'medico',        sel:'a[href*="consulta"]',         t:'Atendimento',       d:'Inicie teleconsulta com chat e prescrição.' },
+      { token:'consulta',      sel:'a[href*="centro-de-testes"]', t:'Centro de Testes',  d:'Aplique GAD‑7/PHQ‑9 e gere relatórios.' }
+    ]
+  };
+
+  const QS = new URLSearchParams(location.search);
+
+  // --- Auto-detecção de prefixo (/preview/) e extensão (.html)
+  const path = location.pathname;
+  const prefix = path.startsWith('/preview/') ? '/preview/' : '/';
+  const usesHtml = /\.html?$/.test(path);
+
+  // Monta URL segura para um token de página
+  function urlFor(token){
+    // Sempre usa /preview/ e .html para este sistema
+    return '/preview/' + token + '.html';
+  }
+
+  // Checa se estou nesta página por token
+  function isOn(token){
+    return location.pathname.includes(token);
+  }
+
+  const K_FLAG='telemed_autotour', K_ROLE='telemed_autotour_role', K_IDX='telemed_autotour_step';
+
+  function saveState(role, idx){
+    try { localStorage.setItem(K_FLAG,'1'); localStorage.setItem(K_ROLE,role); localStorage.setItem(K_IDX,String(idx)); } catch(e){}
+  }
+  function loadState(){
+    try {
+      return {
+        has: localStorage.getItem(K_FLAG)==='1',
+        role: localStorage.getItem(K_ROLE),
+        idx: Number(localStorage.getItem(K_IDX)||'0')||0
+      };
+    } catch(e){ return {has:false,role:null,idx:0}; }
+  }
+  function clearState(){
+    try { localStorage.removeItem(K_FLAG); localStorage.removeItem(K_ROLE); localStorage.removeItem(K_IDX); } catch(e){}
+  }
+
+  function waitForElement(selector, {tries=30, interval=200}={}){
+    return new Promise((resolve,reject)=>{
+      let count = 0;
+      const iv = setInterval(()=>{
+        const el = document.querySelector(selector);
+        if (el){
+          clearInterval(iv);
+          resolve(el);
+        } else if (++count >= tries){
+          clearInterval(iv);
+          reject(new Error('Elemento não encontrado: '+selector));
+        }
+      }, interval);
+    });
+  }
+
+  function place(el, title, text){
+    if (!overlay || !spot || !tip) return;
+    const r = el.getBoundingClientRect();
+    overlay.style.display = 'block';
+    spot.style.display = 'block';
+    tip.style.display  = 'block';
+    spot.style.left = (window.scrollX + r.left - 6) + "px";
+    spot.style.top  = (window.scrollY + r.top  - 6) + "px";
+    spot.style.width  = (r.width + 12) + "px";
+    spot.style.height = (r.height + 12) + "px";
+    if (tipTitle) tipTitle.textContent = title;
+    if (tipText) tipText.textContent = text;
+    tip.style.left = (window.scrollX + r.left) + "px";
+    tip.style.top  = (window.scrollY + r.bottom + 12) + "px";
+  }
+
+  let role = null, steps = [], idx = 0;
+
+  async function showStep(){
+    const s = steps[idx];
+    if (!s){ endTour(); return; }
+
+    if (!isOn(s.token)){
+      if (overlay) overlay.style.display = 'none';
+      if (spot) spot.style.display = 'none';
+      if (tip) tip.style.display  = 'none';
+      saveState(role, idx);
+      const url = urlFor(s.token) + '?autotour='+encodeURIComponent(role)+'&tourStep='+idx;
+      location.assign(url);
+      return;
+    }
+
+    try {
+      const el = await waitForElement(s.sel, {tries:30, interval=200});
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(()=> place(el, s.t, s.d), 250);
+      if (btnNext) btnNext.textContent = (idx === steps.length - 1) ? 'Concluir' : 'Próximo';
+    } catch(e){
+      idx++;
+      showStep();
+    }
+  }
+
+  function next(){
+    idx++;
+    if (idx >= steps.length){ endTour(); return; }
+    showStep();
+  }
+
+  function endTour(){
+    if (overlay) overlay.style.display = 'none';
+    if (spot) spot.style.display = 'none';
+    if (tip) tip.style.display  = 'none';
+    clearState();
+  }
+
+  async function startTour(requestedRole, startIndex=0){
+    role  = requestedRole;
+    steps = (tours[role]||[]);
+    if (!steps.length){ return; }
+    idx = Math.max(0, Math.min(startIndex, steps.length-1));
+    saveState(role, idx);
+    showStep();
+  }
+
+  window._telemedStartTour = (r)=> startTour(r, 0);
+
+  document.addEventListener('keydown', (ev)=>{
+    if (ev.key === 'Escape') endTour();
+  });
+
+  if (btnNext) btnNext.addEventListener('click', next);
+  if (btnSkip) btnSkip.addEventListener('click', endTour);
+
+  window.addEventListener('load', ()=>{
+    const qRole = QS.get('autotour');
+    const qStep = Number(QS.get('tourStep') || '0');
+
+    const s = loadState();
+
+    if (qRole){ startTour(qRole, qStep); return; }
+    if (s.has && s.role){ startTour(s.role, s.idx); }
+  });
+
+  console.log('🧠 Centro de Testes carregado com tour multi-página');
+})();
+  </script>
+
+  <!-- Tour overlay elements -->
+  <div id="tourOverlay" style="position:fixed;inset:0;background:rgba(2,6,23,.55);backdrop-filter:blur(2px);z-index:9998;display:none"></div>
+  <div id="tourSpot" style="position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(2,6,23,.55), 0 0 0 3px #0ea5e9;transition:all .2s;z-index:9999;display:none"></div>
+  <div id="tourTip" style="position:absolute;max-width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 26px rgba(2,6,23,.18);padding:14px;z-index:10000;display:none">
+    <h4 id="tourTitle" style="margin:0 0 6px;font-size:1rem;color:#111827"></h4>
+    <p id="tourText" style="margin:0 0 12px;font-size:.9rem;color:#374151"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="tourSkip" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:transparent;color:#0ea5e9;font-weight:600;cursor:pointer">Pular</button>
+      <button id="tourNext" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:#0ea5e9;color:#fff;font-weight:600;cursor:pointer">Próximo</button>
+    </div>
+  </div>
+</body>
+</html>
