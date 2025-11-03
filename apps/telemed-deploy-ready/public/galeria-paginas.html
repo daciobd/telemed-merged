@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📸 Galeria de Páginas - TeleMed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 30px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    h1 { color: #667eea; margin-bottom: 10px; font-size: 2.5rem; }
+    .subtitle { color: #666; font-size: 1.1rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+      margin-top: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+    }
+    .card-header {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .card-url {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      font-family: 'Courier New', monospace;
+    }
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .badge-real { background: #ecfdf5; color: #065f46; }
+    .badge-qa { background: #f0f9ff; color: #075985; }
+    .badge-bidconnect { background: #fef3c7; color: #92400e; }
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    .btn:hover { background: #5568d3; }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+      padding: 15px 25px;
+      background: #f0f9ff;
+      border-radius: 8px;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+    .description {
+      color: #555;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📸 Galeria de Páginas - TeleMed</h1>
+      <p class="subtitle">Visualização completa de todas as páginas da plataforma</p>
+      
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-number">18</div>
+          <div class="stat-label">Páginas Totais</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">13</div>
+          <div class="stat-label">Páginas Reais</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Páginas QA/Docs</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Landing Page -->
+      <div class="card" onclick="window.open('/index.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🏠 Landing Page</div>
+          <div class="card-url">/index.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Página principal da plataforma com hero section, features e CTAs para pacientes e médicos.</p>
+          <a href="/index.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Consulta Médica -->
+      <div class="card" onclick="window.open('/consulta.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">💊 Consulta Médica</div>
+          <div class="card-url">/consulta.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Sala de consulta com tabs funcionais (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.</p>
+          <a href="/consulta.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Sala de Espera -->
+      <div class="card" onclick="window.open('/sala-de-espera.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">⏳ Sala de Espera</div>
+          <div class="card-url">/sala-de-espera.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Interface de espera do paciente com timer e informações da consulta.</p>
+          <a href="/sala-de-espera.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- PHR -->
+      <div class="card" onclick="window.open('/phr.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">📋 PHR - Prontuário</div>
+          <div class="card-url">/phr.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Prontuário Pessoal de Saúde com histórico médico do paciente.</p>
+          <a href="/phr.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Dashboard Piloto -->
+      <div class="card" onclick="window.open('/dashboard-piloto.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">📊 Dashboard Piloto</div>
+          <div class="card-url">/dashboard-piloto.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Dashboard médico com métricas, consultas e gestão de pacientes.</p>
+          <a href="/dashboard-piloto.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Agenda -->
+      <div class="card" onclick="window.open('/agenda.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">📅 Agenda Médica</div>
+          <div class="card-url">/agenda.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Sistema de agendamento com visualização de consultas e horários disponíveis.</p>
+          <a href="/agenda.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Dashboard Médico -->
+      <div class="card" onclick="window.open('/dashboard-medico.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">📊 Dashboard Médico Completo</div>
+          <div class="card-url">/dashboard-medico.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Dashboard completo com estatísticas e gestão médica avançada.</p>
+          <a href="/dashboard-medico.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- BidConnect Conservador -->
+      <div class="card" onclick="window.open('/bidconnect-standalone.html?model=conservative', '_blank')">
+        <div class="card-header">
+          <div class="card-title">💰 BidConnect Conservador</div>
+          <div class="card-url">/bidconnect-standalone.html?model=conservative</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-bidconnect">💵 BIDCONNECT</span>
+          <p class="description">Modelo de precificação conservador com faixa fixa (R$140-R$180).</p>
+          <a href="/bidconnect-standalone.html?model=conservative" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- BidConnect Sugestivo -->
+      <div class="card" onclick="window.open('/bidconnect-standalone.html?model=suggestive', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🤖 BidConnect Sugestivo (IA)</div>
+          <div class="card-url">/bidconnect-standalone.html?model=suggestive</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-bidconnect">💵 BIDCONNECT</span>
+          <p class="description">Modelo com sugestões de IA baseadas no perfil do paciente.</p>
+          <a href="/bidconnect-standalone.html?model=suggestive" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- BidConnect Dinâmico -->
+      <div class="card" onclick="window.open('/bidconnect-standalone.html?model=dynamic', '_blank')">
+        <div class="card-header">
+          <div class="card-title">⚡ BidConnect Dinâmico</div>
+          <div class="card-url">/bidconnect-standalone.html?model=dynamic</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-bidconnect">💵 BIDCONNECT</span>
+          <p class="description">Modelo de leilão dinâmico com grid de faixas de preço.</p>
+          <a href="/bidconnect-standalone.html?model=dynamic" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Dr. AI Triagem -->
+      <div class="card" onclick="window.open('/dr-ai.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🤖 Dr. AI - Triagem</div>
+          <div class="card-url">/dr-ai.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Sistema de triagem médica com IA e detecção de red flags LGPD-compliant.</p>
+          <a href="/dr-ai.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Dr. AI Dashboard -->
+      <div class="card" onclick="window.open('/dr-ai-dashboard.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">📊 Dr. AI Dashboard</div>
+          <div class="card-url">/dr-ai-dashboard.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Dashboard de triagens e métricas do sistema Dr. AI.</p>
+          <a href="/dr-ai-dashboard.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Login -->
+      <div class="card" onclick="window.open('/auth/login.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🔐 Login</div>
+          <div class="card-url">/auth/login.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-real">✅ REAL</span>
+          <p class="description">Página de autenticação com formulário de login.</p>
+          <a href="/auth/login.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Tour Completo -->
+      <div class="card" onclick="window.open('/public/tour.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🗺️ Tour Completo</div>
+          <div class="card-url">/public/tour.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-qa">📝 QA/DOCS</span>
+          <p class="description">Guia completo com 27 cards e navegação por fluxo Paciente/Médico.</p>
+          <a href="/public/tour.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Bem-Vindo -->
+      <div class="card" onclick="window.open('/public/bem-vindo.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">👋 Página de Boas-Vindas</div>
+          <div class="card-url">/public/bem-vindo.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-qa">📝 QA/DOCS</span>
+          <p class="description">Onboarding completo para testadores com features e jornadas.</p>
+          <a href="/public/bem-vindo.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Guia do Testador -->
+      <div class="card" onclick="window.open('/public/tester-guide.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🧪 Guia do Testador</div>
+          <div class="card-url">/public/tester-guide.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-qa">📝 QA/DOCS</span>
+          <p class="description">Mini-plataforma QA com checklist, filtros e bug report.</p>
+          <a href="/public/tester-guide.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Pitch Deck -->
+      <div class="card" onclick="window.open('/public/pitchdeck.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">💼 Pitch Deck Investidores</div>
+          <div class="card-url">/public/pitchdeck.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-qa">📝 QA/DOCS</span>
+          <p class="description">Apresentação profissional V2.0 com tração, unit economics e ask.</p>
+          <a href="/public/pitchdeck.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+
+      <!-- Smoke Test -->
+      <div class="card" onclick="window.open('/public/smoke-test.html', '_blank')">
+        <div class="card-header">
+          <div class="card-title">🧪 Smoke Test</div>
+          <div class="card-url">/public/smoke-test.html</div>
+        </div>
+        <div class="card-body">
+          <span class="badge badge-qa">📝 QA/DOCS</span>
+          <p class="description">Interface de testes automáticos com validação de páginas e redirects.</p>
+          <a href="/public/smoke-test.html" target="_blank" class="btn">Abrir Página →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
