@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Tour Links — TeleMed QA</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      max-width: 1200px; 
+      margin: 20px auto; 
+      padding: 20px; 
+      background: #0f172a; 
+      color: #e2e8f0;
+    }
+    h1 { color: #60a5fa; }
+    .status-ok { color: #10b981; }
+    .status-error { color: #ef4444; }
+    .status-pending { color: #f59e0b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background: #1e293b; font-weight: 600; }
+    .btn { 
+      background: #3b82f6; 
+      color: white; 
+      border: none; 
+      padding: 10px 20px; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-weight: 600;
+      margin-right: 10px;
+    }
+    .btn:hover { background: #2563eb; }
+    .progress { 
+      height: 24px; 
+      background: #1e293b; 
+      border-radius: 12px; 
+      overflow: hidden; 
+      margin: 20px 0;
+    }
+    .progress-bar { 
+      height: 100%; 
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6); 
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .summary { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 15px; 
+      margin: 20px 0;
+    }
+    .summary-card { 
+      background: #1e293b; 
+      padding: 20px; 
+      border-radius: 12px; 
+      border-left: 4px solid #3b82f6;
+    }
+    .summary-card.success { border-color: #10b981; }
+    .summary-card.error { border-color: #ef4444; }
+    .summary-card h3 { margin: 0 0 10px; font-size: 14px; opacity: 0.8; }
+    .summary-card .value { font-size: 32px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Tour Links — Validação Automática</h1>
+  <p>Verifica todos os links críticos do tour.html com HEAD request</p>
+  
+  <div>
+    <button class="btn" onclick="runTests()">▶️ Executar Testes</button>
+    <button class="btn" onclick="exportResults()" style="background: #8b5cf6">📊 Exportar JSON</button>
+  </div>
+
+  <div class="progress">
+    <div class="progress-bar" id="progress" style="width: 0%">0%</div>
+  </div>
+
+  <div class="summary" id="summary" style="display: none;">
+    <div class="summary-card success">
+      <h3>✅ Sucesso</h3>
+      <div class="value status-ok" id="count-ok">0</div>
+    </div>
+    <div class="summary-card error">
+      <h3>❌ Falhas</h3>
+      <div class="value status-error" id="count-error">0</div>
+    </div>
+    <div class="summary-card">
+      <h3>📊 Total</h3>
+      <div class="value" id="count-total">0</div>
+    </div>
+    <div class="summary-card">
+      <h3>⏱️ Tempo</h3>
+      <div class="value" id="time-elapsed" style="font-size: 24px;">0s</div>
+    </div>
+  </div>
+
+  <table id="results">
+    <thead>
+      <tr>
+        <th style="width: 60px">Status</th>
+        <th>Caminho</th>
+        <th style="width: 80px">HTTP</th>
+        <th>Descrição</th>
+      </tr>
+    </thead>
+    <tbody id="results-body">
+      <tr><td colspan="4" style="text-align: center; opacity: 0.5;">Clique em "Executar Testes" para começar</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const CRITICAL_PATHS = [
+      { path: '/auth/register.html', desc: 'Cadastro de Paciente' },
+      { path: '/auth/login.html', desc: 'Login' },
+      { path: '/bidconnect-standalone.html', desc: 'BidConnect Standalone' },
+      { path: '/patient/waiting-room.html', desc: 'Sala de Espera' },
+      { path: '/patient/phr.html', desc: 'PHR do Paciente' },
+      { path: '/medicaldesk/index.html', desc: 'MedicalDesk Dashboard' },
+      { path: '/medicaldesk/agenda.html', desc: 'Agenda Médica' },
+      { path: '/como-funciona/index.html', desc: 'Como Funciona' },
+      { path: '/precos/index.html', desc: 'Preços' },
+      { path: '/termos-privacidade.html', desc: 'Termos e Privacidade' },
+      { path: '/public/tour.html', desc: 'Tour Guiado' },
+      { path: '/public/bem-vindo.html', desc: 'Bem-vindo' },
+      { path: '/public/pitchdeck.html', desc: 'Pitch Deck' },
+      { path: '/pricing-models.html', desc: 'BidConnect Pricing Models' },
+      { path: '/index.html', desc: 'Landing Page' }
+    ];
+
+    let testResults = [];
+    let startTime = 0;
+
+    async function runTests() {
+      testResults = [];
+      startTime = Date.now();
+      
+      document.getElementById('results-body').innerHTML = '';
+      document.getElementById('summary').style.display = 'grid';
+      
+      let completed = 0;
+      const total = CRITICAL_PATHS.length;
+
+      for (const item of CRITICAL_PATHS) {
+        const result = await testPath(item.path, item.desc);
+        testResults.push(result);
+        
+        addResultRow(result);
+        
+        completed++;
+        updateProgress(completed, total);
+        updateSummary();
+      }
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+      document.getElementById('time-elapsed').textContent = elapsed + 's';
+    }
+
+    async function testPath(path, description) {
+      try {
+        const response = await fetch(path, { method: 'HEAD', redirect: 'manual' });
+        return {
+          path,
+          description,
+          status: response.status,
+          ok: response.ok,
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        return {
+          path,
+          description,
+          status: 'ERR',
+          ok: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        };
+      }
+    }
+
+    function addResultRow(result) {
+      const tbody = document.getElementById('results-body');
+      const row = document.createElement('tr');
+      
+      const statusIcon = result.ok ? '✅' : '❌';
+      const statusClass = result.ok ? 'status-ok' : 'status-error';
+      
+      row.innerHTML = `
+        <td class="${statusClass}">${statusIcon}</td>
+        <td><code>${result.path}</code></td>
+        <td class="${statusClass}">${result.status}</td>
+        <td>${result.description}</td>
+      `;
+      
+      tbody.appendChild(row);
+    }
+
+    function updateProgress(completed, total) {
+      const percent = Math.round((completed / total) * 100);
+      const progressBar = document.getElementById('progress');
+      progressBar.style.width = percent + '%';
+      progressBar.textContent = percent + '%';
+    }
+
+    function updateSummary() {
+      const ok = testResults.filter(r => r.ok).length;
+      const error = testResults.filter(r => !r.ok).length;
+      const total = testResults.length;
+
+      document.getElementById('count-ok').textContent = ok;
+      document.getElementById('count-error').textContent = error;
+      document.getElementById('count-total').textContent = total;
+    }
+
+    function exportResults() {
+      const data = {
+        timestamp: new Date().toISOString(),
+        duration_ms: Date.now() - startTime,
+        total: testResults.length,
+        success: testResults.filter(r => r.ok).length,
+        failed: testResults.filter(r => !r.ok).length,
+        results: testResults
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tour-links-test-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
