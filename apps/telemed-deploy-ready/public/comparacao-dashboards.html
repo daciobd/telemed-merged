@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔍 Comparação de Dashboards - TeleMed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #94a3b8;
+      font-size: 1.1rem;
+    }
+    
+    .filters {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 10px 20px;
+      border: 2px solid #334155;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .filter-btn:hover {
+      border-color: #3b82f6;
+      background: #334155;
+    }
+    
+    .filter-btn.active {
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      border-color: transparent;
+      color: white;
+    }
+    
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    
+    .card {
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      display: none;
+    }
+    
+    .card.show {
+      display: block;
+    }
+    
+    .card:hover {
+      border-color: #3b82f6;
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    
+    .card-subtitle {
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+    
+    .badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .badge.light { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; }
+    .badge.dark { background: rgba(15, 23, 42, 0.8); color: #94a3b8; }
+    .badge.recommended { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge.advanced { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    
+    .features {
+      list-style: none;
+      margin: 16px 0;
+    }
+    
+    .features li {
+      padding: 8px 0;
+      display: flex;
+      align-items: start;
+      gap: 8px;
+      color: #cbd5e1;
+    }
+    
+    .features li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    .when-use {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid #3b82f6;
+      padding: 12px;
+      margin: 16px 0;
+      border-radius: 4px;
+    }
+    
+    .when-use strong {
+      color: #3b82f6;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .btn-test {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-test:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    }
+    
+    .summary {
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 16px;
+      padding: 32px;
+      margin-top: 40px;
+    }
+    
+    .summary h2 {
+      color: #3b82f6;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .summary-item {
+      background: rgba(59, 130, 246, 0.1);
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .summary-item strong {
+      display: block;
+      color: #3b82f6;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Comparação de Dashboards TeleMed</h1>
+      <p>Encontre a página perfeita para cada situação</p>
+    </div>
+    
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">📊 Todas</button>
+      <button class="filter-btn" data-filter="dashboard">🏥 Dashboards</button>
+      <button class="filter-btn" data-filter="agenda">📅 Agendas</button>
+      <button class="filter-btn" data-filter="gestao">💼 Gestão</button>
+    </div>
+    
+    <div class="comparison-grid">
+      <!-- Dashboard PRO com Sidebar -->
+      <div class="card show" data-category="dashboard">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dashboard PRO</div>
+            <div class="card-subtitle">/dashboard/</div>
+          </div>
+          <div>
+            <span class="badge light">Light</span>
+            <span class="badge recommended">★ Recomendado</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>Sidebar lateral com navegação completa</li>
+          <li>Gráficos avançados (Chart.js)</li>
+          <li>Visual moderno tipo SaaS</li>
+          <li>Breadcrumbs de navegação</li>
+          <li>Métricas consolidadas</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Primeira vez após login, uso profissional diário, ambiente clínica/hospital
+        </div>
+        
+        <a href="/dashboard/" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+      
+      <!-- Dashboard Médico MVP -->
+      <div class="card show" data-category="dashboard">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dashboard Operacional</div>
+            <div class="card-subtitle">/dashboard-medico.html</div>
+          </div>
+          <div>
+            <span class="badge dark">Dark</span>
+            <span class="badge">⚡ Rápido</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>Interface minimalista e compacta</li>
+          <li>Foco em ação rápida (fila agora)</li>
+          <li>4 métricas principais (KPIs simples)</li>
+          <li>Filtros por especialidade</li>
+          <li>Botão direto MedicalDesk</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Atendimento diário ativo, plantões noturnos, precisa ver rapidamente quem está na fila
+        </div>
+        
+        <a href="/dashboard-medico.html" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+      
+      <!-- Dashboard Piloto -->
+      <div class="card show" data-category="dashboard">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dashboard de Métricas</div>
+            <div class="card-subtitle">/dashboard-piloto.html</div>
+          </div>
+          <div>
+            <span class="badge dark">Dark</span>
+            <span class="badge">📈 KPIs</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>4 KPIs principais (NPS, uptime, consultas)</li>
+          <li>Funil de conversão visual</li>
+          <li>Gráficos de tendência</li>
+          <li>Logs de atividade</li>
+          <li>Cards coloridos por métrica</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Análise de performance, reuniões mensais, acompanhar NPS e disponibilidade
+        </div>
+        
+        <a href="/dashboard-piloto.html" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+      
+      <!-- Gestão Avançada -->
+      <div class="card show" data-category="gestao">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Gestão Financeira</div>
+            <div class="card-subtitle">/gestao-avancada/</div>
+          </div>
+          <div>
+            <span class="badge dark">Dark</span>
+            <span class="badge advanced">💰 C-Level</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>Métricas financeiras (receita, custos, margens)</li>
+          <li>Gráficos avançados profissionais</li>
+          <li>Relatórios exportáveis</li>
+          <li>Análise de tendências</li>
+          <li>Visual executivo premium</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Gestão de clínica, análise financeira, reuniões executivas, apresentações para investidores
+        </div>
+        
+        <a href="/gestao-avancada/" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+      
+      <!-- Agenda Simples -->
+      <div class="card show" data-category="agenda">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Agenda Simples</div>
+            <div class="card-subtitle">/agenda.html</div>
+          </div>
+          <div>
+            <span class="badge dark">Dark</span>
+            <span class="badge">⚡ Simples</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>Tabela limpa e direta</li>
+          <li>3 estatísticas (aguardando, em consulta, finalizadas)</li>
+          <li>Status coloridos por consulta</li>
+          <li>Botões de teste/demo</li>
+          <li>Foco em fila de atendimento</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Ver rapidamente quem está na fila, após aceitar BID, interface sem distrações
+        </div>
+        
+        <a href="/agenda.html" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+      
+      <!-- Agenda PRO -->
+      <div class="card show" data-category="agenda">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Agenda PRO</div>
+            <div class="card-subtitle">/agenda/</div>
+          </div>
+          <div>
+            <span class="badge dark">Dark</span>
+            <span class="badge recommended">📆 Calendário</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>Calendário visual mensal</li>
+          <li>Layout 2 colunas (calendário + lista)</li>
+          <li>Navegação entre dias</li>
+          <li>Indicadores coloridos por status</li>
+          <li>Planejamento de longo prazo</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Planejar a semana/mês, ver consultas futuras, interface visual de calendário
+        </div>
+        
+        <a href="/agenda/" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+      
+      <!-- Meus Pacientes -->
+      <div class="card show" data-category="gestao">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Meus Pacientes</div>
+            <div class="card-subtitle">/meus-pacientes.html</div>
+          </div>
+          <div>
+            <span class="badge dark">Dark</span>
+            <span class="badge">🔍 Busca</span>
+          </div>
+        </div>
+        
+        <ul class="features">
+          <li>Filtros por ID, nome, especialidade</li>
+          <li>Tabela com histórico de consultas</li>
+          <li>Ações por paciente (prontuário, histórico)</li>
+          <li>Widget de ajuda/suporte</li>
+          <li>Navegação para outras seções</li>
+        </ul>
+        
+        <div class="when-use">
+          <strong>👤 Quando usar:</strong>
+          Buscar histórico de paciente, verificar última consulta, antes de atendimento
+        </div>
+        
+        <a href="/meus-pacientes.html" class="btn-test" target="_blank">🚀 Testar Agora</a>
+      </div>
+    </div>
+    
+    <div class="summary">
+      <h2>🎯 Resumo: Qual Usar Quando?</h2>
+      
+      <div class="summary-grid">
+        <div class="summary-item">
+          <strong>🏥 Atendimento Diário</strong>
+          Use <code>/dashboard-medico.html</code> — Interface rápida, foco em fila de consultas
+        </div>
+        
+        <div class="summary-item">
+          <strong>🏢 Uso Profissional Completo</strong>
+          Use <code>/dashboard/</code> — Interface PRO com sidebar e navegação completa
+        </div>
+        
+        <div class="summary-item">
+          <strong>📊 Análise de Métricas</strong>
+          Use <code>/dashboard-piloto.html</code> — KPIs, NPS, funil de conversão
+        </div>
+        
+        <div class="summary-item">
+          <strong>💰 Gestão Financeira</strong>
+          Use <code>/gestao-avancada/</code> — Gráficos avançados, receita, custos
+        </div>
+        
+        <div class="summary-item">
+          <strong>📅 Ver Fila Agora</strong>
+          Use <code>/agenda.html</code> — Tabela simples e rápida
+        </div>
+        
+        <div class="summary-item">
+          <strong>📆 Planejar Semana</strong>
+          Use <code>/agenda/</code> — Calendário visual mensal
+        </div>
+        
+        <div class="summary-item">
+          <strong>👤 Buscar Histórico</strong>
+          Use <code>/meus-pacientes.html</code> — Filtros e busca de pacientes
+        </div>
+        
+        <div class="summary-item">
+          <strong>🌙 Plantão Noturno</strong>
+          Use <code>/dashboard-medico.html</code> ou <code>/agenda.html</code> — Dark theme confortável
+        </div>
+      </div>
+      
+      <div style="margin-top: 32px; text-align: center;">
+        <a href="/public/GUIA-PAGINAS-MEDICO.md" style="color: #3b82f6; text-decoration: none; font-weight: 600;">
+          📚 Ver Guia Completo em Markdown →
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Filtros interativos
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.card');
+    
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        
+        // Atualizar botões ativos
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Filtrar cards
+        cards.forEach(card => {
+          if (filter === 'all' || card.dataset.category === filter) {
+            card.classList.add('show');
+          } else {
+            card.classList.remove('show');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
