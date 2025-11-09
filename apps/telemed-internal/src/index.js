@@ -441,6 +441,15 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/medicaldesk')) {
     return next();
   }
+  
+  // NÃO interceptar páginas HTML estáticas ou arquivos estáticos
+  // Isso permite que galeria-paginas.html, tour.html, etc funcionem diretamente
+  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
+  if (isStaticAsset) {
+    // Deixa express.static tentar servir, se não existir vai dar 404 natural
+    return next();
+  }
+  
   // Se é uma rota do frontend que não foi encontrada nos arquivos estáticos, retorna index.html
   res.sendFile(path.join(frontendPathHere, 'index.html'), (err) => {
     if (err) {
