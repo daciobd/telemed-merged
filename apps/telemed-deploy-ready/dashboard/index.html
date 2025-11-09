@@ -387,6 +387,192 @@
     .categoria-orfas a:hover {
         background: #d1d5db;
     }
+    
+    /* Widget de Ações Rápidas */
+    .widget-acoes-rapidas {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #f1f5f9;
+        margin-bottom: 24px;
+    }
+    .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #f1f5f9;
+    }
+    .widget-header h3 {
+        font-size: 18px;
+        color: #1f2937;
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .widget-header h3::before {
+        content: '⚡';
+        font-size: 20px;
+    }
+    .widget-header a {
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+    .widget-header a:hover {
+        background: #eff6ff;
+        color: #4f46e5;
+    }
+    .fila-rapida {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    .bid-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s;
+    }
+    .bid-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.12);
+        border-color: #6366f1;
+    }
+    .badge-novo {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+        animation: pulse 2s infinite;
+    }
+    .badge-agendado {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.75; }
+    }
+    .bid-card h4 {
+        margin: 0 0 10px 0;
+        font-size: 17px;
+        color: #1f2937;
+        font-weight: 600;
+        padding-right: 100px;
+    }
+    .bid-card p {
+        margin: 0 0 14px 0;
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .bid-card p strong {
+        color: #374151;
+        font-weight: 600;
+    }
+    .bid-card-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .bid-card button {
+        flex: 1;
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .bid-card button:hover {
+        background: #4f46e5;
+        transform: scale(1.02);
+    }
+    .bid-card button.btn-secondary {
+        background: transparent;
+        color: #6366f1;
+        border: 2px solid #6366f1;
+    }
+    .bid-card button.btn-secondary:hover {
+        background: #eff6ff;
+        border-color: #4f46e5;
+        color: #4f46e5;
+    }
+    .widget-footer {
+        text-align: center;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 2px solid #f1f5f9;
+    }
+    .widget-footer a {
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .widget-footer a:hover {
+        background: #eff6ff;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 32px 20px;
+        color: #6b7280;
+    }
+    .empty-state-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+    .empty-state h4 {
+        font-size: 16px;
+        color: #374151;
+        margin: 0 0 6px 0;
+    }
+    .empty-state p {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0 0 16px 0;
+    }
     </style></head>
 <body>
 <aside class="sidebar">
@@ -621,6 +807,28 @@
 </div>
 </div>
 </section>
+
+<!-- Widget de Ações Rápidas -->
+<section class="widget-acoes-rapidas">
+    <div class="widget-header">
+        <h3>Atendimentos Pendentes</h3>
+        <a href="/dashboard-medico.html">Ver todos os pacientes →</a>
+    </div>
+    
+    <div id="fila-rapida-container" class="fila-rapida">
+        <!-- Os BIDs serão inseridos aqui via JavaScript -->
+        <div class="bid-card">
+            <p style="text-align: center; color: #94a3b8;">Carregando atendimentos...</p>
+        </div>
+    </div>
+    
+    <div class="widget-footer">
+        <a href="/demo.html">
+            🧪 Criar um paciente demo para testar
+        </a>
+    </div>
+</section>
+
 <!-- Bottom section -->
 <section class="bottom">
 <div class="card">
@@ -823,13 +1031,167 @@
             }
         }
 
+        // =============================================
+        // WIDGET DE AÇÕES RÁPIDAS - ATENDIMENTOS
+        // =============================================
+        
+        // Dados mock dos BIDs (substituir por dados reais da API)
+        const bidsDisponiveis = [
+            {
+                id: 'karina-001',
+                nome: 'Karina Pinheiro',
+                idade: 31,
+                especialidade: 'Psiquiatria',
+                valor: 150.00,
+                tipo: 'novo',
+                urgencia: 'alta',
+                sintomas: 'Dor de cabeça persistente há 3 dias'
+            },
+            {
+                id: 'solange-002',
+                nome: 'Solange Vicentini',
+                idade: 55,
+                especialidade: 'Psiquiatria',
+                horario: '17:00',
+                tipo: 'agendado',
+                queixas: 'Consulta de rotina'
+            }
+        ];
+
+        // Função para renderizar os BIDs
+        function renderizarBids() {
+            const container = document.getElementById('fila-rapida-container');
+            
+            if (!bidsDisponiveis || bidsDisponiveis.length === 0) {
+                // Estado vazio
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">✨</div>
+                        <h4>Nenhum atendimento pendente</h4>
+                        <p>Você está em dia! Novos BIDs aparecerão aqui automaticamente.</p>
+                        <a href="/demo.html" style="display: inline-block; margin-top: 12px; padding: 8px 20px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                            Criar Paciente Demo
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Renderizar cada BID
+            container.innerHTML = bidsDisponiveis.map(bid => {
+                if (bid.tipo === 'novo') {
+                    return `
+                        <div class="bid-card">
+                            <span class="badge-novo">NOVA OFERTA</span>
+                            <h4>${bid.nome} · ${bid.idade} anos</h4>
+                            <p>
+                                <strong>Especialidade:</strong> ${bid.especialidade}<br>
+                                <strong>Valor oferecido:</strong> R$ ${bid.valor.toFixed(2)}<br>
+                                <strong>Queixa:</strong> ${bid.sintomas}
+                            </p>
+                            <div class="bid-card-actions">
+                                <button onclick="aceitarBid('${bid.id}')" data-testid="button-aceitar-${bid.id}">
+                                    ✅ Aceitar Consulta
+                                </button>
+                                <button class="btn-secondary" onclick="verDetalhes('${bid.id}')" data-testid="button-detalhes-${bid.id}">
+                                    Ver mais
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (bid.tipo === 'agendado') {
+                    return `
+                        <div class="bid-card">
+                            <span class="badge-agendado">AGENDADO ${bid.horario}</span>
+                            <h4>${bid.nome} · ${bid.idade} anos</h4>
+                            <p>
+                                <strong>Especialidade:</strong> ${bid.especialidade}<br>
+                                <strong>Horário:</strong> Hoje às ${bid.horario}<br>
+                                <strong>Motivo:</strong> ${bid.queixas}
+                            </p>
+                            <div class="bid-card-actions">
+                                <button onclick="iniciarConsulta('${bid.id}')" data-testid="button-consulta-${bid.id}">
+                                    🎥 Entrar em Consulta
+                                </button>
+                                <button class="btn-secondary" onclick="verProntuario('${bid.id}')" data-testid="button-phr-${bid.id}">
+                                    📋 Ver PHR
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // Função: Aceitar BID
+        function aceitarBid(bidId) {
+            console.log('✅ Aceitando BID:', bidId);
+            
+            // Salvar no sessionStorage
+            sessionStorage.setItem('bidAceito', bidId);
+            sessionStorage.setItem('consultaIniciada', new Date().toISOString());
+            
+            // Feedback visual
+            const button = event.target;
+            const card = button.closest('.bid-card');
+            if (card) {
+                card.style.transform = 'scale(0.95)';
+                card.style.opacity = '0.7';
+            }
+            
+            // Redirecionar para consulta
+            setTimeout(() => {
+                window.location.href = `/consulta.html?bid=${bidId}&source=dashboard`;
+            }, 300);
+        }
+
+        // Função: Ver mais detalhes
+        function verDetalhes(bidId) {
+            console.log('👁️ Vendo detalhes do BID:', bidId);
+            window.location.href = `/dashboard-medico.html#bid-${bidId}`;
+        }
+
+        // Função: Iniciar consulta agendada
+        function iniciarConsulta(pacienteId) {
+            console.log('🎥 Iniciando consulta:', pacienteId);
+            
+            sessionStorage.setItem('pacienteAtual', pacienteId);
+            sessionStorage.setItem('consultaIniciada', new Date().toISOString());
+            
+            window.location.href = `/consulta.html?paciente=${pacienteId}&source=dashboard`;
+        }
+
+        // Função: Ver prontuário
+        function verProntuario(pacienteId) {
+            console.log('📋 Abrindo prontuário:', pacienteId);
+            window.location.href = `/phr.html?paciente=${pacienteId}`;
+        }
+
         // Inicializar
         document.addEventListener('DOMContentLoaded', function() {
             createHeatmap();
+            renderizarBids(); // Renderizar o widget
+            
             console.log('📊 Dashboard Teste com Chart.js carregado com sucesso!');
             console.log('✅ Gráficos: KPIs, Consultas por Hora, NPS, Fila de Prioridade');
             console.log('🎨 Interface: Sidebar, módulos, heatmap, timeline');
+            console.log('⚡ Widget de Ações Rápidas: carregado');
+            
+            // Atualizar widget a cada 30 segundos (simular novos BIDs)
+            setInterval(() => {
+                // Em produção, fazer fetch na API aqui
+                // fetch('/api/bids/pendentes').then(...)
+                renderizarBids();
+            }, 30000);
         });
+        
+        // Detectar se veio de cadastro (welcome=true)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('welcome') === 'true') {
+            setTimeout(() => {
+                alert('Bem-vindo ao TeleMed! Este é seu painel de controle. 👋');
+            }, 500);
+        }
 
         // util: pega/guarda dados do último agendamento
         (function(){

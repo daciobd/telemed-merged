@@ -67,7 +67,7 @@
       if(!res.ok) throw new Error(res.error || 'Falha no login');
 
       // redireciona
-      if (role === 'medico') location.href = '../app/medico.html';
+      if (role === 'medico') location.href = '../dashboard/';
       else                   location.href = '../app/paciente.html';
     }catch(e){ err.textContent = e.message; }
   };
