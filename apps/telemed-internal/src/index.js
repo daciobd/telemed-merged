@@ -414,7 +414,28 @@ app.get('/medicaldesk-demo/agenda.html', (req, res) => {
   res.redirect(301, '/agenda.html');
 });
 
-console.log('🔁 Redirects 301 configurados: stubs QA → páginas reais');
+// Redirects convenientes: páginas QA/Docs sem /public/
+app.get('/galeria-paginas.html', (req, res) => {
+  console.log('[REDIRECT 301] /galeria-paginas.html → /public/galeria-paginas.html');
+  res.redirect(301, '/public/galeria-paginas.html');
+});
+
+app.get('/tour.html', (req, res) => {
+  console.log('[REDIRECT 301] /tour.html → /public/tour.html');
+  res.redirect(301, '/public/tour.html');
+});
+
+app.get('/bem-vindo.html', (req, res) => {
+  console.log('[REDIRECT 301] /bem-vindo.html → /public/bem-vindo.html');
+  res.redirect(301, '/public/bem-vindo.html');
+});
+
+app.get('/tester-guide.html', (req, res) => {
+  console.log('[REDIRECT 301] /tester-guide.html → /public/tester-guide.html');
+  res.redirect(301, '/public/tester-guide.html');
+});
+
+console.log('🔁 Redirects 301 configurados: stubs QA → páginas reais + docs QA');
 
 // ===== SERVE FRONTEND ESTÁTICO =====
 // IMPORTANTE: express.static DEVE vir DEPOIS do proxy MedicalDesk e ANTES do SPA Fallback!
@@ -465,6 +486,13 @@ const requireToken = (req, res, next) => {
   // Endpoints públicos (sem auth)
   const publicPaths = ['/healthz', '/health', '/api/health', '/'];
   if (publicPaths.includes(req.path)) return next();
+  
+  // Arquivos estáticos: HTML, CSS, JS, imagens, etc (públicos)
+  // Isso permite acesso direto a páginas de documentação e assets
+  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf|webp|avif)$/i.test(req.path);
+  if (isStaticAsset) {
+    return next();
+  }
   
   // Proxy auction: passa direto (BidConnect faz autenticação própria)
   if (req.path.startsWith('/api/auction/')) {
