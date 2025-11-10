@@ -1139,9 +1139,9 @@
                 card.style.opacity = '0.7';
             }
             
-            // Redirecionar para consulta
+            // Redirecionar para consulta (versão com Jitsi real)
             setTimeout(() => {
-                window.location.href = `/consulta.html?bid=${bidId}&source=dashboard`;
+                window.location.href = `/consulta/?bid=${bidId}&source=dashboard`;
             }, 300);
         }
 
@@ -1158,7 +1158,7 @@
             sessionStorage.setItem('pacienteAtual', pacienteId);
             sessionStorage.setItem('consultaIniciada', new Date().toISOString());
             
-            window.location.href = `/consulta.html?paciente=${pacienteId}&source=dashboard`;
+            window.location.href = `/consulta/?paciente=${pacienteId}&source=dashboard`;
         }
 
         // Função: Ver prontuário
