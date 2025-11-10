@@ -1141,8 +1141,8 @@ app.all('/api/ai/ask', demoAiHandler);
 
 // Arquivos estáticos configurados acima (antes do SPA fallback)
 
-app.listen(PORT, () => {
-  console.log('[telemed] listening on', PORT);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('[telemed] listening on 0.0.0.0:' + PORT);
   
   // Iniciar job de limpeza automática
   startCleanupJob();
