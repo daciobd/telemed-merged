@@ -197,6 +197,14 @@
     .tm-dev-on .tm-locked::after{ display:none; }
   </style>
 
+  <!-- Evita erro setHeaderH is not defined -->
+  <script>
+    // evita que scripts parem caso alguma parte chame setHeaderH
+    if (typeof window.setHeaderH !== "function") {
+      window.setHeaderH = () => {};
+    }
+  </script>
+  
   <script>
   (function(){
     // ===== Configurações =====

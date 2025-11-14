@@ -1,0 +1,108 @@
+{
+  "idPersona": "5150400",
+  "nomeCompleto": "Éryka Catherine Mendes",
+  "cpf": "15847952036",
+  "idade": 29,
+  "nascimento": "1995-12-08",
+  "genero": "Feminino",
+  "contatos": {
+    "telefone": "+55 21 96017-25613",
+    "email": "erka.c.mendes@gmail.com"
+  },
+  "endereco": {
+    "cidade": "Rio de Janeiro",
+    "uf": "RJ",
+    "cep": "22245-020"
+  },
+  "parametros": {
+    "altura": "170cm",
+    "peso": "65kg",
+    "pa": "115/75 mmHg",
+    "cintura": "78cm",
+    "imc": "22.5"
+  },
+  "equipe": [
+    "Dra. Patricia Santos - Cardiologista",
+    "Dr. Fernando Costa - Clínico Geral",
+    "Dra. Mariana Silva - Ginecologista"
+  ],
+  "alergias": ["Contraste iodado", "Sulfa"],
+  "patologias": ["Prolapso da válvula mitral leve", "TPM"],
+  "medicacoes": [
+    "Anticoncepcional contínuo",
+    "Magnésio 400mg - 1x/dia",
+    "Ômega 3 1g - 1x/dia"
+  ],
+  "eventos": [
+    {
+      "id": "ev1", 
+      "tipo": "VIDEO_CONSULTA",
+      "titulo": "Consulta Cardiológica",
+      "data": "2025-08-25T11:00:00Z",
+      "profissional": "Dra. Patricia Santos",
+      "especialidade": "Cardiologia"
+    },
+    {
+      "id": "ev2",
+      "tipo": "EXAME",
+      "titulo": "Ecocardiograma de controle",
+      "data": "2025-08-20T14:30:00Z",
+      "profissional": "Instituto do Coração",
+      "especialidade": "Cardiologia"
+    }
+  ],
+  "consultas": [
+    {
+      "data": "2025-08-25T11:00:00Z",
+      "especialidade": "Cardiologia",
+      "profissional": "Dra. Patricia Santos",
+      "registro": {
+        "queixa": "Palpitações e dor no peito eventual",
+        "doencaAtual": "Paciente jovem com prolapso mitral conhecido, refere palpitações esporádicas, sem sintomas limitantes",
+        "hipoteses": ["Prolapso válvula mitral benigno", "Arritmias funcionais"],
+        "conduta": "Tranquilização, orientações sobre atividade física, controle do estresse",
+        "prescricoes": [
+          {"produto": "Magnésio quelato 400mg", "posologia": "1 cápsula ao dia"},
+          {"produto": "Valeriana 500mg", "posologia": "1 cápsula à noite se ansiedade"}
+        ],
+        "encaminhamentos": []
+      }
+    }
+  ],
+  "laboratoriais": [
+    {
+      "data": "2025-08-12",
+      "exame": "Hemograma + bioquímica",
+      "resultado": "Normal",
+      "valores": "Todos os parâmetros dentro da normalidade",
+      "laboratorio": "Lab. São Marcos"
+    },
+    {
+      "data": "2025-08-12", 
+      "exame": "Perfil tireoidiano",
+      "resultado": "Normal",
+      "valores": "TSH: 1.8 μUI/mL, T4L: 1.1 ng/dL",
+      "laboratorio": "Lab. São Marcos"
+    }
+  ],
+  "estudos": [
+    {
+      "data": "2025-08-20",
+      "tipo": "Ecocardiograma",
+      "achados": "Prolapso mitral leve sem regurgitação significativa, função sistólica normal, FEVE 65%",
+      "servico": "Instituto do Coração"
+    },
+    {
+      "data": "2025-07-10",
+      "tipo": "Holter 24h",
+      "achados": "Ritmo sinusal, raras extrassístoles ventriculares isoladas, sem arritmias significativas",
+      "servico": "CardioCenter"
+    }
+  ],
+  "vacinas": [
+    {"vacina": "COVID-19 (3ª dose)", "data": "2024-10-15"},
+    {"vacina": "Influenza", "data": "2025-03-25"},
+    {"vacina": "HPV (3ª dose)", "data": "2023-08-20"}
+  ],
+  "notasPrivadas": "Paciente jovem, ansiosa com as palpitações. Importante reforçar natureza benigna do prolapso mitral."
+}

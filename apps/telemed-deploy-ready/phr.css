@@ -1,0 +1,148 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f8fafc;
+  color: #2d3748;
+  line-height: 1.5;
+}
+
+.topbar {
+  background: #2b6cb0;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.topbar .back {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.topbar .back:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.hd {
+  background: #e2e8f0;
+  color: #2d3748;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #cbd5e0;
+}
+
+.bd {
+  padding: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.row {
+  display: flex;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.row .k {
+  font-weight: 600;
+  min-width: 140px;
+  color: #4a5568;
+}
+
+.timeline .item {
+  background: #f7fafc;
+  border-left: 4px solid #3182ce;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.timeline .item b {
+  color: #2d3748;
+}
+
+.timeline .small {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.timeline .empty {
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .topbar {
+    padding: 1rem;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .row .k {
+    min-width: auto;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Enhanced visual hierarchy */
+.timeline .item:hover {
+  background: #edf2f7;
+  transition: background 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  transition: box-shadow 0.2s;
+}

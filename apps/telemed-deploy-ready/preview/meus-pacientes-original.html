@@ -412,7 +412,7 @@
                 </thead>
                 <tbody>
                     <tr data-especialidade="Clínica Geral">
-                        <td class="patient-id">335602</td>
+                        <td class="patient-id">3335602</td>
                         <td class="patient-name">Dhelicane Da Silva Costa</td>
                         <td>032.689.843-70</td>
                         <td>23/09/1988</td>
@@ -422,7 +422,7 @@
                         <td>+55 21 99504-0225</td>
                         <td>Clínica Geral</td>
                         <td class="action-buttons">
-                            <button class="action-btn" onclick="viewPHR('335602')">📋 Ver PHR</button>
+                            <button class="action-btn" onclick="viewPHR('3335602')">📋 Ver PHR</button>
                             <button class="action-btn secondary" onclick="newOfflineAttention('335602')">🏥 Nova Atenção</button>
                         </td>
                     </tr>
@@ -544,8 +544,8 @@
             // Abrir PHR do paciente na nova página dedicada
             console.log(`📋 Abrindo PHR do paciente ${patientId}`);
             
-            // Abrir página de Registro de Saúde com ID do paciente
-            window.open(`/registro-saude?patientId=${patientId}`, '_blank');
+            // ✅ Usar novo formato: /phr.html?id=ID (dados ricos dos JSONs)
+            window.open(`/phr.html?id=${patientId}`, '_blank');
         }
 
         function newOfflineAttention(patientId) {

@@ -154,8 +154,10 @@ export default function MeusPacientesDoc24() {
   const paginaAtual = filtrados.slice(inicio, inicio + porPagina);
 
   // Ações
+  const onlyDigits = (v: unknown) => String(v ?? '').replace(/\D/g,'');
+  
   const verPHR = (id: string) => {
-    window.location.href = `/phr-react.html?id=${id}`;
+    window.location.href = `/phr.html?id=${id}`;
   };
 
   const novaAtencao = (id: string) => {
@@ -308,10 +310,12 @@ export default function MeusPacientesDoc24() {
                     <td className="px-5 py-3 align-top" data-testid={`text-telefone-${p.idPersona}`}>{p.telefone || "-"}</td>
                     <td className="px-5 py-3 align-top">
                       <div className="flex gap-2">
-                        <button 
+                        <a 
+                          href={`/phr.html?id=${onlyDigits(p.idPersona)}`}
+                          title={`/phr.html?id=${onlyDigits(p.idPersona)}`}
+                          onClick={(e) => e.stopPropagation()}
                           data-testid={`button-ver-phr-${p.idPersona}`}
-                          onClick={() => verPHR(p.idPersona)} 
-                          className="rounded-md bg-[#1282db] px-3 py-1.5 text-white hover:bg-[#0e6fb9]">Ver PHR</button>
+                          className="rounded-md bg-[#1282db] px-3 py-1.5 text-white hover:bg-[#0e6fb9] inline-block text-center">Ver PHR</a>
                         <button 
                           data-testid={`button-nova-atencao-${p.idPersona}`}
                           onClick={() => novaAtencao(p.idPersona)} 

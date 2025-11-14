@@ -1,356 +1,106 @@
-import React, { useEffect, useMemo, useState } from "react";
+import "./phr-doc24.css";
+import React, { useEffect, useState } from "react";
 
-/**
- * /phr/:id — Registro de Saúde Pessoal (Doc24 → Telemed)
- *
- * ✔️ Cards: Dados pessoais, Notas privadas, Parâmetros básicos, Equipe de Saúde,
- *           Alergias, Patologias atuais, Medicação atual, Laboratoriais, Estudos, Vacinas
- * ✔️ Histórico de Eventos (timeline) com "Vídeo Consulta" e link Detalhe
- * ✔️ Rotas: /consulta?patientId=:id  |  voltar para /meus-pacientes
- * ✔️ Mock de dados; pronto para trocar por API
- */
-
-interface Evento {
-  id: string;
-  tipo: "VIDEO_CONSULTA" | "TEXTO" | "EXAME";
-  titulo: string;
-  data: string; // ISO
-  profissional: string;
-  especialidade?: string;
-}
-
-interface PHRData {
+type Phr = {
   idPersona: string;
   nomeCompleto: string;
   cpf?: string;
-  idade: number;
-  nascimento: string; // ISO
-  genero: "Masculino" | "Feminino" | "Outro";
-  nacionalidade?: string;
-  equipe: string[];
-  alergias: string[];
-  patologias: string[];
-  medicacoes: string[];
-  laboratoriais: string[];
-  estudos: string[];
-  vacinas: string[];
-  parametros?: {
-    altura?: number;
-    peso?: number;
-    cintura?: number;
-    pa?: string;
-    imc?: number;
-  };
+  idade?: number;
+  nascimento?: string;
+  genero?: string;
   notasPrivadas?: string;
-  eventos: Evento[];
-}
-
-const MOCK_PHR: Record<string, PHRData> = {
-  "3335602": {
-    idPersona: "3335602",
-    nomeCompleto: "Dheliciane Da Silva Costa",
-    cpf: "03262894370",
-    idade: 36,
-    nascimento: "1988-09-23",
-    genero: "Feminino",
-    nacionalidade: "Brasil",
-    equipe: ["Carla Nacao Nonato", "Paula Oliveira Amarante", "Lorrany Pereira"],
-    alergias: [],
-    patologias: [],
-    medicacoes: [],
-    laboratoriais: [],
-    estudos: [],
-    vacinas: [],
-    parametros: { altura: undefined, peso: undefined, pa: undefined, imc: undefined, cintura: undefined },
-    notasPrivadas: "",
-    eventos: [
-      { id: "e1", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-08-13T12:36:00Z", profissional: "Dácio Bonoldi Dutra", especialidade: "Psiquiatria" },
-      { id: "e0", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-08-12T10:10:00Z", profissional: "Lorrany Pereira", especialidade: "Psicologia" },
-    ],
-  },
-  "4537263": {
-    idPersona: "4537263", 
-    nomeCompleto: "Hadassa Da Silva Santos Garcia",
-    cpf: "14109089760",
-    idade: 34,
-    nascimento: "1991-08-01",
-    genero: "Feminino",
-    nacionalidade: "Brasil",
-    equipe: ["Dr. João Silva", "Enfª Maria Santos"],
-    alergias: ["Dipirona"],
-    patologias: ["Ansiedade", "Depressão leve"],
-    medicacoes: ["Sertralina 50mg", "Alprazolam 0,25mg"],
-    laboratoriais: ["Hemograma completo (12/2024)", "Glicemia (11/2024)"],
-    estudos: ["Ressonância craniana (10/2024)"],
-    vacinas: ["COVID-19 (bivalente)", "Influenza 2024"],
-    parametros: { altura: 165, peso: 62, pa: "120x80", imc: 22.8, cintura: 75 },
-    notasPrivadas: "Paciente com histórico de ansiedade, acompanhamento psiquiátrico regular.",
-    eventos: [
-      { id: "e2", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-09-15T14:30:00Z", profissional: "Dr. João Silva", especialidade: "Psiquiatria" },
-      { id: "e3", tipo: "EXAME", titulo: "Exames Laboratoriais", data: "2025-09-10T09:00:00Z", profissional: "Lab. Central", especialidade: "Laboratório" },
-    ],
-  },
-  "4849323": {
-    idPersona: "4849323",
-    nomeCompleto: "William Lopes Do Nascimento", 
-    cpf: "02876267179",
-    idade: 27,
-    nascimento: "1997-09-10",
-    genero: "Masculino",
-    nacionalidade: "Brasil",
-    equipe: ["Dra. Ana Costa"],
-    alergias: [],
-    patologias: ["Hipertensão arterial"],
-    medicacoes: ["Losartana 50mg"],
-    laboratoriais: ["Perfil lipídico (08/2024)"],
-    estudos: [],
-    vacinas: ["Hepatite B", "COVID-19"],
-    parametros: { altura: 178, peso: 85, pa: "140x90", imc: 26.8, cintura: 95 },
-    notasPrivadas: "",
-    eventos: [
-      { id: "e4", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-09-05T11:15:00Z", profissional: "Dra. Ana Costa", especialidade: "Cardiologia" },
-    ],
-  },
-  "5150400": {
-    idPersona: "5150400",
-    nomeCompleto: "Erika Carvalho Mendes",
-    cpf: "11892779722", 
-    idade: 38,
-    nascimento: "1987-05-04",
-    genero: "Feminino",
-    nacionalidade: "Brasil",
-    equipe: ["Dr. Carlos Mendes"],
-    alergias: [],
-    patologias: [],
-    medicacoes: [],
-    laboratoriais: ["Check-up completo (07/2024)"],
-    estudos: ["Ecocardiograma (06/2024)"],
-    vacinas: ["Todas em dia"],
-    parametros: { altura: 160, peso: 58, pa: "110x70", imc: 22.7, cintura: 70 },
-    notasPrivadas: "",
-    eventos: [
-      { id: "e5", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-08-20T16:00:00Z", profissional: "Dr. Carlos Mendes", especialidade: "Cardiologia" },
-    ],
-  },
-  "5155665": {
-    idPersona: "5155665",
-    nomeCompleto: "Natalia Da Silva Mello",
-    cpf: "09941565708",
-    idade: 42,
-    nascimento: "1982-12-27",
-    genero: "Feminino", 
-    nacionalidade: "Brasil",
-    equipe: ["Dra. Lucia Pereira"],
-    alergias: [],
-    patologias: ["Diabetes tipo 2"],
-    medicacoes: ["Metformina 850mg"],
-    laboratoriais: ["Glicose jejum (09/2024)", "HbA1c (08/2024)"],
-    estudos: [],
-    vacinas: ["COVID-19", "Influenza 2024"],
-    parametros: { altura: 155, peso: 68, pa: "130x85", imc: 28.3, cintura: 88 },
-    notasPrivadas: "Paciente diabética, controle glicêmico estável.",
-    eventos: [
-      { id: "e6", tipo: "VIDEO_CONSULTA", titulo: "VÍDEO CONSULTA", data: "2025-09-12T10:30:00Z", profissional: "Dra. Lucia Pereira", especialidade: "Endocrinologia" },
-    ],
-  },
-};
-
-const Card: React.FC<{ title: string; children?: React.ReactNode; right?: React.ReactNode; tone?: "neutral"|"green"|"red"|"blue" }>=({title,children,right,tone="neutral"})=>{
-  const tones: Record<string,string>={
-    neutral:"border-slate-200",
-    green:"border-emerald-200",
-    red:"border-rose-200", 
-    blue:"border-sky-200",
-  };
-  return (
-    <div className={`rounded-xl border ${tones[tone]} bg-white shadow-sm`}>
-      <div className="flex items-center justify-between border-b px-4 py-2 text-slate-700">
-        <div className="text-sm font-semibold">{title}</div>
-        {right}
-      </div>
-      <div className="p-4 text-sm text-slate-700">{children}</div>
-    </div>
-  );
+  parametros?: { altura?:string; peso?:string; pa?:string; cintura?:string; imc?:string };
+  eventos?: Array<{ id:string; tipo:string; titulo:string; data:string; profissional?:string; especialidade?:string }>;
+  equipe?: string[];
+  alergias?: string[];
+  patologias?: string[];
+  medicacoes?: string[];
 };
 
 export default function PHRDoc24() {
-  const params = new URLSearchParams(window.location.search);
-  // Também suportar /phr/:id (usando pathname)
-  const pathId = (()=>{
-    const m = window.location.pathname.match(/\/phr\/(\w+)/);
-    return m?m[1]:null;
-  })();
-  const id = pathId || params.get("id") || "3335602";
+  const sp = new URLSearchParams(window.location.search);
+  const pathId = (window.location.pathname.match(/\/phr\/(\w+)/) || [])[1];
+  const id = (pathId || sp.get("patientId") || sp.get("id") || "3335602").replace(/\D/g,"");
+  const [data, setData] = useState<Phr | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  const [data, setData] = useState<PHRData | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/phr/${id}`)
+      .then(r => r.ok ? r.json() : Promise.reject(new Error("404")))
+      .then(d => { if (alive) setData(d); })
+      .catch(async () => {
+        // fallback estático
+        try {
+          const r = await fetch(`/data/phr/${id}.json`);
+          if (!r.ok) throw new Error("no static");
+          const d = await r.json();
+          if (alive) setData(d);
+        } catch {
+          if (alive) setErr(`PHR não encontrado para ID: ${id}.`);
+        }
+      });
+    return () => { alive = false; };
+  }, [id]);
 
-  useEffect(()=>{
-    // Trocar por fetch(`/api/phr/${id}`)
-    setData(MOCK_PHR[id] || null);
-  },[id]);
-
-  if(!data){
-    return (
-      <div className="min-h-screen bg-[#f4f6f8] p-6">
-        <div className="text-slate-600">
-          PHR não encontrado para ID: {id}. 
-          <br/>
-          <a className="text-sky-600 underline" href="/meus-pacientes-react.html">← Voltar para Meus Pacientes</a>
-        </div>
-      </div>
-    );
-  }
-
-  const DetalheEvento = (ev: Evento)=> (
-    <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid={`evento-${ev.id}`}>
-      <div className="flex items-center justify-between">
-        <div className="text-[13px] font-semibold" data-testid={`evento-titulo-${ev.id}`}>{ev.titulo}</div>
-        <a 
-          href={`/consulta.html?patientId=${data.idPersona}&evento=${ev.id}`} 
-          className="text-[12px] text-sky-600 underline"
-          data-testid={`evento-detalhe-${ev.id}`}>
-          Detalhe
-        </a>
-      </div>
-      <div className="mt-1 text-[12px] text-slate-600" data-testid={`evento-especialidade-${ev.id}`}>
-        {ev.especialidade} • {new Date(ev.data).toLocaleString('pt-BR')}
-      </div>
-      <div className="text-[12px] text-slate-600" data-testid={`evento-profissional-${ev.id}`}>{ev.profissional}</div>
+  if (err) return (
+    <div className="phr-wrap" style={{padding:16}}>
+      <a href="/meus-pacientes" className="link-back">← Voltar para Meus Pacientes</a>
+      <div style={{marginTop:8,color:"#fca5a5"}}>{err}</div>
     </div>
   );
 
+  if (!data) return <div className="phr-wrap" style={{padding:16}}>Carregando PHR…</div>;
+
+  const p = data;
   return (
-    <div className="min-h-screen bg-[#f4f6f8]">
-      {/* Topbar */}
-      <header className="w-full bg-[#1282db] text-white">
-        <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold" data-testid="logo-doc24">doc24</div>
-          <div className="text-sm opacity-90">
-            <a className="underline" href="/meus-pacientes-react.html" data-testid="link-voltar-header">← Voltar</a>
-          </div>
-        </div>
-      </header>
+    <div className="phr-wrap">
+      <div className="topbar">
+        PHR — {p.nomeCompleto} <span style={{opacity:.8, fontWeight:400}}> · ID Persona: {p.idPersona}</span>
+        <a href="/meus-pacientes" className="link-back" style={{float:"right"}}>← Voltar</a>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800" data-testid="titulo-phr">
-            PHR - {data.nomeCompleto}
-          </h1>
-          <div className="text-sm text-slate-600" data-testid="subtitulo-phr">
-            ID Persona: {data.idPersona}
+      <div style={{padding:"12px 16px"}}>
+        <section className="section">
+          <div className="hd">Dados pessoais</div>
+          <div className="bd grid-2">
+            <div className="row"><div className="k">Nome</div><div>{p.nomeCompleto}</div></div>
+            <div className="row"><div className="k">ID Persona</div><div>{p.idPersona}</div></div>
+            <div className="row"><div className="k">CPF</div><div>{p.cpf || "—"}</div></div>
+            <div className="row"><div className="k">Idade</div><div>{p.idade ?? "—"}</div></div>
+            <div className="row"><div className="k">Nascimento</div><div>{p.nascimento || "—"}</div></div>
+            <div className="row"><div className="k">Gênero</div><div>{p.genero || "—"}</div></div>
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* Coluna 1 */}
-          <div className="md:col-span-2 space-y-4">
-            <Card title="Dados pessoais" right={<a className="text-sky-600 text-sm underline" href="#" data-testid="editar-dados-pessoais">Editar</a>}>
-              <div className="flex items-start gap-4">
-                <div className="h-16 w-16 rounded bg-slate-200" data-testid="avatar-placeholder" />
-                <div>
-                  <div className="text-base font-semibold" data-testid="nome-completo">{data.nomeCompleto}</div>
-                  <div className="text-sm text-slate-600" data-testid="idade-cpf">{data.idade} anos, CPF {data.cpf || "-"}</div>
-                  <div className="text-sm text-slate-600" data-testid="nascimento">Data de nascimento: {new Date(data.nascimento).toLocaleDateString('pt-BR')}</div>
-                  <div className="text-sm text-slate-600" data-testid="genero-nacionalidade">Gênero: {data.genero} • Nacionalidade: {data.nacionalidade || "-"}</div>
-                </div>
+        <section className="section">
+          <div className="hd">Histórico de Eventos</div>
+          <div className="bd timeline">
+            {(p.eventos?.length ? p.eventos : []).map(ev => (
+              <div key={ev.id} className="item">
+                <b>{ev.titulo}</b> — {ev.tipo} · {new Date(ev.data).toLocaleString()}
+                {ev.profissional && <> · {ev.profissional}</>}
+                {ev.especialidade && <> · {ev.especialidade}</>}
               </div>
-            </Card>
-
-            <Card title="Notas privadas" right={<button className="rounded-md border px-3 py-1 text-sm" data-testid="adicionar-nota">Adicionar</button>}>
-              {data.notasPrivadas ? (
-                <div data-testid="notas-privadas-conteudo">{data.notasPrivadas}</div>
-              ) : (
-                <div className="text-slate-500" data-testid="sem-notas">Sem notas registradas</div>
-              )}
-            </Card>
-
-            <Card title="Parâmetros básicos" right={<a className="text-sky-600 text-sm underline" href="#" data-testid="editar-parametros">Editar</a>}>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                <div data-testid="parametro-altura">Altura: <span className="text-slate-500">{data.parametros?.altura ? `${data.parametros.altura}cm` : "sem dados"}</span></div>
-                <div data-testid="parametro-peso">Peso: <span className="text-slate-500">{data.parametros?.peso ? `${data.parametros.peso}kg` : "sem dados"}</span></div>
-                <div data-testid="parametro-pa">Pressão Arterial: <span className="text-slate-500">{data.parametros?.pa ?? "sem dados"}</span></div>
-                <div data-testid="parametro-cintura">Cintura: <span className="text-slate-500">{data.parametros?.cintura ? `${data.parametros.cintura}cm` : "sem dados"}</span></div>
-                <div data-testid="parametro-imc">I.M.C.: <span className="text-slate-500">{data.parametros?.imc ?? "sem dados"}</span></div>
-              </div>
-            </Card>
-
-            <Card title="Histórico de Eventos">
-              <div className="space-y-3" data-testid="lista-eventos">
-                {data.eventos.map((ev)=> (
-                  <DetalheEvento key={ev.id} {...ev} />
-                ))}
-                {data.eventos.length === 0 && (
-                  <div className="text-slate-500" data-testid="sem-eventos">Sem eventos registrados</div>
-                )}
-              </div>
-            </Card>
+            )) || "Sem eventos registrados."}
           </div>
+        </section>
 
-          {/* Coluna 2 */}
-          <div className="space-y-4">
-            <Card title="Equipe de Saúde" tone="green" right={<div className="text-xs text-slate-500" data-testid="contador-equipe">{data.equipe.length} prof.</div>}>
-              {data.equipe.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-equipe">
-                  {data.equipe.map((n)=> <li key={n}>{n}</li>)}
-                </ul>
-              ) : (
-                <div className="text-slate-500" data-testid="sem-equipe">Sem equipe registrada</div>
-              )}
-            </Card>
+        <section className="section">
+          <div className="hd">Equipe de Saúde</div>
+          <div className="bd">{(p.equipe?.length ? p.equipe.join(", ") : "—")}</div>
+        </section>
 
-            <Card title="Alergias" tone="red" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-alergia">Adicionar</button>}>
-              {data.alergias.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-alergias">{data.alergias.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-alergias">Sem alergias registradas</div>}
-            </Card>
+        <section className="section">
+          <div className="hd">Alergias</div>
+          <div className="bd">{(p.alergias?.length ? p.alergias.join(", ") : "—")}</div>
+        </section>
 
-            <Card title="Patologias Atuais" tone="red" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-patologia">Adicionar</button>}>
-              {data.patologias.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-patologias">{data.patologias.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-patologias">Sem patologias registradas</div>}
-            </Card>
-
-            <Card title="Medicação Atual" tone="blue" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-medicacao">Adicionar</button>}>
-              {data.medicacoes.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-medicacoes">{data.medicacoes.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-medicacoes">Sem medicações registradas</div>}
-            </Card>
-
-            <Card title="Laboratoriais" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-laboratorial">Adicionar</button>}>
-              {data.laboratoriais.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-laboratoriais">{data.laboratoriais.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-laboratoriais">Sem laboratoriais registrados</div>}
-            </Card>
-
-            <Card title="Estudos" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-estudo">Adicionar</button>}>
-              {data.estudos.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-estudos">{data.estudos.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-estudos">Sem estudos registrados</div>}
-            </Card>
-
-            <Card title="Vacinas" right={<button className="rounded-md border px-2 py-1 text-xs" data-testid="adicionar-vacina">Adicionar</button>}>
-              {data.vacinas.length ? (
-                <ul className="list-inside list-disc text-sm" data-testid="lista-vacinas">{data.vacinas.map(a=> <li key={a}>{a}</li>)}</ul>
-              ) : <div className="text-slate-500" data-testid="sem-vacinas">Sem vacinas registradas</div>}
-            </Card>
-          </div>
-        </div>
-
-        <div className="mt-6 flex gap-3">
-          <a 
-            href={`/consulta.html?patientId=${data.idPersona}`} 
-            className="rounded-md bg-[#1282db] px-4 py-2 text-white hover:bg-[#0e6fb9]"
-            data-testid="botao-iniciar-consulta">
-            Iniciar consulta
-          </a>
-          <a 
-            href="/meus-pacientes-react.html" 
-            className="rounded-md border px-4 py-2"
-            data-testid="botao-voltar">
-            Voltar
-          </a>
-        </div>
-      </main>
+        <section className="section">
+          <div className="hd">Medicação Atual</div>
+          <div className="bd">{(p.medicacoes?.length ? p.medicacoes.join(", ") : "—")}</div>
+        </section>
+      </div>
     </div>
   );
 }

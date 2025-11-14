@@ -1,0 +1,96 @@
+{
+  "idPersona": "4537263",
+  "nomeCompleto": "Hadassa Da Silva Santos Garcia",
+  "cpf": "14109089760",
+  "idade": 34,
+  "nascimento": "1991-07-01",
+  "genero": "Feminino",
+  "contatos": {
+    "telefone": "+55 21 96018-4773",
+    "email": "silvadassa@gmail.com"
+  },
+  "endereco": {
+    "cidade": "Niterói",
+    "uf": "RJ",
+    "cep": "24020-040"
+  },
+  "parametros": {
+    "altura": "162cm",
+    "peso": "58kg",
+    "pa": "110/70 mmHg",
+    "cintura": "75cm",
+    "imc": "22.1"
+  },
+  "equipe": [
+    "Dr. Carlos Mendes - Psiquiatra",
+    "Dra. Lucia Fernandes - Psicóloga",
+    "Dr. Roberto Lima - Clínico Geral"
+  ],
+  "alergias": ["Dipirona", "Látex"],
+  "patologias": ["Transtorno de ansiedade generalizada", "Síndrome do pânico"],
+  "medicacoes": [
+    "Escitalopram 10mg - 1x/dia pela manhã",
+    "Alprazolam 0,25mg - conforme necessário",
+    "Melatonina 3mg - 1x/dia à noite"
+  ],
+  "eventos": [
+    {
+      "id": "ev1",
+      "tipo": "VIDEO_CONSULTA",
+      "titulo": "Consulta Psiquiátrica",
+      "data": "2025-08-20T16:00:00Z",
+      "profissional": "Dr. Carlos Mendes",
+      "especialidade": "Psiquiatria"
+    },
+    {
+      "id": "ev2",
+      "tipo": "TEXTO",
+      "titulo": "Sessão de Psicoterapia",
+      "data": "2025-08-18T14:00:00Z",
+      "profissional": "Dra. Lucia Fernandes",
+      "especialidade": "Psicologia"
+    }
+  ],
+  "consultas": [
+    {
+      "data": "2025-08-20T16:00:00Z",
+      "especialidade": "Psiquiatria", 
+      "profissional": "Dr. Carlos Mendes",
+      "registro": {
+        "queixa": "Crises de ansiedade e insônia",
+        "doencaAtual": "Paciente com quadro de ansiedade há 6 meses, com piora recente. Insônia inicial e despertar precoce",
+        "hipoteses": ["Transtorno de ansiedade generalizada", "Episódio depressivo leve"],
+        "conduta": "Ajuste de medicação, acompanhamento psicológico, técnicas de mindfulness",
+        "prescricoes": [
+          {"produto": "Escitalopram 15mg", "posologia": "1 comprimido ao dia pela manhã"},
+          {"produto": "Melatonina 3mg", "posologia": "1 comprimido 30min antes de dormir"}
+        ],
+        "encaminhamentos": [
+          {"destino": "Psicologia", "motivo": "Terapia cognitivo-comportamental"}
+        ]
+      }
+    }
+  ],
+  "laboratoriais": [
+    {
+      "data": "2025-08-05",
+      "exame": "TSH e T4 livre",
+      "resultado": "Normal",
+      "valores": "TSH: 2.1 μUI/mL, T4L: 1.2 ng/dL", 
+      "laboratorio": "Lab. Excellence"
+    },
+    {
+      "data": "2025-07-15",
+      "exame": "Vitamina B12 e ácido fólico",
+      "resultado": "B12 limítrofe",
+      "valores": "B12: 250 pg/mL, Ácido fólico: 8.5 ng/mL",
+      "laboratorio": "Lab. Excellence"
+    }
+  ],
+  "estudos": [],
+  "vacinas": [
+    {"vacina": "COVID-19 (3ª dose)", "data": "2024-11-20"},
+    {"vacina": "Hepatite B", "data": "2024-06-10"}
+  ],
+  "notasPrivadas": "Responde bem ao tratamento farmacológico. Importante manter acompanhamento psicológico regular."
+}

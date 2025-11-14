@@ -1,159 +1,26 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8"/>
-  <title>PHR — TeleMed</title>
-  <meta name="robots" content="noindex,nofollow">
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate"/>
-  <link rel="stylesheet" href="/css/style.css">
-  <style>
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    .skel { background:#f2f3f5; height:14px; border-radius:6px; animation:pulse 1.2s infinite linear; }
-    @keyframes pulse { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
-    .patient-summary { background:#3547e7; color:#fff; padding:16px; border-radius:10px; margin-bottom: 20px; }
-    .patient-summary h2 { margin:0; font-size: 1.8rem; }
-    .patient-summary p { margin:6px 0 0 0; opacity: 0.9; }
-    .section { background:#fff; padding:16px; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom: 16px; }
-    .section h3 { margin:0 0 8px 0; color: #2d3748; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
-    .item { background:#f8f9fb; padding:12px; border-radius:8px; margin:8px 0; border-left: 4px solid #3547e7; }
-    .item-date { font-weight: 600; color: #3547e7; font-size: 0.9rem; }
-    .item-title { font-weight: 500; margin: 4px 0; }
-    .item-details { color: #666; font-size: 0.9rem; margin-top: 4px; }
-    .empty-state { opacity:.7; text-align: center; padding: 20px; color: #666; }
-    .btn { background: #3547e7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .btn:hover { background: #2c5aa0; }
-    .btn-secondary { background: #e2e8f0; color: #4a5568; }
-    .btn-secondary:hover { background: #cbd5e0; }
-    header { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-    header h1 { margin: 0; color: #2d3748; }
-    .alert-danger { background: #fed7d7; color: #742a2a; padding: 12px; border-radius: 6px; border-left: 4px solid #e53e3e; }
-    .blocks { display: grid; gap: 16px; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="title">PHR — TeleMed</title>
+  <meta name="description" content="Personal Health Record - Registro Pessoal de Saúde" />
+  <link rel="stylesheet" href="/phr.css" />
 </head>
 <body>
-  <main class="container">
-    <header>
-      <h1>📋 Prontuário do Paciente</h1>
-      <button id="copy" class="btn btn-secondary" title="Copiar link">🔗 Copiar link</button>
-    </header>
-    <section id="top">
-      <div class="skel" style="width:40%"></div>
-      <div class="skel" style="width:30%;margin-top:8px"></div>
-    </section>
-    <section id="blocks" class="blocks" style="margin-top:20px">
-      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
-    </section>
-    <div id="error" style="display:none;color:#b00;margin-top:16px" class="alert-danger"></div>
-  </main>
-
-<script>
-(async () => {
-  console.log('📋 PHR Script iniciado');
-  const patientId = location.pathname.split('/').filter(Boolean).pop() || 
-                   new URLSearchParams(location.search).get('id') || 'PAT-123';
-  console.log('🔍 Patient ID:', patientId);
-  const $top = document.getElementById('top');
-  const $blocks = document.getElementById('blocks');
-  const $err = document.getElementById('error');
-  console.log('🎯 Elementos encontrados:', { top: !!$top, blocks: !!$blocks, err: !!$err });
-
-  const copyBtn = document.getElementById('copy');
-  copyBtn.addEventListener('click', async () => {
-    const url = location.origin + '/phr.html?id=' + patientId;
-    try { 
-      await navigator.clipboard.writeText(url); 
-      copyBtn.textContent = '✅ Copiado'; 
-      setTimeout(() => copyBtn.textContent = '🔗 Copiar link', 1400);
-    } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement('textarea');
-      textarea.value = url;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      copyBtn.textContent = '✅ Copiado';
-      setTimeout(() => copyBtn.textContent = '🔗 Copiar link', 1400);
-    }
-  });
-
-  try {
-    console.log('🚀 Iniciando carregamento PHR');
-    // auditoria (fire-and-forget)
-    fetch('/api/events', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({type:'phr_viewed', patientId})
-    }).catch(() => {});
-
-    console.log('📡 Fazendo fetch da API');
-    const resp = await fetch(`/api/patients/${encodeURIComponent(patientId)}/phr?limit=20`);
-    console.log('📡 Response status:', resp.status);
-    if (resp.status === 403) throw new Error('Sem permissão para visualizar este PHR.');
-    if (!resp.ok) throw new Error('Falha ao carregar dados do PHR.');
-
-    const data = await resp.json(); // { patient, consultations[], exams[], allergies[], meds[] }
-    console.log('📊 Dados carregados:', data);
-
-    // topo
-    console.log('✍️ Atualizando topo');
-    $top.innerHTML = `
-      <div class="patient-summary">
-        <h2>${data.patient.name}</h2>
-        <p>${data.patient.age} anos • ${data.patient.sex}</p>
-        ${data.patient.phone ? `<p>${data.patient.phone}</p>` : ''}
+  <div class="topbar">
+    <a href="/meus-pacientes-react.html" class="back">← Voltar</a>
+    <span id="title">PHR — TeleMed</span>
+  </div>
+  
+  <div class="container">
+    <div id="app">
+      <div class="card">
+        <div class="bd">Carregando PHR...</div>
       </div>
-    `;
-    console.log('✅ Topo atualizado');
+    </div>
+  </div>
 
-    const block = (title, html) => `
-      <section class="section">
-        <h3>${title}</h3>
-        ${html || '<p class="empty-state">Sem registros</p>'}
-      </section>`;
-
-    const list = (arr, render) => (arr && arr.length) ? arr.map(render).join('') : '';
-
-    $blocks.innerHTML = [
-      block('🩺 Consultas Recentes', list(data.consultations, c => `
-        <div class="item">
-          <div class="item-date">${new Date(c.date).toLocaleDateString('pt-BR')}</div>
-          <div class="item-title">${c.diagnosis}</div>
-          <div class="item-details">Dr(a). ${c.doctor} | ${c.notes}</div>
-        </div>
-      `)),
-      
-      block('🔬 Exames', list(data.exams, e => `
-        <div class="item">
-          <div class="item-date">${new Date(e.date).toLocaleDateString('pt-BR')}</div>
-          <div class="item-title">${e.type}</div>
-          <div class="item-details">Resultado: ${e.result} | Dr(a). ${e.doctor}</div>
-        </div>
-      `)),
-
-      block('🚨 Alergias', data.allergies && data.allergies.length ? 
-        data.allergies.map(a => `<div class="item"><div class="item-title">${a}</div></div>`).join('') : 
-        '<p class="empty-state">Nenhuma alergia conhecida</p>'
-      ),
-
-      block('💊 Medicações em Uso', list(data.meds, m => `
-        <div class="item">
-          <div class="item-title">${m.name}</div>
-          <div class="item-details">${m.frequency} | ${m.duration}</div>
-        </div>
-      `))
-    ].join('');
-
-  } catch (error) {
-    console.error('PHR Error:', error);
-    $err.style.display = 'block';
-    $err.innerHTML = `<strong>Erro:</strong> ${error.message}`;
-    
-    // Limpar skeleton loading
-    $top.innerHTML = '';
-    $blocks.innerHTML = '';
-  }
-})();
-</script>
-
+  <script src="/phr.js"></script>
 </body>
 </html>

@@ -1,0 +1,119 @@
+{
+  "idPersona": "4849323",
+  "nomeCompleto": "William Santos Silva",
+  "cpf": "02876267179",
+  "idade": 42,
+  "nascimento": "1982-03-15",
+  "genero": "Masculino",
+  "contatos": {
+    "telefone": "+55 21 96017-25613",
+    "email": "02876267179@mail.com"
+  },
+  "endereco": {
+    "cidade": "São Gonçalo",
+    "uf": "RJ",
+    "cep": "24440-320"
+  },
+  "parametros": {
+    "altura": "178cm",
+    "peso": "85kg",
+    "pa": "140/90 mmHg",
+    "cintura": "98cm",
+    "imc": "26.8"
+  },
+  "equipe": [
+    "Dr. Paulo Rodrigues - Clínica Geral",
+    "Dra. Sandra Oliveira - Cardiologista",
+    "Dr. Marcos Alves - Endocrinologista"
+  ],
+  "alergias": ["Captopril", "Aspirina"],
+  "patologias": ["Hipertensão arterial", "Diabetes mellitus tipo 2", "Dislipidemia"],
+  "medicacoes": [
+    "Losartana 100mg - 1x/dia",
+    "Metformina 850mg - 2x/dia",
+    "Sinvastatina 20mg - 1x/dia à noite",
+    "AAS 100mg - 1x/dia"
+  ],
+  "eventos": [
+    {
+      "id": "ev1",
+      "tipo": "VIDEO_CONSULTA",
+      "titulo": "Consulta Cardiológica",
+      "data": "2025-08-22T10:30:00Z",
+      "profissional": "Dra. Sandra Oliveira",
+      "especialidade": "Cardiologia"
+    },
+    {
+      "id": "ev2",
+      "tipo": "EXAME",
+      "titulo": "Ecocardiograma",
+      "data": "2025-08-18T15:00:00Z",
+      "profissional": "Clínica CardioSaúde",
+      "especialidade": "Cardiologia"
+    }
+  ],
+  "consultas": [
+    {
+      "data": "2025-08-22T10:30:00Z",
+      "especialidade": "Cardiologia",
+      "profissional": "Dra. Sandra Oliveira",
+      "registro": {
+        "queixa": "Controle de hipertensão e diabetes",
+        "doencaAtual": "Paciente com DM2 e HAS há 5 anos, em uso regular de medicação. PA controlada, glicemia com oscilações",
+        "hipoteses": ["DM2 com controle subótimo", "HAS controlada", "Síndrome metabólica"],
+        "conduta": "Ajuste de hipoglicemiante, orientação nutricional, atividade física regular",
+        "prescricoes": [
+          {"produto": "Metformina XR 1000mg", "posologia": "1 comprimido 2x/dia"},
+          {"produto": "Empagliflozina 10mg", "posologia": "1 comprimido pela manhã"}
+        ],
+        "encaminhamentos": [
+          {"destino": "Nutrição", "motivo": "Planejamento alimentar para diabético"},
+          {"destino": "Educação Física", "motivo": "Prescrição de exercícios"}
+        ]
+      }
+    }
+  ],
+  "laboratoriais": [
+    {
+      "data": "2025-08-15",
+      "exame": "Hemoglobina glicada",
+      "resultado": "Alterado",
+      "valores": "HbA1c: 7.8%",
+      "laboratorio": "Lab. Diagnósticos"
+    },
+    {
+      "data": "2025-08-15",
+      "exame": "Perfil lipídico",
+      "resultado": "Alterado",
+      "valores": "CT: 220mg/dL, LDL: 140mg/dL, HDL: 38mg/dL, TG: 180mg/dL",
+      "laboratorio": "Lab. Diagnósticos"
+    },
+    {
+      "data": "2025-08-10",
+      "exame": "Microalbuminúria",
+      "resultado": "Normal",
+      "valores": "15 mg/g creatinina",
+      "laboratorio": "Lab. Diagnósticos"
+    }
+  ],
+  "estudos": [
+    {
+      "data": "2025-08-18",
+      "tipo": "Ecocardiograma",
+      "achados": "Função sistólica preservada, FEVE 60%, sem alterações valvares significativas",
+      "servico": "Clínica CardioSaúde"
+    },
+    {
+      "data": "2025-07-30",
+      "tipo": "ECG",
+      "achados": "Ritmo sinusal, sem alterações isquêmicas",
+      "servico": "Clínica CardioSaúde"
+    }
+  ],
+  "vacinas": [
+    {"vacina": "COVID-19 (4ª dose)", "data": "2025-02-20"},
+    {"vacina": "Influenza", "data": "2025-04-05"},
+    {"vacina": "Pneumocócica 23", "data": "2024-09-10"}
+  ],
+  "notasPrivadas": "Paciente com boa adesão ao tratamento. Necessita reforço nas orientações dietéticas e atividade física."
+}
