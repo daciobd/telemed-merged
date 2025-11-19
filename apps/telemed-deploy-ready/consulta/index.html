@@ -158,27 +158,180 @@
       window.open(`/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`, '_blank');
     };
 
-    // --- Patch 5: Botão "Abrir Medical Desk" na consulta (médico)
+    // --- BUSCA INTERATIVA DE PROTOCOLOS MÉDICOS ---
     const mdaBtn = document.getElementById('btn-mda');
-    if (mdaBtn) mdaBtn.onclick = () => {
-      // Obter URL do MDA do localStorage (configurado no Hub)
-      const mdaBase = localStorage.getItem('MDA_SERVICE_URL') || 
-                     'https://medical-desk-advanced-daciobd.replit.app';
+    if (mdaBtn) mdaBtn.onclick = () => searchMedicalProtocol();
+    
+    async function searchMedicalProtocol() {
+      // Interface de busca
+      const condition = prompt(
+        '🔍 Digite a condição clínica:\n\n' +
+        'Exemplos:\n' +
+        '• hipertensão\n' +
+        '• diabetes\n' +
+        '• iam (infarto)\n' +
+        '• asma\n' +
+        '• pneumonia'
+      );
       
-      // Obter patientId e appointmentId dos parâmetros da URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const appointmentId = urlParams.get('appointmentId') || room || 'demo-appointment';
-      const patientId = urlParams.get('patientId') || 
-                       localStorage.getItem('patientId') || 
-                       localStorage.getItem('LAST_PATIENT_ID') || 
-                       'demo-patient';
+      if (!condition) return;
       
-      // Montar URL conforme especificado no patch
-      const url = `${mdaBase}?patientId=${encodeURIComponent(patientId)}&appointmentId=${encodeURIComponent(appointmentId)}`;
+      // Mostrar loading
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'protocol-loading';
+      loadingDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        z-index: 9999;
+        text-align: center;
+      `;
+      loadingDiv.innerHTML = `
+        <div style="font-size: 48px;">⏳</div>
+        <p style="margin: 10px 0 0 0; color: #16A085;">Buscando protocolo...</p>
+      `;
+      document.body.appendChild(loadingDiv);
       
-      console.log('🖥️ Abrindo Medical Desk Advanced:', url);
-      window.open(url, "_blank", "noopener");
-    };
+      try {
+        const response = await fetch(
+          `https://medical-desk-advanced.onrender.com/api/protocols/${condition.toLowerCase().trim()}`
+        );
+        
+        loadingDiv.remove();
+        
+        if (!response.ok) {
+          throw new Error('Protocolo não encontrado');
+        }
+        
+        const data = await response.json();
+        showProtocolResult(data);
+        
+      } catch (error) {
+        loadingDiv.remove();
+        
+        // Erro bonito
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #FFF3CD;
+          border: 2px solid #FFC107;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+          z-index: 9999;
+          max-width: 400px;
+        `;
+        errorDiv.innerHTML = `
+          <h3 style="color: #856404; margin: 0 0 15px 0;">⚠️ Protocolo não encontrado</h3>
+          <p style="color: #856404; margin: 0 0 20px 0;">
+            Não foi possível encontrar o protocolo para "${condition}".
+            Tente outro termo ou aguarde se o serviço estiver iniciando.
+          </p>
+          <button onclick="this.parentElement.remove()" style="
+            background: #FFC107;
+            border: none;
+            color: #856404;
+            padding: 10px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+          ">OK</button>
+        `;
+        document.body.appendChild(errorDiv);
+      }
+    }
+    
+    function showProtocolResult(protocol) {
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        z-index: 9999;
+        overflow-y: auto;
+      `;
+      
+      modal.innerHTML = `
+        <div style="background: linear-gradient(135deg, #16A085 0%, #117864 100%); padding: 25px; border-radius: 15px 15px 0 0;">
+          <h2 style="color: white; margin: 0; font-size: 28px;">
+            📋 ${protocol.protocol?.name || protocol.name || 'Protocolo Clínico'}
+          </h2>
+        </div>
+        
+        <div style="padding: 30px;">
+          ${protocol.protocol?.description ? `
+            <div style="background: #ECF0F1; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <p style="margin: 0; color: #2C3E50;">${protocol.protocol.description}</p>
+            </div>
+          ` : ''}
+          
+          ${protocol.protocol?.diagnosis ? `
+            <h3 style="color: #16A085; margin: 25px 0 15px 0;">🔍 Diagnóstico</h3>
+            <p><strong>Critérios:</strong> ${protocol.protocol.diagnosis.criteria}</p>
+            <p><strong>Exames:</strong></p>
+            <ul>
+              ${protocol.protocol.diagnosis.exams.map(exam => `<li>${exam}</li>`).join('')}
+            </ul>
+          ` : ''}
+          
+          ${protocol.protocol?.treatment ? `
+            <h3 style="color: #16A085; margin: 25px 0 15px 0;">💊 Tratamento</h3>
+            ${protocol.protocol.treatment.lifestyle ? `
+              <p><strong>Mudanças de estilo de vida:</strong></p>
+              <ul>
+                ${protocol.protocol.treatment.lifestyle.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            ` : ''}
+            ${protocol.protocol.treatment.medications ? `
+              <p><strong>Medicações:</strong></p>
+              ${protocol.protocol.treatment.medications.map(med => `
+                <div style="background: #F8F9FA; padding: 10px; margin: 10px 0; border-left: 4px solid #16A085;">
+                  <strong>${med.class}</strong><br>
+                  Exemplos: ${med.examples.join(', ')}<br>
+                  <small>Linha: ${med.line}</small>
+                </div>
+              `).join('')}
+            ` : ''}
+          ` : ''}
+          
+          ${protocol.protocol?.followup ? `
+            <h3 style="color: #16A085; margin: 25px 0 15px 0;">📅 Acompanhamento</h3>
+            <p><strong>Frequência:</strong> ${protocol.protocol.followup.frequency}</p>
+            <p><strong>Monitorar:</strong> ${protocol.protocol.followup.monitoring.join(', ')}</p>
+          ` : ''}
+          
+          <div style="margin-top: 30px; text-align: center;">
+            <button onclick="this.closest('[style*=fixed]').remove()" style="
+              background: #16A085;
+              color: white;
+              border: none;
+              padding: 12px 40px;
+              border-radius: 25px;
+              font-size: 16px;
+              cursor: pointer;
+              font-weight: bold;
+            ">✓ Fechar</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+    }
 
     // --- Patch ReceitaCerta: Botão "Abrir ReceitaCerta" na consulta (médico)
     const rcBtn = document.getElementById('btn-rc');
@@ -263,7 +416,7 @@
         <span class="state wait" id="state"><span class="dot"></span> Aguardando</span>
         <span class="pill" id="elapsed">18m 19s</span>
         <button class="btn primary" id="btn-start">Iniciar Consulta</button>
-        <button class="btn ghost" id="btn-mda" data-open-medicaldesk data-patient-id="pid-consulta" data-doctor-id="doc-consulta" data-testid="button-open-mda">🖥️ Abrir Medical Desk</button>
+        <button class="btn ghost" id="btn-mda" data-open-medicaldesk data-patient-id="pid-consulta" data-doctor-id="doc-consulta" data-testid="button-open-mda">🔍 Buscar Protocolo</button>
         <button class="btn ghost" id="btn-rc" data-action="open-receita-certa" data-testid="button-open-receita-certa">📋 Abrir ReceitaCerta</button>
         <button class="btn ghost" id="btn-back" data-action="go-back">Voltar</button>
         <button class="btn ghost" id="btn-form">Formulário</button>
