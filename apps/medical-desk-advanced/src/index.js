@@ -46,31 +46,113 @@ app.get('/api/protocols/:condition', (req, res) => {
       name: "Hipertensão Arterial Sistêmica",
       description: "Doença cardiovascular crônica caracterizada por níveis elevados de pressão arterial (≥140/90 mmHg).",
       diagnosis: {
-        criteria: "PA ≥ 140/90 mmHg em pelo menos 2 consultas",
+        criteria: "PA ≥ 140/90 mmHg em pelo menos 2 consultas, MAPA ou MRPA confirmando valores elevados",
         exams: ["ECG", "Ecocardiograma", "Creatinina", "Potássio", "Glicemia", "Perfil lipídico"]
       },
       treatment: {
         lifestyle: ["Redução de sódio (<2g/dia)", "Dieta DASH", "Exercícios (150min/semana)", "Perda de peso"],
         medications: [
           { class: "IECA", examples: ["Enalapril 5-40mg/dia", "Captopril 25-150mg/dia"], line: "1ª linha" },
-          { class: "BRA", examples: ["Losartana 50-100mg/dia", "Valsartana 80-320mg/dia"], line: "1ª linha" }
+          { class: "BRA", examples: ["Losartana 50-100mg/dia"], line: "1ª linha" }
         ]
       },
       followup: {
         frequency: "A cada 3-6 meses",
         monitoring: ["PA", "Creatinina", "Potássio"]
       }
+    },
+    diabetes: {
+      name: "Diabetes Mellitus Tipo 2",
+      description: "Doença metabólica crônica caracterizada por hiperglicemia.",
+      diagnosis: {
+        criteria: "Glicemia jejum ≥126mg/dL (2x) ou HbA1c ≥6.5%",
+        exams: ["Glicemia jejum", "HbA1c", "Perfil lipídico", "Creatinina"]
+      },
+      treatment: {
+        lifestyle: ["Dieta hipocalórica", "Exercícios (150min/semana)", "Perda de peso 5-10%"],
+        medications: [
+          { class: "Biguanidas", examples: ["Metformina 500-2000mg/dia"], line: "1ª linha" },
+          { class: "iSGLT2", examples: ["Dapagliflozina 10mg/dia"], line: "2ª linha" }
+        ]
+      },
+      followup: {
+        frequency: "A cada 3 meses",
+        monitoring: ["HbA1c", "Glicemia", "Peso", "PA"]
+      }
+    },
+    iam: {
+      name: "Infarto Agudo do Miocárdio",
+      description: "Síndrome coronariana aguda com necrose miocárdica.",
+      diagnosis: {
+        criteria: "Dor torácica + troponina elevada + ECG alterado",
+        exams: ["ECG 12 derivações", "Troponina", "CK-MB", "Ecocardiograma"]
+      },
+      treatment: {
+        lifestyle: ["Repouso 24-48h", "Cessação tabagismo", "Reabilitação cardíaca"],
+        medications: [
+          { class: "Antiagregantes", examples: ["AAS 100mg/dia", "Clopidogrel 75mg/dia"], line: "1ª linha" },
+          { class: "Betabloqueadores", examples: ["Metoprolol 25-100mg"], line: "1ª linha" }
+        ]
+      },
+      followup: {
+        frequency: "7-14 dias pós-alta",
+        monitoring: ["ECG", "Ecocardiograma", "Troponina"]
+      }
+    },
+    asma: {
+      name: "Asma Brônquica",
+      description: "Doença inflamatória crônica das vias aéreas.",
+      diagnosis: {
+        criteria: "Sintomas variáveis + espirometria reversível",
+        exams: ["Espirometria", "Pico de fluxo", "Raio-X tórax"]
+      },
+      treatment: {
+        lifestyle: ["Evitar alérgenos", "Controle ambiental", "Vacinação influenza"],
+        medications: [
+          { class: "Corticoide inalatório", examples: ["Budesonida 200-800mcg/dia"], line: "1ª linha" },
+          { class: "Beta-2 resgate", examples: ["Salbutamol 100-200mcg"], line: "Resgate" }
+        ]
+      },
+      followup: {
+        frequency: "1-3 meses até controle",
+        monitoring: ["Sintomas", "Pico de fluxo", "Espirometria anual"]
+      }
+    },
+    pneumonia: {
+      name: "Pneumonia Comunitária",
+      description: "Infecção aguda do parênquima pulmonar.",
+      diagnosis: {
+        criteria: "Sintomas respiratórios + infiltrado no RX tórax",
+        exams: ["RX tórax", "Hemograma", "PCR", "Gasometria"]
+      },
+      treatment: {
+        lifestyle: ["Repouso", "Hidratação 2-3L/dia"],
+        medications: [
+          { class: "Amoxicilina+Clav", examples: ["875/125mg 12/12h 5-7d"], line: "1ª linha" },
+          { class: "Macrolídeos", examples: ["Azitromicina 500mg/dia 3-5d"], line: "Associação" }
+        ]
+      },
+      followup: {
+        frequency: "48-72h ambulatorial, RX 4-6sem",
+        monitoring: ["Temperatura", "SatO2", "RX controle"]
+      }
     }
   };
   
-  const condition = req.params.condition.toLowerCase();
+  const condition = req.params.condition.toLowerCase().trim();
   const protocol = protocolsDatabase[condition];
   
   if (!protocol) {
-    return res.status(404).json({ error: "Protocolo não encontrado" });
+    return res.status(404).json({ 
+      error: "Protocolo não encontrado",
+      message: `Condições disponíveis: ${Object.keys(protocolsDatabase).join(', ')}`,
+      available: Object.keys(protocolsDatabase),
+      source: "medical-desk-advanced"
+    });
   }
   
-  res.json({ success: true, protocol });
+  console.log(`[PROTOCOLS] Servindo protocolo: ${condition}`);
+  res.json({ success: true, protocol, source: "medical-desk-advanced", timestamp: new Date().toISOString() });
 });
 
 const port = process.env.PORT || 5000;
