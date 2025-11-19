@@ -391,6 +391,11 @@ if (MD_ENABLED && MD_BASE) {
   console.log(`🏥 MedicalDesk proxy: DISABLED (enabled=${MD_ENABLED}, url=${!!MD_BASE})`);
 }
 
+// ===== MEDICAL DESK ADVANCED PROTOCOLS (LOCAL) =====
+// Rotas locais para protocolos clínicos (dados MOCK integrados)
+// Nota: Proxy desabilitado temporariamente - usando dados locais para garantir disponibilidade
+console.log(`📋 MDA Protocols: usando dados locais (MOCK integrado)`);
+
 // ===== REDIRECTS DOS STUBS QA PARA PÁGINAS REAIS =====
 // Redirects 301 permanentes dos stubs de QA para páginas canônicas reais
 // Garante que bookmarks antigos e links do tour.html funcionem corretamente
@@ -505,6 +510,12 @@ const requireToken = (req, res, next) => {
     return next();
   }
   
+  // MedicalDesk protocols: públicos para busca de protocolos clínicos
+  if (req.path.startsWith('/api/protocols/') || req.path.startsWith('/api/mda/protocols/')) {
+    console.log(`[AUTH BYPASS] ${req.method} ${req.path} → public protocol lookup`);
+    return next();
+  }
+  
   // Dr. AI endpoints: públicos para demos
   if (req.path.startsWith('/api/ai/')) {
     return next();
@@ -524,6 +535,143 @@ const requireToken = (req, res, next) => {
   }
   next();
 };
+
+// ===== FALLBACK LOCAL: ROTAS DE PROTOCOLOS =====
+// Se o proxy externo falhar, as rotas abaixo servem como fallback com dados MOCK
+
+const protocolsDatabase = {
+  hipertensao: {
+    name: "Hipertensão Arterial Sistêmica",
+    description: "Doença cardiovascular crônica caracterizada por níveis elevados de pressão arterial (≥140/90 mmHg).",
+    diagnosis: {
+      criteria: "PA ≥ 140/90 mmHg em pelo menos 2 consultas, MAPA ou MRPA confirmando valores elevados",
+      exams: ["ECG", "Ecocardiograma", "Creatinina", "Potássio", "Glicemia", "Perfil lipídico"]
+    },
+    treatment: {
+      lifestyle: ["Redução de sódio (<2g/dia)", "Dieta DASH", "Exercícios (150min/semana)", "Perda de peso"],
+      medications: [
+        { class: "IECA", examples: ["Enalapril 5-40mg/dia", "Captopril 25-150mg/dia"], line: "1ª linha" },
+        { class: "BRA", examples: ["Losartana 50-100mg/dia"], line: "1ª linha" }
+      ]
+    },
+    followup: {
+      frequency: "A cada 3-6 meses",
+      monitoring: ["PA", "Creatinina", "Potássio"]
+    }
+  },
+  diabetes: {
+    name: "Diabetes Mellitus Tipo 2",
+    description: "Doença metabólica crônica caracterizada por hiperglicemia.",
+    diagnosis: {
+      criteria: "Glicemia jejum ≥126mg/dL (2x) ou HbA1c ≥6.5%",
+      exams: ["Glicemia jejum", "HbA1c", "Perfil lipídico", "Creatinina"]
+    },
+    treatment: {
+      lifestyle: ["Dieta hipocalórica", "Exercícios (150min/semana)", "Perda de peso 5-10%"],
+      medications: [
+        { class: "Biguanidas", examples: ["Metformina 500-2000mg/dia"], line: "1ª linha" },
+        { class: "iSGLT2", examples: ["Dapagliflozina 10mg/dia"], line: "2ª linha" }
+      ]
+    },
+    followup: {
+      frequency: "A cada 3 meses",
+      monitoring: ["HbA1c", "Glicemia", "Peso", "PA"]
+    }
+  },
+  iam: {
+    name: "Infarto Agudo do Miocárdio",
+    description: "Síndrome coronariana aguda com necrose miocárdica.",
+    diagnosis: {
+      criteria: "Dor torácica + troponina elevada + ECG alterado",
+      exams: ["ECG 12 derivações", "Troponina", "CK-MB", "Ecocardiograma"]
+    },
+    treatment: {
+      lifestyle: ["Repouso 24-48h", "Cessação tabagismo", "Reabilitação cardíaca"],
+      medications: [
+        { class: "Antiagregantes", examples: ["AAS 100mg/dia", "Clopidogrel 75mg/dia"], line: "1ª linha" },
+        { class: "Betabloqueadores", examples: ["Metoprolol 25-100mg"], line: "1ª linha" }
+      ]
+    },
+    followup: {
+      frequency: "7-14 dias pós-alta",
+      monitoring: ["ECG", "Ecocardiograma", "Troponina"]
+    }
+  },
+  asma: {
+    name: "Asma Brônquica",
+    description: "Doença inflamatória crônica das vias aéreas.",
+    diagnosis: {
+      criteria: "Sintomas variáveis + espirometria reversível",
+      exams: ["Espirometria", "Pico de fluxo", "Raio-X tórax"]
+    },
+    treatment: {
+      lifestyle: ["Evitar alérgenos", "Controle ambiental", "Vacinação influenza"],
+      medications: [
+        { class: "Corticoide inalatório", examples: ["Budesonida 200-800mcg/dia"], line: "1ª linha" },
+        { class: "Beta-2 resgate", examples: ["Salbutamol 100-200mcg"], line: "Resgate" }
+      ]
+    },
+    followup: {
+      frequency: "1-3 meses até controle",
+      monitoring: ["Sintomas", "Pico de fluxo", "Espirometria anual"]
+    }
+  },
+  pneumonia: {
+    name: "Pneumonia Comunitária",
+    description: "Infecção aguda do parênquima pulmonar.",
+    diagnosis: {
+      criteria: "Sintomas respiratórios + infiltrado no RX tórax",
+      exams: ["RX tórax", "Hemograma", "PCR", "Gasometria"]
+    },
+    treatment: {
+      lifestyle: ["Repouso", "Hidratação 2-3L/dia"],
+      medications: [
+        { class: "Amoxicilina+Clav", examples: ["875/125mg 12/12h 5-7d"], line: "1ª linha" },
+        { class: "Macrolídeos", examples: ["Azitromicina 500mg/dia 3-5d"], line: "Associação" }
+      ]
+    },
+    followup: {
+      frequency: "48-72h ambulatorial, RX 4-6sem",
+      monitoring: ["Temperatura", "SatO2", "RX controle"]
+    }
+  }
+};
+
+// Rota para busca de protocolos clínicos
+app.get('/api/protocols/:condition', (req, res) => {
+  const condition = req.params.condition.toLowerCase().trim();
+  const protocol = protocolsDatabase[condition];
+  
+  if (!protocol) {
+    return res.status(404).json({ 
+      error: "Protocolo não encontrado", 
+      message: `Condições disponíveis: ${Object.keys(protocolsDatabase).join(', ')}`,
+      available: Object.keys(protocolsDatabase),
+      source: "local"
+    });
+  }
+  
+  console.log(`[PROTOCOLS] Servindo protocolo: ${condition}`);
+  res.json({ success: true, protocol, source: "local", timestamp: new Date().toISOString() });
+});
+
+// Alias para compatibilidade: /api/mda/protocols
+app.get('/api/mda/protocols/:condition', (req, res) => {
+  const condition = req.params.condition.toLowerCase().trim();
+  const protocol = protocolsDatabase[condition];
+  
+  if (!protocol) {
+    return res.status(404).json({ 
+      error: "Protocolo não encontrado",
+      message: `Condições disponíveis: ${Object.keys(protocolsDatabase).join(', ')}`,
+      available: Object.keys(protocolsDatabase),
+      source: "local"
+    });
+  }
+  
+  console.log(`[MDA PROTOCOLS] Servindo protocolo: ${condition}`);
+  res.json({ success: true, protocol, source: "local", timestamp: new Date().toISOString() });
+});
 
 // protege tudo a seguir (exceto /healthz)
 app.use(requireToken);

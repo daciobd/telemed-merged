@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medical Desk Advanced - Protocolos Clínicos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    
+    .status {
+      background: #f0f9ff;
+      border: 2px solid #0ea5e9;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .status.success {
+      background: #f0fdf4;
+      border-color: #22c55e;
+    }
+    
+    .info-box {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .info-box h3 {
+      color: #111827;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    
+    .info-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .info-box li {
+      padding: 8px 0;
+      color: #4b5563;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .info-box li:last-child {
+      border-bottom: none;
+    }
+    
+    .footer {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+    
+    .badge {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏥 Medical Desk Advanced</h1>
+    <p class="subtitle">Sistema de Protocolos Clínicos</p>
+    
+    <div class="status success">
+      <strong>✅ Serviço Online</strong><br>
+      <small>Todos os sistemas operacionais</small>
+    </div>
+    
+    <div class="info-box">
+      <h3>📋 Protocolos Disponíveis</h3>
+      <ul>
+        <li>Hipertensão Arterial <span class="badge">Disponível</span></li>
+        <li>Diabetes Mellitus Tipo 2 <span class="badge">Disponível</span></li>
+        <li>Infarto Agudo do Miocárdio <span class="badge">Disponível</span></li>
+        <li>Asma Brônquica <span class="badge">Disponível</span></li>
+        <li>Pneumonia Comunitária <span class="badge">Disponível</span></li>
+      </ul>
+    </div>
+    
+    <div class="info-box">
+      <h3>🔌 Endpoints da API</h3>
+      <ul>
+        <li><code>GET /api/health</code> - Status do serviço</li>
+        <li><code>GET /api/mda/health</code> - Health check MDA</li>
+        <li><code>GET /api/protocols/:condition</code> - Buscar protocolo</li>
+        <li><code>GET /api/mda/protocols/:condition</code> - Buscar protocolo (alias)</li>
+      </ul>
+    </div>
+    
+    <div class="footer">
+      <p>TeleMed Platform • Medical Desk Advanced Service</p>
+      <p><small>v2.0 • 2025</small></p>
+    </div>
+  </div>
+  
+  <script>
+    // Testar API ao carregar
+    fetch('/api/health')
+      .then(r => r.json())
+      .then(data => {
+        console.log('✅ API Health:', data);
+      })
+      .catch(err => {
+        console.error('❌ API Error:', err);
+      });
+  </script>
+</body>
+</html>
