@@ -23,9 +23,15 @@ app.use(cors({
 initMetrics();
 initializeFeatureFlags();
 
+// Servir arquivos estáticos da pasta public (medical-desk-standalone.html)
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
+// Servir build do React (dashboard MedicalDesk)
+const clientBuild = path.join(__dirname, '..', 'client', 'dist');
+app.use('/medicaldesk', express.static(clientBuild));
+
+// Rota raiz: página standalone
 app.get('/', (req, res) => {
   res.sendFile(path.join(publicDir, 'medical-desk-standalone.html'));
 });
@@ -155,6 +161,11 @@ app.get('/api/protocols/:condition', (req, res) => {
   res.json({ success: true, protocol, source: "medical-desk-advanced", timestamp: new Date().toISOString() });
 });
 
+// Fallback: rotas não-API servem o React app (SPA routing)
+app.get('/medicaldesk/*', (req, res) => {
+  res.sendFile(path.join(clientBuild, 'index.html'));
+});
+
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`🚀 Starting Medical Desk Advanced Service...`);
@@ -164,5 +175,12 @@ app.listen(port, () => {
     PORT: port,
     CORS_ORIGINS: 'localhost + telemed-deploy-ready allowed',
     SERVICE_NAME: process.env.SERVICE_NAME || 'medical-desk-advanced'
+  });
+  console.log('Routes:', {
+    '/': 'Standalone HTML interface',
+    '/medicaldesk/': 'React Dashboard (SPA)',
+    '/api/health': 'Health check',
+    '/api/protocols/:condition': 'Clinical protocols API',
+    '/api/mda/*': 'MDA routes'
   });
 });

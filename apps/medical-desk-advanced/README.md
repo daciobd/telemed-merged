@@ -5,10 +5,16 @@ Serviço standalone de protocolos clínicos para demonstrações em hospitais.
 ## 📋 **Visão Geral**
 
 Este serviço fornece:
-- ✅ **Interface web standalone** acessível via link público
+- ✅ **Dashboard React interativo** em `/medicaldesk/` (frontend moderno)
+- ✅ **Interface standalone** em `/` para apresentações rápidas
 - ✅ **API de protocolos clínicos** com 5 condições médicas
 - ✅ **Zero dependências externas** - dados MOCK integrados
 - ✅ **Pronto para deploy no Render** - configurado para produção
+
+### **Duas Interfaces:**
+
+1. **Standalone HTML** (`/`) - Lista simples de protocolos para demos rápidas
+2. **Dashboard React** (`/medicaldesk/`) - Interface completa e interativa
 
 ---
 
@@ -30,7 +36,27 @@ Este link pode ser usado diretamente em apresentações em hospitais, **sem pass
 - Conta no [Render.com](https://render.com)
 - Repositório Git com este código (ex: GitHub, GitLab)
 
-### **Passo 1: Criar Web Service no Render**
+### **Passo 1: Build do Frontend React**
+
+⚠️ **IMPORTANTE:** Antes de fazer deploy, você precisa buildar o frontend React!
+
+```bash
+# Entrar na pasta client
+cd apps/medical-desk-advanced/client
+
+# Instalar dependências
+npm install
+
+# Fazer build
+npm run build
+
+# Verificar
+ls -la dist/
+```
+
+**Leia o guia completo:** [`BUILD_GUIDE.md`](./BUILD_GUIDE.md)
+
+### **Passo 2: Criar Web Service no Render**
 
 1. Acesse o [Dashboard do Render](https://dashboard.render.com)
 2. Clique em **"New +"** → **"Web Service"**
@@ -43,10 +69,12 @@ Este link pode ser usado diretamente em apresentações em hospitais, **sem pass
    Region: Oregon (US West) ou São Paulo (South America)
    Branch: main
    Root Directory: apps/medical-desk-advanced
-   Build Command: npm install
+   Build Command: cd client && npm install && npm run build && cd .. && npm install
    Start Command: npm start
    Instance Type: Free (ou superior)
    ```
+
+   **Observação:** O Build Command faz o build do React e instala as dependências do backend.
 
 5. **Variáveis de Ambiente** (opcional):
    - `NODE_ENV=production`
@@ -55,7 +83,7 @@ Este link pode ser usado diretamente em apresentações em hospitais, **sem pass
 
 6. Clique em **"Create Web Service"**
 
-### **Passo 2: Aguardar Deploy**
+### **Passo 3: Aguardar Deploy**
 
 O Render irá:
 1. Fazer clone do repositório
@@ -63,15 +91,16 @@ O Render irá:
 3. Iniciar o serviço com `npm start`
 4. Gerar o URL público (ex: `https://medical-desk-advanced.onrender.com`)
 
-**Tempo estimado:** 2-5 minutos
+**Tempo estimado:** 3-6 minutos (inclui build do React)
 
-### **Passo 3: Validar Deploy**
+### **Passo 4: Validar Deploy**
 
 Acesse:
-- **Interface:** `https://medical-desk-advanced.onrender.com/`
+- **Standalone:** `https://medical-desk-advanced.onrender.com/`
+- **Dashboard React:** `https://medical-desk-advanced.onrender.com/medicaldesk/`
 - **API Health:** `https://medical-desk-advanced.onrender.com/api/health`
 
-Você deve ver a página standalone com a lista de protocolos.
+Você deve ver ambas as interfaces funcionando.
 
 ---
 

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedicalDesk Advance - Protocolos Clínicos Inteligentes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2C3E50;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #16A085 0%, #117864 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .hero p {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            background: #FF6B9D;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .cta-button.primary {
+            background: #FFD700;
+            color: #2C3E50;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .feature-card {
+            background: #F8F9FA;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card h3 {
+            color: #16A085;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .demo-section {
+            background: #ECF0F1;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: #2ECC71;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        
+        footer {
+            background: #2C3E50;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <span class="status-badge">🟢 SISTEMA ONLINE</span>
+        <h1>MedicalDesk Advance</h1>
+        <p>Protocolos Clínicos Inteligentes com IA para Decisão Médica</p>
+        <a href="/medicaldesk/" class="cta-button primary">🏥 ACESSAR DASHBOARD</a>
+        <button class="cta-button" onclick="testLocalAPI()">🧪 Testar API Local</button>
+    </div>
+
+    <div class="container">
+        <h2 style="text-align: center; margin-bottom: 40px;">O que é o MedicalDesk?</h2>
+        <p style="text-align: center; font-size: 1.2em; color: #7F8C8D; max-width: 800px; margin: 0 auto 60px;">
+            Sistema inteligente que fornece protocolos clínicos, guidelines e suporte à decisão médica em tempo real,
+            integrado com IA para recomendações personalizadas baseadas em evidências científicas.
+        </p>
+
+        <div class="features">
+            <div class="feature-card">
+                <h3>📚 Base de Conhecimento</h3>
+                <p>Milhares de protocolos clínicos atualizados cobrindo as principais especialidades médicas e condições clínicas.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🤖 IA Integrada</h3>
+                <p>Recomendações inteligentes baseadas em sintomas, histórico e guidelines internacionais (WHO, AHA, ESC).</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>⚡ Tempo Real</h3>
+                <p>Acesso instantâneo durante consultas via API RESTful de alta performance.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🔒 Compliance</h3>
+                <p>Totalmente em conformidade com CFM, ANVISA e padrões de segurança LGPD.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🌍 Multilíngue</h3>
+                <p>Suporte para português, inglês e espanhol com terminologia médica precisa.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>📱 Integração Fácil</h3>
+                <p>API simples e documentada para integração com qualquer plataforma médica.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <div class="container">
+            <h2>🎯 Acesso Rápido</h2>
+            <p style="margin-bottom: 30px; font-size: 1.1em;">Escolha a funcionalidade que deseja acessar</p>
+            
+            <a href="/medicaldesk/" class="cta-button primary" style="font-size: 1.3em; padding: 20px 50px;">
+                📊 Dashboard Principal
+            </a>
+            <a href="/medicaldesk/clinical" class="cta-button">
+                🩺 Análise Clínica
+            </a>
+            <a href="/medicaldesk/protocols" class="cta-button">
+                📋 Protocolos
+            </a>
+        </div>
+    </div>
+
+    <div class="container" style="text-align: center; padding: 80px 20px;">
+        <h2>Pronto para Começar?</h2>
+        <p style="font-size: 1.2em; margin: 30px 0;">
+            Acesse o dashboard completo e comece a utilizar o sistema agora mesmo
+        </p>
+        <a href="/medicaldesk/" class="cta-button primary" style="font-size: 1.3em;">
+            🚀 Começar Agora
+        </a>
+    </div>
+
+    <footer>
+        <p><strong>MedicalDesk Advance</strong></p>
+        <p>Powered by TeleMed Consultas</p>
+        <p style="margin-top: 20px; opacity: 0.7;">
+            Sistema Local: <span id="apiStatus">Verificando...</span>
+        </p>
+    </footer>
+
+    <script>
+        // Verificar status da API local
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch('/api/stats');
+                document.getElementById('apiStatus').textContent = '🟢 Online';
+                document.getElementById('apiStatus').style.color = '#2ECC71';
+            } catch (error) {
+                document.getElementById('apiStatus').textContent = '🔴 Offline';
+                document.getElementById('apiStatus').style.color = '#E74C3C';
+            }
+        }
+
+        async function testLocalAPI() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                alert(`✅ API Local Funcionando!\n\nProtocolos Ativos: ${data.activeProtocols}\nSugestões Hoje: ${data.todaySuggestions}\nAlertas de Viés: ${data.biasAlerts}\n\nClique em "ACESSAR DASHBOARD" para ver mais!`);
+            } catch (error) {
+                alert('❌ Erro ao conectar com a API local. Verifique se o servidor está rodando.');
+            }
+        }
+
+        // Verificar status ao carregar
+        checkAPIStatus();
+    </script>
+</body>
+</html>
