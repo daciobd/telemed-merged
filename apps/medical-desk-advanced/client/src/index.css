@@ -5,39 +5,40 @@
 
 :root {
   --radius: 0.5rem;
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222.2 84% 4.9%);
+  /* Medical Purple Theme - inspirado na página standalone */
+  --background: hsl(240 10% 98%);
+  --foreground: hsl(240 20% 15%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222.2 84% 4.9%);
+  --card-foreground: hsl(240 20% 15%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222.2 84% 4.9%);
-  --primary: hsl(214 100% 40%);
-  --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(195 100% 36%);
-  --secondary-foreground: hsl(195 20% 10%);
-  --muted: hsl(210 40% 96%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
-  --accent: hsl(210 40% 96%);
-  --accent-foreground: hsl(222.2 84% 4.9%);
+  --popover-foreground: hsl(240 20% 15%);
+  --primary: hsl(252 65% 65%); /* Roxo #667eea */
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(270 50% 55%); /* Roxo escuro #764ba2 */
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(240 15% 96%);
+  --muted-foreground: hsl(240 10% 45%);
+  --accent: hsl(252 65% 95%);
+  --accent-foreground: hsl(252 65% 35%);
   --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(214 100% 40%);
-  --chart-1: hsl(214 100% 40%);
-  --chart-2: hsl(195 100% 36%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(240 15% 90%);
+  --input: hsl(240 15% 92%);
+  --ring: hsl(252 65% 65%);
+  --chart-1: hsl(252 65% 65%);
+  --chart-2: hsl(270 50% 55%);
   --chart-3: hsl(166 100% 37%);
   --chart-4: hsl(43 96% 56%);
   --chart-5: hsl(0 84% 60%);
   --font-sans: Inter, system-ui, -apple-system, sans-serif;
-  --sidebar: hsl(180 6.6667% 97.0588%);
-  --sidebar-foreground: hsl(210 25% 7.8431%);
-  --sidebar-primary: hsl(203.8863 88.2845% 53.1373%);
+  --sidebar: hsl(252 65% 65%); /* Roxo médico */
+  --sidebar-foreground: hsl(0 0% 100%);
+  --sidebar-primary: hsl(270 50% 55%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(211.5789 51.3514% 92.7451%);
-  --sidebar-accent-foreground: hsl(203.8863 88.2845% 53.1373%);
-  --sidebar-border: hsl(205.0000 25.0000% 90.5882%);
-  --sidebar-ring: hsl(202.8169 89.1213% 53.1373%);
+  --sidebar-accent: hsl(252 65% 75%);
+  --sidebar-accent-foreground: hsl(0 0% 100%);
+  --sidebar-border: hsl(252 65% 55%);
+  --sidebar-ring: hsl(270 50% 55%);
 }
 
 .dark {
@@ -81,8 +82,15 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
   }
+}
+
+/* Medical Purple Gradient - FORA do @layer para garantir compilação */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
 }
 
 @layer components {
