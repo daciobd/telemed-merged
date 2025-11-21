@@ -1,273 +1,339 @@
-import { useState } from "react";
-import SidebarNav from "@/components/ui/sidebar-nav";
-import SymptomInputPanel from "@/components/clinical/symptom-input-panel";
-import ClinicalSuggestions from "@/components/clinical/clinical-suggestions";
-import ProtocolsPanel from "@/components/clinical/protocols-panel";
-import AnalyticsDashboard from "@/components/clinical/analytics-dashboard";
-import CareChainDashboard from "@/components/automation/care-chain-dashboard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { api, type AnalysisResponse } from "@/lib/api";
+import { useState } from 'react';
 
-export default function Dashboard() {
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+/**
+ * MedicalDesk Dashboard - Versão Premium
+ * Design System Médico Profissional
+ */
 
-  // Get system stats
-  const { data: stats } = useQuery({
-    queryKey: ["/api/stats"],
-    queryFn: api.getSystemStats,
-  });
+interface Patient {
+  id: number;
+  name: string;
+  age: number;
+  condition: string;
+  severity: 'critical' | 'warning' | 'stable';
+  protocol?: string;
+}
 
-  const handleAnalysisComplete = (result: AnalysisResponse) => {
-    setAnalysisResult(result);
-    setIsAnalyzing(false);
+const MedicalDeskDashboard = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeNav, setActiveNav] = useState('Dashboard');
+
+  // Dados de demonstração
+  const demoPatients: Patient[] = [
+    {
+      id: 1,
+      name: 'João Silva',
+      age: 58,
+      condition: 'SCA com dor torácica',
+      severity: 'critical',
+      protocol: 'Protocolo SCA'
+    },
+    {
+      id: 2,
+      name: 'Maria Costa',
+      age: 72,
+      condition: 'Pneumonia grave (CURB-65=4)',
+      severity: 'critical',
+      protocol: 'Protocolo Pneumonia'
+    },
+    {
+      id: 3,
+      name: 'Carlos Lima',
+      age: 34,
+      condition: 'Suspeita meningite',
+      severity: 'warning',
+      protocol: 'Protocolo Meningite'
+    },
+    {
+      id: 4,
+      name: 'Ana Ferreira',
+      age: 45,
+      condition: 'TEP pós-cirúrgico',
+      severity: 'warning',
+      protocol: 'Protocolo TEP'
+    },
+    {
+      id: 5,
+      name: 'Pedro Souza',
+      age: 28,
+      condition: 'Trauma craniano',
+      severity: 'critical',
+      protocol: 'Protocolo Trauma'
+    }
+  ];
+
+  const stats = {
+    activePacientes: 0,
+    criticalCases: 0,
+    protocolsUsed: 0
   };
 
-  const handleAnalysisStart = () => {
-    setIsAnalyzing(true);
+  const navigationItems = [
+    { name: 'Dashboard', icon: '📊' },
+    { name: 'Análise Clínica', icon: '🔍' },
+    { name: 'Automação', icon: '⚡' },
+    { name: 'Protocolos', icon: '📋' },
+    { name: 'Analytics', icon: '📈' },
+    { name: 'Alertas de Viés', icon: '⚠️' },
+    { name: 'Dados Populacionais', icon: '👥' },
+    { name: 'Configurações', icon: '⚙️' }
+  ];
+
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'analise', label: 'Análise' },
+    { id: 'automacao', label: 'Automação' },
+    { id: 'protocolos', label: 'Protocolos' },
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'alertas', label: 'Alertas' },
+    { id: 'populacao', label: 'População' },
+    { id: 'config', label: 'Config' }
+  ];
+
+  const getSeverityBadge = (severity: string) => {
+    const badges = {
+      critical: { icon: '🔴', label: 'Crítico', class: 'critical' },
+      warning: { icon: '🟡', label: 'Atenção', class: 'warning' },
+      stable: { icon: '🟢', label: 'Estável', class: 'stable' }
+    };
+    return badges[severity as keyof typeof badges] || badges.stable;
   };
 
   return (
-    <div className="min-h-screen flex bg-muted">
-      <SidebarNav onTabChange={setActiveTab} activeTab={activeTab} />
-      
-      <main className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">Sistema de Sugestões Clínicas</h2>
-              <p className="text-sm text-muted-foreground">Assistência inteligente para tomada de decisões médicas</p>
+    <div className="medical-desk-container">
+      {/* Sidebar */}
+      <aside className="medical-desk-sidebar">
+        <div className="sidebar-header">
+          <h1 className="sidebar-logo">TELEMED</h1>
+          <p className="sidebar-subtitle">Sistema Inteligente</p>
+        </div>
+
+        <nav className="sidebar-nav">
+          {navigationItems.map((item) => (
+            <div
+              key={item.name}
+              className={`nav-item ${activeNav === item.name ? 'active' : ''}`}
+              onClick={() => setActiveNav(item.name)}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              {item.name}
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Sistema Online</span>
-              </div>
-              <button 
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                data-testid="button-notifications"
-              >
-                <i className="fas fa-bell text-lg"></i>
-              </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-user">
+          <div className="user-name">Dra. Ana Silva</div>
+          <div className="user-role">CRM 12345-SP</div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="medical-desk-main">
+        {/* Header */}
+        <header className="main-header">
+          <div className="header-title-section">
+            <h1 className="header-title">Sistema de Sugestões Clínicas</h1>
+            <p className="header-subtitle">
+              Assistência inteligente para tomada de decisões médicas
+            </p>
+          </div>
+          <div className="header-actions">
+            <div className="system-status">
+              <span className="status-indicator"></span>
+              Sistema Online
             </div>
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="flex-1 p-6 overflow-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" data-testid="dashboard-tabs">
-            <TabsList className="grid w-full grid-cols-8 h-auto p-1 gap-1">
-              <TabsTrigger value="overview" data-testid="tab-overview" className="text-xs p-2">
-                <i className="fas fa-home mr-1"></i>
-                Dashboard
-              </TabsTrigger>
-              <TabsTrigger value="analysis" data-testid="tab-analysis" className="text-xs p-2">
-                <i className="fas fa-search mr-1"></i>
-                Análise
-              </TabsTrigger>
-              <TabsTrigger value="automation" data-testid="tab-automation" className="text-xs p-2">
-                <i className="fas fa-cogs mr-1"></i>
-                Automação
-              </TabsTrigger>
-              <TabsTrigger value="protocols" data-testid="tab-protocols" className="text-xs p-2">
-                <i className="fas fa-file-medical mr-1"></i>
-                Protocolos
-              </TabsTrigger>
-              <TabsTrigger value="analytics" data-testid="tab-analytics" className="text-xs p-2">
-                <i className="fas fa-chart-bar mr-1"></i>
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="bias-alerts" data-testid="tab-bias-alerts" className="text-xs p-2">
-                <i className="fas fa-exclamation-triangle mr-1"></i>
-                Alertas
-              </TabsTrigger>
-              <TabsTrigger value="population" data-testid="tab-population" className="text-xs p-2">
-                <i className="fas fa-users mr-1"></i>
-                População
-              </TabsTrigger>
-              <TabsTrigger value="settings" data-testid="tab-settings" className="text-xs p-2">
-                <i className="fas fa-cog mr-1"></i>
-                Config
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="analysis" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Symptom Input Panel */}
-                <div className="lg:col-span-1">
-                  <SymptomInputPanel 
-                    onAnalysisStart={handleAnalysisStart}
-                    onAnalysisComplete={handleAnalysisComplete}
-                    stats={stats}
-                  />
-                </div>
-
-                {/* Clinical Suggestions */}
-                <div className="lg:col-span-2">
-                  <ClinicalSuggestions 
-                    analysisResult={analysisResult}
-                    isAnalyzing={isAnalyzing}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="automation" className="mt-6">
-              <CareChainDashboard />
-            </TabsContent>
-
-            <TabsContent value="protocols" className="mt-6">
-              <ProtocolsPanel />
-            </TabsContent>
-
-            <TabsContent value="analytics" className="mt-6">
-              <AnalyticsDashboard />
-            </TabsContent>
-
-            <TabsContent value="overview" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Dashboard Principal</h3>
-                  <div className="bg-card p-4 rounded-lg border">
-                    <h4 className="font-medium mb-2">Estatísticas do Sistema</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Pacientes ativos</p>
-                        <p className="text-2xl font-bold text-primary">{(stats as any)?.totalPatients || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Casos críticos</p>
-                        <p className="text-2xl font-bold text-red-600">{(stats as any)?.criticalCases || 0}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Pacientes de Demonstração</h3>
-                  <div className="bg-card p-4 rounded-lg border">
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Casos críticos</p>
-                          <p className="text-lg font-bold text-red-600">{(stats as any)?.criticalCases || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Protocolos usados</p>
-                          <p className="text-lg font-bold text-green-600">{(stats as any)?.completedProtocols || 0}</p>
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        <p>• João Silva (58): SCA com dor torácica</p>
-                        <p>• Maria Costa (72): Pneumonia grave (CURB-65=4)</p>
-                        <p>• Carlos Lima (34): Suspeita meningite</p>
-                        <p>• Ana Ferreira (45): TEP pós-cirúrgico</p>
-                        <p>• Pedro Souza (28): Trauma craniano</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="bias-alerts" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Alertas de Viés Cognitivo</h3>
-                <div className="bg-card p-4 rounded-lg border">
-                  <p className="text-muted-foreground">Sistema de detecção de padrões de viés cognitivo em desenvolvimento.</p>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <span>Viés de confirmação detectado em 2 casos esta semana</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Sistema funcionando normalmente</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="population" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Dados Epidemiológicos</h3>
-                <div className="bg-card p-4 rounded-lg border">
-                  <p className="text-muted-foreground">Dados populacionais e epidemiológicos contextuais.</p>
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium mb-2">São Paulo - SP</h4>
-                      <div className="space-y-1 text-sm">
-                        <p>População: 12.4M habitantes</p>
-                        <p>Incidência DM: 8.4%</p>
-                        <p>Incidência HAS: 24.1%</p>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Tendências Sazonais</h4>
-                      <div className="space-y-1 text-sm">
-                        <p>Respiratórias: ↑ 15% (inverno)</p>
-                        <p>Cardiovasculares: Estável</p>
-                        <p>Infectocontagiosas: ↓ 8%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="settings" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Configurações do Sistema</h3>
-                <div className="bg-card p-4 rounded-lg border">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Perfil do Usuário</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Nome</p>
-                          <p>Dra. Ana Silva</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">CRM</p>
-                          <p>12345-SP</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Especialidade</p>
-                          <p>Emergência</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Instituição</p>
-                          <p>Hospital Geral</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Preferências</h4>
-                      <div className="space-y-2 text-sm">
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" defaultChecked />
-                          <span>Notificações de alertas críticos</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" defaultChecked />
-                          <span>Sugestões baseadas em guidelines</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" />
-                          <span>Modo desenvolvimento (dados simulados)</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+        {/* Tabs Navigation */}
+        <div className="tabs-nav">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
+
+        {/* Dashboard Content */}
+        {activeTab === 'dashboard' && (
+          <>
+            {/* Stats Grid */}
+            <div className="dashboard-grid">
+              {/* Pacientes Ativos */}
+              <div className="stat-card">
+                <div className="stat-header">
+                  <div>
+                    <div className="stat-label">Pacientes Ativos</div>
+                    <div className="stat-value">{stats.activePacientes}</div>
+                  </div>
+                  <div className="card-icon">
+                    👥
+                  </div>
+                </div>
+                <div className="stat-change positive">
+                  <span>↑ 0%</span>
+                  <span>vs. ontem</span>
+                </div>
+              </div>
+
+              {/* Casos Críticos */}
+              <div className="stat-card">
+                <div className="stat-header">
+                  <div>
+                    <div className="stat-label">Casos Críticos</div>
+                    <div className="stat-value error">{stats.criticalCases}</div>
+                  </div>
+                  <div className="card-icon" style={{ background: 'var(--color-error-50)', color: 'var(--color-error-600)' }}>
+                    🚨
+                  </div>
+                </div>
+                <div className="stat-change negative">
+                  <span>Atenção imediata</span>
+                </div>
+              </div>
+
+              {/* Protocolos Utilizados */}
+              <div className="stat-card">
+                <div className="stat-header">
+                  <div>
+                    <div className="stat-label">Protocolos Usados</div>
+                    <div className="stat-value success">{stats.protocolsUsed}</div>
+                  </div>
+                  <div className="card-icon" style={{ background: 'var(--color-success-50)', color: 'var(--color-success-600)' }}>
+                    ✅
+                  </div>
+                </div>
+                <div className="stat-change positive">
+                  <span>100% conformidade</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Patients List */}
+            <div className="patient-list">
+              <div className="patient-list-header">
+                <div>
+                  <h2 className="card-title">Pacientes de Demonstração</h2>
+                  <p className="card-subtitle">
+                    {demoPatients.filter(p => p.severity === 'critical').length} casos críticos requerem atenção
+                  </p>
+                </div>
+                <button className="btn btn-primary">
+                  ➕ Novo Paciente
+                </button>
+              </div>
+
+              <div>
+                {demoPatients.map((patient) => {
+                  const badge = getSeverityBadge(patient.severity);
+                  return (
+                    <div key={patient.id} className="patient-item">
+                      <div className="patient-info">
+                        <div className="patient-name">
+                          {patient.name} ({patient.age})
+                        </div>
+                        <div className="patient-condition">
+                          {patient.condition}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center' }}>
+                        {patient.protocol && (
+                          <div className="protocol-badge">
+                            <span className="protocol-icon">📋</span>
+                            {patient.protocol}
+                          </div>
+                        )}
+                        <div className={`patient-badge ${badge.class}`}>
+                          <span>{badge.icon}</span>
+                          {badge.label}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Action Cards */}
+            <div className="dashboard-grid" style={{ marginTop: 'var(--spacing-2xl)' }}>
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h3 className="card-title">Análise Clínica</h3>
+                    <p className="card-subtitle">
+                      IA para suporte à decisão
+                    </p>
+                  </div>
+                  <div className="card-icon">🔍</div>
+                </div>
+                <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-neutral-600)' }}>
+                  Utilize IA para analisar casos complexos e receber sugestões baseadas em evidências.
+                </p>
+                <button className="btn btn-ghost">
+                  Iniciar Análise →
+                </button>
+              </div>
+
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h3 className="card-title">Protocolos Clínicos</h3>
+                    <p className="card-subtitle">
+                      Biblioteca atualizada
+                    </p>
+                  </div>
+                  <div className="card-icon">📋</div>
+                </div>
+                <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-neutral-600)' }}>
+                  Acesse protocolos clínicos atualizados e orientações baseadas em guidelines.
+                </p>
+                <button className="btn btn-ghost">
+                  Ver Protocolos →
+                </button>
+              </div>
+
+              <div className="card">
+                <div className="card-header">
+                  <div>
+                    <h3 className="card-title">Analytics Médicos</h3>
+                    <p className="card-subtitle">
+                      Insights e métricas
+                    </p>
+                  </div>
+                  <div className="card-icon">📈</div>
+                </div>
+                <p style={{ marginBottom: 'var(--spacing-lg)', color: 'var(--color-neutral-600)' }}>
+                  Visualize métricas de atendimento e indicadores de qualidade assistencial.
+                </p>
+                <button className="btn btn-ghost">
+                  Ver Analytics →
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Outros Tabs (Placeholders) */}
+        {activeTab !== 'dashboard' && (
+          <div className="card" style={{ padding: 'var(--spacing-3xl)', textAlign: 'center' }}>
+            <div className="card-icon" style={{ margin: '0 auto var(--spacing-xl)', width: '80px', height: '80px', fontSize: 'var(--font-size-4xl)' }}>
+              🚧
+            </div>
+            <h2 className="card-title" style={{ marginBottom: 'var(--spacing-md)' }}>
+              {tabs.find(t => t.id === activeTab)?.label}
+            </h2>
+            <p className="card-subtitle">
+              Esta seção está em desenvolvimento. Em breve você terá acesso a todas as funcionalidades.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );
-}
+};
+
+export default MedicalDeskDashboard;
