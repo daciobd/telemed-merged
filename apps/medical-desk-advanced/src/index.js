@@ -23,18 +23,13 @@ app.use(cors({
 initMetrics();
 initializeFeatureFlags();
 
-// Servir arquivos estáticos da pasta public (medical-desk-standalone.html)
+// Diretórios
 const publicDir = path.join(__dirname, '..', 'public');
-app.use(express.static(publicDir));
-
-// Servir build do React (dashboard MedicalDesk)
 const clientBuild = path.join(__dirname, '..', 'client', 'dist');
-app.use('/medicaldesk', express.static(clientBuild));
 
-// Rota raiz: página standalone
-app.get('/', (req, res) => {
-  res.sendFile(path.join(publicDir, 'medical-desk-standalone.html'));
-});
+// ============================================
+// ROTAS DE API (mantém no topo)
+// ============================================
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -161,8 +156,26 @@ app.get('/api/protocols/:condition', (req, res) => {
   res.json({ success: true, protocol, source: "medical-desk-advanced", timestamp: new Date().toISOString() });
 });
 
-// Fallback: rotas não-API servem o React app (SPA routing)
-app.get('/medicaldesk/*', (req, res) => {
+// ============================================
+// ROTA STANDALONE (página roxa de protocolos)
+// ============================================
+
+app.get('/landing', (req, res) => {
+  res.sendFile(path.join(publicDir, 'medical-desk-standalone.html'));
+});
+
+// ============================================
+// REACT DASHBOARD (rota principal)
+// ============================================
+
+// Servir arquivos estáticos do React
+app.use(express.static(clientBuild));
+
+// Fallback: todas as rotas não-API servem o React (SPA routing)
+app.get('*', (req, res, next) => {
+  // Deixa /api para o backend
+  if (req.path.startsWith('/api')) return next();
+  
   res.sendFile(path.join(clientBuild, 'index.html'));
 });
 
@@ -177,8 +190,8 @@ app.listen(port, () => {
     SERVICE_NAME: process.env.SERVICE_NAME || 'medical-desk-advanced'
   });
   console.log('Routes:', {
-    '/': 'Standalone HTML interface',
-    '/medicaldesk/': 'React Dashboard (SPA)',
+    '/': 'React Dashboard (SPA) ⚛️',
+    '/landing': 'Standalone HTML (página roxa)',
     '/api/health': 'Health check',
     '/api/protocols/:condition': 'Clinical protocols API',
     '/api/mda/*': 'MDA routes'
