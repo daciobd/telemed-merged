@@ -1,20 +1,28 @@
 # 🏥 Medical Desk Advanced - Protocolos Clínicos
 
-Serviço standalone de protocolos clínicos para demonstrações em hospitais.
+Serviço standalone de protocolos clínicos com **design system teal médico premium** enterprise-grade.
 
 ## 📋 **Visão Geral**
 
 Este serviço fornece:
-- ✅ **Dashboard React interativo** em `/medicaldesk/` (frontend moderno)
-- ✅ **Interface standalone** em `/` para apresentações rápidas
+- ✅ **Dashboard React com design premium** em `/` (tema teal médico profissional)
+- ✅ **Interface standalone** em `/landing` para apresentações rápidas
 - ✅ **API de protocolos clínicos** com 5 condições médicas
 - ✅ **Zero dependências externas** - dados MOCK integrados
 - ✅ **Pronto para deploy no Render** - configurado para produção
 
 ### **Duas Interfaces:**
 
-1. **Standalone HTML** (`/`) - Lista simples de protocolos para demos rápidas
-2. **Dashboard React** (`/medicaldesk/`) - Interface completa e interativa
+1. **Dashboard React Premium** (`/`) - Interface principal com design system teal médico
+2. **Standalone HTML** (`/landing`) - Página standalone roxa para demos rápidas
+
+### **Design System Premium:**
+
+🎨 **Paleta Teal Médico** (#0D9488) - profissional e confiável  
+📐 **Tipografia Inter** - hierarquia clara e legível  
+✨ **Sistema de sombras completo** - elevation e profundidade  
+🎯 **Micro-interações** - hover states e animações suaves  
+📱 **Responsivo** - mobile, tablet e desktop
 
 ---
 

@@ -86,12 +86,7 @@
   }
 }
 
-/* Medical Purple Gradient - FORA do @layer para garantir compilação */
-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  background-attachment: fixed !important;
-  min-height: 100vh;
-}
+/* Removido: tema agora vem de MedicalDeskStyles.css */
 
 @layer components {
   .priority-urgent {
