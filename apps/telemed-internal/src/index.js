@@ -444,17 +444,18 @@ console.log('🔁 Redirects 301 configurados: stubs QA → páginas reais + docs
 
 // ===== SERVE FRONTEND ESTÁTICO =====
 // IMPORTANTE: express.static DEVE vir DEPOIS do proxy MedicalDesk e ANTES do SPA Fallback!
-const frontendPathHere = path.join(__dirname, '../../telemed-deploy-ready');
+// USANDO MEDICAL DESK ADVANCED COM TEMA TEAL PREMIUM
+const frontendPathHere = path.join(__dirname, '../../medical-desk-advanced/client/dist');
 
 // attached_assets -> /assets (imagens anexadas pelo usuário)
 app.use('/assets', express.static(path.join(__dirname, '../../../attached_assets')));
 
-// Frontend build (telemed-deploy-ready) - CSS, JS, HTML
+// Frontend build (medical-desk-advanced) - CSS, JS, HTML COM TEMA TEAL
 app.use(express.static(frontendPathHere));
 
 console.log('📁 Arquivos estáticos configurados:');
 console.log(`   - /assets → attached_assets/`);
-console.log(`   - / → telemed-deploy-ready/`);
+console.log(`   - / → medical-desk-advanced/client/dist/ (TEMA TEAL PREMIUM)`);
 
 // ===== SPA FALLBACK =====
 // Para React Router - retorna index.html para rotas não-API (DEPOIS do static!)
