@@ -3,7 +3,11 @@ set -e
 
 echo "🔍 Current directory: $(pwd)"
 echo "📁 Listing workspace:"
-ls -la
+ls -la | head -20
+
+echo ""
+echo "📂 Checking medical-desk structure:"
+ls -la apps/medical-desk-advanced/
 
 echo ""
 echo "📂 Entering medical-desk-advanced/client..."
@@ -16,5 +20,4 @@ echo "🔨 Building application..."
 npm run build
 
 echo "✅ Build complete!"
-echo "📊 Build output:"
-ls -lh dist/
+ls -lh dist/assets/ | head -5
