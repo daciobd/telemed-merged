@@ -854,6 +854,46 @@ app.get('/api/population-data', (req, res) => {
   });
 });
 
+// Tarefas de automação pendentes
+app.get('/api/automation/pending', (req, res) => {
+  res.json([
+    {
+      id: 1,
+      patient: 'João Silva',
+      task: 'Revisar ECG',
+      priority: 'high',
+      dueDate: '2025-01-22T12:00:00Z'
+    },
+    {
+      id: 2,
+      patient: 'Maria Costa',
+      task: 'Avaliar Raio-X',
+      priority: 'medium',
+      dueDate: '2025-01-22T15:00:00Z'
+    }
+  ]);
+});
+
+// Cadeias de cuidado
+app.get('/api/care-chains', (req, res) => {
+  res.json([
+    {
+      id: 1,
+      name: 'Cadeia SCA',
+      steps: ['Triagem', 'ECG', 'Laboratório', 'Intervenção'],
+      activePatients: 3,
+      averageTime: '45 min'
+    },
+    {
+      id: 2,
+      name: 'Cadeia AVC',
+      steps: ['Triagem', 'TC Crânio', 'Neurologia', 'Terapia'],
+      activePatients: 1,
+      averageTime: '30 min'
+    }
+  ]);
+});
+
 // Alertas de viés
 app.get('/api/bias-alerts', (req, res) => {
   res.json([
