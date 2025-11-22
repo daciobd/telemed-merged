@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import initializeFeatureFlags from "./features/featureFlags.js";
 import { initMetrics } from "./monitoring/metrics.js";
 import mdaRouter from "./routes/mda.js";
+import { setupAPIRoutes } from "./routes/api.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +41,9 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use("/api/mda", mdaRouter);
+
+// Setup comprehensive API routes (stats, patients, analyze, etc.)
+setupAPIRoutes(app);
 
 app.get('/api/protocols/:condition', (req, res) => {
   const protocolsDatabase = {
