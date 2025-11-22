@@ -10,23 +10,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+app.use(express.json());
 
-// CORS atualizado - adicionar frontend
+// Patch 6: CORS configurado para BID funcionar + protocolos
 app.use(cors({ 
-  origin: [
-    'https://telemed-deploy-ready.onrender.com',
-    'https://medical-desk-advanced.onrender.com', // ← NOVO!
-    'http://localhost:5000',
-    'http://localhost:5173'
-  ],
-  credentials: true,
+  origin: ['https://telemed-deploy-ready.onrender.com', 'http://localhost:5000'],
+  origin: ['https://telemed-deploy-ready.onrender.com', 'https://medical-desk-advanced.onrender.com', 'http://localhost:5000', 'http://localhost:5173'],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Internal-Token"]
-}));
-
-initMetrics();
-initializeFeatureFlags();
 }));
 
 initMetrics();
