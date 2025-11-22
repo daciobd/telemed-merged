@@ -20,7 +20,6 @@ const mockData = {
 
 export async function fetchFromAPI(endpoint: string, useMock = false) {
   if (useMock) {
-    // Simular delay da rede
     await new Promise(resolve => setTimeout(resolve, 500));
     
     if (endpoint === '/api/stats') return mockData.stats;
@@ -49,7 +48,6 @@ export async function fetchFromAPI(endpoint: string, useMock = false) {
 }
 
 export async function analyzeSymptoms(data: any) {
-  // Simular análise
   await new Promise(resolve => setTimeout(resolve, 1500));
   
   const { symptoms } = data;
@@ -59,7 +57,6 @@ export async function analyzeSymptoms(data: any) {
   let recommendations: string[] = [];
   let redFlags: string[] = [];
 
-  // Análise baseada em sintomas
   const symptomsLower = symptoms.map((s: string) => s.toLowerCase());
   
   if (symptomsLower.some((s: string) => s.includes('dor') && s.includes('torácica'))) {
@@ -78,7 +75,7 @@ export async function analyzeSymptoms(data: any) {
       'Dispneia associada',
       'Fatores de risco cardiovascular'
     ];
-  } else if (symptomsLower.some((s: string) => s.includes('dispneia') || s.includes('falta de ar'))) {
+  } else if (symptomsLower.some((s: string) => s.includes('dispneia'))) {
     condition = 'Possível Pneumonia ou Insuficiência Cardíaca';
     confidence = 75;
     riskLevel = 'medium';
