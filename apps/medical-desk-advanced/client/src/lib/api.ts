@@ -1,237 +1,106 @@
-import { queryClient } from "./queryClient";
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://telemed-deploy-ready.onrender.com';
 
-export interface SymptomAnalysisRequest {
-  symptoms: string[];
-  age: number;
-  gender: "masculino" | "feminino" | "nao_informado";
-  location?: string;
-  doctorId?: string;
-}
-
-export interface ClinicalSuggestion {
-  id: string;
-  priority: "URGENT" | "HIGH" | "MEDIUM" | "LOW";
-  title: string;
-  description: string;
-  actions: string[];
-  protocolId?: string;
-  category: "investigation" | "score" | "checklist" | "treatment";
-}
-
-export interface Protocol {
-  id: string;
-  name: string;
-  title: string;
-  symptoms?: string[];
-  summary?: string;
-  url?: string;
-  content?: any;
-  active: boolean;
-  lastUpdated: Date;
-}
-
-export interface BiasAlert {
-  id: string;
-  doctorId: string;
-  pattern: string;
-  description: string;
-  suggestion?: string;
-  severity: "HIGH" | "MEDIUM" | "LOW";
-  createdAt: Date;
-}
-
-export interface EpidemiologyContext {
-  location: string;
-  data: {
-    condition: string;
-    incidence: number;
-    trend: string;
-    period: string;
-  }[];
-}
-
-export interface AnalysisResponse {
-  consultationId: string;
-  patientId: string;
-  suggestions: ClinicalSuggestion[];
-  protocols: Protocol[];
-  biasAlerts: BiasAlert[];
-  epidemiologyContext?: EpidemiologyContext;
-}
-
-export interface WellsScoreCriteria {
-  clinicalSignsTVP: boolean;
-  tepmorelikely: boolean;
-  heartRateOver100: boolean;
-  immobilizationSurgery: boolean;
-  previousTEP: boolean;
-  hemoptysis: boolean;
-  cancer: boolean;
-}
-
-export interface WellsScoreResponse {
-  score: number;
-  interpretation: string;
-  recommendation: string;
-  criteria: WellsScoreCriteria;
-}
-
-export interface SystemStats {
-  activeProtocols: number;
-  todaySuggestions: number;
-  biasAlerts: number;
-  totalConsultations: number;
-}
-
-export interface AnalyticsData {
-  consultationStats: {
-    today: number;
-    thisWeek: number;
-    thisMonth: number;
-    total: number;
-  };
-  priorityStats: {
-    urgent: number;
-    high: number;
-    medium: number;
-    low: number;
-  };
-  protocolUsage: Array<{
-    id: string;
-    name: string;
-    usage: number;
-  }>;
-  avgResponseTime: number;
-  accuracyMetrics: {
-    overallAccuracy: number;
-    urgentCaseAccuracy: number;
-    falsePositives: number;
-    falseNegatives: number;
-  };
-  systemHealth: {
-    uptime: string;
-    lastUpdate: string;
-    activeUsers: number;
-    processingLoad: string;
-  };
-}
-
-export const api = {
-  // Analyze symptoms
-  analyzeSymptoms: async (request: SymptomAnalysisRequest): Promise<AnalysisResponse> => {
-    const response = await fetch("/api/analyze-symptoms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Erro ao analisar sintomas");
-    }
-
-    return response.json();
+// Mock data fallback
+const mockData = {
+  stats: {
+    protocolosAtivos: 12,
+    sugestoesHoje: 45,
+    alertasVies: 3,
+    taxaAprovacao: 94
   },
-
-  // Calculate Wells Score
-  calculateWellsScore: async (criteria: WellsScoreCriteria): Promise<WellsScoreResponse> => {
-    const response = await fetch("/api/wells-score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(criteria),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Erro ao calcular escore de Wells");
-    }
-
-    return response.json();
-  },
-
-  // Get protocols
-  getProtocols: async (): Promise<Protocol[]> => {
-    const response = await fetch("/api/protocols");
-    if (!response.ok) {
-      throw new Error("Erro ao buscar protocolos");
-    }
-    return response.json();
-  },
-
-  // Get system stats
-  getSystemStats: async (): Promise<SystemStats> => {
-    const response = await fetch("/api/stats");
-    if (!response.ok) {
-      throw new Error("Erro ao buscar estatísticas");
-    }
-    return response.json();
-  },
-
-  // Get advanced analytics
-  getAnalytics: async (): Promise<AnalyticsData> => {
-    const response = await fetch("/api/analytics");
-    if (!response.ok) {
-      throw new Error("Erro ao buscar analytics");
-    }
-    return response.json();
-  },
-
-  // Get epidemiology data
-  getEpidemiologyData: async (location: string): Promise<EpidemiologyContext> => {
-    const response = await fetch(`/api/epidemiology?location=${encodeURIComponent(location)}`);
-    if (!response.ok) {
-      throw new Error("Erro ao buscar dados epidemiológicos");
-    }
-    return response.json();
-  },
-
-  // Get bias alerts
-  getBiasAlerts: async (doctorId: string): Promise<BiasAlert[]> => {
-    const response = await fetch(`/api/bias-alerts/${doctorId}`);
-    if (!response.ok) {
-      throw new Error("Erro ao buscar alertas de viés");
-    }
-    return response.json();
-  },
-
-  // Submit feedback
-  submitFeedback: async (feedback: {
-    consultationId: string;
-    rating: number;
-    comments?: string;
-    helpful?: boolean;
-  }): Promise<void> => {
-    const response = await fetch("/api/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(feedback),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Erro ao enviar feedback");
-    }
-  },
+  patients: [
+    { id: 1, name: 'João Silva', age: 58, condition: 'SCA com dor torácica', status: 'critical' },
+    { id: 2, name: 'Maria Costa', age: 72, condition: 'Pneumonia grave (CURB-65=4)', status: 'critical' }
+  ],
+  protocols: [
+    { id: 1, name: 'Protocolo SCA', usage: 245, accuracy: 94 },
+    { id: 2, name: 'Protocolo Pneumonia', usage: 189, accuracy: 91 }
+  ]
 };
 
-// Mutation functions for React Query
-export const mutations = {
-  analyzeSymptoms: (onSuccess?: (data: AnalysisResponse) => void) => ({
-    mutationFn: api.analyzeSymptoms,
-    onSuccess: (data: AnalysisResponse) => {
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      onSuccess?.(data);
-    },
-  }),
+export async function fetchFromAPI(endpoint: string, useMock = false) {
+  if (useMock) {
+    // Simular delay da rede
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (endpoint === '/api/stats') return mockData.stats;
+    if (endpoint === '/api/patients') return mockData.patients;
+    if (endpoint === '/api/protocols') return mockData.protocols;
+    
+    return null;
+  }
 
-  calculateWellsScore: (onSuccess?: (data: WellsScoreResponse) => void) => ({
-    mutationFn: api.calculateWellsScore,
-    onSuccess,
-  }),
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (!response.ok) {
+      console.warn(`API error for ${endpoint}: ${response.status}, falling back to mock data`);
+      return fetchFromAPI(endpoint, true);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.warn(`Network error for ${endpoint}, falling back to mock data:`, error);
+    return fetchFromAPI(endpoint, true);
+  }
+}
 
-  submitFeedback: (onSuccess?: () => void) => ({
-    mutationFn: api.submitFeedback,
-    onSuccess,
-  }),
-};
+export async function analyzeSymptoms(data: any) {
+  // Simular análise
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  const { symptoms } = data;
+  let condition = 'Condição não identificada';
+  let confidence = 70;
+  let riskLevel = 'medium';
+  let recommendations: string[] = [];
+  let redFlags: string[] = [];
+
+  // Análise baseada em sintomas
+  const symptomsLower = symptoms.map((s: string) => s.toLowerCase());
+  
+  if (symptomsLower.some((s: string) => s.includes('dor') && s.includes('torácica'))) {
+    condition = 'Síndrome Coronariana Aguda';
+    confidence = 85;
+    riskLevel = 'high';
+    recommendations = [
+      'ECG de 12 derivações imediatamente',
+      'Troponina seriada (0h, 1h, 3h)',
+      'Aspirina 200mg VO imediatamente',
+      'Considerar antiagregação dupla',
+      'Monitorização contínua'
+    ];
+    redFlags = [
+      'Dor torácica em repouso',
+      'Dispneia associada',
+      'Fatores de risco cardiovascular'
+    ];
+  } else if (symptomsLower.some((s: string) => s.includes('dispneia') || s.includes('falta de ar'))) {
+    condition = 'Possível Pneumonia ou Insuficiência Cardíaca';
+    confidence = 75;
+    riskLevel = 'medium';
+    recommendations = [
+      'Ausculta pulmonar detalhada',
+      'Saturação de oxigênio',
+      'Raio-X de tórax',
+      'Considerar gasometria arterial'
+    ];
+    redFlags = [
+      'Dispneia em repouso',
+      'Taquipneia'
+    ];
+  }
+
+  return {
+    condition,
+    confidence,
+    riskLevel,
+    recommendations,
+    redFlags,
+    analyzedSymptoms: symptoms,
+    timestamp: new Date().toISOString()
+  };
+}
