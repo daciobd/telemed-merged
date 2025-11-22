@@ -3,49 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 import {
   Activity, TrendingUp, AlertTriangle, Users, FileText, Settings,
-  BarChart3, Bell, Moon, Sun, Plus, X, Check,
-  Heart, Stethoscope, Brain, Zap
+  BarChart3, Bell, Moon, Sun, Search, Filter, Plus, X, Check,
+  Heart, Stethoscope, Brain, Zap, Clock, CheckCircle, XCircle,
+  TrendingDown, Calendar, MapPin, Shield, Download, Upload
 } from 'lucide-react'
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-
-// Mock API functions
-const fetchFromAPI = async (url: string, fallback = true) => {
-  try {
-    const res = await fetch(url)
-    if (!res.ok && fallback) throw new Error()
-    return await res.json()
-  } catch {
-    // Return mock data
-    return {
-      protocolosAtivos: 12,
-      sugestoesHoje: 45,
-      alertasVies: 3,
-      taxaAprovacao: 94
-    }
-  }
-}
-
-const analyzeSymptoms = async (_params: { symptoms: string[] }) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  return {
-    condition: 'Síndrome Coronariana Aguda (SCA)',
-    confidence: 87,
-    riskLevel: 'high',
-    recommendations: [
-      'Solicitar ECG de 12 derivações imediatamente',
-      'Monitorização cardíaca contínua',
-      'Administrar AAS 300mg via oral',
-      'Considerar protocolo de dor torácica',
-      'Avaliar necessidade de terapia de reperfusão'
-    ],
-    redFlags: [
-      'Dor torácica típica em repouso',
-      'Fatores de risco cardiovascular presentes'
-    ]
-  }
-}
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { fetchFromAPI, analyzeSymptoms } from './lib/api'
 
 // Chart data
 const trendData = [
@@ -64,6 +27,14 @@ const conditionsData = [
   { name: 'Outros', value: 20, color: '#10b981' },
 ]
 
+const performanceData = [
+  { day: 'Seg', tempo: 45, pacientes: 12 },
+  { day: 'Ter', tempo: 38, pacientes: 15 },
+  { day: 'Qua', tempo: 42, pacientes: 14 },
+  { day: 'Qui', tempo: 35, pacientes: 18 },
+  { day: 'Sex', tempo: 40, pacientes: 16 },
+]
+
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [darkMode, setDarkMode] = useState(false)
@@ -71,6 +42,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [stats, setStats] = useState<any>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [newSymptom, setNewSymptom] = useState('')
 
   useEffect(() => {
@@ -261,7 +233,6 @@ function App() {
 
               {/* Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Trend Chart */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -289,7 +260,6 @@ function App() {
                   </ResponsiveContainer>
                 </motion.div>
 
-                {/* Pie Chart */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -305,7 +275,7 @@ function App() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -344,7 +314,6 @@ function App() {
                   </h2>
                 </div>
 
-                {/* Form */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -370,6 +339,19 @@ function App() {
                         <option>Feminino</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Município (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: São Paulo, SP"
+                      className={`w-full px-4 py-3 rounded-lg border-2 focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+                        darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                      }`}
+                    />
                   </div>
 
                   <div>
@@ -470,7 +452,6 @@ function App() {
                     </div>
 
                     <div className="space-y-6">
-                      {/* Condition */}
                       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4`}>
                         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
                           Condição Sugerida
@@ -485,7 +466,6 @@ function App() {
                         </span>
                       </div>
 
-                      {/* Confidence */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -503,7 +483,6 @@ function App() {
                         </div>
                       </div>
 
-                      {/* Recommendations */}
                       <div>
                         <h4 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-3 flex items-center space-x-2`}>
                           <FileText className="w-5 h-5 text-teal-600" />
@@ -525,7 +504,6 @@ function App() {
                         </ul>
                       </div>
 
-                      {/* Red Flags */}
                       {result.redFlags && (
                         <div>
                           <h4 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-3 flex items-center space-x-2`}>
@@ -555,24 +533,608 @@ function App() {
             </motion.div>
           )}
 
-          {/* Other tabs placeholder */}
-          {!['dashboard', 'analise'].includes(activeTab) && (
+          {activeTab === 'automacao' && (
             <motion.div
-              key={activeTab}
+              key="automacao"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-12 text-center`}
+              className="space-y-6"
             >
-              <div className="w-20 h-20 bg-teal-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Brain className="w-10 h-10 text-teal-600" />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Cadeias Ativas
+                    </h3>
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <p className="text-4xl font-bold text-blue-600">0</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-2`}>
+                    0% vs. ontem
+                  </p>
+                </div>
+
+                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Aprovações Pendentes
+                    </h3>
+                    <Clock className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <p className="text-4xl font-bold text-orange-600">0</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-2`}>
+                    Média: 2.5h
+                  </p>
+                </div>
+
+                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Taxa de Aprovação
+                    </h3>
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                  <p className="text-4xl font-bold text-green-600">0%</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-2`}>
+                    +4% esta semana
+                  </p>
+                </div>
               </div>
-              <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                {tabs.find(t => t.id === activeTab)?.label}
-              </h3>
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-lg`}>
-                Módulo em desenvolvimento
-              </p>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Tarefas Pendentes
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { patient: 'João Silva', task: 'Revisar ECG', priority: 'high', due: '2h' },
+                    { patient: 'Maria Costa', task: 'Avaliar Raio-X', priority: 'medium', due: '4h' },
+                  ].map((item, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg flex items-center justify-between`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-2 h-12 rounded-full ${
+                          item.priority === 'high' ? 'bg-red-500' :
+                          item.priority === 'medium' ? 'bg-orange-500' :
+                          'bg-green-500'
+                        }`} />
+                        <div>
+                          <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {item.task}
+                          </p>
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Paciente: {item.patient}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Vence em {item.due}
+                        </p>
+                        <button className="mt-1 text-teal-600 hover:text-teal-700 text-sm font-medium">
+                          Revisar →
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'protocolos' && (
+            <motion.div
+              key="protocolos"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Protocolos Clínicos
+                </h2>
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar protocolos..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={`pl-10 pr-4 py-2 rounded-lg border ${
+                        darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+                    <Plus className="w-5 h-5" />
+                    <span>Novo Protocolo</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  { name: 'Síndrome Coronariana Aguda', usage: 245, accuracy: 94, category: 'Cardiologia' },
+                  { name: 'Pneumonia Adquirida na Comunidade', usage: 189, accuracy: 91, category: 'Pneumologia' },
+                  { name: 'AVC Isquêmico', usage: 156, accuracy: 96, category: 'Neurologia' },
+                  { name: 'Sepse', usage: 134, accuracy: 89, category: 'Infectologia' },
+                  { name: 'Insuficiência Cardíaca', usage: 98, accuracy: 92, category: 'Cardiologia' },
+                  { name: 'DPOC Exacerbado', usage: 87, accuracy: 88, category: 'Pneumologia' },
+                ].map((protocol, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -4 }}
+                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 cursor-pointer`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-1`}>
+                          {protocol.name}
+                        </h3>
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-teal-100 text-teal-800 rounded">
+                          {protocol.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Utilizações
+                        </span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {protocol.usage}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Acurácia
+                          </span>
+                          <span className="text-sm font-bold text-green-600">
+                            {protocol.accuracy}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-green-500 rounded-full"
+                            style={{ width: `${protocol.accuracy}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <button className="mt-4 w-full py-2 text-teal-600 hover:bg-teal-50 rounded-lg font-medium transition-colors">
+                      Ver Detalhes →
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <motion.div
+              key="analytics"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Analytics & Performance
+              </h2>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                  <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                    Tempo Médio por Consulta
+                  </h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
+                      <XAxis dataKey="day" stroke={darkMode ? '#9ca3af' : '#6b7280'} />
+                      <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                          border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area type="monotone" dataKey="tempo" stroke="#14b8a6" fill="#14b8a6" fillOpacity={0.3} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                  <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                    Pacientes por Dia
+                  </h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
+                      <XAxis dataKey="day" stroke={darkMode ? '#9ca3af' : '#6b7280'} />
+                      <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                          border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="pacientes" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { label: 'Total de Pacientes', value: '234', icon: Users, color: 'blue' },
+                  { label: 'Tempo Médio', value: '3.2 dias', icon: Clock, color: 'teal' },
+                  { label: 'Satisfação', value: '4.6/5', icon: Heart, color: 'pink' },
+                ].map((metric, index) => {
+                  const Icon = metric.icon
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Icon className={`w-8 h-8 text-${metric.color}-600`} />
+                      </div>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {metric.label}
+                      </p>
+                      <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
+                        {metric.value}
+                      </p>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'alertas' && (
+            <motion.div
+              key="alertas"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Alertas de Viés Cognitivo
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <Shield className="w-6 h-6 text-teal-600" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Sistema de detecção ativo
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  {
+                    type: 'Viés de Confirmação',
+                    description: 'Detectado em 2 casos esta semana',
+                    severity: 'medium',
+                    cases: 2,
+                    color: 'orange'
+                  },
+                  {
+                    type: 'Viés de Ancoragem',
+                    description: 'Possível viés em diagnósticos de pneumonia',
+                    severity: 'low',
+                    cases: 1,
+                    color: 'yellow'
+                  },
+                  {
+                    type: 'Viés de Disponibilidade',
+                    description: 'Diagnósticos recentes influenciando decisões',
+                    severity: 'low',
+                    cases: 1,
+                    color: 'yellow'
+                  },
+                ].map((alert, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 border-l-4 ${
+                      alert.severity === 'high' ? 'border-red-500' :
+                      alert.severity === 'medium' ? 'border-orange-500' :
+                      'border-yellow-500'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <AlertTriangle className={`w-6 h-6 text-${alert.color}-600`} />
+                          <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {alert.type}
+                          </h3>
+                        </div>
+                        <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                          {alert.description}
+                        </p>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Casos afetados: <strong>{alert.cases}</strong>
+                          </span>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            alert.severity === 'high' ? 'bg-red-100 text-red-800' :
+                            alert.severity === 'medium' ? 'bg-orange-100 text-orange-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {alert.severity === 'high' ? 'Alta' :
+                             alert.severity === 'medium' ? 'Média' : 'Baixa'}
+                          </span>
+                        </div>
+                      </div>
+                      <button className="text-teal-600 hover:text-teal-700 font-medium">
+                        Revisar →
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'populacao' && (
+            <motion.div
+              key="populacao"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Dados Populacionais & Epidemiologia
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-6 h-6 text-teal-600" />
+                  <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    São Paulo - SP
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { label: 'População Total', value: '12.4M', icon: Users },
+                  { label: 'Diabetes', value: '8.4%', icon: TrendingUp },
+                  { label: 'Hipertensão', value: '24.1%', icon: Heart },
+                  { label: 'Obesidade', value: '19.8%', icon: AlertTriangle },
+                ].map((stat, index) => {
+                  const Icon = stat.icon
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}
+                    >
+                      <Icon className="w-8 h-8 text-teal-600 mb-3" />
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {stat.label}
+                      </p>
+                      <p className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mt-1`}>
+                        {stat.value}
+                      </p>
+                    </motion.div>
+                  )
+                })}
+              </div>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Tendências Sazonais
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { name: 'Respiratórias', current: 15, trend: 'up', color: 'blue' },
+                    { name: 'Cardiovasculares', current: 24, trend: 'stable', color: 'teal' },
+                    { name: 'Infecciosas', current: 8, trend: 'down', color: 'green' },
+                  ].map((trend, index) => (
+                    <div key={index} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {trend.name}
+                        </span>
+                        {trend.trend === 'up' && <TrendingUp className="w-5 h-5 text-red-500" />}
+                        {trend.trend === 'stable' && <div className="w-5 h-0.5 bg-gray-400" />}
+                        {trend.trend === 'down' && <TrendingDown className="w-5 h-5 text-green-500" />}
+                      </div>
+                      <p className={`text-2xl font-bold text-${trend.color}-600`}>
+                        {trend.current}%
+                      </p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                        da população
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'config' && (
+            <motion.div
+              key="config"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-4xl mx-auto space-y-6"
+            >
+              <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Configurações do Sistema
+              </h2>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Preferências Gerais
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        Modo Escuro
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Ativar tema escuro na interface
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setDarkMode(!darkMode)}
+                      className={`relative w-14 h-7 rounded-full transition-colors ${
+                        darkMode ? 'bg-teal-600' : 'bg-gray-300'
+                      }`}
+                    >
+                      <motion.div
+                        animate={{ x: darkMode ? 28 : 2 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        className="absolute top-1 w-5 h-5 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        Notificações
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Receber alertas de casos críticos
+                      </p>
+                    </div>
+                    <button className="relative w-14 h-7 rounded-full bg-teal-600">
+                      <motion.div
+                        initial={{ x: 28 }}
+                        className="absolute top-1 w-5 h-5 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        Sons
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Alertas sonoros para notificações
+                      </p>
+                    </div>
+                    <button className="relative w-14 h-7 rounded-full bg-gray-300">
+                      <motion.div
+                        initial={{ x: 2 }}
+                        className="absolute top-1 w-5 h-5 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Perfil do Usuário
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Nome
+                    </label>
+                    <input
+                      type="text"
+                      defaultValue="Dra. Ana Silva"
+                      className={`w-full px-4 py-2 rounded-lg border ${
+                        darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      CRM
+                    </label>
+                    <input
+                      type="text"
+                      defaultValue="12345-SP"
+                      className={`w-full px-4 py-2 rounded-lg border ${
+                        darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Especialidade
+                    </label>
+                    <select className={`w-full px-4 py-2 rounded-lg border ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}>
+                      <option>Clínica Médica</option>
+                      <option>Cardiologia</option>
+                      <option>Neurologia</option>
+                      <option>Emergência</option>
+                    </select>
+                  </div>
+                  <button className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors">
+                    Salvar Alterações
+                  </button>
+                </div>
+              </div>
+
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
+                <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  Dados & Privacidade
+                </h3>
+                <div className="space-y-3">
+                  <button className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <Download className="w-5 h-5 text-teal-600" />
+                      <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+                        Exportar Dados
+                      </span>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                  <button className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <Shield className="w-5 h-5 text-teal-600" />
+                      <span className={darkMode ? 'text-white' : 'text-gray-900'}>
+                        Política de Privacidade
+                      </span>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                  <button className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <XCircle className="w-5 h-5" />
+                      <span>Excluir Conta</span>
+                    </div>
+                    <span className="text-gray-400">→</span>
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
