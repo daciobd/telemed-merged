@@ -10,6 +10,8 @@ import {
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { fetchFromAPI, analyzeSymptoms } from './lib/api'
 
+import { protocolosClinicosCompletos } from './data/protocolos'
+import { ProtocoloDetalhes } from './components/ProtocoloDetalhes'
 // Chart data
 const trendData = [
   { month: 'Jan', sugestoes: 120, aprovadas: 112 },
