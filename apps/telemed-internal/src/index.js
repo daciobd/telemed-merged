@@ -268,6 +268,15 @@ console.log(`   Feature enabled: ${FEATURE_PRICING}`);
 // para as demais rotas sem interferir no proxy
 app.use(express.json());
 
+// ============================================
+// CONSULTÓRIO VIRTUAL API ENDPOINTS
+// ============================================
+
+// Rotas do Consultório Virtual (autenticação, médicos, consultas)
+app.use('/api/consultorio', consultorioRoutes);
+
+console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
+
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect
 app.post('/_diag/auction/bids', async (req, res) => {
@@ -523,6 +532,12 @@ const requireToken = (req, res, next) => {
     return next();
   }
   
+  // Consultório Virtual endpoints: autenticação própria com JWT
+  if (req.path.startsWith('/api/consultorio/')) {
+    console.log(`[AUTH BYPASS] ${req.method} ${req.path} → Consultório Virtual (JWT auth)`);
+    return next();
+  }
+  
   const tok = req.header('X-Internal-Token');
   const expectedToken = process.env.INTERNAL_TOKEN || '';
   
@@ -674,15 +689,6 @@ app.get('/api/mda/protocols/:condition', (req, res) => {
   console.log(`[MDA PROTOCOLS] Servindo protocolo: ${condition}`);
   res.json({ success: true, protocol, source: "local", timestamp: new Date().toISOString() });
 });
-
-// ============================================
-// CONSULTÓRIO VIRTUAL API ENDPOINTS
-// ============================================
-
-// Rotas do Consultório Virtual (autenticação, médicos, consultas)
-app.use('/api/consultorio', consultorioRoutes);
-
-console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
 
 // ============================================
 // MEDICAL DESK ADVANCED API ENDPOINTS (PÚBLICAS)
