@@ -1,8 +1,9 @@
 // Rotas do Consultório Virtual integradas ao telemed-internal
 import express from 'express';
 import { db } from '../../../db/index.js';
-import { users, patients, doctors, consultations, bids, virtualOfficeSettings } from '../../../db/schema.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import * as schema from '../../../db/schema.cjs';
+const { users, patients, doctors, consultations, bids, virtualOfficeSettings } = schema;
+import { eq, and, desc, sql, ne } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
@@ -14,7 +15,8 @@ import {
   createConsultationSchema,
   updateConsultationSchema,
   createBidSchema,
-  updateDoctorSchema
+  updateDoctorSchema,
+  directBookingSchema
 } from './consultorio-validation.js';
 
 const router = express.Router();
@@ -329,8 +331,9 @@ router.get('/dr/:customUrl', async (req, res) => {
   try {
     const { customUrl } = req.params;
     
-    const [result] = await db.select({
+    const [doctor] = await db.select({
       id: doctors.id,
+      userId: doctors.userId,
       fullName: users.fullName,
       email: users.email,
       phone: users.phone,
@@ -353,11 +356,27 @@ router.get('/dr/:customUrl', async (req, res) => {
     .where(eq(doctors.customUrl, customUrl))
     .limit(1);
     
-    if (!result) {
+    if (!doctor) {
       return res.status(404).json({ error: 'Médico não encontrado' });
     }
     
-    res.json(result);
+    // Buscar settings do consultório virtual
+    const [officeSettings] = await db.select()
+      .from(virtualOfficeSettings)
+      .where(eq(virtualOfficeSettings.doctorId, doctor.id))
+      .limit(1);
+    
+    // Retornar dados no formato esperado pelo frontend
+    res.json({
+      doctor,
+      officeSettings: officeSettings || {
+        autoAcceptBookings: false,
+        requirePrepayment: false,
+        allowCancellation: true,
+        emailNotifications: true,
+        whatsappNotifications: false,
+      }
+    });
   } catch (error) {
     console.error('Erro ao buscar médico:', error);
     res.status(500).json({ error: 'Erro ao buscar médico' });
@@ -721,6 +740,79 @@ router.put('/doctors/me', authenticate, validate(updateDoctorSchema), async (req
   } catch (error) {
     console.error('Erro ao atualizar médico:', error);
     res.status(500).json({ error: 'Erro ao atualizar perfil' });
+  }
+});
+
+// ============================================
+// VIRTUAL OFFICE - ENDPOINTS PÚBLICOS
+// ============================================
+
+// POST /api/consultorio/consultations/direct - Agendamento direto (sem leilão)
+router.post('/consultations/direct', authenticate, validate(directBookingSchema), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { doctorId, consultationType, scheduledFor, chiefComplaint } = req.validatedBody;
+    
+    // Verificar se é paciente
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({ error: 'Apenas pacientes podem agendar consultas' });
+    }
+    
+    const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+    if (!patient) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+    
+    // Buscar médico e pricing
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.id, doctorId)).limit(1);
+    if (!doctor) {
+      return res.status(404).json({ error: 'Médico não encontrado' });
+    }
+    
+    // Calcular preço da consulta
+    const pricing = doctor.consultationPricing || {};
+    const agreedPrice = pricing[consultationType] || 0;
+    
+    // Criar consulta direta
+    const [consultation] = await db.insert(consultations).values({
+      patientId: patient.id,
+      doctorId: doctor.id,
+      consultationType,
+      isMarketplace: false, // Não é marketplace, é agendamento direto
+      scheduledFor: new Date(scheduledFor),
+      agreedPrice: agreedPrice.toString(),
+      status: 'scheduled', // Já agendada
+      chiefComplaint: chiefComplaint || null,
+    }).returning();
+    
+    res.json(consultation);
+  } catch (error) {
+    console.error('Erro ao criar agendamento direto:', error);
+    res.status(500).json({ error: 'Erro ao criar agendamento' });
+  }
+});
+
+// POST /api/consultorio/virtual-office/check-availability
+router.post('/virtual-office/check-availability', async (req, res) => {
+  try {
+    const { doctorId, datetime } = req.body;
+    
+    // Verificar se já existe consulta nesse horário
+    const [existingConsultation] = await db.select()
+      .from(consultations)
+      .where(
+        and(
+          eq(consultations.doctorId, doctorId),
+          eq(consultations.scheduledFor, new Date(datetime)),
+          ne(consultations.status, 'cancelled')
+        )
+      )
+      .limit(1);
+    
+    res.json({ available: !existingConsultation });
+  } catch (error) {
+    console.error('Erro ao verificar disponibilidade:', error);
+    res.status(500).json({ error: 'Erro ao verificar disponibilidade' });
   }
 });
 

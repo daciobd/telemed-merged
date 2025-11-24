@@ -17,7 +17,7 @@ export default function PublicOfficePage() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
-  const [consultationType, setConsultationType] = useState<'primeira_consulta' | 'retorno' | 'urgente' | 'check_up'>('primeira_consulta');
+  const [consultationType, setConsultationType] = useState<string>(''); // Tipos dinâmicos baseados no pricing
   const [chiefComplaint, setChiefComplaint] = useState('');
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [isBooking, setIsBooking] = useState(false);
@@ -314,21 +314,16 @@ export default function PublicOfficePage() {
                 </label>
                 <select
                   value={consultationType}
-                  onChange={(e) => setConsultationType(e.target.value as any)}
+                  onChange={(e) => setConsultationType(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  required
                 >
-                  {pricing.primeira_consulta && (
-                    <option value="primeira_consulta">Primeira Consulta - R$ {pricing.primeira_consulta}</option>
-                  )}
-                  {pricing.retorno && (
-                    <option value="retorno">Retorno - R$ {pricing.retorno}</option>
-                  )}
-                  {pricing.urgente && (
-                    <option value="urgente">Urgente - R$ {pricing.urgente}</option>
-                  )}
-                  {pricing.check_up && (
-                    <option value="check_up">Check-up - R$ {pricing.check_up}</option>
-                  )}
+                  <option value="">Selecione o tipo</option>
+                  {Object.entries(pricing).map(([type, price]) => (
+                    <option key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1)} - R$ {price}
+                    </option>
+                  ))}
                 </select>
               </div>
 

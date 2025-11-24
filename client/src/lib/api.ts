@@ -1,13 +1,16 @@
 export async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('consultorio_token');
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options?.headers,
   };
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  if (options?.headers) {
+    Object.assign(headers, options.headers);
   }
 
   const response = await fetch(url, {

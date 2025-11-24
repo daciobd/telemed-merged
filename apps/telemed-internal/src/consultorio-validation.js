@@ -74,18 +74,24 @@ export const createBidSchema = z.object({
 // Doctor Update Validation
 export const updateDoctorSchema = z.object({
   bio: z.string().optional(),
-  consultationPricing: z.object({
-    primeira_consulta: z.number().positive().optional(),
-    retorno: z.number().positive().optional(),
-    urgente: z.number().positive().optional(),
-    check_up: z.number().positive().optional()
-  }).optional(),
+  customUrl: z.string().min(3).optional(),
+  consultationPricing: z.record(z.number().positive()).optional(), // Permite qualquer chave (video, presencial, etc.)
+  education: z.array(z.string()).optional(),
+  experience: z.array(z.string()).optional(),
   availability: z.array(z.object({
     day: z.number().min(0).max(6),
     slots: z.array(z.string())
   })).optional(),
   consultationDuration: z.number().min(15).max(120).optional(),
   minPriceMarketplace: z.number().positive().optional()
+});
+
+// Direct Booking Validation (Virtual Office)
+export const directBookingSchema = z.object({
+  doctorId: z.number().int().positive('ID do médico é obrigatório'),
+  consultationType: z.string().min(1, 'Tipo de consulta é obrigatório'),
+  scheduledFor: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/, 'Data/hora no formato ISO inválido'),
+  chiefComplaint: z.string().optional()
 });
 
 // ============================================

@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   registerPatient: (data: { email: string; password: string; fullName: string; phone?: string }) => Promise<void>;
@@ -99,7 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, registerPatient, registerDoctor, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      isAuthenticated: !!user,
+      isLoading, 
+      login, 
+      registerPatient, 
+      registerDoctor, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -28,7 +28,7 @@ export const virtualOfficeService = {
 
   // Buscar horários disponíveis do médico
   async getAvailableSlots(
-    doctorId: number,
+    _doctorId: number,
     date: string,
     duration: number = 30
   ): Promise<TimeSlot[]> {

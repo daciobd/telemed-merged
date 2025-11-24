@@ -16,7 +16,9 @@ export const consultationTypeEnum = pgEnum('consultation_type', [
   'primeira_consulta',
   'retorno',
   'urgente',
-  'check_up'
+  'check_up',
+  'video',
+  'presencial'
 ]);
 
 // ============================================
