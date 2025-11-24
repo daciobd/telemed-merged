@@ -97,7 +97,7 @@ export default function PatientDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/consultorio/consultations'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/consultorio/bids/consultation'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/consultorio/bids/consultation', selectedConsultation] });
       toast({
         title: 'Lance aceito!',
         description: 'O médico foi notificado',

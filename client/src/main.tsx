@@ -18,7 +18,11 @@ const queryClient = new QueryClient({
           headers['Authorization'] = `Bearer ${token}`;
         }
 
-        const res = await fetch(queryKey[0] as string, { headers });
+        // Build URL from all queryKey segments
+        // If queryKey is ['/api/path', id], build '/api/path/id'
+        const url = queryKey.filter(k => k !== null && k !== undefined).join('/');
+
+        const res = await fetch(url, { headers });
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
           throw new Error(errorData.error || `HTTP ${res.status}`);
