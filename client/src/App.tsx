@@ -5,6 +5,7 @@ import RegisterPatient from './pages/RegisterPatient';
 import RegisterDoctor from './pages/RegisterDoctor';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
+import PublicOfficePage from './pages/PublicOfficePage';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -41,6 +42,7 @@ export default function App() {
 
   return (
     <Switch>
+      <Route path="/dr/:customUrl" component={PublicOfficePage} />
       <Route path="/login">
         {user ? <Redirect to="/dashboard" /> : <Login />}
       </Route>
