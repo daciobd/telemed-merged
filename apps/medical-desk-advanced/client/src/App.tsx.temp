@@ -9,15 +9,9 @@ import {
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { fetchFromAPI, analyzeSymptoms } from './lib/api'
+
 import { protocolosClinicosCompletos } from './data/protocolos'
 import { ProtocoloDetalhes } from './components/ProtocoloDetalhes'
-import { cadeiasCompletas } from './data/cadeias'
-import { CadeiaDetalhes } from './components/CadeiaDetalhes'
-import { acessosRapidos, metricas, distribuicaoPrioridade } from './data/emergencia'
-import { AcessoRapidoModal } from './components/AcessoRapido'
-import { dadosBrasil, tendenciasSazonais, causasMortalidade, alertasEpidemiologicos } from './data/populacao'
-
-
 // Chart data
 const trendData = [
   { month: 'Jan', sugestoes: 120, aprovadas: 112 },
@@ -52,12 +46,6 @@ function App() {
   const [stats, setStats] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [newSymptom, setNewSymptom] = useState('')
-  const [protocoloSelecionado, setProtocoloSelecionado] = useState<any>(null)
-  const [categoriaFiltro, setCategoriaFiltro] = useState<string>('todas')
-  const [cadeiaSelecionada, setCadeiaSelecionada] = useState<any>(null)
-  const [acessoSelecionado, setAcessoSelecionado] = useState<any>(null)
-  const [regiaoSelecionada, setRegiaoSelecionada] = useState(0)
-
 
   useEffect(() => {
     loadStats()
@@ -82,12 +70,6 @@ function App() {
     { id: 'populacao', label: 'População', icon: Users },
     { id: 'config', label: 'Config', icon: Settings },
   ]
-  const protocolosFiltrados = categoriaFiltro === 'todas' 
-    ? protocolosClinicosCompletos
-    : protocolosClinicosCompletos.filter(p => p.categoria === categoriaFiltro)
-  
-  const categorias = ['todas', ...Array.from(new Set(protocolosClinicosCompletos.map(p => p.categoria)))]
-
 
   const handleAnalyze = async () => {
     if (symptoms.length === 0) {
