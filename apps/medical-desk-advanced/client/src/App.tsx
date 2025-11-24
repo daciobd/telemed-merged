@@ -722,7 +722,6 @@ function App() {
                   </motion.div>
                 ))}
               </div>
-                    </div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
