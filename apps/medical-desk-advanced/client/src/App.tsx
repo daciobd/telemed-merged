@@ -1175,6 +1175,31 @@ function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Modais */}
+      <AnimatePresence>
+        {protocoloSelecionado && (
+          <ProtocoloDetalhes
+            protocolo={protocoloSelecionado}
+            onClose={() => setProtocoloSelecionado(null)}
+            darkMode={darkMode}
+          />
+        )}
+        {cadeiaSelecionada && (
+          <CadeiaDetalhes
+            cadeia={cadeiaSelecionada}
+            onClose={() => setCadeiaSelecionada(null)}
+            darkMode={darkMode}
+          />
+        )}
+        {acessoSelecionado && (
+          <AcessoRapidoModal
+            acesso={acessoSelecionado}
+            onClose={() => setAcessoSelecionado(null)}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
