@@ -8,6 +8,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
+import consultorioRoutes from './consultorio-routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -673,6 +674,15 @@ app.get('/api/mda/protocols/:condition', (req, res) => {
   console.log(`[MDA PROTOCOLS] Servindo protocolo: ${condition}`);
   res.json({ success: true, protocol, source: "local", timestamp: new Date().toISOString() });
 });
+
+// ============================================
+// CONSULTÓRIO VIRTUAL API ENDPOINTS
+// ============================================
+
+// Rotas do Consultório Virtual (autenticação, médicos, consultas)
+app.use('/api/consultorio', consultorioRoutes);
+
+console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
 
 // ============================================
 // MEDICAL DESK ADVANCED API ENDPOINTS (PÚBLICAS)
