@@ -1,7 +1,7 @@
 # TeleMed Platform - Documentação Concisa
 
 ## Overview
-A Plataforma TeleMed é uma solução unificada de telemedicina que consolida três aplicações existentes em um monorepo com cinco microserviços. Ela oferece workflows de consulta, calculadoras médicas, prescrição digital, automação de documentos médicos com integração AWS S3, um sistema de triagem médica com IA (Dr. AI Medical Triage), e módulos plug-and-play para chat em consulta, gestão de pacientes, agendamento e um widget de suporte. O projeto está completo e pronto para produção, focado em compliance com as regulamentações brasileiras de telemedicina. Seu objetivo é otimizar a experiência de telemedicina e ser um produto líder no mercado brasileiro.
+A Plataforma TeleMed é uma solução unificada de telemedicina que consolida três aplicações existentes em um monorepo com cinco microserviços. Ela oferece workflows de consulta com leilão reverso e comissão de 20%, calculadoras médicas, prescrição digital, automação de documentos médicos com integração AWS S3, um sistema de triagem médica com IA (Dr. AI Medical Triage), e módulos plug-and-play para chat em consulta, gestão de pacientes, agendamento e um widget de suporte. O projeto está completo e pronto para produção, focado em compliance com as regulamentações brasileiras de telemedicina. Seu objetivo é otimizar a experiência de telemedicina e ser um produto líder no mercado brasileiro.
 
 ## User Preferences
 - **Linguagem**: Português brasileiro
@@ -21,15 +21,16 @@ A plataforma é composta por um monorepo com seis microserviços Dockerizados, o
 
 **Frontend:**
 -   **Tecnologias**: React com TypeScript, React Router, React Query + Context API, Tailwind CSS.
--   **UI/UX**: Componentes responsivos, modal de prescrição ANVISA, chat flutuante, dashboard de métricas, widget de suporte, sistema de temas Dark/Light. Dr. AI Medical Triage com interface LGPD-compliant e algoritmo de triagem. Integração de leilão/precificação (BidConnect) com proxy local e feature flag, oferecendo 3 modelos de precificação. Página de consulta modernizada com tabs (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.
+-   **UI/UX**: Componentes responsivos, modal de prescrição ANVISA, chat flutuante, dashboard de métricas (incluindo métricas de comissão de marketplace), widget de suporte, sistema de temas Dark/Light. Dr. AI Medical Triage com interface LGPD-compliant e algoritmo de triagem. Integração de leilão/precificação (BidConnect) com proxy local e feature flag, oferecendo 3 modelos de precificação (Marketplace 20% comissão, Virtual Office, Hybrid). Página de consulta modernizada com tabs (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.
 -   **Ferramentas de Teste/Onboarding**: Guia Interativo do Testador (`tester-guide.html`), página de Boas-Vindas (`bem-vindo.html`), ferramentas de QA automatizadas (`test-tour-links.html`, `smoke-test.html`), Pitch Deck para Investidores (`pitchdeck.html`), e guia de testes para médicos (`guia-teste-medico.html`).
 
 **Backend:**
 -   **Tecnologias**: Express.js + TypeScript.
 -   **Autenticação**: JWT + bcrypt.
--   **Banco de Dados**: PostgreSQL com Drizzle ORM.
+-   **Banco de Dados**: PostgreSQL com Drizzle ORM. Tabelas `bids` e `consultations` incluem campos `platform_fee` (20% comissão) e `doctor_earnings` (80% remuneração) para auditoria financeira completa do marketplace.
 -   **Documentos**: PDFKit + Handlebars para geração de documentos com templates profissionais e QR Codes de verificação.
 -   **Validação**: Zod schemas.
+-   **Lógica de Negócio Marketplace**: Cálculo automático de fees ao aceitar lance (20% plataforma, 80% médico), com persistência em banco para compliance fiscal e auditoria.
 -   **Gateway Consolidado (`telemed-internal`)**: Serve o frontend estático, atua como proxy para serviços externos e gerencia health endpoints.
 
 **Infraestrutura e Deploys:**

@@ -131,10 +131,26 @@ router.post('/auth/register/patient', authLimiter, validate(registerPatientSchem
 // POST /api/consultorio/auth/register/doctor - Cadastro de médico
 router.post('/auth/register/doctor', authLimiter, validate(registerDoctorSchema), async (req, res) => {
   try {
-    const { email, password, fullName, phone, cpf, crm, crmState, specialties, accountType, customUrl } = req.validatedBody;
+    const data = req.validatedBody;
+    
+    // Processar campos flexíveis
+    const specialty = data.specialty || (data.specialties && data.specialties[0]) || 'Clínico Geral';
+    const specialties = data.specialties || (data.specialty ? [data.specialty] : ['Clínico Geral']);
+    const businessModel = data.businessModel || data.accountType || 'marketplace';
+    
+    // Processar CRM para extrair estado se necessário
+    let crm = data.crm;
+    let crmState = data.crmState;
+    
+    // Se CRM tem formato "12345-SP", separar
+    if (crm && crm.includes('-') && !crmState) {
+      const parts = crm.split('-');
+      crm = parts[0];
+      crmState = parts[1];
+    }
     
     // Verificar se email já existe
-    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const existingUser = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
     if (existingUser.length > 0) {
       return res.status(400).json({ error: 'Email já cadastrado' });
     }
@@ -146,23 +162,23 @@ router.post('/auth/register/doctor', authLimiter, validate(registerDoctorSchema)
     }
     
     // Verificar se URL personalizada já existe
-    if (customUrl) {
-      const existingUrl = await db.select().from(doctors).where(eq(doctors.customUrl, customUrl)).limit(1);
+    if (data.customUrl) {
+      const existingUrl = await db.select().from(doctors).where(eq(doctors.customUrl, data.customUrl)).limit(1);
       if (existingUrl.length > 0) {
         return res.status(400).json({ error: 'URL personalizada já está em uso' });
       }
     }
     
     // Hash da senha
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(data.password, 10);
     
     // Criar usuário
     const [newUser] = await db.insert(users).values({
-      email,
+      email: data.email,
       passwordHash,
-      fullName,
-      phone,
-      cpf,
+      fullName: data.fullName,
+      phone: data.phone,
+      cpf: data.cpf,
       role: 'doctor',
     }).returning();
     
@@ -171,9 +187,9 @@ router.post('/auth/register/doctor', authLimiter, validate(registerDoctorSchema)
       userId: newUser.id,
       crm,
       crmState,
-      specialties: specialties || [],
-      accountType: accountType || 'marketplace',
-      customUrl: customUrl || null,
+      specialties,
+      accountType: businessModel,
+      customUrl: data.customUrl || null,
       isActive: true,
       isVerified: false,
     }).returning();
@@ -640,15 +656,19 @@ router.put('/bids/:id/accept', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Sem permissão para aceitar lances desta consulta' });
     }
     
-    // Aceitar lance
-    const [acceptedBid] = await db.update(bids)
-      .set({ isAccepted: true })
-      .where(eq(bids.id, parseInt(id)))
-      .returning();
-    
-    // Atualizar consulta
+    // Calcular fees (20% plataforma, 80% médico)
     const platformFee = parseFloat(bid.bidAmount) * 0.2; // 20% comissão
     const doctorEarnings = parseFloat(bid.bidAmount) - platformFee;
+    
+    // Aceitar lance e armazenar valores financeiros
+    const [acceptedBid] = await db.update(bids)
+      .set({ 
+        isAccepted: true,
+        platformFee: platformFee.toFixed(2),
+        doctorEarnings: doctorEarnings.toFixed(2),
+      })
+      .where(eq(bids.id, parseInt(id)))
+      .returning();
     
     await db.update(consultations)
       .set({

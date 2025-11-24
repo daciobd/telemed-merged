@@ -21,10 +21,15 @@ export const registerDoctorSchema = z.object({
   fullName: z.string().min(3, 'Nome completo é obrigatório'),
   phone: z.string().optional(),
   cpf: z.string().regex(/^\d{11}$/, 'CPF deve ter 11 dígitos').optional(),
+  // Aceita CRM com ou sem estado separado
   crm: z.string().min(4, 'CRM é obrigatório'),
-  crmState: z.string().length(2, 'Estado do CRM inválido'),
-  specialties: z.array(z.string()).min(1, 'Ao menos uma especialidade é obrigatória'),
-  accountType: z.enum(['marketplace', 'virtual_office', 'hybrid']),
+  crmState: z.string().length(2, 'Estado do CRM inválido').optional(),
+  // Aceita especialidade como string ou array
+  specialty: z.string().optional(),
+  specialties: z.array(z.string()).min(1, 'Ao menos uma especialidade é obrigatória').optional(),
+  // Aceita businessModel ou accountType
+  businessModel: z.enum(['marketplace', 'virtual_office', 'hybrid']).optional(),
+  accountType: z.enum(['marketplace', 'virtual_office', 'hybrid']).optional(),
   customUrl: z.string().regex(/^[a-z0-9-]+$/, 'URL deve conter apenas letras minúsculas, números e hífens').optional(),
   bio: z.string().optional()
 });

@@ -174,28 +174,30 @@ export const consultations = pgTable('consultations', {
   
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  completedAt: timestamp('completed_at'),
-  cancelledAt: timestamp('cancelled_at'),
-  cancellationReason: text('cancellation_reason'),
 });
 
 // ============================================
-// TABELA: consultation_bids (leilão reverso - marketplace)
+// TABELA: bids (leilão - marketplace) - NOME REAL DA TABELA NO BANCO
 // ============================================
-export const consultationBids = pgTable('consultation_bids', {
+export const bids = pgTable('bids', {
   id: serial('id').primaryKey(),
   consultationId: integer('consultation_id').references(() => consultations.id).notNull(),
   doctorId: integer('doctor_id').references(() => doctors.id).notNull(),
   
-  bidPrice: decimal('bid_price', { precision: 10, scale: 2 }).notNull(),
-  message: text('message'), // mensagem do médico para o paciente
+  bidAmount: decimal('bid_amount', { precision: 10, scale: 2 }).notNull(),
+  message: text('message'),
   
   isAccepted: boolean('is_accepted').default(false),
-  isRejected: boolean('is_rejected').default(false),
+  
+  // Valores financeiros calculados no momento da aceitação
+  platformFee: decimal('platform_fee', { precision: 10, scale: 2 }),
+  doctorEarnings: decimal('doctor_earnings', { precision: 10, scale: 2 }),
   
   createdAt: timestamp('created_at').defaultNow(),
-  respondedAt: timestamp('responded_at'),
 });
+
+// Alias para manter compatibilidade (pode ser removido no futuro)
+export const consultationBids = bids;
 
 // ============================================
 // TABELA: payments
