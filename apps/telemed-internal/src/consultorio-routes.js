@@ -348,4 +348,360 @@ router.get('/dr/:customUrl', async (req, res) => {
   }
 });
 
+// ============================================
+// CONSULTAS (CONSULTATIONS)
+// ============================================
+
+// POST /api/consultorio/consultations - Criar nova consulta
+router.post('/consultations', authenticate, validate(createConsultationSchema), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { consultationType, isMarketplace, scheduledFor, patientOffer, chiefComplaint, doctorId } = req.validatedBody;
+    
+    // Verificar se é paciente
+    const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+    if (!patient) {
+      return res.status(403).json({ error: 'Apenas pacientes podem criar consultas' });
+    }
+    
+    // Se não for marketplace, verificar se doctorId foi fornecido
+    if (!isMarketplace && !doctorId) {
+      return res.status(400).json({ error: 'doctorId é obrigatório para consultas diretas' });
+    }
+    
+    // Criar consulta
+    const [consultation] = await db.insert(consultations).values({
+      patientId: patient.id,
+      doctorId: doctorId || null,
+      consultationType,
+      isMarketplace: isMarketplace ?? true,
+      scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+      patientOffer: patientOffer || null,
+      chiefComplaint,
+      status: 'pending',
+    }).returning();
+    
+    res.status(201).json(consultation);
+  } catch (error) {
+    console.error('Erro ao criar consulta:', error);
+    res.status(500).json({ error: 'Erro ao criar consulta' });
+  }
+});
+
+// GET /api/consultorio/consultations - Listar consultas do usuário
+router.get('/consultations', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+    
+    let result = [];
+    
+    if (role === 'patient') {
+      const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+      if (!patient) {
+        return res.status(404).json({ error: 'Paciente não encontrado' });
+      }
+      
+      result = await db.select().from(consultations)
+        .where(eq(consultations.patientId, patient.id))
+        .orderBy(desc(consultations.createdAt));
+    } else if (role === 'doctor') {
+      const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId)).limit(1);
+      if (!doctor) {
+        return res.status(404).json({ error: 'Médico não encontrado' });
+      }
+      
+      result = await db.select().from(consultations)
+        .where(eq(consultations.doctorId, doctor.id))
+        .orderBy(desc(consultations.createdAt));
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro ao listar consultas:', error);
+    res.status(500).json({ error: 'Erro ao listar consultas' });
+  }
+});
+
+// GET /api/consultorio/consultations/marketplace - Listar consultas disponíveis no marketplace
+router.get('/consultations/marketplace', authenticate, async (req, res) => {
+  try {
+    // Apenas médicos podem ver marketplace
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ error: 'Apenas médicos podem acessar o marketplace' });
+    }
+    
+    const result = await db.select().from(consultations)
+      .where(and(
+        eq(consultations.isMarketplace, true),
+        eq(consultations.status, 'pending')
+      ))
+      .orderBy(desc(consultations.createdAt));
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro ao listar marketplace:', error);
+    res.status(500).json({ error: 'Erro ao listar consultas do marketplace' });
+  }
+});
+
+// PUT /api/consultorio/consultations/:id - Atualizar consulta
+router.put('/consultations/:id', authenticate, validate(updateConsultationSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const updates = req.validatedBody;
+    
+    // Buscar consulta
+    const [consultation] = await db.select().from(consultations).where(eq(consultations.id, parseInt(id))).limit(1);
+    if (!consultation) {
+      return res.status(404).json({ error: 'Consulta não encontrada' });
+    }
+    
+    // Verificar permissão e ownership
+    if (req.user.role === 'patient') {
+      const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+      if (!patient) {
+        return res.status(404).json({ error: 'Paciente não encontrado' });
+      }
+      if (consultation.patientId !== patient.id) {
+        return res.status(403).json({ error: 'Sem permissão para atualizar esta consulta' });
+      }
+    } else if (req.user.role === 'doctor') {
+      const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId)).limit(1);
+      if (!doctor) {
+        return res.status(404).json({ error: 'Médico não encontrado' });
+      }
+      if (consultation.doctorId !== doctor.id) {
+        return res.status(403).json({ error: 'Sem permissão para atualizar esta consulta' });
+      }
+    }
+    
+    // Atualizar consulta
+    const [updated] = await db.update(consultations)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(consultations.id, parseInt(id)))
+      .returning();
+    
+    res.json(updated);
+  } catch (error) {
+    console.error('Erro ao atualizar consulta:', error);
+    res.status(500).json({ error: 'Erro ao atualizar consulta' });
+  }
+});
+
+// DELETE /api/consultorio/consultations/:id - Cancelar consulta
+router.delete('/consultations/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    // Buscar consulta
+    const [consultation] = await db.select().from(consultations).where(eq(consultations.id, parseInt(id))).limit(1);
+    if (!consultation) {
+      return res.status(404).json({ error: 'Consulta não encontrada' });
+    }
+    
+    // Verificar permissão (apenas o paciente DONO da consulta pode cancelar)
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({ error: 'Apenas pacientes podem cancelar consultas' });
+    }
+    
+    const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+    if (!patient) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+    
+    if (consultation.patientId !== patient.id) {
+      return res.status(403).json({ error: 'Sem permissão para cancelar esta consulta' });
+    }
+    
+    // Cancelar consulta
+    const [cancelled] = await db.update(consultations)
+      .set({
+        status: 'cancelled',
+        updatedAt: new Date(),
+      })
+      .where(eq(consultations.id, parseInt(id)))
+      .returning();
+    
+    res.json(cancelled);
+  } catch (error) {
+    console.error('Erro ao cancelar consulta:', error);
+    res.status(500).json({ error: 'Erro ao cancelar consulta' });
+  }
+});
+
+// ============================================
+// LANCES (BIDS)
+// ============================================
+
+// POST /api/consultorio/bids - Criar lance para consulta
+router.post('/bids', authenticate, validate(createBidSchema), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { consultationId, bidAmount, message } = req.validatedBody;
+    
+    // Verificar se é médico
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId)).limit(1);
+    if (!doctor) {
+      return res.status(403).json({ error: 'Apenas médicos podem criar lances' });
+    }
+    
+    // Verificar se consulta existe e está no marketplace
+    const [consultation] = await db.select().from(consultations).where(eq(consultations.id, consultationId)).limit(1);
+    if (!consultation) {
+      return res.status(404).json({ error: 'Consulta não encontrada' });
+    }
+    
+    if (!consultation.isMarketplace || consultation.status !== 'pending') {
+      return res.status(400).json({ error: 'Consulta não disponível para lances' });
+    }
+    
+    // Criar lance
+    const [bid] = await db.insert(bids).values({
+      consultationId,
+      doctorId: doctor.id,
+      bidAmount,
+      message: message || null,
+    }).returning();
+    
+    res.status(201).json(bid);
+  } catch (error) {
+    console.error('Erro ao criar lance:', error);
+    res.status(500).json({ error: 'Erro ao criar lance' });
+  }
+});
+
+// GET /api/consultorio/bids/consultation/:consultationId - Listar lances de uma consulta
+router.get('/bids/consultation/:consultationId', authenticate, async (req, res) => {
+  try {
+    const { consultationId } = req.params;
+    const userId = req.user.id;
+    
+    // Verificar se consulta existe
+    const [consultation] = await db.select().from(consultations).where(eq(consultations.id, parseInt(consultationId))).limit(1);
+    if (!consultation) {
+      return res.status(404).json({ error: 'Consulta não encontrada' });
+    }
+    
+    // Verificar permissão
+    if (req.user.role === 'patient') {
+      const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+      if (consultation.patientId !== patient?.id) {
+        return res.status(403).json({ error: 'Sem permissão para ver lances desta consulta' });
+      }
+    }
+    
+    // Buscar lances
+    const result = await db.select().from(bids)
+      .where(eq(bids.consultationId, parseInt(consultationId)))
+      .orderBy(bids.bidAmount);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro ao listar lances:', error);
+    res.status(500).json({ error: 'Erro ao listar lances' });
+  }
+});
+
+// PUT /api/consultorio/bids/:id/accept - Aceitar lance
+router.put('/bids/:id/accept', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    // Buscar lance
+    const [bid] = await db.select().from(bids).where(eq(bids.id, parseInt(id))).limit(1);
+    if (!bid) {
+      return res.status(404).json({ error: 'Lance não encontrado' });
+    }
+    
+    // Buscar consulta
+    const [consultation] = await db.select().from(consultations).where(eq(consultations.id, bid.consultationId)).limit(1);
+    if (!consultation) {
+      return res.status(404).json({ error: 'Consulta não encontrada' });
+    }
+    
+    // Verificar se é o paciente DONO da consulta
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({ error: 'Apenas pacientes podem aceitar lances' });
+    }
+    
+    const [patient] = await db.select().from(patients).where(eq(patients.userId, userId)).limit(1);
+    if (!patient) {
+      return res.status(404).json({ error: 'Paciente não encontrado' });
+    }
+    
+    if (consultation.patientId !== patient.id) {
+      return res.status(403).json({ error: 'Sem permissão para aceitar lances desta consulta' });
+    }
+    
+    // Aceitar lance
+    const [acceptedBid] = await db.update(bids)
+      .set({ isAccepted: true })
+      .where(eq(bids.id, parseInt(id)))
+      .returning();
+    
+    // Atualizar consulta
+    const platformFee = parseFloat(bid.bidAmount) * 0.2; // 20% comissão
+    const doctorEarnings = parseFloat(bid.bidAmount) - platformFee;
+    
+    await db.update(consultations)
+      .set({
+        doctorId: bid.doctorId,
+        agreedPrice: bid.bidAmount,
+        platformFee: platformFee.toString(),
+        doctorEarnings: doctorEarnings.toString(),
+        status: 'doctor_matched',
+        updatedAt: new Date(),
+      })
+      .where(eq(consultations.id, bid.consultationId));
+    
+    res.json(acceptedBid);
+  } catch (error) {
+    console.error('Erro ao aceitar lance:', error);
+    res.status(500).json({ error: 'Erro ao aceitar lance' });
+  }
+});
+
+// ============================================
+// UPDATE DE MÉDICO
+// ============================================
+
+// PUT /api/consultorio/doctors/me - Atualizar perfil do médico
+router.put('/doctors/me', authenticate, validate(updateDoctorSchema), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updates = req.validatedBody;
+    
+    // Verificar se é médico
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ error: 'Apenas médicos podem atualizar perfil' });
+    }
+    
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId)).limit(1);
+    if (!doctor) {
+      return res.status(404).json({ error: 'Médico não encontrado' });
+    }
+    
+    // Atualizar perfil
+    const [updated] = await db.update(doctors)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(doctors.userId, userId))
+      .returning();
+    
+    res.json(updated);
+  } catch (error) {
+    console.error('Erro ao atualizar médico:', error);
+    res.status(500).json({ error: 'Erro ao atualizar perfil' });
+  }
+});
+
 export default router;

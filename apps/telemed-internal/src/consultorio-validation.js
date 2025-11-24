@@ -61,6 +61,7 @@ export const updateConsultationSchema = z.object({
 
 // Bid Validation
 export const createBidSchema = z.object({
+  consultationId: z.number().int().positive('ID da consulta é obrigatório'),
   bidAmount: z.number().positive('Lance deve ser positivo'),
   message: z.string().optional()
 });
