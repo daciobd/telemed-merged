@@ -6,13 +6,18 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 const app = express();
+
+// Start server FIRST to open port quickly
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🩺 TeleMed running on port ${PORT}`);
+});
 
 app.use(express.json());
 
-// Health check
-app.get(['/api/health', '/healthz'], (req, res) => {
+// Health check - priority endpoint
+app.get(['/api/health', '/healthz', '/health'], (req, res) => {
   res.json({ 
     ok: true, 
     service: 'telemed-production',
@@ -67,6 +72,8 @@ app.use((req, res, next) => {
   }
 });
 
-app.listen(parseInt(PORT), '0.0.0.0', () => {
-  console.log(`🩺 TeleMed running on port ${PORT}`);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('Shutting down...');
+  server.close(() => process.exit(0));
 });
