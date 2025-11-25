@@ -23,64 +23,60 @@ run = ["sh", "-c", "bash -lc 'node production.js'"]
 
 ## ✅ DEPOIS (Substituir por):
 
-### Linha 11 - Build command (SUBSTITUIR COMPLETAMENTE):
+### Linha 11 - Build command:
 ```
 build = ["sh", "-c", "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'"]
 ```
 
-### Linha 12 - Run command (SUBSTITUIR COMPLETAMENTE):
+### Linha 12 - Run command:
 ```
-run = ["sh", "-c", "bash -lc 'node production.cjs'"]
+run = ["sh", "-c", "bash -lc 'node start.cjs'"]
 ```
 
 ---
 
-## 📝 Resumo das mudanças:
+## 📋 Como fazer (copiar/colar):
 
-| Linha | Campo | Mudança |
-|-------|-------|---------|
-| 11 | `build` | Remove `npm run build`, adiciona `npx esbuild` direto |
-| 12 | `run` | Muda de `production.js` para `production.cjs` |
+1. Abra `.replit`
+2. **Linha 11**: Selecione e delete a linha inteira começando com `build = [`
+3. Copie e cole exatamente:
+   ```
+   build = ["sh", "-c", "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'"]
+   ```
 
----
+4. **Linha 12**: Selecione e delete a linha inteira começando com `run = [`
+5. Copie e cole exatamente:
+   ```
+   run = ["sh", "-c", "bash -lc 'node start.cjs'"]
+   ```
 
-## Como fazer:
-
-1. **Clique** no arquivo `.replit` para abri-lo
-2. **Localize** a linha 11 (você verá `build = [`)
-3. **Selecione** toda a linha 11 e **delete**
-4. **Paste** a nova linha 11 acima
-5. **Localize** a linha 12 (você verá `run = [`)
-6. **Selecione** toda a linha 12 e **delete**
-7. **Paste** a nova linha 12
+6. **Salve** com Ctrl+S (ou Cmd+S no Mac)
+7. **Clique Publish** para fazer o deploy
 
 ---
 
 ## 🎯 O que vai acontecer:
 
-Na **Build Phase** (deploy):
-- ✅ Instala dependências de produção com `npm install --omit=dev`
-- ✅ Roda esbuild para gerar `production-full.cjs` (bundle autocontido com Express embutido)
+**Build Phase:**
+- ✅ Instala dependências com `npm install --omit=dev`
+- ✅ Gera `production-full.cjs` com esbuild (bundle autocontido)
 
-Na **Run Phase** (execução):
-- ✅ Executa `node production.cjs`
-- ✅ Carrega o bundle autocontido
-- ✅ Servidor abre na porta 5000 ✅
-
----
-
-## ⚡ Depois de alterar:
-
-1. **Salve** o `.replit` (Ctrl+S ou Cmd+S)
-2. **Clique** em "Publish" para fazer o deploy
-3. **Aguarde** 2-3 minutos
-4. Seu TeleMed estará **ao vivo**! 🎉
+**Run Phase:**
+- ✅ Executa `node start.cjs`
+- ✅ Que carrega `production-full.cjs` (Express embutido)
+- ✅ Servidor abre na porta 5000
 
 ---
 
-## ❓ Dúvidas?
+## ⚠️ Pontos importantes:
 
-Se receber erro "Cannot find module", é sinal que o `.replit` não foi salvo corretamente.
-Verifique se as duas linhas estão exatamente como mostrado acima.
+- ✅ Arquivo `start.cjs` já existe no root
+- ✅ Arquivo `production-full.cjs` será gerado na build
+- ✅ Não precisa de `npm run build` script
+- ✅ Não precisa chamar `production.js`
 
-**KEY: Não use `npm run build` - chame `npx esbuild` diretamente!**
+---
+
+## 🎉 Pronto!
+
+Depois de alterar o `.replit` e clicar Publish, seu TeleMed estará ao vivo em poucos minutos!
