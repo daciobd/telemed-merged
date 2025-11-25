@@ -15,11 +15,10 @@ packages = [
   "nano",
   "deploy-rs",
 ]
-
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "npm install && npx esbuild server-prod.js --bundle --platform=node --format=cjs --outfile=server-bundle.cjs --external:pg-native"]
-run = ["sh", "-c", "node server-bundle.cjs"]
+build = ["sh", "-c", "npm install"]
+run = ["sh", "-c", "npx esbuild server-prod.js --bundle --platform=node --format=cjs --outfile=/tmp/server.cjs --external:pg-native && node /tmp/server.cjs"]
 
 [[ports]]
 localPort = 3000
