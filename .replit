@@ -4,12 +4,26 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["jq", "unzipNLS", "chromium", "try", "gh", "nix", "openssh", "nano", "deploy-rs"]
+packages = [
+  "jq",
+  "unzipNLS",
+  "chromium",
+  "try",
+  "gh",
+  "nix",
+  "openssh",
+  "nano",
+  "deploy-rs",
+]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "bash -lc ' set -e # instala deps no root (com fallback se não houver lockfile) if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then   npm ci --include=dev else   npm install --include=dev fi  # build do TeleMedMerge (root) npm run build || (vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist) '"]
-run = ["sh", "-c", "bash -lc 'node production.js'"]
+build = [
+  "sh",
+  "-c",
+  "npm install && npx esbuild production.js --bundle --platform=node --format=cjs --outfile=dist/production-bundle.cjs --external:pg-native",
+]
+run = ["sh", "-c", "node run-production.cjs"]
 
 [[ports]]
 localPort = 3000
@@ -100,4 +114,8 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-integrations = ["javascript_database:1.0.0", "javascript_auth_all_persistance:1.0.0", "javascript_object_storage:1.0.0"]
+integrations = [
+  "javascript_database:1.0.0",
+  "javascript_auth_all_persistance:1.0.0",
+  "javascript_object_storage:1.0.0",
+]
