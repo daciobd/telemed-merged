@@ -8,27 +8,12 @@ packages = ["jq", "unzipNLS", "chromium", "try", "gh", "nix", "openssh"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'"]
- run = ["sh", "-c", "bash -lc 'node production.cjs'"]
-  "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npm run build && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'",
-]
-run = ["sh", "-c", "bash -lc 'node production.cjs'"]
-
-[[ports]]
-localPort = 3000
-externalPort = 5173
-
-[[ports]]
-localPort = 3001
-externalPort = 8008
+build = ["sh", "-c", "bash -lc ' set -e # instala deps no root (com fallback se não houver lockfile) if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then   npm ci --include=dev else   npm install --include=dev fi  # build do TeleMedMerge (root) npm run build || (vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist) '"]
+run = ["sh", "-c", "bash -lc 'node production.js'"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33171
-externalPort = 9000
 
 [[ports]]
 localPort = 33333
@@ -43,16 +28,8 @@ localPort = 36215
 externalPort = 6800
 
 [[ports]]
-localPort = 36715
-externalPort = 8080
-
-[[ports]]
 localPort = 37101
 externalPort = 3000
-
-[[ports]]
-localPort = 37243
-externalPort = 8081
 
 [[ports]]
 localPort = 37727
@@ -65,10 +42,6 @@ externalPort = 3002
 [[ports]]
 localPort = 39473
 externalPort = 3003
-
-[[ports]]
-localPort = 43253
-externalPort = 8099
 
 [[ports]]
 localPort = 44015
@@ -103,8 +76,4 @@ args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-integrations = [
-  "javascript_database:1.0.0",
-  "javascript_auth_all_persistance:1.0.0",
-  "javascript_object_storage:1.0.0",
-]
+integrations = ["javascript_database:1.0.0", "javascript_auth_all_persistance:1.0.0", "javascript_object_storage:1.0.0"]
