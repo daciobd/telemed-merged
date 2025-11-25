@@ -8,9 +8,8 @@ packages = ["jq", "unzipNLS", "chromium", "try", "gh", "nix", "openssh"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = [
-  "sh",
-  "-c",
+build = ["sh", "-c", "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'"]
+ run = ["sh", "-c", "bash -lc 'node production.cjs'"]
   "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npm run build && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'",
 ]
 run = ["sh", "-c", "bash -lc 'node production.cjs'"]
