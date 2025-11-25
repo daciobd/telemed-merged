@@ -21,9 +21,9 @@ deploymentTarget = "autoscale"
 build = [
   "sh",
   "-c",
-  "npm install && npx esbuild production.js --bundle --platform=node --format=cjs --outfile=dist/production-bundle.cjs --external:pg-native",
+  "npm install && npx esbuild production.js --bundle --platform=node --format=cjs --outfile=production-bundle.cjs --external:pg-native",
 ]
-run = ["sh", "-c", "node run-production.cjs"]
+run = ["sh", "-c", "node production-bundle.cjs"]
 
 [[ports]]
 localPort = 3000
