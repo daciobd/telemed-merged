@@ -18,11 +18,7 @@ packages = [
 
 [deployment]
 deploymentTarget = "autoscale"
-build = [
-  "sh",
-  "-c",
-  "npm install && npx esbuild production.js --bundle --platform=node --format=cjs --outfile=production-bundle.cjs --external:pg-native",
-]
+build = ["sh", "-c", "npm install && npx esbuild production.js --bundle --platform=node --format=cjs --outfile=production-bundle.cjs --external:pg-native"]
 run = ["sh", "-c", "node production-bundle.cjs"]
 
 [[ports]]
