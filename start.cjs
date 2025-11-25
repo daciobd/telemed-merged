@@ -1,3 +1,3 @@
 #!/usr/bin/env node
-// Production entry point - loads bundled server
-require('./production-full.cjs');
+// Simple production start - use existing server
+require('./apps/telemed-internal/src/index.js');
