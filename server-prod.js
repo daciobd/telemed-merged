@@ -1,10 +1,5 @@
-import express from 'express';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const express = require('express');
+const path = require('path');
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const app = express();
@@ -60,13 +55,13 @@ app.get('/config.js', (req, res) => {
 });
 
 // Static files
-const staticPath = join(__dirname, 'apps', 'telemed-deploy-ready');
+const staticPath = path.join(process.cwd(), 'apps', 'telemed-deploy-ready');
 app.use(express.static(staticPath, { extensions: ['html'], index: 'index.html' }));
 
 // SPA fallback
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api/')) {
-    res.sendFile(join(staticPath, 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'));
   } else {
     next();
   }
