@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
-// Simple production entry point - runs the bundled server
-require('./dist/production-bundle.cjs');
+// Production entry point - runs the bundled server from root
+require('./production-bundle.cjs');
