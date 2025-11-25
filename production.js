@@ -1,12 +1,8 @@
 #!/usr/bin/env node
 
 import express from 'express';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { join } from 'path';
 import jwt from 'jsonwebtoken';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 process.on('unhandledRejection', (e) => { console.error(e); process.exit(1); });
 
@@ -115,31 +111,9 @@ app.post('/api/medicaldesk/session', (req, res) => {
   }
 });
 
-// MedicalDesk Proxy (if enabled)
+// MedicalDesk Proxy placeholder
 if (FEAT_MD && MD_BASE) {
-  try {
-    const { createProxyMiddleware } = await import('http-proxy-middleware');
-    app.use('/medicaldesk', createProxyMiddleware({
-      target: MD_BASE,
-      changeOrigin: true,
-      secure: true,
-      logLevel: 'warn',
-      pathRewrite: { '^/medicaldesk': '' },
-      onProxyReq: (proxyReq) => {
-        proxyReq.setHeader('X-From-TeleMed', 'true');
-      },
-      onError: (err, req, res) => {
-        console.error('[MedicalDesk Proxy Error]', err.message);
-        res.status(502).json({ 
-          ok: false, 
-          error: 'Serviço MedicalDesk indisponível' 
-        });
-      }
-    }));
-    console.log('[boot] MedicalDesk proxy enabled');
-  } catch (e) {
-    console.warn('[boot] http-proxy-middleware not available, MedicalDesk proxy disabled');
-  }
+  console.log('[boot] MedicalDesk configured - proxy requires external service');
 }
 
 // Dr. AI Endpoints (DEMO mode)
@@ -171,7 +145,7 @@ app.get('/config.js', (req, res) => {
 });
 
 // Static file serving from telemed-deploy-ready
-const staticPath = join(__dirname, 'apps', 'telemed-deploy-ready');
+const staticPath = join(process.cwd(), 'apps', 'telemed-deploy-ready');
 app.use(express.static(staticPath, {
   extensions: ['html'],
   index: 'index.html'
@@ -208,9 +182,6 @@ function setupGracefulShutdown(server) {
 const server = app.listen(parseInt(PORT), '0.0.0.0', () => {
   console.log(`🩺 TeleMed production server running on port ${PORT}`);
   console.log(`📊 MedicalDesk feature: ${FEAT_MD ? 'ENABLED' : 'DISABLED'}`);
-  if (FEAT_MD && MD_BASE) {
-    console.log(`🔗 MedicalDesk proxy: ${MD_BASE}`);
-  }
   console.log(`💰 Pricing/Auction feature: ${FEATURE_PRICING ? 'ENABLED' : 'DISABLED'}`);
 });
 
