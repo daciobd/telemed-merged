@@ -15,7 +15,7 @@ Procure pela seção `[deployment]` (você verá isso na linha 9)
 ## ❌ ANTES (Linhas atuais 11-12):
 
 ```
-build = ["sh", "-c", "bash -lc ' set -e # instala deps no root (com fallback se não houver lockfile) if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then   npm ci --include=dev else   npm install --include=dev fi  # build do TeleMedMerge (root) npm run build || (vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist) '"]
+build = ["sh", "-c", "bash -lc ' set -e # instala deps no root..."]
 run = ["sh", "-c", "bash -lc 'node production.js'"]
 ```
 
@@ -25,7 +25,7 @@ run = ["sh", "-c", "bash -lc 'node production.js'"]
 
 ### Linha 11 - Build command (SUBSTITUIR COMPLETAMENTE):
 ```
-build = ["sh", "-c", "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npm run build && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'"]
+build = ["sh", "-c", "bash -lc 'set -e && npm install --omit=dev --legacy-peer-deps && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs'"]
 ```
 
 ### Linha 12 - Run command (SUBSTITUIR COMPLETAMENTE):
@@ -37,10 +37,10 @@ run = ["sh", "-c", "bash -lc 'node production.cjs'"]
 
 ## 📝 Resumo das mudanças:
 
-| Linha | Campo | Antes | Depois |
-|-------|-------|-------|--------|
-| 11 | `build` | Longa string complexa | `npm install --omit=dev && npm run build && npx esbuild server-prod.cjs --bundle --platform=node --format=cjs --outfile=production-full.cjs` |
-| 12 | `run` | `node production.js` | `node production.cjs` |
+| Linha | Campo | Mudança |
+|-------|-------|---------|
+| 11 | `build` | Remove `npm run build`, adiciona `npx esbuild` direto |
+| 12 | `run` | Muda de `production.js` para `production.cjs` |
 
 ---
 
@@ -59,9 +59,8 @@ run = ["sh", "-c", "bash -lc 'node production.cjs'"]
 ## 🎯 O que vai acontecer:
 
 Na **Build Phase** (deploy):
-- ✅ Instala dependências de produção
-- ✅ Roda o build do frontend
-- ✅ Gera `production-full.cjs` (um bundle autocontido com Express embutido)
+- ✅ Instala dependências de produção com `npm install --omit=dev`
+- ✅ Roda esbuild para gerar `production-full.cjs` (bundle autocontido com Express embutido)
 
 Na **Run Phase** (execução):
 - ✅ Executa `node production.cjs`
@@ -83,3 +82,5 @@ Na **Run Phase** (execução):
 
 Se receber erro "Cannot find module", é sinal que o `.replit` não foi salvo corretamente.
 Verifique se as duas linhas estão exatamente como mostrado acima.
+
+**KEY: Não use `npm run build` - chame `npx esbuild` diretamente!**
