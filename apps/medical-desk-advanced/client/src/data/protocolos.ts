@@ -242,5 +242,3 @@ export const protocolosClinicosCompletos: Protocolo[] = [
     referencias: ['Bone RC et al. Chest 1992']
   }
 ];
-
-export { protocolosClinicosCompletos };
