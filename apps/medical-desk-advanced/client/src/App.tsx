@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+console.log('🏥 MedicalDesk Build:', new Date().toISOString());
 import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 import {
