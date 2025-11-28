@@ -21,7 +21,13 @@ const FEATURE_PRICING = String(process.env.FEATURE_PRICING ?? 'true') === 'true'
 const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5001/api';
 
 app.set('trust proxy', 1);
-app.use(cors({ origin: ['https://telemed-deploy-ready.onrender.com'], credentials: true, exposedHeaders: ['*'] }));
+
+// CORS - Permitir qualquer origem (para testes)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true
+}));
 
 // NÃO aplicar express.json() globalmente - causa problema com proxy!
 // Será aplicado seletivamente após os proxies
