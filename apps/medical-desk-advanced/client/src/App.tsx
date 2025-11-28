@@ -92,7 +92,12 @@ function App() {
       : protocolosClinicosCompletos.filter(p => p.categoria === categoriaFiltro);
   }, [categoriaFiltro])
   
-  const categorias = ['todas', ...Array.from(new Set(protocolosClinicosCompletos.map(p => p.categoria)))]
+  const categorias = useMemo(() => {
+    if (!protocolosClinicosCompletos || !Array.isArray(protocolosClinicosCompletos)) {
+      return ['todas'];
+    }
+    return ['todas', ...Array.from(new Set(protocolosClinicosCompletos.map(p => p.categoria)))];
+  }, [])
 
 
   const handleAnalyze = async () => {
