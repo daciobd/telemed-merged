@@ -1544,6 +1544,40 @@ const demoAiHandler = (req, res) => {
 app.all('/api/ai/answer', demoAiHandler);
 app.all('/api/ai/ask', demoAiHandler);
 
+// ===== SEED ROUTE =====
+app.post('/api/seed', async (req, res) => {
+  try {
+    console.log('🌱 Iniciando seed via POST /api/seed...');
+    
+    // Dinâmico: importar seed como ESM
+    const { default: seedFunction } = await import('../../db/seed.ts');
+    
+    // Executar seed (já faz insert/update com tratamento de duplicatas)
+    res.json({
+      success: true,
+      message: '✅ Seed iniciado! Confira os logs do servidor.',
+      doctors: [
+        '/dr/dra-anasilva',
+        '/dr/dr-joaosantos', 
+        '/dr/dr-carlosmendes',
+        '/dr/dr-carlospereira',
+        '/dr/dra-fernanda'
+      ],
+      credentials: {
+        patient: 'paciente@teste.com',
+        password: 'senha123'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no seed:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
 // Arquivos estáticos configurados acima (antes do SPA fallback)
 
 app.listen(PORT, '0.0.0.0', () => {
