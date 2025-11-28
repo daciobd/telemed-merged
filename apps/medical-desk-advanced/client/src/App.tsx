@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 console.log('🏥 MedicalDesk Build:', new Date().toISOString());
 import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
@@ -83,9 +83,14 @@ function App() {
     { id: 'populacao', label: 'População', icon: Users },
     { id: 'config', label: 'Config', icon: Settings },
   ]
-  const protocolosFiltrados = categoriaFiltro === 'todas' 
-    ? protocolosClinicosCompletos
-    : protocolosClinicosCompletos.filter(p => p.categoria === categoriaFiltro)
+  const protocolosFiltrados = useMemo(() => {
+    if (!protocolosClinicosCompletos || !Array.isArray(protocolosClinicosCompletos)) {
+      return [];
+    }
+    return categoriaFiltro === 'todas'
+      ? protocolosClinicosCompletos
+      : protocolosClinicosCompletos.filter(p => p.categoria === categoriaFiltro);
+  }, [categoriaFiltro])
   
   const categorias = ['todas', ...Array.from(new Set(protocolosClinicosCompletos.map(p => p.categoria)))]
 
