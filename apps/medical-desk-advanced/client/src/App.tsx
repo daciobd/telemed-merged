@@ -520,7 +520,7 @@ function App() {
                           <span>Recomendações Clínicas</span>
                         </h4>
                         <ul className="space-y-2">
-                          {result.recommendations.map((rec: string, index: number) => (
+                          {result.recommendations?.map((rec: string, index: number) => (
                             <motion.li
                               key={index}
                               initial={{ opacity: 0, x: -20 }}
@@ -542,7 +542,7 @@ function App() {
                             <span>Sinais de Alerta Identificados</span>
                           </h4>
                           <ul className="space-y-2">
-                            {result.redFlags.map((flag: string, index: number) => (
+                            {result.redFlags?.map((flag: string, index: number) => (
                               <motion.li
                                 key={index}
                                 initial={{ opacity: 0, x: -20 }}
@@ -721,7 +721,7 @@ function App() {
                     </p>
                     <div className="flex items-center justify-between">
                       <div className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                        {protocolo.passos.length} passos
+                        {protocolo.passos?.length || 0} passos
                       </div>
                       <button className="text-teal-600 hover:text-teal-700 text-sm font-medium flex items-center space-x-1">
                         <span>Ver detalhes</span>
