@@ -1317,16 +1317,36 @@ function MedicalDeskApp({ darkMode, setDarkMode }: { darkMode: boolean; setDarkM
   )
 }
 
+import LoginPage from './pages/login'
+import { ProtectedRoute } from './components/ProtectedRoute'
+
 function App() {
   const [darkMode, setDarkMode] = useState(false)
   
   return (
     <Router>
-      <Route path="/dr/:customUrl" component={DoctorPublicPage} />
-      <Route path="/doctor/virtual-office-setup" component={VirtualOfficeSetupPage} />
-      <Route path="/doctor/my-patients" component={MyPatientsPage} />
-      <Route path="/doctor/dashboard" component={DoctorDashboardPage} />
+      <Route path="/login" component={LoginPage} />
       <Route path="/pricing" component={PricingPage} />
+      <Route path="/dr/:customUrl" component={DoctorPublicPage} />
+      
+      <Route path="/doctor/dashboard">
+        <ProtectedRoute allowedRoles={["doctor"]}>
+          <DoctorDashboardPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/doctor/virtual-office-setup">
+        <ProtectedRoute allowedRoles={["doctor"]}>
+          <VirtualOfficeSetupPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/doctor/my-patients">
+        <ProtectedRoute allowedRoles={["doctor"]}>
+          <MyPatientsPage />
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/">
         <MedicalDeskApp darkMode={darkMode} setDarkMode={setDarkMode} />
       </Route>
