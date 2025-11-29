@@ -7,7 +7,7 @@ import {
   BarChart3, Bell, Moon, Sun, Search, Filter, Plus, X, Check,
   Heart, Stethoscope, Brain, Zap, Clock, CheckCircle, XCircle,
   TrendingDown, Calendar, MapPin, Shield, Download, Upload
-} from 'lucide-react'
+, Calculator } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { fetchFromAPI, analyzeSymptoms } from './lib/api'
 import { protocolosClinicosCompletos } from './data/protocolos'
@@ -16,6 +16,8 @@ import { cadeiasCompletas } from './data/cadeias'
 import { CadeiaDetalhes } from './components/CadeiaDetalhes'
 import { acessosRapidos, metricas, distribuicaoPrioridade } from './data/emergencia'
 import { AcessoRapidoModal } from './components/AcessoRapido'
+import { CalculadoraMedica } from './components/CalculadoraMedica'
+import { calculadoras } from './data/calculadoras'
 import { dadosBrasil, tendenciasSazonais, causasMortalidade, alertasEpidemiologicos } from './data/populacao'
 
 
@@ -57,6 +59,7 @@ function App() {
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('todas')
   const [cadeiaSelecionada, setCadeiaSelecionada] = useState<any>(null)
   const [acessoSelecionado, setAcessoSelecionado] = useState<any>(null)
+  const [calculadoraSelecionada, setCalculadoraSelecionada] = useState<any>(null)
   const [regiaoSelecionada, setRegiaoSelecionada] = useState(0)
 
 
@@ -78,6 +81,7 @@ function App() {
     { id: 'analise', label: 'Análise Clínica', icon: Stethoscope },
     { id: 'automacao', label: 'Automação', icon: Zap },
     { id: 'protocolos', label: 'Protocolos', icon: FileText },
+    { id: 'calculadoras', label: 'Calculadoras', icon: Calculator },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'alertas', label: 'Alertas', icon: Bell },
     { id: 'populacao', label: 'População', icon: Users },
@@ -1168,6 +1172,65 @@ function App() {
             </motion.div>
           )}
         </AnimatePresence>
+          {activeTab === 'calculadoras' && (
+            <motion.div
+              key="calculadoras"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Calculadoras Médicas
+                  </h2>
+                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Ferramentas essenciais para cálculos clínicos rápidos e precisos
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {calculadoras.map((calc, index) => (
+                  <motion.div
+                    key={calc.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    onClick={() => setCalculadoraSelecionada(calc)}
+                    className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6 cursor-pointer border-2 ${darkMode ? 'border-gray-700 hover:border-teal-500' : 'border-gray-100 hover:border-teal-500'} transition-all`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="p-3 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                        <Calculator className="w-6 h-6 text-teal-600" />
+                      </div>
+                      <span className="text-xs px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded-full">
+                        {calc.categoria}
+                      </span>
+                    </div>
+                    <h3 className={`text-lg font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {calc.nome}
+                    </h3>
+                    <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {calc.descricao}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {calc.campos.length} campos
+                      </span>
+                      <span className="text-teal-600 font-semibold hover:text-teal-700 transition-colors flex items-center">
+                        Calcular
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
 
       {/* Modal de Detalhes do Protocolo */}
       <AnimatePresence>
@@ -1175,6 +1238,17 @@ function App() {
           <ProtocoloDetalhes
             protocolo={protocoloSelecionado}
             onClose={() => setProtocoloSelecionado(null)}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Calculadora Médica */}
+      <AnimatePresence>
+        {calculadoraSelecionada && (
+          <CalculadoraMedica
+            calculadora={calculadoraSelecionada}
+            onClose={() => setCalculadoraSelecionada(null)}
             darkMode={darkMode}
           />
         )}
