@@ -937,6 +937,9 @@ app.get('/api/bias-alerts', (req, res) => {
   ]);
 });
 
+// ===== SEED ROUTES (SEM AUTH) =====
+app.use('/api', seedRoutes);
+
 // protege tudo a seguir (exceto /healthz)
 app.use(requireToken);
 
@@ -1550,9 +1553,6 @@ const demoAiHandler = (req, res) => {
 
 app.all('/api/ai/answer', demoAiHandler);
 app.all('/api/ai/ask', demoAiHandler);
-
-// ===== SEED ROUTES =====
-app.use('/api', seedRoutes);
 
 // Arquivos estáticos configurados acima (antes do SPA fallback)
 
