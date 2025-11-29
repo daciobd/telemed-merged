@@ -1,0 +1,56 @@
+╔════════════════════════════════════════════════════════════════╗
+║    CHECKLIST DE TESTES - TELEMED CONSULTÓRIO VIRTUAL          ║
+║                    (Use este documento)                         ║
+╚════════════════════════════════════════════════════════════════╝
+
+🟢 JÁ IMPLEMENTADO - TESTAR AGORA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 1. SEED - Popular banco de dados
+    URL: POST http://localhost:5000/api/seed
+    Esperado: ✅ Retorna 2 médicos criados
+    
+[ ] 2. WELLS SCORE - Calcular escore
+    URL: http://localhost:5000/medicaldesk
+    Esperado: ✅ Calcula e mostra resultado
+    
+[ ] 3. EXPORTAR PDF - Wells Score
+    Ação: Clique "📄 Exportar PDF" após calcular
+    Esperado: ✅ Abre documento com logo TeleMed
+    
+[ ] 4. HISTÓRICO - Últimos cálculos
+    Ação: Clique "📋 Histórico" após calcular
+    Esperado: ✅ Mostra painel com cálculos anteriores
+    
+[ ] 5. TOASTS - Notificações
+    Ação: Calcule sem selecionar critérios
+    Esperado: ✅ Toast vermelho: "⚠️ Selecione critério"
+
+
+🔴 AINDA NÃO IMPLEMENTADO - SERÁ TESTADO DEPOIS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 6. PÁGINA PÚBLICA - Ver consultório do médico
+    URL: http://localhost:5000/dr/dra-anasilva
+    Status: ❌ Página não existe ainda
+    
+[ ] 7. SETUP - Configurar consultório
+    URL: http://localhost:5000/doctor/virtual-office-setup
+    Status: ❌ Página não existe ainda
+    
+[ ] 8. AGENDAMENTO - Agendar consulta direto
+    Ação: Agendar na página pública
+    Status: ❌ Endpoint não existe ainda
+    
+[ ] 9. MEUS PACIENTES - Ver lista de pacientes
+    URL: http://localhost:5000/doctor/my-patients
+    Status: ❌ Página não existe ainda
+    
+[ ] 10. DASHBOARD TOGGLE - Modo consultório/marketplace
+    URL: http://localhost:5000/medicaldesk
+    Status: ❌ Toggle não existe ainda
+
+
+═══════════════════════════════════════════════════════════════════
+Próxima semana: Implementar páginas 6-10 (backend + frontend)
+═══════════════════════════════════════════════════════════════════
