@@ -72,4 +72,15 @@ router.post(
   virtualOfficeController.checkAvailability
 );
 
+/**
+ * @route   POST /api/virtual-office/:customUrl/book
+ * @desc    Agendar consulta direto no consultório do médico
+ * @access  Public (paciente não autenticado pode agendar)
+ * @body    { patientId, consultationType, scheduledFor, chiefComplaint }
+ */
+router.post(
+  '/:customUrl/book',
+  virtualOfficeController.bookConsultation
+);
+
 export default router;

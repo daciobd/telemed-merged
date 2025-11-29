@@ -170,6 +170,58 @@ export class VirtualOfficeController {
       next(error);
     }
   }
+
+  // POST /api/virtual-office/:customUrl/book - Agendar consulta direto
+  async bookConsultation(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { customUrl } = req.params;
+      const { patientId, consultationType, scheduledFor, chiefComplaint } = req.body;
+
+      // Validações
+      if (!patientId || !consultationType || !scheduledFor) {
+        return errorResponse(res, 'patientId, consultationType e scheduledFor são obrigatórios', 400);
+      }
+
+      // Buscar médico por customUrl
+      const { db } = await import('../../db');
+      const { doctors } = await import('../../db/schema');
+      const { eq } = await import('drizzle-orm');
+
+      const [doctor] = await db
+        .select()
+        .from(doctors)
+        .where(eq(doctors.customUrl, customUrl))
+        .limit(1);
+
+      if (!doctor) {
+        return notFound(res, 'Consultório não encontrado');
+      }
+
+      // Importar consultation service para criar a consulta
+      const consultationService = (await import('../services/consultation.service')).default;
+
+      const consultation = await consultationService.createDirectConsultation({
+        patientId,
+        doctorId: doctor.id,
+        consultationType,
+        scheduledFor,
+        chiefComplaint,
+      });
+
+      return successResponse(res, consultation, 'Consulta agendada com sucesso no consultório', 201);
+    } catch (error: any) {
+      if (error.message === 'Consultório não encontrado') {
+        return notFound(res, error.message);
+      }
+      if (error.message.includes('só aceita consultas')) {
+        return errorResponse(res, error.message, 400);
+      }
+      if (error.message === 'Médico não encontrado') {
+        return notFound(res, error.message);
+      }
+      next(error);
+    }
+  }
 }
 
 export default new VirtualOfficeController();
