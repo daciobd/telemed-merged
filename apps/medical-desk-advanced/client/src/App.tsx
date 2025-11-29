@@ -1317,18 +1317,28 @@ function MedicalDeskApp({ darkMode, setDarkMode }: { darkMode: boolean; setDarkM
   )
 }
 
-import LoginPage from './pages/login'
-import { ProtectedRoute } from './components/ProtectedRoute'
+import { Switch, Route } from 'wouter';
+import LoginPage from './pages/login';
+import DoctorPublicPage from './pages/dr/DoctorPublicPage';
+import DoctorDashboardPage from './pages/doctor/dashboard';
+import VirtualOfficeSetupPage from './pages/doctor/virtual-office-setup';
+import MyPatientsPage from './pages/doctor/my-patients';
+import PricingPage from './pages/pricing';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false)
-  
+  const [darkMode, setDarkMode] = useState(false);
+
   return (
-    <Router>
+    <Switch>
       <Route path="/login" component={LoginPage} />
+
       <Route path="/pricing" component={PricingPage} />
-      <Route path="/dr/:customUrl" component={DoctorPublicPage} />
-      
+
+      <Route path="/dr/:customUrl">
+        {(params) => <DoctorPublicPage customUrl={params.customUrl} />}
+      </Route>
+
       <Route path="/doctor/dashboard">
         <ProtectedRoute allowedRoles={["doctor"]}>
           <DoctorDashboardPage />
@@ -1350,11 +1360,11 @@ function App() {
       <Route path="/">
         <MedicalDeskApp darkMode={darkMode} setDarkMode={setDarkMode} />
       </Route>
-    </Router>
-  )
+    </Switch>
+  );
 }
 
-export default App
+export default App;
 // Force rebuild Wed Nov 26 01:08:45 PM UTC 2025
 // Force deploy 1764352422
 // Force deploy 1764362741
