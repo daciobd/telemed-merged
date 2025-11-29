@@ -37,6 +37,39 @@ export default function WellsScoreCalculator() {
     calculateScoreMutation.mutate(criteria);
   };
 
+  const exportPDF = async () => {
+    try {
+      if (!result) return;
+
+      const response = await fetch('/api/export-pdf/wells-score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          score: result.score,
+          interpretation: result.interpretation,
+          recommendation: result.recommendation,
+          criteria
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao exportar PDF');
+      }
+
+      const html = await response.text();
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(html);
+        newWindow.document.close();
+      }
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      alert('Erro ao exportar PDF: ' + error.message);
+    }
+  };
+
   return (
     <div className="bg-orange-50 rounded-md p-3 mt-3" data-testid="wells-score-calculator">
       <h5 className="font-medium text-orange-900 mb-2">Critérios de Wells (TEP):</h5>
@@ -117,6 +150,17 @@ export default function WellsScoreCalculator() {
         >
           {calculateScoreMutation.isPending ? "Calculando..." : "Calcular Escore"}
         </Button>
+        {result && (
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => exportPDF()}
+            className="border-orange-300 text-orange-700 hover:bg-orange-100"
+            data-testid="button-export-pdf"
+          >
+            📄 Exportar PDF
+          </Button>
+        )}
       </div>
 
       {result && (

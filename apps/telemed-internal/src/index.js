@@ -1554,6 +1554,100 @@ const demoAiHandler = (req, res) => {
 app.all('/api/ai/answer', demoAiHandler);
 app.all('/api/ai/ask', demoAiHandler);
 
+// ===== EXPORT PDF ROUTES =====
+app.post('/api/export-pdf/wells-score', (req, res) => {
+  try {
+    const { score, interpretation, recommendation, criteria } = req.body;
+
+    if (score === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Score é obrigatório'
+      });
+    }
+
+    // Gerar HTML simples para PDF
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Wells Score Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+    .header { border-bottom: 2px solid #D97706; padding-bottom: 10px; margin-bottom: 20px; }
+    .logo { font-size: 24px; font-weight: bold; color: #2BB3A8; }
+    .subtitle { font-size: 11px; color: #666; }
+    .title { font-size: 18px; font-weight: bold; margin: 20px 0 10px 0; }
+    .score-box { background: #FFF7ED; border-left: 4px solid #D97706; padding: 15px; margin: 15px 0; }
+    .score-value { font-size: 32px; font-weight: bold; color: #D97706; }
+    .section { margin: 15px 0; }
+    .label { font-weight: bold; color: #333; }
+    .value { color: #666; margin-top: 5px; }
+    .criteria-list { margin: 10px 0; padding-left: 20px; }
+    .criteria-item { margin: 5px 0; }
+    .footer { border-top: 1px solid #DDD; margin-top: 30px; padding-top: 15px; font-size: 10px; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TeleMed</div>
+    <div class="subtitle">Plataforma de Telemedicina</div>
+  </div>
+  
+  <h2 class="title">Relatório - Escore de Wells (TEP)</h2>
+  <div class="subtitle">Gerado em: ${new Date().toLocaleString('pt-BR')}</div>
+  
+  <div class="score-box">
+    <div class="label">Escore Total</div>
+    <div class="score-value">${score} pontos</div>
+  </div>
+  
+  <div class="section">
+    <div class="label">Interpretação:</div>
+    <div class="value">${interpretation}</div>
+  </div>
+  
+  <div class="section">
+    <div class="label">Recomendação:</div>
+    <div class="value">${recommendation}</div>
+  </div>
+  
+  ${criteria ? `
+  <div class="section">
+    <div class="label">Critérios Selecionados:</div>
+    <div class="criteria-list">
+      ${Object.entries(criteria)
+        .filter(([_, value]) => value)
+        .map(([key, _]) => `<div class="criteria-item">✓ ${key}</div>`)
+        .join('')}
+    </div>
+  </div>
+  ` : ''}
+  
+  <div class="footer">
+    <p>© TeleMed - Telemedicina Profissional | Documento gerado automaticamente</p>
+  </div>
+  
+  <script>
+    window.print();
+  </script>
+</body>
+</html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+
+  } catch (error) {
+    console.error('❌ Erro ao gerar PDF:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao gerar PDF: ' + error.message
+    });
+  }
+});
+
 // Arquivos estáticos configurados acima (antes do SPA fallback)
 
 app.listen(PORT, '0.0.0.0', () => {
