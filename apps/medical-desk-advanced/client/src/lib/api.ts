@@ -1,5 +1,22 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://telemed-deploy-ready.onrender.com';
 
+// Types
+export interface WellsScoreCriteria {
+  clinicalSignsTVP: boolean;
+  tepmorelikely: boolean;
+  heartRateOver100: boolean;
+  immobilizationSurgery: boolean;
+  previousTEP: boolean;
+  hemoptysis: boolean;
+  cancer: boolean;
+}
+
+export interface WellsScoreResult {
+  score: number;
+  interpretation: string;
+  recommendation: string;
+}
+
 // Mock data fallback
 const mockData = {
   stats: {
@@ -101,3 +118,44 @@ export async function analyzeSymptoms(data: any) {
     timestamp: new Date().toISOString()
   };
 }
+
+// Calculate Wells Score for Pulmonary Embolism
+export function calculateWellsScore(criteria: WellsScoreCriteria): WellsScoreResult {
+  let score = 0;
+  
+  if (criteria.clinicalSignsTVP) score += 3;
+  if (criteria.tepmorelikely) score += 3;
+  if (criteria.heartRateOver100) score += 1.5;
+  if (criteria.immobilizationSurgery) score += 1.5;
+  if (criteria.previousTEP) score += 1.5;
+  if (criteria.hemoptysis) score += 1;
+  if (criteria.cancer) score += 1;
+
+  let interpretation = '';
+  let recommendation = '';
+
+  if (score < 2) {
+    interpretation = 'Risco BAIXO de TEP (< 2%)';
+    recommendation = 'Considerar alta sem teste D-dímero. Reavalie se sintomas pioram.';
+  } else if (score < 6) {
+    interpretation = 'Risco INTERMEDIÁRIO de TEP (2-30%)';
+    recommendation = 'D-dímero é recomendado. Se negativo + risco intermediário = pode descartar TEP.';
+  } else {
+    interpretation = 'Risco ALTO de TEP (> 30%)';
+    recommendation = 'Angiografia pulmonar (CTPA) ou venografia recomendados. Considerar anticoagulação empiricamente.';
+  }
+
+  return {
+    score,
+    interpretation,
+    recommendation
+  };
+}
+
+// Mutations for React Query
+export const mutations = {
+  calculateWellsScore: (onSuccess?: (data: WellsScoreResult) => void) => ({
+    mutationFn: (criteria: WellsScoreCriteria) => Promise.resolve(calculateWellsScore(criteria)),
+    onSuccess
+  })
+};
