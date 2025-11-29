@@ -7,7 +7,7 @@ import {
   BarChart3, Bell, Moon, Sun, Search, Filter, Plus, X, Check,
   Heart, Stethoscope, Brain, Zap, Clock, CheckCircle, XCircle,
   TrendingDown, Calendar, MapPin, Shield, Download, Upload
-, Calculator } from 'lucide-react'
+, Calculator , ChevronRight } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { fetchFromAPI, analyzeSymptoms } from './lib/api'
 import { protocolosClinicosCompletos } from './data/protocolos'
