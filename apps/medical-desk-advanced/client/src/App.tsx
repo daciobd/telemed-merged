@@ -87,10 +87,26 @@ function App() {
     if (!protocolosClinicosCompletos || !Array.isArray(protocolosClinicosCompletos)) {
       return [];
     }
-    return categoriaFiltro === 'todas'
-      ? protocolosClinicosCompletos
-      : protocolosClinicosCompletos.filter(p => p.categoria === categoriaFiltro);
-  }, [categoriaFiltro])
+    
+    let filtered = protocolosClinicosCompletos;
+    
+    // Filtro por categoria
+    if (categoriaFiltro !== 'todas') {
+      filtered = filtered.filter(p => p.categoria === categoriaFiltro);
+    }
+    
+    // Filtro por busca
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.nome.toLowerCase().includes(query) ||
+        p.descricao.toLowerCase().includes(query) ||
+        p.categoria.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [categoriaFiltro, searchQuery])
   
   const categorias = useMemo(() => {
     if (!protocolosClinicosCompletos || !Array.isArray(protocolosClinicosCompletos)) {
