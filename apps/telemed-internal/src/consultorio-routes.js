@@ -816,4 +816,105 @@ router.post('/virtual-office/check-availability', async (req, res) => {
   }
 });
 
+// ============================================
+// DASHBOARD DO MÉDICO
+// ============================================
+
+// GET /api/doctor/dashboard - Dashboard com métricas do médico
+router.get('/doctor/dashboard', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Verificar se é médico
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ error: 'Apenas médicos podem acessar dashboard' });
+    }
+
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId)).limit(1);
+    if (!doctor) {
+      return res.status(404).json({ error: 'Médico não encontrado' });
+    }
+
+    // Contar consultas totais
+    const totalConsultations = await db.select()
+      .from(consultations)
+      .where(eq(consultations.doctorId, doctor.id));
+
+    // Calcular receita do mês
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const monthConsultations = await db.select()
+      .from(consultations)
+      .where(
+        and(
+          eq(consultations.doctorId, doctor.id),
+          sql`scheduled_for >= ${monthStart}`,
+          sql`scheduled_for <= ${monthEnd}`
+        )
+      );
+
+    // Somar receita do médico (doctorEarnings)
+    const monthRevenue = monthConsultations.reduce((sum, c) => {
+      return sum + (parseFloat(c.doctorEarnings) || 0);
+    }, 0);
+
+    res.json({
+      doctor: {
+        fullName: doctor.userId ? (await db.select().from(users).where(eq(users.id, doctor.userId)).limit(1))?.[0]?.fullName : null,
+        accountType: doctor.accountType,
+        customUrl: doctor.customUrl,
+        totalConsultations: totalConsultations.length,
+        monthRevenue: parseFloat(monthRevenue.toFixed(2)),
+      },
+    });
+  } catch (error) {
+    console.error('Erro ao carregar dashboard:', error);
+    res.status(500).json({ error: 'Erro ao carregar dashboard' });
+  }
+});
+
+// ============================================
+// TIPO DE CONTA DO MÉDICO
+// ============================================
+
+// PATCH /api/doctor/account-type - Trocar modo (marketplace/virtual_office/hybrid)
+router.patch('/doctor/account-type', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { accountType } = req.body;
+
+    // Validar accountType
+    if (!['marketplace', 'virtual_office', 'hybrid'].includes(accountType)) {
+      return res.status(400).json({ error: 'accountType inválido. Use: marketplace, virtual_office ou hybrid' });
+    }
+
+    // Verificar se é médico
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ error: 'Apenas médicos podem alterar tipo de conta' });
+    }
+
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.userId, userId)).limit(1);
+    if (!doctor) {
+      return res.status(404).json({ error: 'Médico não encontrado' });
+    }
+
+    // Atualizar accountType
+    const [updated] = await db.update(doctors)
+      .set({ accountType, updatedAt: new Date() })
+      .where(eq(doctors.id, doctor.id))
+      .returning();
+
+    res.json({
+      doctor: {
+        accountType: updated.accountType,
+      },
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar tipo de conta:', error);
+    res.status(500).json({ error: 'Erro ao atualizar tipo de conta' });
+  }
+});
+
 export default router;
