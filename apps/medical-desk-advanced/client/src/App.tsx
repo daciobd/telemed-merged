@@ -1164,6 +1164,18 @@ function App() {
         )}
       </AnimatePresence>
 
+
+      {/* Modal de Detalhes do Protocolo */}
+      <AnimatePresence>
+        {protocoloSelecionado && (
+          <ProtocoloDetalhes
+            protocolo={protocoloSelecionado}
+            onClose={() => setProtocoloSelecionado(null)}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
+
       </main>
     </div>
   )
