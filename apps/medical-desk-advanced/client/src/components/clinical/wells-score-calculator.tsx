@@ -1,9 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation } from "@tanstack/react-query";
 import { mutations, type WellsScoreCriteria } from "@/lib/api";
+import { toast } from "react-hot-toast";
+
+interface WellsHistoryItem {
+  id: string;
+  score: number;
+  interpretation: string;
+  recommendation: string;
+  criteria: WellsScoreCriteria;
+  timestamp: string;
+}
 
 export default function WellsScoreCalculator() {
   const [criteria, setCriteria] = useState<WellsScoreCriteria>({
@@ -22,8 +32,39 @@ export default function WellsScoreCalculator() {
     recommendation: string;
   } | null>(null);
 
+  const [history, setHistory] = useState<WellsHistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Carregar histórico do localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('wells-score-history');
+      if (saved) {
+        setHistory(JSON.parse(saved));
+      }
+    } catch (err) {
+      console.error('Erro ao carregar histórico:', err);
+    }
+  }, []);
+
   const calculateScoreMutation = useMutation(mutations.calculateWellsScore((data) => {
     setResult(data);
+    
+    // Salvar no histórico
+    const newItem: WellsHistoryItem = {
+      id: Date.now().toString(),
+      score: data.score,
+      interpretation: data.interpretation,
+      recommendation: data.recommendation,
+      criteria,
+      timestamp: new Date().toLocaleString('pt-BR')
+    };
+    
+    const updated = [newItem, ...history].slice(0, 5);
+    setHistory(updated);
+    localStorage.setItem('wells-score-history', JSON.stringify(updated));
+    
+    toast.success(`✅ Escore calculado: ${data.score} pontos`, { duration: 3000 });
   }));
 
   const handleCriteriaChange = (criterion: keyof WellsScoreCriteria, checked: boolean) => {
@@ -34,7 +75,18 @@ export default function WellsScoreCalculator() {
   };
 
   const calculateScore = () => {
+    const selected = Object.values(criteria).some(v => v);
+    if (!selected) {
+      toast.error('⚠️ Selecione pelo menos um critério', { duration: 3000 });
+      return;
+    }
     calculateScoreMutation.mutate(criteria);
+  };
+
+  const recalculateFromHistory = (item: WellsHistoryItem) => {
+    setCriteria(item.criteria);
+    setResult(null);
+    toast.info(`🔄 Critérios carregados de ${item.timestamp}`, { duration: 2000 });
   };
 
   const exportPDF = async () => {
@@ -139,7 +191,7 @@ export default function WellsScoreCalculator() {
         </label>
       </div>
 
-      <div className="mt-3 flex space-x-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <Button 
           size="sm" 
           variant="outline" 
@@ -151,15 +203,25 @@ export default function WellsScoreCalculator() {
           {calculateScoreMutation.isPending ? "Calculando..." : "Calcular Escore"}
         </Button>
         {result && (
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => exportPDF()}
-            className="border-orange-300 text-orange-700 hover:bg-orange-100"
-            data-testid="button-export-pdf"
-          >
-            📄 Exportar PDF
-          </Button>
+          <>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => exportPDF()}
+              className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              data-testid="button-export-pdf"
+            >
+              📄 Exportar PDF
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => setShowHistory(!showHistory)}
+              className="border-orange-300 text-orange-700 hover:bg-orange-100"
+            >
+              📋 Histórico ({history.length})
+            </Button>
+          </>
         )}
       </div>
 
@@ -186,6 +248,35 @@ export default function WellsScoreCalculator() {
                   {result.recommendation}
                 </span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showHistory && history.length > 0 && (
+        <Card className="mt-3 bg-orange-50 border-orange-200">
+          <CardContent className="p-3">
+            <h6 className="font-medium text-orange-900 mb-2">📋 Últimos Cálculos:</h6>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {history.map((item) => (
+                <div key={item.id} className="p-2 bg-white rounded border border-orange-100 text-sm">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-bold text-orange-700">{item.score}</span>
+                      <span className="text-xs text-gray-500 ml-2">{item.timestamp}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => recalculateFromHistory(item)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      🔄 Usar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{item.interpretation}</p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

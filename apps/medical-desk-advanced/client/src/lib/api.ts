@@ -156,6 +156,8 @@ export function calculateWellsScore(criteria: WellsScoreCriteria): WellsScoreRes
 export const mutations = {
   calculateWellsScore: (onSuccess?: (data: WellsScoreResult) => void) => ({
     mutationFn: (criteria: WellsScoreCriteria) => Promise.resolve(calculateWellsScore(criteria)),
-    onSuccess
+    onSuccess: (data: WellsScoreResult) => {
+      if (onSuccess) onSuccess(data);
+    }
   })
 };
