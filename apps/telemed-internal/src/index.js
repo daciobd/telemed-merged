@@ -282,7 +282,12 @@ app.use(express.json());
 // Rotas do Consultório Virtual (autenticação, médicos, consultas)
 app.use('/api/consultorio', consultorioRoutes);
 
+// Importar rotas de Virtual Office (agendamento direto, página pública, etc)
+const { default: virtualOfficeRoutes } = await import('./virtual-office.routes.js');
+app.use('/api/virtual-office', virtualOfficeRoutes);
+
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
+console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
 
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect

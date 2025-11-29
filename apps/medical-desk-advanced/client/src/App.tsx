@@ -2,6 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 console.log('🏥 MedicalDesk Build:', new Date().toISOString());
 import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
+import { Router, Route, Link } from 'wouter'
+import DoctorPublicPage from './pages/dr/[customUrl]'
+import VirtualOfficeSetupPage from './pages/doctor/virtual-office-setup'
+import MyPatientsPage from './pages/doctor/my-patients'
+import DoctorDashboardPage from './pages/doctor/dashboard'
+import PricingPage from './pages/pricing'
 import {
   Activity, TrendingUp, AlertTriangle, Users, FileText, Settings,
   BarChart3, Bell, Moon, Sun, Search, Filter, Plus, X, Check,
@@ -152,6 +158,45 @@ function App() {
   const removeSymptom = (index: number) => {
     setSymptoms(symptoms.filter((_, i) => i !== index))
     toast.success('Sintoma removido')
+  }
+
+  return (
+    <Router>
+      <Route path="/dr/:customUrl" component={DoctorPublicPage} />
+      <Route path="/doctor/virtual-office-setup" component={VirtualOfficeSetupPage} />
+      <Route path="/doctor/my-patients" component={MyPatientsPage} />
+      <Route path="/doctor/dashboard" component={DoctorDashboardPage} />
+      <Route path="/pricing" component={PricingPage} />
+      <Route path="/">
+        <MedicalDeskApp darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Route>
+    </Router>
+  )
+}
+
+function MedicalDeskApp({ darkMode, setDarkMode }: { darkMode: boolean; setDarkMode: (v: boolean) => void }) {
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [symptoms, setSymptoms] = useState<string[]>(['Dor torácica', 'Dispneia'])
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
+  const [stats, setStats] = useState<any>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [newSymptom, setNewSymptom] = useState('')
+  const [protocoloSelecionado, setProtocoloSelecionado] = useState<any>(null)
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>('todas')
+  const [calculadoraSelecionada, setCalculadoraSelecionada] = useState<any>(null)
+
+  useEffect(() => {
+    loadStats()
+  }, [])
+
+  const loadStats = async () => {
+    try {
+      const data = await fetchFromAPI('/api/stats', true)
+      setStats(data)
+    } catch (error) {
+      toast.error('Erro ao carregar estatísticas')
+    }
   }
 
   return (
@@ -1269,6 +1314,23 @@ function App() {
 
       </main>
     </div>
+  )
+}
+
+function App() {
+  const [darkMode, setDarkMode] = useState(false)
+  
+  return (
+    <Router>
+      <Route path="/dr/:customUrl" component={DoctorPublicPage} />
+      <Route path="/doctor/virtual-office-setup" component={VirtualOfficeSetupPage} />
+      <Route path="/doctor/my-patients" component={MyPatientsPage} />
+      <Route path="/doctor/dashboard" component={DoctorDashboardPage} />
+      <Route path="/pricing" component={PricingPage} />
+      <Route path="/">
+        <MedicalDeskApp darkMode={darkMode} setDarkMode={setDarkMode} />
+      </Route>
+    </Router>
   )
 }
 
