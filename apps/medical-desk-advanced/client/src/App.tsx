@@ -19,6 +19,7 @@ import { AcessoRapidoModal } from './components/AcessoRapido'
 import { CalculadoraMedica } from './components/CalculadoraMedica'
 import { calculadoras } from './data/calculadoras'
 import { dadosBrasil, tendenciasSazonais, causasMortalidade, alertasEpidemiologicos } from './data/populacao'
+import { usoPorEspecialidade, tendenciaUso, distribuicaoTempo, topProtocolos } from './data/analytics'
 
 
 // Chart data
