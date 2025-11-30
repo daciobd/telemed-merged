@@ -65,8 +65,8 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-ID', req.id);
   next(); 
 });
-// Força porta 5000 conforme configuração do .replit (waitForPort = 5000)
-const PORT = 5000;
+// Porta: Render (RENDER=true) usa PORT env, Replit usa 5000 fixo
+const PORT = process.env.RENDER ? (process.env.PORT || 10000) : 5000;
 
 // Health check endpoints para observabilidade (PÚBLICO - sem auth)
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
@@ -1264,7 +1264,7 @@ app.post('/api/export-pdf/wells-score', (req, res) => {
 // Arquivos estáticos configurados acima (antes do SPA fallback)
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('[telemed] listening on 0.0.0.0:' + PORT);
+  console.log(`[telemed] listening on 0.0.0.0:${PORT}`);
   
   // Iniciar job de limpeza automática
   startCleanupJob();

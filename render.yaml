@@ -1,13 +1,36 @@
-# render.yaml — Telemed (monorepo com 5 serviços)
+# render.yaml — Telemed (monorepo com 5 serviços + unified entry point)
 
 services:
-  # 0) Gateway Service - Always-on unified entry point
+  # ROOT) TeleMed Unified - Single entry point with all routes
+  - type: web
+    name: telemed-unified
+    env: node
+    region: ohio
+    plan: starter
+    autoDeploy: true
+    rootDir: .
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: RENDER
+        value: "true"
+      - key: FEATURE_PRICING
+        value: "true"
+      - key: FEATURE_MEDICALDESK
+        value: "true"
+
+  # 0) Gateway Service - Always-on unified entry point (legacy)
   - type: web
     name: telemed-gateway
     env: node
     region: ohio
     plan: starter
-    autoDeploy: true
+    autoDeploy: false
     rootDir: apps/telemed-gateway
     buildCommand: |
       if [ -f package-lock.json ]; then npm ci; else npm install --include=dev; fi
