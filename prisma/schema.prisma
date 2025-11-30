@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model auditLog {
+  id        String   @id @default(cuid())
+  traceId   String?
+  eventType String?
+  category  String?
+  level     String?
+  payload   Json?
+  userAgent String?
+  ipHash    String?
+  createdAt DateTime @default(now())
+  
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model physician {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  crm       String?  @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([email])
+}
+
+model appointment {
+  id          String   @id @default(cuid())
+  physicianId String?
+  patientName String?
+  patientEmail String?
+  status      String?  @default("scheduled")
+  startTime   DateTime?
+  endTime     DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([physicianId])
+  @@index([startTime])
+}

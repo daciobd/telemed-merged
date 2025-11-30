@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { PrismaClient } from '@prisma/client';
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
 import { createProxyMiddleware } from 'http-proxy-middleware';
