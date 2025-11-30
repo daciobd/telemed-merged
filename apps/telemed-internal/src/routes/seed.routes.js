@@ -9,8 +9,8 @@ router.post('/seed', async (req, res) => {
     console.log('🌱 Iniciando seed via POST /api/seed...');
     
     // Importar dinâmicamente para evitar problemas de ESM
-    const { db } = await import('../../../../db/index.ts');
-    const { users, doctors, virtualOfficeSettings } = await import('../../../../db/schema.ts');
+    const { db } = await import('../../../../db/index.js');
+    const { users, doctors, virtualOfficeSettings } = await import('../../../../db/schema.js');
     
     // Verificar se já tem dados
     const existingUsers = await db.select().from(users).limit(1);
