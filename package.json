@@ -16,5 +16,13 @@
     "@types/node": "^20.0.0",
     "http-server": "^14.1.1",
     "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "openai": "^4.73.0",
+    "node-cron": "^3.0.3",
+    "http-proxy-middleware": "^3.0.0",
+    "morgan": "^1.10.0"
   }
 }
