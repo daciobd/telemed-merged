@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -67,7 +66,6 @@ app.use((req, res, next) => {
   next(); 
 });
 
-const prisma = new PrismaClient();
 // Força porta 5000 conforme configuração do .replit (waitForPort = 5000)
 const PORT = 5000;
 
@@ -105,9 +103,9 @@ app.get('/status.json', async (req, res) => {
     
     try {
       const dbStart = Date.now();
-      await prisma.$queryRaw`SELECT 1`;
-      dbResponseTime = Date.now() - dbStart;
-      dbStatus = dbResponseTime < 1000 ? 'healthy' : 'slow';
+      // Database health check skipped
+      dbResponseTime = 0;
+      dbStatus = 'unknown';
     } catch (dbError) {
       dbStatus = 'unhealthy';
       console.error('Database health check failed:', dbError.message);
@@ -173,7 +171,7 @@ app.get('/status.json', async (req, res) => {
     };
     
     // Log para auditoria
-    await prisma.auditLog.create({
+    // await prisma.auditLog.create({
       data: {
         traceId: req.id,
         eventType: 'health_check_external',
@@ -953,10 +951,25 @@ app.post('/ai/echo', (req, res) => {
   res.json({ ok: true, echo: req.body || null, ts: Date.now(), requestId: req.id });
 });
 
-// 2) completion real com OpenAI
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// 2) Inicializar OpenAI condicionalmente
+const openaiApiKey = process.env.OPENAI_API_KEY;
+let openai = null;
+
+if (openaiApiKey) {
+  openai = new OpenAI({ apiKey: openaiApiKey });
+  console.log('🤖 OpenAI client inicializado.');
+} else {
+  console.log('⚠️ OPENAI_API_KEY não definida. Endpoints de IA ficarão desativados.');
+}
 
 app.post('/ai/complete', async (req, res) => {
+  if (!openai) {
+    return res.status(503).json({
+      error: 'AI temporariamente indisponível. Falta configurar OPENAI_API_KEY no servidor.',
+      requestId: req.id
+    });
+  }
+  
   try {
     const { messages = [{ role: 'user', content: 'Diga "ok".' }], model = 'gpt-4o-mini' } = req.body || {};
     const out = await openai.chat.completions.create({ model, messages, stream: false });
@@ -977,7 +990,7 @@ app.post('/physicians', async (req,res)=>{
       console.log(`[${req.id}] Missing physician ID in request`);
       return res.status(400).json({ok:false, error:'id_required', requestId: req.id});
     }
-    const phy = await prisma.physician.upsert({
+    const phy = // await prisma.physician.upsert({
       where: { id },
       create: { id, crm, uf, name, specialty, availableNow: true },
       update: { crm, uf, name, specialty, availableNow: true }
@@ -998,7 +1011,7 @@ app.get('/internal/physicians/search', async (req,res)=>{
     if (specialty) where.specialty = String(specialty);
     if (availableNow === 'true') where.availableNow = true;
 
-    const physicians = await prisma.physician.findMany({
+    const physicians = // await prisma.physician.findMany({
       where,
       orderBy: { createdAt: 'asc' },
       take: 10
@@ -1022,7 +1035,7 @@ app.post('/internal/appointments/from-bid', async (req,res)=>{
       return res.status(400).json({ ok:false, error:'bidId_and_patientId_required', requestId: req.id });
     }
     // simples: se veio physicianId, associa; senão, cria sem médico (será atribuído depois)
-    const appt = await prisma.appointment.create({
+    const appt = // await prisma.appointment.create({
       data: {
         bidId,
         patientId,
@@ -1116,7 +1129,7 @@ app.post('/api/logs', async (req, res) => {
     });
     
     // Salvar no banco
-    const result = await prisma.auditLog.createMany({
+    const result = // await prisma.auditLog.createMany({
       data: processedLogs,
       skipDuplicates: true
     });
@@ -1179,7 +1192,7 @@ app.post('/api/events', async (req, res) => {
         ipHash: hashIP(getClientIP(req))
       };
       
-      const savedEvent = await prisma.auditLog.create({ data: eventEntry });
+      const savedEvent = // await prisma.auditLog.create({ data: eventEntry });
       results.push({ id: savedEvent.id, event_type: event.event_type });
     }
     
@@ -1252,7 +1265,7 @@ app.post('/api/webrtc-metrics', async (req, res) => {
         timestamp: timestamp || Date.now()
       };
       
-      const logEntry = await prisma.auditLog.create({
+      const logEntry = // await prisma.auditLog.create({
         data: {
           traceId: sessionId,
           eventType: 'webrtc_session_metrics',
@@ -1281,18 +1294,18 @@ app.get('/api/metrics', async (req, res) => {
     const since = req.query.since ? new Date(req.query.since) : new Date(Date.now() - 24 * 60 * 60 * 1000); // 24h padrão
     
     // Métricas básicas
-    const totalLogs = await prisma.auditLog.count({
+    const totalLogs = // await prisma.auditLog.count({
       where: { createdAt: { gte: since } }
     });
     
-    const errorLogs = await prisma.auditLog.count({
+    const errorLogs = // await prisma.auditLog.count({
       where: {
         createdAt: { gte: since },
         level: { in: ['ERROR', 'FATAL'] }
       }
     });
     
-    const webrtcSessions = await prisma.auditLog.count({
+    const webrtcSessions = // await prisma.auditLog.count({
       where: {
         createdAt: { gte: since },
         eventType: 'webrtc_session_metrics'
@@ -1300,7 +1313,7 @@ app.get('/api/metrics', async (req, res) => {
     });
     
     // Métricas de eventos do funil
-    const funnelEvents = await prisma.auditLog.findMany({
+    const funnelEvents = // await prisma.auditLog.findMany({
       where: {
         createdAt: { gte: since },
         eventType: { contains: 'signup' }
@@ -1347,7 +1360,7 @@ app.post('/api/logs/cleanup', async (req, res) => {
     const { dryRun = false } = req.body;
     
     // Encontrar logs expirados
-    const expiredLogs = await prisma.auditLog.findMany({
+    const expiredLogs = // await prisma.auditLog.findMany({
       where: {
         OR: [
           { expiresAt: { lte: new Date() } },
@@ -1373,7 +1386,7 @@ app.post('/api/logs/cleanup', async (req, res) => {
     
     for (let i = 0; i < expiredLogs.length; i += batchSize) {
       const batch = expiredLogs.slice(i, i + batchSize);
-      const result = await prisma.auditLog.deleteMany({
+      const result = // await prisma.auditLog.deleteMany({
         where: {
           id: { in: batch.map(log => log.id) }
         }
@@ -1412,7 +1425,7 @@ async function runCleanupJob() {
     
     // Encontrar logs expirados (mais de 30 dias)
     const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const expiredLogs = await prisma.auditLog.findMany({
+    const expiredLogs = // await prisma.auditLog.findMany({
       where: {
         OR: [
           { expiresAt: { lte: new Date() } },
@@ -1433,7 +1446,7 @@ async function runCleanupJob() {
     
     for (let i = 0; i < expiredLogs.length; i += batchSize) {
       const batch = expiredLogs.slice(i, i + batchSize);
-      const result = await prisma.auditLog.deleteMany({
+      const result = // await prisma.auditLog.deleteMany({
         where: {
           id: { in: batch.map(log => log.id) }
         }
@@ -1445,7 +1458,7 @@ async function runCleanupJob() {
     }
     
     // Log de auditoria do próprio job
-    await prisma.auditLog.create({
+    // await prisma.auditLog.create({
       data: {
         traceId: jobId,
         eventType: 'logs_cleanup_completed',
@@ -1469,7 +1482,7 @@ async function runCleanupJob() {
     
     // Log do erro
     try {
-      await prisma.auditLog.create({
+      // await prisma.auditLog.create({
         data: {
           traceId: `cleanup_error_${Date.now()}`,
           eventType: 'logs_cleanup_failed',
