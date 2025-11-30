@@ -1,12 +1,13 @@
 # TeleMed Platform - Documentação Concisa
 
 ## Overview
-A Plataforma TeleMed é uma solução unificada de telemedicina que consolida três aplicações existentes em um monorepo com cinco microserviços. Ela oferece workflows de consulta com leilão reverso e comissão de 20%, calculadoras médicas, prescrição digital, automação de documentos médicos com integração AWS S3, um sistema de triagem médica com IA (Dr. AI Medical Triage), e módulos plug-and-play para chat em consulta, gestão de pacientes, agendamento e um widget de suporte. O projeto está completo e pronto para produção, focado em compliance com as regulamentações brasileiras de telemedicina. Seu objetivo é otimizar a experiência de telemedicina e ser um produto líder no mercado brasileiro.
+A Plataforma TeleMed é uma solução unificada de telemedicina que consolida três aplicações existentes em um monorepo com cinco microserviços. Ela oferece workflows de consulta com leilão reverso e comissão de 20%, calculadoras médicas, prescrição digital, automação de documentos médicos com integração AWS S3, um sistema de triagem médica com IA (Dr. AI Medical Triage), e módulos plug-and-play para chat em consulta, gestão de pacientes, agendamento e um widget de suporte. **Nova fase: Consultório Virtual (Virtual Office) totalmente operacional com React SPA, autenticação JWT, calendário dinâmico e agendamento direto**. O projeto está completo e pronto para produção, focado em compliance com as regulamentações brasileiras de telemedicina. Seu objetivo é otimizar a experiência de telemedicina e ser um produto líder no mercado brasileiro.
 
 ## User Preferences
 - **Linguagem**: Português brasileiro
 - **Comunicação**: Linguagem simples e cotidiana
 - **Contexto**: Telemedicina brasileira com compliance CFM
+- **Preferência Tech**: React + Wouter + React Query + TypeScript + Zod + Drizzle ORM
 
 ## System Architecture
 A plataforma é composta por um monorepo com seis microserviços Dockerizados, orquestrados para deploy no Render.
@@ -19,19 +20,44 @@ A plataforma é composta por um monorepo com seis microserviços Dockerizados, o
 -   **telemed-docs-automation**: Automação de documentos médicos (receitas e atestados CFM-compliant em PDF, com integração AWS S3).
 -   **medical-desk-advanced**: Serviço standalone de protocolos clínicos para demonstrações em hospitais.
 
-**Frontend:**
--   **Tecnologias**: React com TypeScript, React Router, React Query + Context API, Tailwind CSS.
--   **UI/UX**: Componentes responsivos, modal de prescrição ANVISA, chat flutuante, dashboard de métricas (incluindo métricas de comissão de marketplace), widget de suporte, sistema de temas Dark/Light. Dr. AI Medical Triage com interface LGPD-compliant e algoritmo de triagem. Integração de leilão/precificação (BidConnect) com proxy local e feature flag, oferecendo 3 modelos de precificação (Marketplace 20% comissão, Virtual Office, Hybrid). Página de consulta modernizada com tabs (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.
--   **Ferramentas de Teste/Onboarding**: Guia Interativo do Testador (`tester-guide.html`), página de Boas-Vindas (`bem-vindo.html`), ferramentas de QA automatizadas (`test-tour-links.html`, `smoke-test.html`), Pitch Deck para Investidores (`pitchdeck.html`), e guia de testes para médicos (`guia-teste-medico.html`).
+**Root Entry Point (Novo - Nov 2025):**
+-   **index.js + server.js (raiz)**: Orquestra o TeleMed Internal Gateway que serve Frontend SPA + todas as rotas API (consultório virtual, marketplace, etc.)
 
-**Backend:**
+**Frontend - Consultório Virtual (Nov 2025 - NOVO):**
+-   **Tecnologias**: React 19 com TypeScript, Wouter (Switch/Route), React Query v5, React Hook Form + Zod, Tailwind CSS + shadcn/ui.
+-   **Páginas Implementadas**:
+    - `/login` – Autenticação JWT com email/senha
+    - `/doctor/dashboard` – Métricas, toggle de modo (marketplace/virtual_office/hybrid)
+    - `/doctor/virtual-office-setup` – Configurar preços, dias de trabalho, URL customizada
+    - `/doctor/my-patients` – Busca e tabela de pacientes
+    - `/dr/:customUrl` – Página pública do médico + calendário + agendamento direto
+-   **UI/UX**: Loading skeletons, error states, empty states, toasts shadcn, tema teal #2BB3A8, `data-testid` em elementos interativos.
+-   **Componentes Reutilizáveis**: ProtectedRoute (JWT + role check), apiFetch (Bearer token automático), useAuth hook.
+
+**Frontend - Existente:**
+-   **Tecnologias**: React com TypeScript, React Router, React Query + Context API, Tailwind CSS.
+-   **UI/UX**: Modal de prescrição ANVISA, chat flutuante, dashboard de métricas (marketplace), widget de suporte, temas Dark/Light. Dr. AI Medical Triage com interface LGPD-compliant. Integração BidConnect com 3 modelos de precificação. Página de consulta modernizada com tabs (Chat, Atendimento, Exames, Receitas) e integração MedicalDesk.
+-   **Ferramentas de Teste/Onboarding**: Guia Interativo do Testador, página de Boas-Vindas, ferramentas de QA automatizadas, Pitch Deck, guia de testes para médicos.
+
+**Backend - Consultório Virtual (Nov 2025 - NOVO):**
+-   **Tecnologias**: Express.js + JavaScript (ESM).
+-   **Autenticação**: JWT (Bearer token) + bcrypt.
+-   **Banco de Dados**: PostgreSQL com Drizzle ORM.
+-   **Endpoints Implementados** (10+ rotas):
+    - Auth: `POST /api/consultorio/auth/login`, `GET /api/consultorio/auth/me`
+    - Doctor: `GET /api/doctor/dashboard`, `PATCH /api/doctor/account-type`
+    - Virtual Office: `GET/POST /api/virtual-office/settings`, `GET /api/virtual-office/:customUrl`, slots dinâmicos, agendamento
+-   **Validação**: Zod schemas + middleware de validação.
+-   **Autenticação Middleware**: Verifica JWT, extrai user/role, rejeita sem token.
+
+**Backend - Existente:**
 -   **Tecnologias**: Express.js + TypeScript.
 -   **Autenticação**: JWT + bcrypt.
--   **Banco de Dados**: PostgreSQL com Drizzle ORM. Tabelas `bids` e `consultations` incluem campos `platform_fee` (20% comissão) e `doctor_earnings` (80% remuneração) para auditoria financeira completa do marketplace.
--   **Documentos**: PDFKit + Handlebars para geração de documentos com templates profissionais e QR Codes de verificação.
+-   **Banco de Dados**: PostgreSQL com Drizzle ORM. Tabelas `bids` e `consultations` com `platform_fee` (20%) e `doctor_earnings` (80%) para auditoria marketplace.
+-   **Documentos**: PDFKit + Handlebars com templates profissionais e QR Codes.
 -   **Validação**: Zod schemas.
--   **Lógica de Negócio Marketplace**: Cálculo automático de fees ao aceitar lance (20% plataforma, 80% médico), com persistência em banco para compliance fiscal e auditoria.
--   **Gateway Consolidado (`telemed-internal`)**: Serve o frontend estático, atua como proxy para serviços externos e gerencia health endpoints.
+-   **Lógica Marketplace**: Cálculo automático de fees ao aceitar lance.
+-   **Gateway Consolidado (`telemed-internal`)**: Serve frontend estático + proxies + health endpoints.
 
 **Infraestrutura e Deploys:**
 -   **Deploy**: Render (5 serviços configurados via `render.yaml`) com PostgreSQL gerenciado.
