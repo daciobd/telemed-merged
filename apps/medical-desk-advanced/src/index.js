@@ -32,7 +32,7 @@ app.use(
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Internal-Token"],
-  })
+  }),
 );
 
 // Métricas e feature flags
@@ -72,7 +72,14 @@ app.get("/api/protocols/:condition", (req, res) => {
       diagnosis: {
         criteria:
           "PA ≥ 140/90 mmHg em pelo menos 2 consultas, MAPA ou MRPA confirmando valores elevados",
-        exams: ["ECG", "Ecocardiograma", "Creatinina", "Potássio", "Glicemia", "Perfil lipídico"],
+        exams: [
+          "ECG",
+          "Ecocardiograma",
+          "Creatinina",
+          "Potássio",
+          "Glicemia",
+          "Perfil lipídico",
+        ],
       },
       treatment: {
         lifestyle: [
@@ -228,7 +235,7 @@ app.get("/api/protocols/:condition", (req, res) => {
     return res.status(404).json({
       error: "Protocolo não encontrado",
       message: `Condições disponíveis: ${Object.keys(protocolsDatabase).join(
-        ", "
+        ", ",
       )}`,
       available: Object.keys(protocolsDatabase),
       source: "medical-desk-advanced",
@@ -260,7 +267,7 @@ app.get("/landing", (req, res) => {
 app.use(express.static(clientBuild));
 
 // Fallback: todas as rotas não-API servem o React (SPA routing)
-app.get("*", (req, res, next) => {
+app.all("*", (req, res, next) => {
   if (req.path.startsWith("/api")) return next();
   res.sendFile(path.join(clientBuild, "index.html"));
 });
@@ -273,7 +280,7 @@ const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log("🚀 Starting Medical Desk Advanced Service...");
   console.log(
-    `[${process.env.SERVICE_NAME || "medical-desk-advanced"}] listening on :${port}`
+    `[${process.env.SERVICE_NAME || "medical-desk-advanced"}] listening on :${port}`,
   );
   console.log("Environment:", {
     NODE_ENV: process.env.NODE_ENV || "development",

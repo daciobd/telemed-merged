@@ -478,7 +478,7 @@ console.log(`   - / → client/dist/ (CONSULTÓRIO VIRTUAL - TEMA TEAL)`);
 
 // ===== SPA FALLBACK =====
 // Para React Router - retorna index.html para rotas não-API (DEPOIS do static!)
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
   // Se é uma chamada de API, continua para os handlers
   if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) {
     return next();
