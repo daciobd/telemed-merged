@@ -23,6 +23,7 @@
     "openai": "^4.73.0",
     "node-cron": "^3.0.3",
     "http-proxy-middleware": "^3.0.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "jsonwebtoken": "^9.0.2"
   }
 }
