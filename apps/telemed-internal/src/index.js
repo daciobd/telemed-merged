@@ -1,8 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
-import pkg from "@prisma/client";
-const { PrismaClient } = pkg;
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -67,7 +65,6 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-ID', req.id);
   next(); 
 });
-
 const prisma = new PrismaClient();
 // Força porta 5000 conforme configuração do .replit (waitForPort = 5000)
 const PORT = 5000;
