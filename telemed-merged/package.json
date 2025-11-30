@@ -1,11 +1,13 @@
 {
   "name": "telemed-merged",
   "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "node index.js",
+    "start": "node server.js",
+    "build": "cd client && npm install && npm run build",
     "test:e2e": "playwright test",
     "pw:browsers": "playwright install --with-deps",
-    "start": "node ../apps/telemed-deploy-ready/server.js",
-    "build": "echo 'Static files - no build process needed'",
     "preview": "vite preview --port 5173 --strictPort --host 127.0.0.1",
     "test:server": "cd .. && npm run dev"
   },
