@@ -20,10 +20,10 @@ import {
   directBookingSchema,
 } from "./consultorio-validation.js";
 
-// Compatibilidade CJS/ESM: tenta achar o objeto de conexão
+// Compatibilidade CJS/ESM: tenta achar o objeto de conexão do Drizzle
 const db = dbModule.db || dbModule.default || dbModule;
 
-// Aqui você mantém exatamente os mesmos nomes que já usava antes
+// Mantém os mesmos nomes das tabelas usados no resto do arquivo
 const {
   users,
   patients,
@@ -1163,12 +1163,10 @@ router.patch("/doctor/account-type", authenticate, async (req, res) => {
 
     // Validar accountType
     if (!["marketplace", "virtual_office", "hybrid"].includes(accountType)) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "accountType inválido. Use: marketplace, virtual_office ou hybrid",
-        });
+      return res.status(400).json({
+        error:
+          "accountType inválido. Use: marketplace, virtual_office ou hybrid",
+      });
     }
 
     // Verificar se é médico
