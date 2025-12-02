@@ -1,9 +1,6 @@
 import express from "express";
-
-// Importa o módulo CommonJS do db e normaliza para uma constante `db`
-import dbModule from "../../../db/index.js";
+import * as dbModule from "../../../db/index.js";
 import * as schema from "../../../db/schema.cjs";
-
 import { eq, and, desc, sql, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -20,10 +17,10 @@ import {
   directBookingSchema,
 } from "./consultorio-validation.js";
 
-// Compatibilidade CJS/ESM: tenta achar o objeto de conexão do Drizzle
+// Compat CJS/ESM: Render aceita qualquer uma dessas formas
 const db = dbModule.db || dbModule.default || dbModule;
 
-// Mantém os mesmos nomes das tabelas usados no resto do arquivo
+// Tabelas do Drizzle
 const {
   users,
   patients,

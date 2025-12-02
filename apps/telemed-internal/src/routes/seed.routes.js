@@ -4,13 +4,18 @@ import bcrypt from 'bcryptjs';
 const router = express.Router();
 
 // Rota de seed - População inicial do banco de dados
+// Rota de seed - População inicial do banco de dados
 router.post('/seed', async (req, res) => {
   try {
     console.log('🌱 Iniciando seed via POST /api/seed...');
-    
-    // Importar dinâmicamente para evitar problemas de ESM
-    const { db } = await import('../../../../db/index.js');
-    const { users, doctors, virtualOfficeSettings } = await import('../../../../db/schema.js');
+
+    // Importar dinamicamente para evitar problemas de ESM / CJS
+    const dbModule = await import('../../../../db/index.js');
+    const db = dbModule.db || dbModule.default || dbModule;
+
+    const { users, doctors, virtualOfficeSettings } =
+      await import('../../../../db/schema.js');
+
     
     // Verificar se já tem dados
     const existingUsers = await db.select().from(users).limit(1);
