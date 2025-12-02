@@ -1,13 +1,21 @@
-// Shim para compatibilizar CommonJS (index.cjs) com import ESM { db } from '.../db/index.js'
-const dbModule = require('./index.cjs');
+// Wrapper ESM para o módulo CommonJS `index.cjs`
+// Assim podemos usar tanto:
+//   import dbModule from "../../../db/index.js"
+//   const { db } = await import("../../../db/index.js")
 
-// Tenta achar o objeto de conexão em dbModule.db, dbModule.default ou no próprio módulo.
-const db =
+import * as dbModule from './index.cjs';
+
+// Tenta descobrir qual é o objeto de conexão do Drizzle:
+// - se o CJS expõe `db`, usamos;
+// - se expõe `default`, usamos;
+// - senão, usamos o módulo inteiro.
+export const db =
   dbModule.db ||
   dbModule.default ||
   dbModule;
 
-module.exports = {
-  ...dbModule,
-  db,
-};
+// Default export (para `import dbModule from ...`)
+export default dbModule;
+
+// Reexporta tudo que o index.cjs tiver
+export * from './index.cjs';
