@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TeleMed — Demo para Médicos</title>
+  <meta name="telemed-no-guard" content="1" />
+  <style>
+    :root{
+      --brand:#0ea5e9; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
+      --text:#111827; --muted:#6b7280; --card:#fff; --border:#e5e7eb; --bg:#f8fafc;
+    }
+    *{box-sizing:border-box} body{margin:0;padding:24px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
+    .hero{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .hero h1{margin:0}
+    .hero .tag{background:var(--brand);color:#fff;padding:6px 10px;border-radius:999px;font-size:.85rem}
+    .links a{margin-right:8px;color:var(--brand);text-decoration:none;border-bottom:1px dashed var(--brand)}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .muted{color:var(--muted)}
+    .btn{background:var(--brand);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+    label{display:block;font-size:.9rem;margin:6px 0 4px}
+    pre{background:#0b1020;color:#e5e7eb;padding:12px;border-radius:10px;overflow:auto;font-size:12px}
+    .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+    .ok{color:var(--ok)} .bad{color:var(--bad)}
+    .presenter{position:fixed;right:16px;bottom:16px;z-index:50;background:var(--ink);color:#e5e7eb;border-radius:12px;padding:12px 14px;box-shadow:0 10px 25px rgba(0,0,0,.25);width:320px;max-height:60vh;overflow:auto;display:none}
+    .presenter h3{margin:8px 0 6px;font-size:14px}.presenter p,.presenter li{font-size:12px;color:#cbd5e1}.presenter .close{position:absolute;top:6px;right:10px;cursor:pointer}
+    .presenter-toggle{position:fixed;right:16px;bottom:16px;z-index:51}
+    .card.success{background:#f0f9ff;border-color:#0ea5e9}
+    .card.success h4{margin:0 0 10px;color:#0369a1}
+    .card.success ol, .card.success ul{margin:0;padding-left:20px}
+    .card.success a{color:#0ea5e9;text-decoration:none}
+    .card.success a:hover{text-decoration:underline}
+    .card.success code{background:#e0f2fe;color:#0369a1;padding:2px 4px;border-radius:4px}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <span class="tag">TeleMed</span>
+    <h1>Demo para Médicos</h1>
+    <div class="links">
+      <a href="/index.html">Home</a>
+      <a href="/example-integration.html">Exemplo simples</a>
+    </div>
+    <button class="btn presenter-toggle" onclick="togglePresenter()">Roteiro</button>
+  </header>
+
+  <!-- Link para cadastro médico -->
+  <div class="card" style="background:#f0f9ff;border-color:#0ea5e9;text-align:center;padding:16px">
+    <p style="margin:0">
+      <strong>Novo na plataforma?</strong> 
+      <a href="/cadastro-medico.html" style="color:#0ea5e9;text-decoration:none;font-weight:600">
+        → Cadastrar Médico
+      </a>
+    </p>
+  </div>
+
+  <!-- Pre-Flight oculto por padrão -->
+  <details class="card" style="margin-bottom:8px">
+    <summary style="cursor:pointer;padding:4px 0;color:#6b7280">
+      ⚙️ Opções Avançadas (Desenvolvedores)
+    </summary>
+    <div style="margin-top:12px">
+      <h3>Pre-Flight / Healthchecks</h3>
+    <p class="muted">Configure os endpoints e verifique <code>/healthz</code>.</p>
+    <div class="grid">
+      <div>
+        <label>AUCTION_URL</label>
+        <input id="auUrl" placeholder="https://telemed-auction.onrender.com" />
+        <button class="btn" id="checkAuction">Testar Auction</button>
+        <div id="outAuction"></div>
+      </div>
+      <div>
+        <label>INTERNAL_URL</label>
+        <input id="inUrl" placeholder="https://telemed-internal.onrender.com" />
+        <button class="btn" id="checkInternal">Testar Internal</button>
+        <div id="outInternal"></div>
+      </div>
+      <div>
+        <label>PRODUCTIVITY_URL</label>
+        <input id="prodUrl" placeholder="https://telemed-productivity.onrender.com" />
+        <button class="btn" id="checkProd">Testar Productivity</button>
+        <div id="outProd"></div>
+      </div>
+    </div>
+    </div>
+  </details>
+
+  <section class="card" style="background:#f0f9ff;border-color:#0ea5e9">
+    <h2>💡 Como Funciona o Sistema de Leilão Reverso</h2>
+    <div style="background:white;padding:20px;border-radius:12px;margin:16px 0;border-left:4px solid #0ea5e9">
+      <h4 style="margin:0 0 12px;color:#0369a1">📋 Fluxo para o Médico:</h4>
+      <ol style="margin:0;padding-left:20px;color:#0f172a">
+        <li><strong>Paciente envia proposta:</strong> O paciente faz um pedido de consulta com sua oferta de valor através do sistema</li>
+        <li><strong>Você recebe o BID:</strong> A proposta aparece no sistema como um "BID" (lance) que você pode visualizar</li>
+        <li><strong>Aceitar ou rejeitar:</strong> Na seção abaixo, você pode <strong>aceitar o bid</strong> do paciente, o que automaticamente:</li>
+        <ul style="margin:8px 0;padding-left:20px">
+          <li>✅ Cria uma consulta agendada</li>
+          <li>✅ Conecta você ao paciente</li>
+          <li>✅ Inicia o processo de atendimento</li>
+        </ul>
+        <li><strong>Consulta realizada:</strong> Após aceitar, vocês podem se conectar na sala de video conferência</li>
+      </ol>
+      <div style="background:#e0f2fe;padding:12px;border-radius:8px;margin-top:16px">
+        <strong>💰 Importante:</strong> Ao aceitar um bid, você está concordando com o valor proposto pelo paciente e se comprometendo a realizar a consulta.
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>1) Leilão Reverso — Criar/Simular BID</h2>
+    
+    <!-- Banner de simulação -->
+    <div class="card" style="background:#fff3cd;border-color:#ffc107;margin-bottom:16px;padding:16px">
+      <h4 style="margin:0 0 8px;color:#856404">🎯 Sem pedidos no momento?</h4>
+      <p style="margin:0 0 12px;color:#856404">
+        Use o modo de simulação para gerar um BID de teste e continuar o roteiro completo.
+      </p>
+      <button class="btn" id="btnSimularPaciente" style="background:#ffc107;color:#212529">
+        🎭 Simular paciente (gerar BID de teste)
+      </button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>patientId</label>
+        <input id="patientId" value="paciente-demo" />
+        <label for="specialty">Especialidade desejada</label>
+        <select id="specialty" name="specialty">
+          <option value="">Selecione…</option>
+          <option>Clínica Geral</option>
+          <option>Cardiologia</option>
+          <option>Dermatologia</option>
+          <option>Endocrinologia</option>
+          <option>Gastroenterologia</option>
+          <option>Geriatria</option>
+          <option>Ginecologia</option>
+          <option>Infectologia</option>
+          <option>Neurologia</option>
+          <option>Oftalmologia</option>
+          <option>Ortopedia</option>
+          <option>Otorrinolaringologia</option>
+          <option>Pediatria</option>
+          <option>Psiquiatria</option>
+          <option>Reumatologia</option>
+          <option>Urologia</option>
+        </select>
+        <label>isImmediate</label>
+        <select id="isImmediate">
+          <option value="true" selected>true</option>
+          <option value="false">false</option>
+        </select>
+        <label>amountCents</label>
+        <input id="amountCents" type="number" value="9000" />
+        <button class="btn" id="btnCreateBid">Criar BID (seed)</button>
+        <div id="outCreateBid" class="muted"></div>
+      </div>
+      <div>
+        <label>Bid ID (preenchido após criar)</label>
+        <input id="bidId" readonly />
+        <label>Modo</label>
+        <select id="mode">
+          <option value="immediate" selected>immediate</option>
+          <option value="scheduled">scheduled</option>
+        </select>
+        <label>scheduledFor (ISO)</label>
+        <input id="scheduledFor" placeholder="2025-09-04T14:00:00Z" />
+        <button class="btn" id="btnAcceptBid" disabled>Aceitar BID → criar consulta</button>
+        <div id="outAcceptBid" class="muted"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ações pós-aceite (oculto inicialmente) -->
+  <div id="posAceite" class="card" style="display:none;margin-top:16px;padding:16px;border:1px solid #059669;background:#f0fdf4">
+    <h4 style="margin:0 0 12px;color:#059669">✅ BID Aceito! Continuar o fluxo:</h4>
+    <div class="grid">
+      <a id="linkSala" class="btn" style="background:#059669">🏥 Ir para Sala de Espera</a>
+      <a id="linkConsulta" class="btn" style="background:#0ea5e9">👨‍⚕️ Ir para Consulta (Médico)</a>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:#e6fffa;border-radius:8px">
+      <strong>Appointment ID:</strong> <code id="displayAppointmentId">-</code>
+      <button class="btn" style="font-size:12px;padding:4px 8px;margin-left:8px" onclick="copyAppointmentId()">Copiar</button>
+    </div>
+  </div>
+
+  <!-- Próximos passos -->
+  <div id="next-steps" class="card" style="margin-top:16px;padding:16px;border:1px solid #0ea5e9;background:#eef7ff">
+    <h4 style="margin:0 0 8px">Próximos passos</h4>
+    <ol style="margin:0;padding-left:18px">
+      <li>Clique em "Simular paciente" para gerar BID de teste</li>
+      <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
+      <li><a href="/index.html">Voltar ao Hub</a></li>
+    </ol>
+  </div>
+
+  <section class="card">
+    <h2>2) Atalhos</h2>
+    <div class="grid">
+      <a class="btn" target="_blank" id="openAuction">Abrir Auction</a>
+      <a class="btn" target="_blank" id="openProd">Abrir Productivity</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Logs</h2>
+    <pre id="log"></pre>
+  </section>
+
+  <div class="presenter" id="presenter">
+    <span class="close" onclick="togglePresenter()">✖</span>
+    <h3>Roteiro Rápido (15–20 min)</h3>
+    <ol>
+      <li>Health: Auction + Internal + Productivity → OK</li>
+      <li>Criar BID (seed) → copiar <em>Bid ID</em></li>
+      <li>Aceitar BID (immediate) → mostrar <code>appointment</code></li>
+      <li>Explicar prontuário/IA (Productivity) na demo verbal (link "Abrir Productivity").</li>
+    </ol>
+    <h3>Mensagens-chave</h3>
+    <ul>
+      <li>Suporte à decisão; médico no comando.</li>
+      <li>Padronização e agilidade.</li>
+      <li>Integração ponta-a-ponta (lance → consulta).</li>
+    </ul>
+  </div>
+
+  <script>
+    function togglePresenter(){
+      const x=document.getElementById('presenter');
+      x.style.display = (x.style.display==='none'||!x.style.display)?'block':'none';
+    }
+
+    // ===== SISTEMA DE SIMULAÇÃO =====
+    let bidId = "";
+    let patientId = "paciente-demo";
+    let appointmentId = "";
+
+    // Função principal de simulação
+    async function simularPaciente() {
+      try {
+        log('🎭 Iniciando simulação de paciente...');
+        
+        // Atualizar estado do botão
+        const btnSimular = document.querySelector('#btnSimularPaciente');
+        btnSimular.disabled = true;
+        btnSimular.textContent = '⏳ Criando BID...';
+
+        // 1) Criar BID seed (modo local para garantir funcionamento)
+        await criarBidLocal();
+        
+        // NÃO aceitar automaticamente - deixar usuário clicar em "Aceitar BID"
+        log('✅ BID criado com sucesso! Agora clique em "Aceitar BID → criar consulta"');
+        
+        // Restaurar botão
+        btnSimular.disabled = false;
+        btnSimular.textContent = '🎭 Simular Novamente';
+        
+      } catch (error) {
+        log('❌ Erro na simulação: ' + error.message);
+        fallbackLocal();
+        
+        // Restaurar botão
+        const btnSimular = document.querySelector('#btnSimularPaciente');
+        btnSimular.disabled = false;
+        btnSimular.textContent = '🎭 Simular Novamente';
+      }
+    }
+
+    async function criarBidLocal() {
+      // Modo DEMO: Cria BID localmente para garantir funcionamento
+      bidId = 'bid_demo_' + Date.now();
+      const specialty = document.querySelector('#specialty').value || 'Cardiologia';
+      const amountCents = parseInt(document.querySelector('#amountCents').value) || 9000;
+      
+      // Simular criação bem-sucedida
+      const bidData = {
+        id: bidId,
+        patientId: patientId,
+        specialty: specialty,
+        amountCents: amountCents,
+        mode: 'immediate',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      // Salvar no localStorage para manter estado
+      localStorage.setItem(`bid:${bidId}`, JSON.stringify(bidData));
+      
+      // Preencher campo na tela
+      const bidIdEl = document.querySelector('#bidId');
+      if (bidIdEl) bidIdEl.value = bidId;
+      
+      log(`📝 BID criado: ${bidId} (${specialty}, R$ ${(amountCents/100).toFixed(2)})`);
+      
+      // Habilitar botão de aceitar
+      const btnAccept = document.querySelector('#btnAcceptBid');
+      if (btnAccept) btnAccept.disabled = false;
+      
+      // Chamar callback se existir
+      if (window.onBidCreated) {
+        window.onBidCreated({ bidId: bidId });
+      }
+    }
+
+    async function aceitarBidLocal() {
+      // Modo DEMO: Aceita BID e cria appointment
+      appointmentId = 'appt_demo_' + Date.now();
+      
+      // Simular aceite bem-sucedido
+      const appointmentData = {
+        id: appointmentId,
+        bidId: bidId,
+        patientId: patientId,
+        doctorId: 'doctor_demo',
+        status: 'confirmed',
+        scheduledAt: new Date().toISOString()
+      };
+      
+      // Salvar no localStorage
+      localStorage.setItem(`appointment:${appointmentId}`, JSON.stringify(appointmentData));
+      
+      log(`✅ BID aceito! Appointment criado: ${appointmentId}`);
+      
+      // Mostrar próximos passos
+      mostrarAcoesPosAceite(appointmentId);
+      
+      // Chamar callback se existir
+      if (window.onBidAccepted) {
+        window.onBidAccepted({ bidId: bidId, appointmentId: appointmentId });
+      }
+    }
+
+    function mostrarAcoesPosAceite(appointmentId) {
+      // Atualizar links com parâmetros corretos
+      const sala = document.querySelector('#linkSala');
+      const consulta = document.querySelector('#linkConsulta');
+      
+      if (sala) {
+        sala.href = `/sala-de-espera.html?appointmentId=${encodeURIComponent(appointmentId)}&patientId=${encodeURIComponent(patientId)}`;
+      }
+      
+      if (consulta) {
+        consulta.href = `/consulta/index.html?appointmentId=${encodeURIComponent(appointmentId)}&role=doctor&patientId=${encodeURIComponent(patientId)}`;
+      }
+      
+      // Mostrar appointment ID
+      const displayEl = document.querySelector('#displayAppointmentId');
+      if (displayEl) displayEl.textContent = appointmentId;
+      
+      // Exibir seção de ações
+      const posAceiteEl = document.querySelector('#posAceite');
+      if (posAceiteEl) posAceiteEl.style.display = 'block';
+      
+      // Ocultar próximos passos iniciais
+      const nextStepsEl = document.querySelector('#next-steps');
+      if (nextStepsEl) nextStepsEl.style.display = 'none';
+    }
+
+    function copyAppointmentId() {
+      const appointmentId = document.querySelector('#displayAppointmentId').textContent;
+      navigator.clipboard.writeText(appointmentId).then(() => {
+        log('📋 Appointment ID copiado: ' + appointmentId);
+      });
+    }
+
+    function fallbackLocal() {
+      // Em caso de erro, simula localmente
+      const fakeAppointment = 'demo_fallback_' + Math.random().toString(36).slice(2,8);
+      const bidIdEl = document.querySelector('#bidId');
+      if (bidIdEl) bidIdEl.value = 'BID-DEMO-OFFLINE';
+      mostrarAcoesPosAceite(fakeAppointment);
+      log('🔄 Usando modo offline - simulação local ativada');
+    }
+
+    // Event listeners para simulação
+    document.addEventListener('DOMContentLoaded', () => {
+      // Botão de simulação
+      const btnSimular = document.querySelector('#btnSimularPaciente');
+      if (btnSimular) {
+        btnSimular.addEventListener('click', simularPaciente);
+      }
+      
+      // REMOVIDO: Handler antigo que causava conflito com novo handler do botão aceitar BID
+    });
+    // ===== FIM DO SISTEMA DE SIMULAÇÃO =====
+
+    const logEl = document.getElementById('log');
+    function log(msg, obj){
+      const line = '['+new Date().toISOString()+'] '+msg+'\n';
+      logEl.textContent += line + (obj? JSON.stringify(obj,null,2)+'\n' : '');
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    const AU = document.getElementById('auUrl');
+    const IN = document.getElementById('inUrl');
+    const PR = document.getElementById('prodUrl');
+
+    // Sugestão: preencher automaticamente se já sabe as URLs
+    AU.value = 'https://telemed-auction.onrender.com';
+    IN.value = 'https://telemed-internal.onrender.com';
+    PR.value = 'https://telemed-productivity.onrender.com';
+    document.getElementById('openAuction').href = AU.value;
+    document.getElementById('openProd').href    = PR.value;
+
+    async function health(url, outId){
+      const out = document.getElementById(outId);
+      out.innerHTML = 'Testando...';
+      if(!url){ out.innerHTML='<span class="bad">URL vazia</span>';return; }
+      
+      // Detectar qual serviço e usar proxy para evitar CORS
+      let service = '';
+      if(url.includes('auction')) service = 'auction';
+      else if(url.includes('productivity')) service = 'productivity';  
+      else if(url.includes('internal')) service = 'internal';
+      
+      try{
+        let r;
+        if(service) {
+          // Usar proxy local para evitar CORS
+          r = await fetch(`/proxy/health/${service}`, { mode: 'cors' });
+        } else {
+          // Fallback direto
+          r = await fetch(url.replace(/\/$/,'') + '/healthz', { mode: 'cors' });
+        }
+        
+        const txt = await r.text().catch(() => '');
+        out.innerHTML = r.ok ? '<span class="ok">OK</span>' : `<span class="bad">Falha ${r.status}</span>`;
+        log('health '+url, { status: r.status, response: txt });
+      }catch(e){
+        out.innerHTML = '<span class="bad">erro: '+String(e).substring(0,50)+'</span>';
+        log('health '+url+' erro', {error:String(e)});
+      }
+    }
+    document.getElementById('checkAuction').onclick = ()=>health(AU.value,'outAuction');
+    document.getElementById('checkInternal').onclick= ()=>health(IN.value,'outInternal');
+    document.getElementById('checkProd').onclick    = ()=>health(PR.value,'outProd');
+
+    // --- MOSTRAR OS LINKS AUTOMATICAMENTE ---
+    const $next = document.getElementById('next-steps');
+
+    function showNextSteps({ bidId, appointmentId }) {
+      const room = appointmentId || bidId || 'telemed-demo';
+      const waitUrl   = `/sala-de-espera/?appointmentId=${encodeURIComponent(room)}`;   // paciente
+      const consultaDoctorUrl = `/consulta/?appointmentId=${encodeURIComponent(room)}&role=doctor`; // médico
+
+      $next.innerHTML = `
+        <h4 style="margin:0 0 8px">Próximos passos</h4>
+        <ol style="margin:0;padding-left:18px">
+          ${bidId ? `<li>Bid criado: <code>${bidId}</code>.</li>` : ''}
+          ${appointmentId
+            ? `<li>Consulta criada: <code>${appointmentId}</code></li>`
+            : bidId
+              ? `<li><em>Usando o Bid ID como sala provisória.</em></li>`
+              : `<li>Crie um BID para habilitar os links.</li>`
+          }
+          <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
+          <li>Médico: entrar na <a target="_blank" href="${consultaDoctorUrl}">Sala de Vídeo</a>.</li>
+          <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
+          <li><a href="/index.html">Voltar ao Hub</a></li>
+        </ol>`;
+    }
+
+    // já atualiza quando o BID é criado
+    window.onBidCreated = (res) => showNextSteps({ bidId: res?.bidId });
+
+    // atualiza quando a consulta é criada (aceitar BID)
+    window.onBidAccepted = (res) => showNextSteps({ bidId: res?.bidId, appointmentId: res?.appointmentId });
+
+    // watchdog: se alguma chamada de rede retornar {appointmentId}, atualiza sozinho
+    (function hookNetwork() {
+      const bump = (data) => {
+        if (!data || typeof data !== 'object') return;
+        const appointmentId = data.appointmentId || data.consultaId || data.appointment?.id || data.consulta?.id;
+        const bidId = data.bidId || data.bid_id || data.bid?.id;
+        if (appointmentId) showNextSteps({ bidId, appointmentId });
+      };
+
+      // fetch
+      const _fetch = window.fetch;
+      window.fetch = async (...args) => {
+        const res = await _fetch(...args);
+        try { bump(await res.clone().json().catch(() => null)); } catch {}
+        return res;
+      };
+
+      // XHR
+      const _open = XMLHttpRequest.prototype.open;
+      const _send = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.open = function(...a){ this._url=a[1]; return _open.apply(this,a); };
+      XMLHttpRequest.prototype.send = function(...a){
+        this.addEventListener('load', () => {
+          try { bump(JSON.parse(this.responseText)); } catch {}
+        });
+        return _send.apply(this,a);
+      };
+    })();
+
+    // opcional: se já existir um Bid ID na página, mostrar logo de cara
+    // (troque "CURRENT_BID_ID" se você tiver essa info disponível)
+    // showNextSteps({ bidId: CURRENT_BID_ID });
+
+    document.getElementById('btnCreateBid').onclick = async ()=>{
+      const auctionUrl = document.querySelector('#auUrl').value.trim();
+      const patientId = document.querySelector('#patientId').value.trim();
+      const amountCents = Number(document.querySelector('#amountCents').value || 0);
+      const isImmediate = document.querySelector('#isImmediate').value === 'true';
+      const specialty = document.querySelector('#specialty')?.value || '';
+      const scheduledFor = document.querySelector('#scheduledFor').value; // ISO
+
+      const body = { patientId, amountCents, mode: isImmediate ? 'immediate' : 'scheduled' };
+      if (specialty) body.specialty = specialty;
+      if (!isImmediate && scheduledFor) body.scheduledFor = new Date(scheduledFor).toISOString();
+
+      const out = document.getElementById('outCreateBid'); out.textContent='Enviando…';
+      try{
+        const res = await fetch(`${auctionUrl}/bids`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();   // se res.ok, data.bid.id terá o ID
+        if(res.ok && data?.bid?.id){
+          document.getElementById('bidId').value = data.bid.id;
+          out.innerHTML = '<span class="ok">Criado</span>';
+          if(window.onBidCreated) window.onBidCreated({bidId: data.bid.id});  // Chama função dos próximos passos
+        }else{
+          out.innerHTML = `<span class="bad">Falha: ${data?.error || res.status}</span>`;
+        }
+        log('create-bid', data);
+      }catch(e){
+        out.innerHTML = '<span class="bad">Erro</span>'; log('create-bid erro', {error:String(e)});
+      }
+    };
+
+    // ===== HANDLER ROBUSTO ACEITAR BID COM AGENDA =====
+    const AUCTION_URL = localStorage.getItem("AUCTION_URL") || "https://telemed-auction.onrender.com";
+    const AGENDA_URL = "/agenda.html";
+
+    async function acceptBidAndGo(bidId) {
+      const btn = document.getElementById("btnAcceptBid");
+      const patientId = document.querySelector("#patientId")?.value || "paciente-demo";
+      const out = document.getElementById('outAcceptBid');
+      
+      try {
+        btn.disabled = true; 
+        btn.textContent = "Aceitando…";
+        out.textContent = 'Processando...';
+
+        // 1) Aceitar BID no backend (ou simulado)
+        const res = await fetch(`${AUCTION_URL}/bids/${encodeURIComponent(bidId)}/accept`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ patientId })
+        });
+
+        let appointmentId = `appt_demo_${Date.now()}`;
+        if (res.ok) {
+          const data = await res.json().catch(()=> ({}));
+          appointmentId = data.appointmentId || data?.appointment?.id || appointmentId;
+        } else {
+          console.warn("Falha ao aceitar no backend; usando fallback local", res.status);
+        }
+
+        // 2) Guardar no localStorage para a Agenda "enxergar"
+        const queueKey = "telemed:agendaQueue";
+        const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+        queue.push({
+          appointmentId,
+          patientId,
+          bidId,
+          name: "Paciente Demo",
+          specialty: document.querySelector("#specialty")?.value || "Clínica Geral",
+          status: "waiting",
+          createdAt: Date.now()
+        });
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+
+        out.innerHTML = `<span style="color:#22c55e">✅ BID aceito! Redirecionando para Agenda...</span><br><code>Appointment ID: ${appointmentId}</code>`;
+        
+        // 3) Callback para próximos passos
+        if(window.onBidAccepted) window.onBidAccepted({bidId: bidId, appointmentId: appointmentId});
+
+        // 4) Redirecionar para a Agenda
+        setTimeout(() => {
+          const p = new URLSearchParams({ appointmentId, patientId });
+          window.location.href = `${AGENDA_URL}?${p.toString()}`;
+        }, 1500);
+
+      } catch (e) {
+        console.error('Erro ao aceitar BID:', e);
+        
+        // fallback local
+        const appointmentId = `appt_demo_${Date.now()}`;
+        const queueKey = "telemed:agendaQueue";
+        const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+        queue.push({ 
+          appointmentId, 
+          patientId, 
+          bidId, 
+          name:"Paciente Demo", 
+          specialty:"Clínica Geral", 
+          status:"waiting", 
+          createdAt:Date.now() 
+        });
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+        
+        out.innerHTML = `<span style="color:#22c55e">✅ BID aceito! (modo offline) Redirecionando...</span><br><code>Appointment ID: ${appointmentId}</code>`;
+        
+        setTimeout(() => {
+          window.location.href = `${AGENDA_URL}?appointmentId=${appointmentId}&patientId=${patientId}`;
+        }, 1000);
+      } finally {
+        btn.disabled = false; 
+        btn.textContent = "Aceitar BID → criar consulta";
+      }
+    }
+
+    document.getElementById("btnAcceptBid").onclick = () => {
+      const bidId = document.querySelector("#bidId")?.value?.trim();
+      if (!bidId) return alert("Crie/Selecione um BID primeiro.");
+      acceptBidAndGo(bidId);
+    };
+  </script>
+
+<script>
+  (function () {
+    const params = new URLSearchParams(location.search);
+    const pid = params.get('patientId') || params.get('cpf'); // fallback, caso venha como cpf
+    if (!pid) return;
+
+    // tente achar o input de patientId nos dois layouts mais comuns
+    const candidates = [
+      document.querySelector('input[name="patientId"]'),
+      document.querySelector('#patientId'),
+    ].filter(Boolean);
+
+    if (candidates.length) {
+      candidates[0].value = pid;
+      // opcional: rolar até a seção do leilão
+      const section = document.querySelector('h1, h2, h3');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  })();
+</script>
+
+  <!-- [TELEMED waitroom patch] Next Steps auto-card -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // garante a existência do container "Próximos passos"
+      let $next = document.getElementById('next-steps');
+      if (!$next) {
+        $next = document.createElement('div');
+        $next.id = 'next-steps';
+        $next.className = 'card';
+        $next.style.marginTop = '16px';
+        $next.style.padding = '16px';
+        $next.style.border = '1px solid #0ea5e9';
+        $next.style.background = '#eef7ff';
+        $next.innerHTML = `
+          <h4 style="margin:0 0 8px">Próximos passos</h4>
+          <ol style="margin:0;padding-left:18px">
+            <li>Aguarde criar/aceitar o BID…</li>
+            <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
+            <li><a href="/index.html">Voltar ao Hub</a></li>
+          </ol>`;
+        // coloca no final do conteúdo principal
+        (document.querySelector('#content, main, .container') || document.body).appendChild($next);
+      }
+
+      // função que escreve os links no card
+      function showNextSteps({ bidId, appointmentId }) {
+        const room     = appointmentId || bidId || 'telemed-demo';
+        const waitUrl  = `/sala-de-espera/?appointmentId=${encodeURIComponent(room)}`;   // paciente
+        const consultaDoctorUrl = `/consulta/?appointmentId=${encodeURIComponent(room)}&role=doctor`; // médico
+        $next.innerHTML = `
+          <h4 style="margin:0 0 8px">Próximos passos</h4>
+          <ol style="margin:0;padding-left:18px">
+            ${bidId ? `<li>Bid criado: <code>${bidId}</code>.</li>` : ''}
+            ${appointmentId ? `
+              <li>Consulta criada: <code>${appointmentId}</code></li>
+              <li>Paciente: abrir a <a target="_blank" href="${waitUrl}">Sala de Espera</a>.</li>
+              <li>Médico: entrar na <a target="_blank" href="${consultaDoctorUrl}">Sala de Vídeo</a>.</li>
+            ` : `
+              <li>Com o Bid ID, aceite o lance (lado direito) para criar a consulta.</li>
+            `}
+            <li>Opcional: <a target="_blank" href="/example-integration.html#scribe">Abrir Scribe/CIDs</a></li>
+            <li><a href="/index.html">Voltar ao Hub</a></li>
+          </ol>`;
+      }
+
+      // encaixa sem quebrar handlers existentes
+      const attach = (name) => {
+        const prev = window[name];
+        window[name] = (res) => {
+          try { if (typeof prev === 'function') prev(res); } catch(e){}
+          showNextSteps(res || {});
+        };
+      };
+      attach('onBidCreated');   // espera { bidId }
+      attach('onBidAccepted');  // espera { bidId, appointmentId }
+
+      // expõe global caso queira chamar manualmente
+      window.showNextSteps = showNextSteps;
+    });
+    <!-- ========= [TELEMED] Card ultra-simples de Próximos Passos ========= -->
+    <style>
+      .ns-wrap{margin-top:16px;border:1px solid #0ea5e9;background:#eef7ff;border-radius:12px;padding:16px}
+      .ns-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+      .ns-btn{appearance:none;border:0;border-radius:10px;padding:14px 16px;font-weight:700;cursor:pointer}
+      .ns-patient{background:#22c55e;color:#08310f}
+      .ns-doctor{background:#3b82f6;color:#061a3a}
+      .ns-ghost{background:transparent;border:1px solid #94a3b8;color:#0f172a}
+      .ns-muted{color:#475569;font-size:13px}
+      @media (max-width:700px){ .ns-row{grid-template-columns:1fr} }
+    </style>
+
+    <div id="next-steps" class="ns-wrap">
+      <h4 style="margin:0 0 6px">Próximos passos</h4>
+      <div class="ns-muted">Crie o BID e use os botões abaixo.</div>
+      <div class="ns-row" style="margin-top:10px">
+        <button class="ns-btn ns-patient" id="nsBtnPatient">🙋 Sou Paciente — Sala de Espera</button>
+        <button class="ns-btn ns-doctor"  id="nsBtnDoctor">🩺 Sou Médico — Sala de Vídeo</button>
+      </div>
+      <div class="ns-row" style="margin-top:10px">
+        <button class="ns-btn ns-ghost" id="nsBtnCopy">📋 Copiar link do Paciente</button>
+        <button class="ns-btn ns-ghost" id="nsBtnBoth">🪟 Abrir 2 janelas (simular)</button>
+      </div>
+      <div id="nsInfo" class="ns-muted" style="margin-top:6px"></div>
+      <ol style="margin:10px 0 0 18px">
+        <li>Paciente: clique em <b>“Sou Paciente — Sala de Espera”</b>.</li>
+        <li>Médico: clique em <b>“Sou Médico — Sala de Vídeo”</b> em outra aba.</li>
+        <li>Ao <b>aceitar o BID</b>, a sala troca automaticamente para o ID da consulta.</li>
+      </ol>
+    </div>
+
+    <script>
+      // Página de vídeo (agora usa /consulta/ com role)
+      const VIDEO_PAGE = "/consulta/";
+
+      function renderNextSteps({ bidId, appointmentId }) {
+        const room = appointmentId || bidId || "telemed-demo";
+        const waitUrl  = `/sala-de-espera/?appointmentId=${encodeURIComponent(room)}`;   // paciente
+        const videoUrl = `${VIDEO_PAGE}?appointmentId=${encodeURIComponent(room)}&role=doctor`; // médico
+
+        // botões
+        const byId = (id) => document.getElementById(id);
+        byId("nsBtnPatient").onclick = () => window.open(waitUrl, "_blank");
+        byId("nsBtnDoctor").onclick  = () => window.open(videoUrl, "_blank");
+        byId("nsBtnCopy").onclick    = async () => {
+          try { await navigator.clipboard.writeText(location.origin + waitUrl);
+            info("Link da Sala de Espera copiado ✔");
+          } catch { info("Não consegui copiar. Clique com o botão direito e copie o link do botão 'Sou Paciente'."); }
+        };
+        byId("nsBtnBoth").onclick    = () => { window.open(waitUrl, "_blank"); window.open(videoUrl, "_blank"); };
+
+        // texto auxiliar super claro
+        const usingProvisional = !appointmentId && !!bidId;
+        const infoText = [
+          bidId ? `Bid: ${bidId}` : "Crie o BID para habilitar os botões.",
+          appointmentId
+            ? `Consulta: ${appointmentId}`
+            : usingProvisional
+              ? "Usando o Bid ID como sala provisória até aceitar o BID."
+              : "Aguarde criar o BID.",
+          `Sala atual: ${room}`
+        ].join(" • ");
+        info(infoText);
+
+        function info(t){ document.getElementById("nsInfo").textContent = t; }
+      }
+
+      // Integra com os handlers já existentes
+      const hook = (name) => {
+        const prev = window[name];
+        window[name] = (res) => { try { if (typeof prev === "function") prev(res); } catch {}
+          renderNextSteps(res || {});
+        };
+      };
+      hook("onBidCreated");   // espera { bidId }
+      hook("onBidAccepted");  // espera { bidId, appointmentId }
+
+      // primeiro estado (sem nada): ainda assim deixa os botões prontos para demo
+      renderNextSteps({});
+    </script>
+    <!-- ========= [TELEMED] Fim do Card ========= -->
+
+  </script>
+</body>
+</html>

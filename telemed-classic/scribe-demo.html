@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TeleMed — Scribe Demo</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e2e8f0;--border:#1e293b;--primary:#0ea5e9}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui}
+    .wrap{max-width:980px;margin:0 auto;padding:20px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+    textarea{width:100%;min-height:180px;background:#0b1220;border:1px solid var(--border);border-radius:12px;color:var(--text);padding:12px}
+    .row{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .btn{background:var(--primary);border:1px solid #065f92;color:#fff;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer}
+    .muted{color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border-bottom:1px solid var(--border);padding:8px;text-align:left}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>TeleMed — Scribe Demo</h1>
+    <p class="muted">Cole o resumo/nota clínica e peça sugestões de CID-10.</p>
+    <div class="card">
+      <textarea id="text" placeholder="Ex.: Paciente masculino, 58 anos, dor torácica há 2h, sudorese, dispneia..."></textarea>
+      <div class="row">
+        <button id="go" class="btn">Sugerir CIDs</button>
+        <a href="/hub.html" class="muted">← Voltar ao Hub</a>
+        <span style="flex:1"></span>
+        <small class="muted dev-only">PRODUCTIVITY_URL: <span id="purl"></span></small>
+      </div>
+      <div id="out"></div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const PRODUCTIVITY_URL = (localStorage.getItem('PRODUCTIVITY_URL') || '').replace(/\/$/,'');
+    document.getElementById('purl').textContent = PRODUCTIVITY_URL || '(não configurado)';
+
+    async function suggest(text){
+      const r = await fetch(`${PRODUCTIVITY_URL}/suggest/cids`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text })
+      });
+      if (!r.ok) throw new Error('Falha na API de sugestões');
+      return r.json(); // esperado: { ok:true, items:[{code,label,confidence}] }
+    }
+
+    const btn = document.getElementById('go');
+    const ta  = document.getElementById('text');
+    const out = document.getElementById('out');
+
+    btn.onclick = async ()=>{
+      out.innerHTML = '<p class="muted">Consultando…</p>';
+      try{
+        const data = await suggest(ta.value.trim());
+        const items = (data && data.items) || [];
+        if (!items.length){ out.innerHTML = '<p class="muted">Sem sugestões.</p>'; return; }
+        out.innerHTML = `
+          <table>
+            <thead><tr><th>Codigo</th><th>Descrição</th><th>Conf.</th></tr></thead>
+            <tbody>
+              ${items.map(i=>`<tr><td>${i.code}</td><td>${i.label||''}</td><td>${i.confidence ?? ''}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        `;
+      }catch(e){
+        out.innerHTML = `<p class="muted">Erro: ${e.message}</p>`;
+      }
+    };
+  })();
+  </script>
+
+  <!-- Componente de status simplificado -->
+  <script>
+    // Apenas ocultar elementos dev-only se não estiver em modo dev
+    (function() {
+      const devMode = new URLSearchParams(location.search).get('dev') === '1' 
+                      || localStorage.getItem('tm_dev') === 'on';
+      
+      document.querySelectorAll('.dev-only').forEach(el => {
+        el.hidden = !devMode;
+      });
+
+      // Atalho Ctrl+Alt+D
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'd') {
+          const current = localStorage.getItem('tm_dev') === 'on';
+          localStorage.setItem('tm_dev', current ? 'off' : 'on');
+          location.reload();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Lances - Consulta por Valor | TeleMed</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fef3c7 0%, #f59e0b 40%, #fbbf24 80%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .back-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .main-title {
+            color: #2A4066;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #4A6A8A;
+            font-size: 1.1rem;
+        }
+
+        .stats-bar {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2A4066;
+            display: block;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .consultas-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: #2A4066;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .consulta-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .consulta-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .consulta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .paciente-info h4 {
+            color: #2A4066;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .paciente-details {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .valor-info {
+            text-align: right;
+        }
+
+        .valor-proposto {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+
+        .tempo-restante {
+            color: #dc2626;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .consulta-details {
+            color: #374151;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .lance-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .lance-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .lance-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .lance-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .lance-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .lance-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .aceitar-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-ativo {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-encerrado {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .criar-lance-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .form-textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .criar-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .meus-lances-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .lance-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .lance-valor {
+            font-weight: bold;
+            color: #059669;
+            font-size: 1.1rem;
+        }
+
+        .lance-status {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .bid-animation {
+            animation: bidPulse 2s infinite;
+        }
+
+        @keyframes bidPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .lance-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .lance-input {
+                text-align: center;
+            }
+        }
+
+        .urgencia-alta {
+            border-left: 4px solid #dc2626;
+        }
+
+        .urgencia-media {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .urgencia-baixa {
+            border-left: 4px solid #10b981;
+        }
+    </style>
+  <link rel="stylesheet" href="/css/theme-telemed.css">
+  <link rel="canonical" href="/precos/">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="dashboard-minimo.html" class="back-link">← Voltar ao Dashboard</a>
+            <h1 class="main-title">💰 Sistema de Lances - Consulta por Valor</h1>
+            <p class="subtitle">Plataforma onde pacientes fazem lances e médicos escolhem as consultas</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-number">12</span>
+                <span class="stat-label">Consultas Ativas</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">R$ 180</span>
+                <span class="stat-label">Maior Lance</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">8</span>
+                <span class="stat-label">Meus Lances</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">R$ 1.240</span>
+                <span class="stat-label">Ganhos do Mês</span>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="consultas-section">
+                <h2 class="section-title">🔥 Consultas Disponíveis para Lance</h2>
+                
+                <div class="consulta-card urgencia-alta bid-animation">
+                    <div class="consulta-header">
+                        <div class="paciente-info">
+                            <h4>🚨 Maria Silva - Urgente</h4>
+                            <div class="paciente-details">Idade: 45 anos • Plano: Premium • Online agora</div>
+                            <span class="status-badge status-ativo">ATIVO</span>
+                        </div>
+                        <div class="valor-info">
+                            <div class="valor-proposto">R$ 180</div>
+                            <div class="tempo-restante">⏰ 15 min restantes</div>
+                        </div>
+                    </div>
+                    <div class="consulta-details">
+                        <strong>Sintomas:</strong> Dor no peito intensa, falta de ar, sudorese. Histórico de hipertensão. Paciente ansiosa, precisa de atendimento imediato.
+                    </div>
+                    <div class="lance-section">
+                        <input type="number" class="lance-input" placeholder="Seu lance (R$)" value="185">
+                        <button class="lance-btn">Fazer Lance</button>
+                        <button class="aceitar-btn">Aceitar R$ 180</button>
+                    </div>
+                </div>
+
+                <div class="consulta-card urgencia-media">
+                    <div class="consulta-header">
+                        <div class="paciente-info">
+                            <h4>⚠️ João Santos</h4>
+                            <div class="paciente-details">Idade: 32 anos • Plano: Basic • Online há 20 min</div>
+                            <span class="status-badge status-ativo">ATIVO</span>
+                        </div>
+                        <div class="valor-info">
+                            <div class="valor-proposto">R$ 120</div>
+                            <div class="tempo-restante">⏰ 45 min restantes</div>
+                        </div>
+                    </div>
+                    <div class="consulta-details">
+                        <strong>Sintomas:</strong> Febre há 2 dias (38.5°C), dor de garganta, mal estar geral. Sem outros sintomas graves.
+                    </div>
+                    <div class="lance-section">
+                        <input type="number" class="lance-input" placeholder="Seu lance (R$)" value="">
+                        <button class="lance-btn">Fazer Lance</button>
+                        <button class="aceitar-btn">Aceitar R$ 120</button>
+                    </div>
+                </div>
+
+                <div class="consulta-card urgencia-baixa">
+                    <div class="consulta-header">
+                        <div class="paciente-info">
+                            <h4>✅ Ana Costa</h4>
+                            <div class="paciente-details">Idade: 28 anos • Plano: Standard • Online há 5 min</div>
+                            <span class="status-badge status-ativo">ATIVO</span>
+                        </div>
+                        <div class="valor-info">
+                            <div class="valor-proposto">R$ 90</div>
+                            <div class="tempo-restante">⏰ 2h restantes</div>
+                        </div>
+                    </div>
+                    <div class="consulta-details">
+                        <strong>Sintomas:</strong> Consulta de rotina, orientação sobre alimentação saudável e exercícios. Sem urgência.
+                    </div>
+                    <div class="lance-section">
+                        <input type="number" class="lance-input" placeholder="Seu lance (R$)" value="">
+                        <button class="lance-btn">Fazer Lance</button>
+                        <button class="aceitar-btn">Aceitar R$ 90</button>
+                    </div>
+                </div>
+
+                <div class="consulta-card urgencia-media">
+                    <div class="consulta-header">
+                        <div class="paciente-info">
+                            <h4>⚠️ Carlos Mendes</h4>
+                            <div class="paciente-details">Idade: 55 anos • Plano: Premium • Aguardando há 1h</div>
+                            <span class="status-badge status-ativo">ATIVO</span>
+                        </div>
+                        <div class="valor-info">
+                            <div class="valor-proposto">R$ 150</div>
+                            <div class="tempo-restante">⏰ 30 min restantes</div>
+                        </div>
+                    </div>
+                    <div class="consulta-details">
+                        <strong>Sintomas:</strong> Dores nas costas persistentes há 1 semana, dificuldade para dormir. Trabalha muito tempo sentado.
+                    </div>
+                    <div class="lance-section">
+                        <input type="number" class="lance-input" placeholder="Seu lance (R$)" value="">
+                        <button class="lance-btn">Fazer Lance</button>
+                        <button class="aceitar-btn">Aceitar R$ 150</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="criar-lance-card">
+                    <h3 class="section-title">💡 Criar Lance Personalizado</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Especialidade</label>
+                        <select class="form-select">
+                            <option>Clínica Geral</option>
+                            <option>Cardiologia</option>
+                            <option>Dermatologia</option>
+                            <option>Pediatria</option>
+                            <option>Psiquiatria</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Valor Mínimo (R$)</label>
+                        <input type="number" class="form-input" placeholder="Ex: 80">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Urgência</label>
+                        <select class="form-select">
+                            <option>Baixa - Até 4 horas</option>
+                            <option>Média - Até 1 hora</option>
+                            <option>Alta - Até 30 minutos</option>
+                            <option>Emergência - Imediato</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Observações</label>
+                        <textarea class="form-textarea" placeholder="Preferências ou requisitos especiais..."></textarea>
+                    </div>
+
+                    <button class="criar-btn" onclick="criarLance()">🎯 Criar Lance</button>
+                </div>
+
+                <div class="meus-lances-card">
+                    <h3 class="section-title">📋 Meus Lances Ativos</h3>
+                    
+                    <div class="lance-item">
+                        <div class="lance-valor">R$ 185</div>
+                        <div>Maria Silva - Urgente</div>
+                        <div class="lance-status">🔥 Lance ativo - Líder</div>
+                    </div>
+
+                    <div class="lance-item">
+                        <div class="lance-valor">R$ 95</div>
+                        <div>Ana Costa - Rotina</div>
+                        <div class="lance-status">⏳ Aguardando resposta</div>
+                    </div>
+
+                    <div class="lance-item">
+                        <div class="lance-valor">R$ 140</div>
+                        <div>Carlos Mendes - Dores</div>
+                        <div class="lance-status">🥈 2º lugar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function criarLance() {
+            // Simular criação de lance
+            alert('Lance personalizado criado com sucesso! Você será notificado quando houver pacientes compatíveis.');
+        }
+
+        // Simular funcionalidade dos botões de lance
+        document.querySelectorAll('.lance-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.consulta-card');
+                const input = card.querySelector('.lance-input');
+                const valor = input.value;
+                
+                if (!valor || valor <= 0) {
+                    alert('Por favor, insira um valor válido para o lance.');
+                    return;
+                }
+                
+                // Simular envio do lance
+                this.textContent = 'Lance Enviado!';
+                this.style.background = '#10b981';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.textContent = 'Fazer Lance';
+                    this.style.background = '';
+                    this.disabled = false;
+                }, 3000);
+                
+                alert(`Lance de R$ ${valor} enviado com sucesso!`);
+            });
+        });
+
+        // Simular aceitar valor proposto
+        document.querySelectorAll('.aceitar-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const card = this.closest('.consulta-card');
+                const paciente = card.querySelector('h4').textContent;
+                
+                if (confirm(`Aceitar consulta com ${paciente}?`)) {
+                    alert('Consulta aceita! Redirecionando para videochamada...');
+                    // Em produção, redirecionaria para videoconsulta
+                    // window.location.href = 'videoconsulta-corrigida.html';
+                }
+            });
+        });
+
+        // Simular atualização de tempo restante
+        function atualizarTempos() {
+            document.querySelectorAll('.tempo-restante').forEach(elemento => {
+                // Simular decremento de tempo (em produção seria tempo real)
+                const textoAtual = elemento.textContent;
+                console.log('Atualizando tempo:', textoAtual);
+            });
+        }
+
+        // Atualizar a cada minuto
+        setInterval(atualizarTempos, 60000);
+
+        // Adicionar efeito visual aos cards ativos
+        function destacarConsultasUrgentes() {
+            document.querySelectorAll('.urgencia-alta').forEach(card => {
+                card.classList.add('bid-animation');
+            });
+        }
+
+        destacarConsultasUrgentes();
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+/* contêiner do player */
+.enhanced-video-shell{
+  position:relative; width:100%; max-width:100%; margin:0 auto 12px;
+  aspect-ratio:16/9; min-height:240px; background:#000; border-radius:12px; overflow:hidden;
+  contain: paint; /* isola a pilha de z-index para evitar conflitos externos */
+  z-index: 0;
+}
+/* fallback se o browser não tiver aspect-ratio (ou quando algum CSS quebrar) */
+@supports not (aspect-ratio: 16/9) {
+  .enhanced-video-shell::before{content:""; display:block; padding-top:56.25%}
+}
+/* qualquer <video> ou <canvas> dentro do shell ocupa tudo */
+.enhanced-video-shell video,
+.enhanced-video-shell canvas{
+  position:absolute; inset:0;
+  width:100% !important; height:100% !important;
+  object-fit:contain;
+  display:block; visibility:visible !important; opacity:1 !important;
+  z-index: 5; /* vídeo fica abaixo dos overlays */
+}
+
+/* PIP (local camera) no canto */
+.enhanced-video-shell video[data-rtc-role="local"]{
+  width:22% !important; height:auto !important;
+  right:8px; bottom:8px; left:auto; top:auto;
+  border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,.35);
+  z-index: 15; /* PIP acima do vídeo remoto, abaixo do HUD/controles */
+}
+
+/* Fix para área de vídeo existente */
+.left, .split-left {
+  position: relative;
+  background: radial-gradient(1200px 600px at -20% 120%, #091226, #0b1220);
+  min-height: 400px; /* garante altura mínima */
+}
+
+.wait {
+  position: absolute; 
+  inset: 0; 
+  display: grid; 
+  place-items: center; 
+  color: #cbd5e1;
+  z-index: 1;
+}
+
+/* barra de botões sobreposta (e clicável) */
+.enhanced-controls, .controls {
+  position:absolute; left:0; right:0; bottom:8px; display:flex; gap:8px; justify-content:center;
+  pointer-events:auto;
+  z-index: 20; /* acima de tudo */
+}
+.enhanced-controls > *, .controls > *{ pointer-events:auto; }
+
+/* z-index saneado: vídeo no fundo, controles acima */
+.enhanced-video-shell{ z-index:0 }
+.enhanced-controls{ z-index:20 }
+.controls { z-index: 20; }
+
+/* QUALQUER overlay que o app já renderize dentro do shell */
+.enhanced-video-shell .overlay,
+.enhanced-video-shell .hud,
+.enhanced-video-shell [data-overlay],
+.enhanced-video-shell .rtc-overlay{
+  position:absolute; z-index:20; pointer-events:auto;
+}
+
+/* se houver um header/toolbar do vídeo, prenda no topo */
+.enhanced-video-shell .overlay.top,
+.enhanced-video-shell .hud.top{ 
+  top:8px; left:0; right:0; 
+}

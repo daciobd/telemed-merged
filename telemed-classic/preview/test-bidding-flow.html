@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Fluxo Completo - Sistema de Lances</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">🎯 Teste Fluxo Completo Sistema de Lances</h1>
+        
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Lado Paciente -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-blue-600 mb-4">👤 Lado Paciente</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Especialidade:</label>
+                        <select id="specialty" class="w-full p-3 border rounded-lg">
+                            <option value="Cardiologia">Cardiologia</option>
+                            <option value="Pediatria">Pediatria</option>
+                            <option value="Dermatologia">Dermatologia</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Valor do Lance:</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
+                            <input type="number" id="bidValue" class="w-full pl-10 pr-4 py-3 border rounded-lg" value="185" min="100" step="5">
+                        </div>
+                    </div>
+                    
+                    <button onclick="submitTestBid()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-bold">
+                        <i class="fas fa-gavel mr-2"></i>Fazer Lance de Teste
+                    </button>
+                </div>
+                
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-2">Links Rápidos:</h3>
+                    <div class="space-y-2">
+                        <a href="/consulta-por-valor.html" class="block text-blue-600 hover:underline">
+                            📋 Sistema Completo de Lances
+                        </a>
+                        <a href="/index.html" class="block text-blue-600 hover:underline">
+                            👨‍⚕️ Dashboard Médico
+                        </a>
+                        <a href="/videoconsulta.html" class="block text-blue-600 hover:underline">
+                            📹 Videoconsulta WebRTC
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lado Médico -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-green-600 mb-4">👨‍⚕️ Lado Médico</h2>
+                
+                <div id="doctorBids" class="space-y-3 mb-4">
+                    <!-- Lances aparecerão aqui -->
+                </div>
+                
+                <div class="space-y-3">
+                    <button onclick="refreshBids()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                        <i class="fas fa-sync mr-2"></i>Atualizar Lances
+                    </button>
+                    
+                    <button onclick="clearAllBids()" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">
+                        <i class="fas fa-trash mr-2"></i>Limpar Todos os Lances
+                    </button>
+                </div>
+                
+                <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                    <h3 class="font-bold text-green-800 mb-2">Status do Sistema:</h3>
+                    <div id="systemStatus" class="text-sm space-y-1">
+                        <!-- Status será atualizado aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instruções -->
+        <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <h3 class="text-lg font-bold text-yellow-800 mb-3">🧪 Como Testar o Fluxo Completo:</h3>
+            <ol class="list-decimal list-inside space-y-2 text-yellow-700">
+                <li><strong>Fazer Lance:</strong> Selecione especialidade, valor e clique "Fazer Lance de Teste"</li>
+                <li><strong>Verificar Dashboard:</strong> Acesse <a href="/index.html" class="underline font-medium">Dashboard Médico</a> para ver o lance</li>
+                <li><strong>Atender Lance:</strong> No dashboard, clique "Atender" no lance desejado</li>
+                <li><strong>Videoconsulta:</strong> Confirme o atendimento para ir à videoconsulta</li>
+                <li><strong>Verificar Status:</strong> Lance muda de "Aguardando" para "Atendido"</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Load and display bids on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshBids();
+            updateSystemStatus();
+            setInterval(refreshBids, 5000); // Refresh every 5 seconds
+        });
+
+        // Submit test bid
+        function submitTestBid() {
+            const specialty = document.getElementById('specialty').value;
+            const bidValue = document.getElementById('bidValue').value;
+            
+            if (!bidValue || bidValue <= 0) {
+                alert('⚠️ Insira um valor válido para o lance!');
+                return;
+            }
+            
+            // Lista de nomes brasileiros realistas
+            const patientNames = [
+                'João Silva', 'Maria Santos', 'Carlos Oliveira', 'Ana Costa', 'Paulo Ferreira',
+                'Lucia Pereira', 'José Rodrigues', 'Fernanda Lima', 'Roberto Almeida', 'Camila Souza',
+                'Rafael Martins', 'Juliana Barbosa', 'Marcos Ribeiro', 'Tatiana Gomes', 'Diego Carvalho',
+                'Beatriz Nunes', 'Thiago Nascimento', 'Priscila Moura', 'Eduardo Teixeira', 'Vanessa Rocha'
+            ];
+            
+            const randomName = patientNames[Math.floor(Math.random() * patientNames.length)];
+            
+            // Create bid object
+            const bid = {
+                id: Date.now(),
+                specialty: specialty,
+                value: bidValue,
+                status: 'aguardando',
+                timestamp: new Date().toISOString(),
+                patient: randomName
+            };
+            
+            // Save to localStorage
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            bids.push(bid);
+            localStorage.setItem('telemed_bids', JSON.stringify(bids));
+            
+            // Success feedback
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i>Lance Enviado!';
+            btn.className = btn.className.replace('bg-blue-600', 'bg-green-600');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.className = btn.className.replace('bg-green-600', 'bg-blue-600');
+            }, 2000);
+            
+            // Refresh doctor view
+            refreshBids();
+            updateSystemStatus();
+        }
+
+        // Refresh bids display
+        function refreshBids() {
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            const container = document.getElementById('doctorBids');
+            
+            if (bids.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-500">
+                        <i class="fas fa-gavel text-xl mb-2 opacity-50"></i>
+                        <p class="text-sm">Nenhum lance ativo</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bids.map(bid => {
+                const timeAgo = getTimeAgo(bid.timestamp);
+                const statusColor = bid.status === 'aguardando' ? 'bg-yellow-100 border-yellow-300' : 'bg-green-100 border-green-300';
+                const statusText = bid.status === 'aguardando' ? 'Aguardando' : 'Atendido';
+                const statusTextColor = bid.status === 'aguardando' ? 'text-yellow-600' : 'text-green-600';
+                
+                return `
+                    <div class="p-3 ${statusColor} border rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">${bid.specialty}</p>
+                                <p class="text-sm text-gray-600">R$ ${bid.value} • ${bid.patient}</p>
+                                <p class="text-xs text-gray-500">${timeAgo}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-medium ${statusTextColor}">${statusText}</span>
+                                ${bid.status === 'aguardando' ? `
+                                    <button onclick="attendTestBid(${bid.id})" class="block mt-1 text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700">
+                                        Atender
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Attend test bid
+        function attendTestBid(bidId) {
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            const bidIndex = bids.findIndex(bid => bid.id === bidId);
+            
+            if (bidIndex !== -1) {
+                const bid = bids[bidIndex];
+                
+                if (confirm(`✅ Confirma atendimento?\n\nPaciente: ${bid.patient}\nEspecialidade: ${bid.specialty}\nValor: R$ ${bid.value}`)) {
+                    bids[bidIndex].status = 'atendido';
+                    bids[bidIndex].attendedAt = new Date().toISOString();
+                    localStorage.setItem('telemed_bids', JSON.stringify(bids));
+                    
+                    refreshBids();
+                    updateSystemStatus();
+                    
+                    alert('🎯 Lance atendido com sucesso!\n\nO sistema real redirecionaria para videoconsulta.');
+                }
+            }
+        }
+
+        // Clear all bids
+        function clearAllBids() {
+            if (confirm('⚠️ Limpar todos os lances de teste?')) {
+                localStorage.removeItem('telemed_bids');
+                refreshBids();
+                updateSystemStatus();
+            }
+        }
+
+        // Update system status
+        function updateSystemStatus() {
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            const aguardando = bids.filter(bid => bid.status === 'aguardando').length;
+            const atendidos = bids.filter(bid => bid.status === 'atendido').length;
+            
+            document.getElementById('systemStatus').innerHTML = `
+                <div>📊 Total de lances: <strong>${bids.length}</strong></div>
+                <div>⏳ Aguardando: <strong>${aguardando}</strong></div>
+                <div>✅ Atendidos: <strong>${atendidos}</strong></div>
+                <div>🕒 Última atualização: <strong>${new Date().toLocaleTimeString()}</strong></div>
+            `;
+        }
+
+        // Helper function
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffInSeconds = Math.floor((now - time) / 1000);
+            
+            if (diffInSeconds < 60) return 'agora';
+            if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + 'min atrás';
+            return Math.floor(diffInSeconds / 3600) + 'h atrás';
+        }
+    </script>
+</body>
+</html>

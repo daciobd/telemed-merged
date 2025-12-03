@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TeleMed — Hub</title>
+  <link rel="stylesheet" href="/css/telemed-status.css">
+  <style>
+    :root{
+      --brand:#0ea5e9; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
+      --text:#0f172a; --muted:#64748b; --card:#fff; --border:#e2e8f0; --bg:#f8fafc;
+    }
+    *{box-sizing:border-box} body{margin:0;padding:28px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
+    header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+    .tag{background:var(--brand);color:#fff;padding:6px 10px;border-radius:999px;font-size:.85rem}
+    h1{margin:0}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .muted{color:var(--muted)}
+    .btn{background:var(--brand);color:#fff;border:0;padding:9px 12px;border-radius:10px;cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center}
+    .btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--border)}
+    input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
+    .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid var(--border)}
+    .ok{color:var(--ok);border-color:#bbf7d0;background:#ecfdf5}
+    .bad{color:var(--bad);border-color:#fecaca;background:#fef2f2}
+    ul.linklist{list-style:none;padding:0;margin:8px 0 0}
+    ul.linklist li{display:flex;justify-content:space-between;gap:10px;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:#fff}
+    ul.linklist a{color:var(--brand);text-decoration:none;font-weight:600}
+    footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+    code{background:#e2e8f0;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <span class="tag">TeleMed</span>
+    <h1>Hub de Apresentação</h1>
+  </header>
+
+  <section class="card">
+    <h2>📝 Sistema de Avaliação</h2>
+    <p class="muted">Coleta feedback de médicos e pacientes sobre a experiência TeleMed</p>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <a href="/avaliacao.html?role=medico" class="btn" target="_blank">📝 Avaliação Médico</a>
+      <a href="/avaliacao.html?role=paciente" class="btn ghost" target="_blank">📝 Avaliação Paciente</a>
+      <a href="/obrigado.html" class="btn ghost" target="_blank">🙏 Página Obrigado</a>
+    </div>
+  </section>
+
+  <!-- Status público + painel dev -->
+  <div id="telemed-status" 
+       data-endpoints='["/api/health","https://telemed-auction.onrender.com/api/health","https://telemed-internal.onrender.com/api/health","https://telemed-productivity.onrender.com/api/health"]'
+       data-hub-url="/hub.html"
+       data-scribe-url="/scribe-demo.html">
+  </div>
+
+  <section class="card dev-only">
+    <h2>Serviços (health) - Console técnico</h2>
+    <p class="muted">Edite os endpoints se necessário e clique em “Testar”. Use “Abrir” para ver o <code>/healthz</code> em nova aba.</p>
+    <div class="grid">
+      <div>
+        <label>AUCTION_URL</label>
+        <div class="row">
+          <input id="auUrl" placeholder="https://telemed-auction.onrender.com" />
+          <button class="btn" id="checkAuction">Testar</button>
+          <a class="btn ghost" id="openAuction" target="_blank" rel="noopener">Abrir</a>
+        </div>
+        <div id="outAuction" class="muted" style="margin-top:6px"></div>
+      </div>
+      <div>
+        <label>INTERNAL_URL</label>
+        <div class="row">
+          <input id="inUrl" placeholder="https://telemed-internal.onrender.com" />
+          <button class="btn" id="checkInternal">Testar</button>
+          <a class="btn ghost" id="openInternal" target="_blank" rel="noopener">Abrir</a>
+        </div>
+        <div id="outInternal" class="muted" style="margin-top:6px"></div>
+      </div>
+      <div>
+        <label>PRODUCTIVITY_URL</label>
+        <div class="row">
+          <input id="prodUrl" placeholder="https://telemed-productivity.onrender.com" />
+          <button class="btn" id="checkProd">Testar</button>
+          <a class="btn ghost" id="openProd" target="_blank" rel="noopener">Abrir</a>
+        </div>
+        <div id="outProd" class="muted" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <!-- ==== MDA SERVICE ==== -->
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+        <label for="mdaUrl" style="min-width:160px;font-weight:600">MDA_SERVICE_URL</label>
+        <input id="mdaUrl" type="url" placeholder="https://medical-desk-advanced.onrender.com"
+               style="min-width:360px;flex:1;padding:8px;border:1px solid #ddd;border-radius:6px" />
+        <button onclick="saveMdaUrl()" style="padding:8px 12px;border-radius:6px">Salvar</button>
+        <button onclick="openMda()"  style="padding:8px 12px;border-radius:6px">Abrir</button>
+        <button onclick="testMda()"  style="padding:8px 12px;border-radius:6px">Testar</button>
+        <span id="mdaBadge" style="margin-left:8px;font-size:12px;color:#666;"></span>
+      </div>
+      <div style="font-size:12px;color:#666;margin-top:4px">Dica: use "Abrir" para ver <code>/api/mda/health</code> em nova aba.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Páginas & Rotas</h2>
+    <p class="muted">O hub verifica se a rota existe (200) antes de exibir o selo ✅.</p>
+    <ul id="routes" class="linklist"></ul>
+  </section>
+
+  <footer>
+    Dica: o serviço estático no Render usa <code>Root Directory = apps/telemed-deploy-ready</code>,
+    <code>Build Command = :</code> e <code>Publish Directory = .</code>
+  </footer>
+
+<script>
+  const DEFAULTS = {
+    auction : 'https://telemed-auction.onrender.com',
+    internal: 'https://telemed-internal.onrender.com',
+    prod    : 'https://telemed-productivity.onrender.com',
+  };
+  const PAGES = [
+    { label:'Cadastro de Paciente',        url:'/cadastro.html' },
+    { label:'Cadastro de Médico',          url:'/cadastro-medico.html' },
+    { label:'Como Funciona (Geral)',       url:'/como-funciona/' },
+    { label:'Como Funciona (Paciente)',    url:'/paciente/como-funciona.html' },
+    { label:'Como Funciona (Médico)',      url:'/medico/como-funciona.html' },
+    { label:'Dr. AI - Assistente Médico',  url:'/dr-ai/' },
+    { label:'Agenda Médica',               url:'/agenda/' },
+    { label:'Consulta Online',             url:'/consulta/' },
+    { label:'Dashboard',                   url:'/dashboard/' },
+    { label:'Sala de Espera',              url:'/sala-de-espera/' },
+    { label:'Preços',                      url:'/precos/' },
+    { label:'Landing Page',                url:'/lp.html' },
+    { label:'Meus Pacientes',              url:'/meus-pacientes/' },
+    { label:'Portal Médico',               url:'/medico/' },
+    { label:'Pedido de Consulta',          url:'/paciente/pedido.html' },
+    { label:'Centro de Testes',            url:'/centro-de-testes/' },
+    { label:'Video Conferência',           url:'/video.html' },
+    { label:'Roteiro 1 página (PDF)', url:'/demo-ativo/roteiro-1pagina.html' },
+    { label:'Guia imprimível (PDF)', url:'/demo-ativo/roteiro-print.html' },
+    { label:'Demo médico (GUI)',           url:'/demo.html' },
+    { label:'Exemplo de integração',       url:'/example-integration.html' },
+    { label:'Gestão avançada (pasta)',     url:'/gestao-avancada/' },
+    { label:'Demo ativo / Configurações',  url:'/demo-ativo/configuracoes.html' },
+    { label:'Atalho /enhanced → demo',     url:'/enhanced/' },
+  ];
+  const AU = document.getElementById('auUrl');
+  const IN = document.getElementById('inUrl');
+  const PR = document.getElementById('prodUrl');
+  const OA = document.getElementById('openAuction');
+  const OI = document.getElementById('openInternal');
+  const OP = document.getElementById('openProd');
+
+  AU.value = DEFAULTS.auction; IN.value = DEFAULTS.internal; PR.value = DEFAULTS.prod;
+
+  function syncOpenLinks(){
+    OA.href = AU.value.replace(/\/$/,'') + '/healthz';
+    OI.href = IN.value.replace(/\/$/,'') + '/healthz';
+    OP.href = PR.value.replace(/\/$/,'') + '/healthz';
+  }
+  [AU,IN,PR].forEach(el => el.addEventListener('input', syncOpenLinks));
+  syncOpenLinks();
+
+  async function health(url, outId){
+    const out = document.getElementById(outId); out.innerHTML='';
+    try{
+      const r = await fetch(url.replace(/\/$/,'')+'/healthz', {method:'GET'});
+      const ok = r.ok; let j = {};
+      try{ j = await r.json(); }catch{}
+      out.innerHTML = ok && j?.ok
+        ? `<span class="badge ok">OK</span> <code>${url}/healthz</code>`
+        : `<span class="badge bad">Erro ${r.status}</span> <code>${url}/healthz</code>`;
+    }catch(e){
+      out.innerHTML = `<span class="badge bad">Falha</span> <small class="muted">${String(e)}</small>`;
+    }
+  }
+  document.getElementById('checkAuction').onclick = ()=>{ health(AU.value,'outAuction'); syncOpenLinks(); };
+  document.getElementById('checkInternal').onclick= ()=>{ health(IN.value,'outInternal'); syncOpenLinks(); };
+  document.getElementById('checkProd').onclick    = ()=>{ health(PR.value,'outProd'); syncOpenLinks(); };
+
+  async function buildRoutes(){
+    const ul = document.getElementById('routes'); ul.innerHTML = '';
+    for (const p of PAGES){
+      const li = document.createElement('li');
+      const left = document.createElement('div');
+      const right= document.createElement('div');
+
+      left.innerHTML = `<a href="${p.url}">${p.label}</a><div class="muted" style="font-size:.85rem">${p.url}</div>`;
+      right.innerHTML= `<span class="badge" id="b-${btoa(p.url)}">verificando…</span>`;
+      li.appendChild(left); li.appendChild(right); ul.appendChild(li);
+
+      try{
+        const r = await fetch(p.url, {method:'GET'});
+        const badge = document.getElementById(`b-${btoa(p.url)}`);
+        if (r.ok) badge.className='badge ok', badge.textContent='Existe';
+        else      badge.className='badge bad', badge.textContent='404';
+      }catch{
+        const badge = document.getElementById(`b-${btoa(p.url)}`);
+        badge.className='badge bad'; badge.textContent='Erro';
+      }
+    }
+  }
+  buildRoutes();
+
+  // ==== MDA Functions ====
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('mdaUrl');
+    if (el) el.value = localStorage.getItem('MDA_SERVICE_URL') || '';
+  });
+  function normalizeUrl(u){ if(!u) return ''; const t=u.trim().replace(/\s+/g,''); return /^https?:\/\//i.test(t)? t.replace(/\/+$/,'') : ('https://'+t); }
+  function setMdaBadge(t){ const el=document.getElementById('mdaBadge'); if(el) el.textContent=t; }
+  function saveMdaUrl(){
+    const url = normalizeUrl(document.getElementById('mdaUrl').value);
+    if(!url){ alert('Informe a URL do MDA.'); return; }
+    localStorage.setItem('MDA_SERVICE_URL', url);
+    setMdaBadge('Salvo ✓');
+  }
+  function openMda(){
+    const url = normalizeUrl(localStorage.getItem('MDA_SERVICE_URL') || document.getElementById('mdaUrl').value);
+    if(!url){ alert('Configure o MDA_SERVICE_URL primeiro.'); return; }
+    // abre diretamente o /api/mda/health para feedback visual imediato
+    window.open(url + '/api/mda/health', '_blank', 'noopener');
+  }
+  async function testMda(){
+    const base = normalizeUrl(document.getElementById('mdaUrl').value);
+    if(!base){ alert('Informe a URL do MDA para testar.'); return; }
+    setMdaBadge('Testando…');
+    try{
+      const r = await fetch(base + '/api/mda/health', { method: 'GET' });
+      setMdaBadge(r.ok ? 'OK ✓' : 'Falhou ('+r.status+')');
+    }catch(e){
+      setMdaBadge('Erro/CORS');
+    }
+  }
+
+  <!-- Componente de status -->
+  const statusScript = document.createElement('script');
+  statusScript.src = '/js/telemed-status.js';
+  document.head.appendChild(statusScript);
+</script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre Nós - TeleMed Sistema</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #FAF8F5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #A7C7E7 0%, #92B4D7 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .back-btn {
+            background: #A7C7E7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 2rem;
+            transition: all 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            background: #92B4D7;
+            transform: translateY(-2px);
+        }
+        
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        
+        h2 {
+            color: #A7C7E7;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #E9F4FF 0%, #F0F8FF 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .team-member {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+        
+        .team-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #A7C7E7, #F4D9B4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1rem;
+            color: white;
+        }
+        
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .value-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        
+        .value-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #A7C7E7;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #A7C7E7;
+            margin-bottom: 0.5rem;
+        }
+        
+        .timeline {
+            position: relative;
+            margin: 2rem 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+        
+        .timeline-date {
+            background: #A7C7E7;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-right: 1rem;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .timeline-content {
+            flex: 1;
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .team-grid,
+            .values-grid,
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+  <link rel="stylesheet" href="/css/theme-telemed.css">
+  <link rel="canonical" href="/sobre">
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-heart"></i> Sobre Nós</h1>
+        <p>Conheça a história e missão do TeleMed Sistema</p>
+    </div>
+
+    <div class="container">
+        <a href="/" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Voltar ao Site
+        </a>
+
+        <div class="highlight-box">
+            <h2>🚀 Nossa Missão</h2>
+            <p style="font-size: 1.2rem;">
+                <strong>Democratizar o acesso à saúde de qualidade no Brasil</strong>, oferecendo consultas médicas 
+                acessíveis, transparentes e inovadoras através da tecnologia.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-lightbulb"></i> Nossa História</h2>
+            <p>O TeleMed Sistema nasceu da necessidade de tornar a saúde mais acessível para todos os brasileiros. 
+            Fundado em 2024, fomos pioneiros em criar o primeiro sistema de lances para consultas médicas do país, 
+            revolucionando a forma como pacientes e médicos se conectam.</p>
+            
+            <p style="margin-top: 1rem;">Nossa plataforma combina a expertise médica tradicional com tecnologias 
+            inovadoras como inteligência artificial, permitindo triagem inteligente e atendimento personalizado 
+            para cada paciente.</p>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-chart-line"></i> Nossos Números</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">25K+</div>
+                    <p>Consultas Realizadas</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1.200+</div>
+                    <p>Médicos Credenciados</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <p>Satisfação dos Pacientes</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">40%</div>
+                    <p>Economia Média</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24h</div>
+                    <p>Tempo Médio de Resposta</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">27</div>
+                    <p>Estados Atendidos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-users"></i> Nossa Equipe</h2>
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="team-avatar">👨‍💻</div>
+                    <h3>Dr. João Silva</h3>
+                    <p><strong>CEO & Fundador</strong></p>
+                    <p>Médico cardiologista com 15 anos de experiência. Formado pela USP, especialista em telemedicina e inovação em saúde.</p>
+                </div>
+
+                <div class="team-member">
+                    <div class="team-avatar">👩‍💼</div>
+                    <h3>Maria Santos</h3>
+                    <p><strong>CTO</strong></p>
+                    <p>Engenheira de software especialista em IA médica. Mestrado em Ciência da Computação pela UNICAMP.</p>
+                </div>
+
+                <div class="team-member">
+                    <div class="team-avatar">👨‍⚕️</div>
+                    <h3>Dr. Pedro Costa</h3>
+                    <p><strong>Diretor Médico</strong></p>
+                    <p>Psiquiatra e especialista em saúde mental digital. Responsável pela triagem psiquiátrica com IA.</p>
+                </div>
+
+                <div class="team-member">
+                    <div class="team-avatar">👩‍💻</div>
+                    <h3>Ana Oliveira</h3>
+                    <p><strong>Head de Produto</strong></p>
+                    <p>Especialista em UX/UI para área da saúde. Responsável pela experiência do paciente na plataforma.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-gem"></i> Nossos Valores</h2>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">🎯</div>
+                    <h3>Transparência</h3>
+                    <p>Preços claros, processo transparente, sem surpresas para pacientes e médicos</p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon">⚡</div>
+                    <h3>Inovação</h3>
+                    <p>Utilizamos tecnologia de ponta para revolucionar o acesso à saúde</p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon">🤝</div>
+                    <h3>Acessibilidade</h3>
+                    <p>Saúde de qualidade deve estar ao alcance de todos os brasileiros</p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon">🛡️</div>
+                    <h3>Segurança</h3>
+                    <p>Dados médicos protegidos com máxima segurança e conformidade LGPD</p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon">👥</div>
+                    <h3>Humanização</h3>
+                    <p>Tecnologia a serviço do cuidado humano e da relação médico-paciente</p>
+                </div>
+
+                <div class="value-card">
+                    <div class="value-icon">📈</div>
+                    <h3>Qualidade</h3>
+                    <p>Médicos qualificados, processos auditados, resultados mensuráveis</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-calendar"></i> Nossa Jornada</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">2024</div>
+                    <div class="timeline-content">
+                        <h3>Fundação</h3>
+                        <p>Início do TeleMed Sistema com foco em democratizar o acesso à saúde através da tecnologia</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">Q2 2024</div>
+                    <div class="timeline-content">
+                        <h3>Lançamento do Sistema de Lances</h3>
+                        <p>Primeiro sistema no Brasil onde pacientes definem o preço das consultas médicas</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">Q3 2024</div>
+                    <div class="timeline-content">
+                        <h3>Dr. AI</h3>
+                        <p>Lançamento da triagem inteligente com IA para direcionamento médico especializado</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">Q4 2024</div>
+                    <div class="timeline-content">
+                        <h3>Triagem Psiquiátrica</h3>
+                        <p>Primeiro sistema de triagem psiquiátrica com IA do Brasil, usando escalas científicas</p>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">2025</div>
+                    <div class="timeline-content">
+                        <h3>Expansão Nacional</h3>
+                        <p>Atendimento em todos os estados brasileiros com mais de 1.200 médicos credenciados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><i class="fas fa-medal"></i> Reconhecimentos</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 2rem; color: #A7C7E7; margin-bottom: 0.5rem;">🏆</div>
+                    <h4>Startup do Ano 2024</h4>
+                    <p>Categoria Saúde Digital - FIAP</p>
+                </div>
+
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 2rem; color: #A7C7E7; margin-bottom: 0.5rem;">⭐</div>
+                    <h4>Melhor Inovação</h4>
+                    <p>Sistema de Lances Médicos - TechCrunch</p>
+                </div>
+
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 2rem; color: #A7C7E7; margin-bottom: 0.5rem;">🎖️</div>
+                    <h4>Certificação CFM</h4>
+                    <p>Conformidade com Resolução de Telemedicina</p>
+                </div>
+
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 2rem; color: #A7C7E7; margin-bottom: 0.5rem;">🛡️</div>
+                    <h4>Selo LGPD</h4>
+                    <p>Proteção de Dados Certificada - ANPD</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h2>🎯 Nosso Futuro</h2>
+            <p style="font-size: 1.1rem; margin-bottom: 2rem;">
+                Estamos trabalhando para expandir ainda mais nossos serviços, incluindo telemedicina veterinária, 
+                integração com farmácias e laboratórios, e desenvolvimento de novas funcionalidades de IA médica.
+            </p>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="/patient-bidding" style="background: #A7C7E7; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <i class="fas fa-rocket"></i> Fazer Consulta
+                </a>
+                <a href="/contato.html" style="background: #F4D9B4; color: #333; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    <i class="fas fa-envelope"></i> Entre em Contato
+                </a>
+            </div>
+        </div>
+
+        <div style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <p><strong>TeleMed Sistema</strong> - Revolucionando o acesso à saúde no Brasil desde 2024</p>
+            <p>Contato: contato@telemed-sistema.replit.dev | Suporte: suporte@telemed-sistema.replit.dev</p>
+        </div>
+    </div>
+</body>
+</html>

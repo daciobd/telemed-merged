@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <base href="/">
+  <meta charset="utf-8" />
+  <title>Dr. AI – TeleMed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="canonical" href="/dr-ai/" />
+  <!-- Tema unificado (garanta public/css/theme-telemed.css) -->
+  <link rel="stylesheet" href="/css/theme-telemed.css">
+  <style>
+    /* Hero com gradiente e CTA */
+    .hero{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 40%,#22d3ee 100%);color:#fff;border-radius:20px;box-shadow:0 16px 40px rgba(2,6,23,.2);padding:32px 20px;margin:16px 0}
+    .hero h1{margin:0 0 8px;font-size:2rem}
+    .hero p{margin:0 0 16px;color:#eaf6ff}
+    .hero .actions{display:flex;gap:10px;flex-wrap:wrap}
+    /* Cards de passos/benefícios */
+    .icon{width:24px;height:24px;display:inline-block;vertical-align:-4px}
+    .grid.benefits{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+    .step-num{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:999px;background:#e6f6fe;color:#075985;font-weight:700;margin-right:8px}
+    /* Vídeo/preview opcional */
+    .video{background:#0b1220;border-radius:16px;min-height:220px;display:grid;place-items:center;color:#b3c1d1}
+    @media (min-width: 1024px){
+      .hero h1{font-size:2.2rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="btn" href="/dashboard/" aria-label="Voltar ao Dashboard">← Voltar</a>
+
+    <!-- HERO -->
+    <section class="hero">
+      <h1>Conheça o Dr. AI</h1>
+      <p>Sua IA médica que entende sintomas, identifica riscos e sugere especialistas em segundos.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/consulta?demo=1">Ver Demonstração</a>
+        <a class="btn btn-outline" href="/consulta/">Iniciar Triagem Agora</a>
+      </div>
+    </section>
+
+    <!-- COMO FUNCIONA -->
+    <section class="section">
+      <div class="prose center">
+        <h2>Como o Dr. AI funciona</h2>
+        <p class="muted">Triagem inteligente em 3 passos</p>
+      </div>
+
+      <div class="grid cards mt-3" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+        <article class="card">
+          <div class="card-body">
+            <div><span class="step-num">1</span><strong>Descreva os sintomas</strong></div>
+            <p class="mt-2">Conte em linguagem natural. O Dr. AI entende contexto, duração e intensidade.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-body">
+            <div><span class="step-num">2</span><strong>Análise inteligente</strong></div>
+            <p class="mt-2">A IA cruza sinais com diretrizes clínicas e identifica sinais de alerta.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-body">
+            <div><span class="step-num">3</span><strong>Encaminhamento seguro</strong></div>
+            <p class="mt-2">Sugere especialidade e próximos passos. Você pode seguir para o agendamento.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- BENEFÍCIOS -->
+    <section class="section">
+      <div class="prose center">
+        <h2>Por que usar o Dr. AI?</h2>
+      </div>
+      <div class="grid benefits mt-3">
+        <div class="card"><div class="card-body">
+          <strong>Rápido e disponível 24/7</strong>
+          <p class="muted">Sem fila. Comece agora, do celular ou computador.</p>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <strong>Baseado em evidências</strong>
+          <p class="muted">Regras clínicas e sinais de alerta atualizados.</p>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <strong>Privacidade</strong>
+          <p class="muted">Dados tratados conforme a <a href="/privacidade">Política de Privacidade</a>.</p>
+        </div></div>
+        <div class="card"><div class="card-body">
+          <strong>Integração com a consulta</strong>
+          <p class="muted">Leva o resumo para a <a href="/consulta/">Consulta Avançada</a> e facilita o diagnóstico.</p>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- PRÉVIA / DEMO -->
+    <section class="section">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:center">
+        <div class="video">Prévia da triagem (simulada)</div>
+        <div class="prose">
+          <h3>Veja uma demonstração</h3>
+          <p>Entenda o fluxo de triagem e como o resultado chega ao médico.</p>
+          <a class="btn btn-primary" href="/consulta?demo=1">Abrir demonstração</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="section center">
+      <h3>Pronto para começar?</h3>
+      <p class="muted">Leva menos de 2 minutos para a primeira avaliação.</p>
+      <a class="btn btn-primary" href="/consulta/">Iniciar Triagem</a>
+      <a class="btn" href="/centro-de-testes/">Centro de Testes</a>
+    </section>
+  </div>
+</body>
+</html>

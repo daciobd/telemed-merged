@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Roteiro de Apresentação (Imprimível) — TeleMed</title>
+<style>
+/* ====== Estilo de tela ====== */
+:root{--brand:#0ea5e9;--ink:#0b1324;--muted:#475569;--ok:#059669;--border:#e2e8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:#0f172a;background:#fff}
+.wrapper{max-width:900px;margin:24px auto;padding:0 16px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.badge{background:var(--brand);color:#fff;padding:6px 10px;border-radius:999px;font-weight:700}
+h1{margin:0;font-size:1.6rem}
+.btn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+.btn:hover{background:#f8fafc}
+small{color:var(--muted)}
+h2{margin:18px 0 8px}
+h3{margin:14px 0 6px}
+ul{margin:6px 0 12px 1.1rem}
+li{margin:.28rem 0}
+.time{font-weight:600;border:1px solid var(--border);border-radius:6px;padding:2px 6px}
+.rule{border:0;border-top:1px solid var(--border);margin:14px 0}
+.box{border:1px solid var(--border);border-radius:10px;padding:10px;background:#f8fafc}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+
+.checklist input{margin-right:6px}
+.footer{margin-top:14px;color:var(--muted);font-size:.92rem}
+
+/* ====== Estilo de impressão ====== */
+@page { size: A4; margin: 12mm }
+@media print {
+  .noprint{ display:none !important }
+  body{background:#fff}
+  .wrapper{max-width:none;margin:0;padding:0}
+  .pagebreak{ page-break-after: always }
+}
+</style>
+<script>
+function doPrint(){ window.print(); }
+</script>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div>
+      <span class="badge">TeleMed</span>
+      <h1>Roteiro de Apresentação (Imprimível)</h1>
+      <small>Guia para demonstração de 15–20 minutos — foco em produtividade médica e fluxo completo</small>
+    </div>
+    <div class="noprint">
+      <button class="btn" onclick="doPrint()">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <h2>1) Abertura (60–90s)</h2>
+  <div class="box">
+    <b>Mensagem-chave:</b> “O TeleMed é <u>apoio à decisão clínica</u> que acelera tarefas e melhora a qualidade do registro.
+    <u>Não substitui</u> o julgamento médico — o médico está no controle o tempo todo.”
+  </div>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Contexto: Teleconsulta com prontuário, prescrições e calculadoras.</label></li>
+    <li><label><input type="checkbox"> Benefícios: <b>produtividade</b>, <b>qualidade</b>, <b>fluxo econômico</b>.</label></li>
+  </ul>
+
+  <h2>2) Visão geral & Login <span class="time">~2 min</span></h2>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Abrir GUI do médico (<code>/demo.html</code>) e mostrar agenda / menus.</label></li>
+    <li><label><input type="checkbox"> Explicar papéis: admin, médico, paciente (JWT / roles).</label></li>
+  </ul>
+
+  <h2>3) Captação via Leilão Reverso <span class="time">~3–4 min</span></h2>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Mostrar página de lances: <i>Imediato</i> x <i>Agendado</i>.</label></li>
+    <li><label><input type="checkbox"> Aceitar lance → criação de <b>appointment</b> pelo endpoint interno <code>/internal/appointments/from-bid</code>.</label></li>
+    <li><label><input type="checkbox"> Pagamento (mock) e notificações (médico/paciente).</label></li>
+  </ul>
+
+  <h2>4) Produtividade (Scribe, CID-10, Notas) <span class="time">~5–6 min</span></h2>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Ativar Scribe para transcrever e gerar <b>resumo SOAP</b> para revisão.</label></li>
+    <li><label><input type="checkbox"> Conferir <b>sugestões de CID-10 / procedimentos</b> e aceitar/ajustar.</label></li>
+    <li><label><input type="checkbox"> Usar <b>bloco de notas</b> sincronizado no prontuário.</label></li>
+  </ul>
+
+  <h2>5) Prescrição Digital <span class="time">~2–3 min</span></h2>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Emitir receita com PDF e QR/assinatura (mock/roadmap ICP-Brasil).</label></li>
+  </ul>
+
+  <h2>6) Agenda Inteligente & Follow-up <span class="time">~2–3 min</span></h2>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Dado o diagnóstico, sugerir retorno (ex.: 30 dias) com 1 clique.</label></li>
+    <li><label><input type="checkbox"> Lembretes automáticos para paciente; badge de retorno na lista.</label></li>
+  </ul>
+
+  <div class="pagebreak"></div>
+
+  <h2>7) Calculadoras & Prontuário (Bônus) <span class="time">~2–3 min</span></h2>
+  <ul class="checklist">
+    <li><label><input type="checkbox"> Demonstrar calculadoras (Framingham, CHA2DS2-VASc, SOFA, etc.).</label></li>
+    <li><label><input type="checkbox"> Sinais vitais e notas estruturadas.</label></li>
+  </ul>
+
+  <h2>Segurança & Arquitetura (1 min)</h2>
+  <ul>
+    <li>Tokens internos, serviços isolados, logs, health checks (<code>/healthz</code>).</li>
+    <li>APIs REST → integrações com HIS/ERP/BI; roadmap HL7/FHIR.</li>
+  </ul>
+
+  <h2>Fechamento (1 min)</h2>
+  <ul>
+    <li><b>ROI</b>: menos tempo administrativo, melhor codificação (menos glosa), continuidade do cuidado.</li>
+    <li><b>Próximos passos</b>: piloto com 3–5 médicos; feedback em 2 semanas.</li>
+  </ul>
+
+  <hr class="rule">
+
+  <div class="cols">
+    <div>
+      <h3>URLs úteis (para referência)</h3>
+      <ul>
+        <li>GUI médico: <code>/demo.html</code></li>
+        <li>Hub: <code>/</code> (ou <code>/enhanced/</code>)</li>
+        <li>Exemplo de integração: <code>/example-integration.html</code></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Health checks</h3>
+      <ul>
+        <li>auction: <code>…/healthz</code></li>
+        <li>internal: <code>…/healthz</code></li>
+        <li>productivity: <code>…/healthz</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer">
+    © TeleMed — material de apoio à demonstração. Este documento não substitui orientação clínica.
+  </p>
+</div>
+</body>
+</html>

@@ -1,0 +1,1 @@
+export const Input = (p:any)=><input {...p} className={(p.className||'')+ ' rounded-2xl px-3 py-2 border'} />;

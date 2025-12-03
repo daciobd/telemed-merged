@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Médica • TeleMed Pro</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='12' width='64' height='64' fill='%231e40af'/%3E%3Ctext x='32' y='42' font-family='Inter,Arial' font-size='36' text-anchor='middle' fill='white'%3ETM%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --card: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --hover: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, #1a2332 50%, #0f1419 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--hover);
+            border-color: var(--primary-light);
+        }
+
+        .btn.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: var(--primary-light);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        .calendar-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-nav {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-nav:hover {
+            background: var(--hover);
+        }
+
+        .calendar-title {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .calendar-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .calendar-grid th {
+            padding: 0.75rem 0.5rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .calendar-grid td {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .calendar-grid td:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--primary-light);
+            border-radius: 6px;
+        }
+
+        .calendar-grid td.today {
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .calendar-grid td.selected {
+            background: var(--secondary);
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .calendar-grid td.has-appointments::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        .schedule-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .schedule-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .notifications-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--secondary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .appointments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .appointment-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .appointment-item:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .appointment-time {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .appointment-details {
+            flex: 1;
+            margin-left: 1rem;
+        }
+
+        .appointment-patient {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .appointment-status {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .appointment-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .camera-ready {
+            position: relative;
+            margin-right: 0.5rem;
+        }
+
+        .camera-ready::before {
+            content: '🎥';
+            animation: blink 1s infinite;
+            font-size: 1.25rem;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .action-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: var(--hover);
+            border-color: var(--primary-light);
+        }
+
+        .action-btn.video {
+            background: var(--secondary);
+            border-color: var(--secondary);
+        }
+
+        .action-btn.video:hover {
+            background: #059669;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--surface);
+            margin: 10% auto;
+            padding: 2rem;
+            width: 400px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+        .notification-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .notification-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--card);
+            border-radius: 6px;
+        }
+
+        .notification-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .calendar-section {
+                order: 2;
+            }
+            
+            .schedule-section {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>📅 Agenda Médica Avançada</h1>
+            <div class="header-actions">
+                <a href="/enhanced" class="btn">🎥 Consulta Avançada</a>
+                <a href="/dashboard/" class="btn">📊 Dashboard</a>
+                <button class="btn primary" id="newAppointmentBtn">➕ Nova Consulta</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Calendário -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <button class="calendar-nav" id="prevMonth">‹</button>
+                <h2 class="calendar-title" id="currentMonth">Agosto 2025</h2>
+                <button class="calendar-nav" id="nextMonth">›</button>
+            </div>
+            <table class="calendar-grid">
+                <thead>
+                    <tr>
+                        <th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
+                    </tr>
+                </thead>
+                <tbody id="calendarBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Horários do Dia -->
+        <div class="schedule-section">
+            <div class="schedule-header">
+                <h2 class="schedule-title" id="scheduleDate">Horários para hoje • 18/08/2025</h2>
+                <div class="notifications-toggle">
+                    <span>Notificações</span>
+                    <label class="switch">
+                        <input type="checkbox" id="notificationsToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="appointments-list" id="appointmentsList">
+                <!-- Consultas serão inseridas dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Notificações -->
+    <div id="notificationsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configurar Notificações</h2>
+                <button class="modal-close" id="modalClose">×</button>
+            </div>
+            <div class="notification-options">
+                <label class="notification-option">
+                    <input type="checkbox" name="notificationMethod" value="email" checked>
+                    <span>📧 Email (recomendado)</span>
+                </label>
+                <label class="notification-option">
+                    <input type="checkbox" name="notificationMethod" value="push">
+                    <span>🔔 Push Notifications</span>
+                </label>
+                <label class="notification-option">
+                    <input type="checkbox" name="notificationMethod" value="sms">
+                    <span>📱 SMS (Premium)</span>
+                </label>
+                <label class="notification-option">
+                    <input type="checkbox" name="notificationMethod" value="whatsapp">
+                    <span>💬 WhatsApp Business</span>
+                </label>
+            </div>
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <button class="btn primary" id="saveNotifications">Salvar Configurações</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/agenda-medica.js"></script>
+</body>
+</html>

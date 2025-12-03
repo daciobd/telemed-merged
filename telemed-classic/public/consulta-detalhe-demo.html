@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhe da Consulta - TeleMed</title>
+  <script>window.__BUILD='pilot-r1';</script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.22);
+      --brand: #60a5fa;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--brand);
+      text-decoration: none;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { color: var(--muted); margin-bottom: 32px; }
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+      color: var(--brand);
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .prescription {
+      background: rgba(96, 165, 250, 0.08);
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .prescription h3 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--brand);
+    }
+    .med-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .med-item:last-child { border-bottom: none; }
+    .notes {
+      background: rgba(167, 139, 250, 0.08);
+      border-left: 3px solid #a78bfa;
+      padding: 16px;
+      border-radius: 4px;
+      margin-top: 16px;
+    }
+    .demo-note {
+      background: rgba(96, 165, 250, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .demo-note h4 {
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<!-- DATA-ATTRIBUTES NO BODY PARA CRIAR BOTÃO FLUTUANTE -->
+<body
+  data-consultation-id="cons_psi_001"
+  data-consultation-date="2025-09-28"
+  data-specialty="Psiquiatria"
+  data-doctor="Dra. Ana Silva"
+  data-limit-days="30"
+  data-patient-id="1"
+  data-prescription-id="rx_psi_001">
+
+  <div class="container">
+    <a href="/minhas-consultas-demo.html" class="back-link">← Voltar para Minhas Consultas</a>
+
+    <h1>📋 Detalhe da Consulta</h1>
+    <p class="subtitle">Consulta realizada em 28/09/2025</p>
+
+    <div class="demo-note">
+      <h4>💡 Botão Flutuante (FAB)</h4>
+      <p>Observe o botão "💬 Tirar dúvida" no canto inferior direito. Ele foi criado automaticamente porque o <code>&lt;body&gt;</code> possui os atributos <code>data-consultation-id</code>, <code>data-consultation-date</code>, etc.</p>
+    </div>
+
+    <!-- Informações da Consulta -->
+    <div class="section">
+      <h2>👩‍⚕️ Informações do Atendimento</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Médico(a)</span>
+          <span class="info-value">Dra. Ana Silva</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Especialidade</span>
+          <span class="info-value">Psiquiatria</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Data</span>
+          <span class="info-value">28/09/2025</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Horário</span>
+          <span class="info-value">14:30</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Duração</span>
+          <span class="info-value">45 minutos</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Modalidade</span>
+          <span class="info-value">Telemedicina</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo Clínico -->
+    <div class="section">
+      <h2>📝 Resumo Clínico</h2>
+      <p><strong>Queixa principal:</strong> Ansiedade generalizada e dificuldade para dormir</p>
+      <p style="margin-top: 12px;"><strong>Conduta:</strong> Iniciado tratamento medicamentoso com fluoxetina 20mg. Orientações sobre higiene do sono e técnicas de relaxamento. Retorno em 30 dias para avaliação.</p>
+    </div>
+
+    <!-- Prescrição -->
+    <div class="section">
+      <h2>💊 Prescrição Médica</h2>
+      <div class="prescription">
+        <h3>Medicamentos Prescritos</h3>
+        <div class="med-item">
+          <div>
+            <strong>Fluoxetina 20mg</strong>
+            <div style="color: var(--muted); font-size: 0.9rem;">Tomar 1 comprimido pela manhã</div>
+          </div>
+          <div style="color: var(--brand);">30 dias</div>
+        </div>
+        <div class="med-item">
+          <div>
+            <strong>Melatonina 3mg</strong>
+            <div style="color: var(--muted); font-size: 0.9rem;">Tomar 1 cápsula 30min antes de dormir</div>
+          </div>
+          <div style="color: var(--brand);">30 dias</div>
+        </div>
+      </div>
+      <div class="notes">
+        <strong>⚠️ Observações Importantes:</strong>
+        <ul style="margin-left: 20px; margin-top: 8px;">
+          <li>Não consumir álcool durante o tratamento</li>
+          <li>Os efeitos podem levar de 2 a 4 semanas para aparecer</li>
+          <li>Em caso de reações adversas, entrar em contato imediatamente</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Orientações -->
+    <div class="section">
+      <h2>📚 Orientações Pós-Consulta</h2>
+      <ul style="margin-left: 20px; line-height: 1.8;">
+        <li>Manter horários regulares para dormir e acordar</li>
+        <li>Evitar uso de telas 1 hora antes de dormir</li>
+        <li>Praticar exercícios físicos regularmente (ao menos 30min/dia)</li>
+        <li>Técnicas de respiração e mindfulness podem ajudar</li>
+        <li>Alimentação equilibrada, evitando cafeína após 16h</li>
+      </ul>
+    </div>
+
+    <!-- Próximos Passos -->
+    <div class="section">
+      <h2>🔔 Próximos Passos</h2>
+      <div class="info-item">
+        <span class="info-label">Retorno Agendado</span>
+        <span class="info-value">28/10/2025 às 15:00</span>
+      </div>
+      <div class="info-item" style="margin-top: 12px;">
+        <span class="info-label">Exames Solicitados</span>
+        <span class="info-value">Nenhum exame solicitado nesta consulta</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget Dr. AI Integration -->
+  <script src="/js/dr-ai-integration.js" defer></script>
+</body>
+</html>

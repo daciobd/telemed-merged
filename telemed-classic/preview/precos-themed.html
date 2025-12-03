@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preços e Planos - TeleMed Sistema</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #FAF8F5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #A7C7E7 0%, #92B4D7 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .back-btn {
+            background: #A7C7E7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 2rem;
+            transition: all 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            background: #92B4D7;
+            transform: translateY(-2px);
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .plan-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        
+        .plan-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .plan-card.featured {
+            border: 3px solid #A7C7E7;
+            transform: scale(1.05);
+        }
+        
+        .plan-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #E9967A;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .plan-title {
+            font-size: 1.5rem;
+            color: #A7C7E7;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-period {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+        
+        .plan-features li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .plan-features li:before {
+            content: "✓";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .plan-features li.unavailable:before {
+            content: "✗";
+            color: #f44336;
+        }
+        
+        .plan-btn {
+            width: 100%;
+            background: #A7C7E7;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        
+        .plan-btn:hover {
+            background: #92B4D7;
+            transform: translateY(-2px);
+        }
+        
+        .plan-btn.secondary {
+            background: #F4D9B4;
+            color: #333;
+        }
+        
+        .specialty-pricing {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        
+        .specialty-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .specialty-item {
+            background: #F8F9FA;
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #E9F4FF 0%, #F0F8FF 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .faq-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        
+        .faq-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1rem 0;
+        }
+        
+        .faq-question {
+            font-weight: bold;
+            color: #A7C7E7;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-tags"></i> Preços e Planos</h1>
+        <p>Consultas médicas com preços transparentes e justos</p>
+    </div>
+
+    <div class="container">
+        <a href="/" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Voltar ao Site
+        </a>
+
+        <div class="highlight-box">
+            <h2><i class="fas fa-gavel"></i> Sistema de Lances Revolucionário</h2>
+            <p>No TeleMed Sistema, <strong>você define o preço que quer pagar</strong> e os médicos fazem lances para atendê-lo. Mais economia, mais transparência!</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Plano Básico -->
+            <div class="plan-card">
+                <div class="plan-title">💡 Consulta Avulsa</div>
+                <div class="plan-price">R$ 89</div>
+                <div class="plan-period">por consulta</div>
+                <ul class="plan-features">
+                    <li>Videoconsulta de 30 minutos</li>
+                    <li>Prescrição digital</li>
+                    <li>Relatório médico</li>
+                    <li>Suporte por chat</li>
+                    <li class="unavailable">Acompanhamento contínuo</li>
+                    <li class="unavailable">Descontos em exames</li>
+                </ul>
+                <a href="/patient-bidding" class="plan-btn">Agendar Consulta</a>
+            </div>
+
+            <!-- Plano Popular -->
+            <div class="plan-card featured">
+                <div class="plan-badge">Mais Popular</div>
+                <div class="plan-title">⭐ Plano Mensal</div>
+                <div class="plan-price">R$ 149</div>
+                <div class="plan-period">por mês (3 consultas)</div>
+                <ul class="plan-features">
+                    <li>3 videoconsultas mensais</li>
+                    <li>Prescrições digitais ilimitadas</li>
+                    <li>Telemonitoramento básico</li>
+                    <li>Dr. AI ilimitado</li>
+                    <li>Relatórios detalhados</li>
+                    <li>Suporte prioritário</li>
+                </ul>
+                <a href="/patient-bidding" class="plan-btn">Assinar Plano</a>
+            </div>
+
+            <!-- Plano Premium -->
+            <div class="plan-card">
+                <div class="plan-title">👑 Plano Premium</div>
+                <div class="plan-price">R$ 299</div>
+                <div class="plan-period">por mês (ilimitado)</div>
+                <ul class="plan-features">
+                    <li>Consultas ilimitadas</li>
+                    <li>Especialistas premium</li>
+                    <li>Telemonitoramento avançado</li>
+                    <li>Emergência 24/7</li>
+                    <li>Exames com desconto</li>
+                    <li>Médico de família dedicado</li>
+                </ul>
+                <a href="/patient-bidding" class="plan-btn">Assinar Premium</a>
+            </div>
+        </div>
+
+        <div class="specialty-pricing">
+            <h2><i class="fas fa-stethoscope"></i> Preços por Especialidade</h2>
+            <p>Faixas de preço médias no sistema de lances:</p>
+            
+            <div class="specialty-grid">
+                <div class="specialty-item">
+                    <span><i class="fas fa-user-md"></i> Clínica Geral</span>
+                    <strong>R$ 80-120</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-brain"></i> Psiquiatria</span>
+                    <strong>R$ 150-250</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-baby"></i> Pediatria</span>
+                    <strong>R$ 100-180</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-eye"></i> Dermatologia</span>
+                    <strong>R$ 120-200</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-bone"></i> Ortopedia</span>
+                    <strong>R$ 130-220</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-venus"></i> Ginecologia</span>
+                    <strong>R$ 120-200</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-heart"></i> Psicoterapia</span>
+                    <strong>R$ 100-180</strong>
+                </div>
+                <div class="specialty-item">
+                    <span><i class="fas fa-apple-alt"></i> Nutrição</span>
+                    <strong>R$ 90-150</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h2><i class="fas fa-shield-alt"></i> Garantias TeleMed</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div>
+                    <i class="fas fa-undo" style="font-size: 2rem; color: #A7C7E7;"></i>
+                    <h3>Reembolso 100%</h3>
+                    <p>Se não ficar satisfeito</p>
+                </div>
+                <div>
+                    <i class="fas fa-clock" style="font-size: 2rem; color: #A7C7E7;"></i>
+                    <h3>Resposta 24h</h3>
+                    <p>Médicos qualificados</p>
+                </div>
+                <div>
+                    <i class="fas fa-lock" style="font-size: 2rem; color: #A7C7E7;"></i>
+                    <h3>Segurança Total</h3>
+                    <p>Dados protegidos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2><i class="fas fa-question-circle"></i> Perguntas Frequentes sobre Preços</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">Como funciona o sistema de lances?</div>
+                <div class="faq-answer">Você define quanto quer pagar pela consulta e os médicos fazem lances para atendê-lo. Você escolhe a melhor proposta considerando preço, experiência e avaliações.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Qual o valor mínimo para uma consulta?</div>
+                <div class="faq-answer">O valor mínimo é R$ 60 para consultas de clínica geral e R$ 80 para especialistas. Valores menores podem não atrair médicos qualificados.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Posso cancelar minha assinatura a qualquer momento?</div>
+                <div class="faq-answer">Sim! Nossas assinaturas são flexíveis e podem ser canceladas a qualquer momento. Você manterá acesso até o final do período pago.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">Como são processados os pagamentos?</div>
+                <div class="faq-answer">Aceitamos cartão de crédito, débito, PIX e boleto bancário. Todos os pagamentos são processados de forma segura com criptografia.</div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question">O que está incluso na consulta?</div>
+                <div class="faq-answer">Toda consulta inclui: videochamada com médico, prescrição digital (se necessária), relatório médico e suporte pós-consulta por 7 dias.</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 3rem 0;">
+            <h2>Pronto para economizar em consultas médicas?</h2>
+            <a href="/patient-bidding" class="plan-btn" style="display: inline-block; width: auto; padding: 15px 30px; margin: 1rem;">
+                <i class="fas fa-rocket"></i> Começar Agora
+            </a>
+        </div>
+
+        <div style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 2rem;">
+            <p><strong>TeleMed Sistema</strong> - Preços atualizados em 26 de julho de 2025</p>
+            <p>Suporte: suporte@telemed-sistema.replit.dev | (11) 9 9999-9999</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Master Demo - TeleMed</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .loader {
+        text-align: center;
+        color: white;
+      }
+      .loader h1 {
+        font-size: 3rem;
+        margin-bottom: 24px;
+        animation: pulse 2s infinite;
+      }
+      .loader p {
+        font-size: 1.3rem;
+        opacity: 0.9;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loader">
+      <h1>🧩 Master Demo</h1>
+      <p>Iniciando demonstração automática...</p>
+    </div>
+    <script>
+      // Redireciona para Dr. AI Demo com autoplay
+      setTimeout(() => {
+        location.replace('/public/dr-ai-demo.html?autoplay=1');
+      }, 1500);
+
+      // Alternativa: Abrir em múltiplas janelas (descomente se preferir)
+      // setTimeout(() => {
+      //   window.open('/public/dr-ai-demo.html?autoplay=1', '_blank');
+      //   setTimeout(() => {
+      //     window.open('/public/toast-demo.html?autoplay=1', '_blank');
+      //   }, 60000); // Após 60s da primeira demo
+      // }, 1500);
+    </script>
+  </body>
+</html>

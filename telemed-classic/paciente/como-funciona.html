@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Como Funciona - Paciente | TeleMed</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e2e8f0;
+      --primary:#0ea5e9; --primary-2:#0284c7; --ok:#22c55e; --warn:#f59e0b;
+      --radius:14px; --border:#1e293b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      padding:32px;
+    }
+    .container{max-width:800px; margin:0 auto}
+    .card{
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); padding:28px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+      margin-bottom:24px;
+    }
+    h1{margin:0 0 18px; font-size:28px; display:flex; align-items:center; gap:12px}
+    .logo{width:24px;height:24px;display:inline-grid;place-items:center;background:#10b981;color:white;border-radius:8px;font-weight:700}
+    .stepper{display:grid; gap:20px; margin:24px 0}
+    .step{
+      display:flex; gap:16px; padding:20px; border-radius:12px;
+      border:1px solid var(--border); background:#0b1530; position:relative;
+    }
+    .step-number{
+      flex-shrink:0; width:32px; height:32px; border-radius:50%;
+      background:var(--primary); color:white; display:flex; align-items:center;
+      justify-content:center; font-weight:700; font-size:14px;
+    }
+    .step-content h3{margin:0 0 8px; color:var(--text); font-size:18px}
+    .step-content p{margin:0; color:var(--muted); line-height:1.4}
+    .step-arrow{
+      position:absolute; left:31px; top:52px; width:2px; height:20px;
+      background:var(--border); display:block;
+    }
+    .step:last-child .step-arrow{display:none}
+    .cta-section{text-align:center; padding:24px}
+    .btn{
+      padding:12px 16px; border-radius:12px; border:1px solid var(--border);
+      color:var(--text); background:#0b1530; cursor:pointer; font-weight:600;
+      text-decoration:none; display:inline-block; margin:8px;
+      transition:all 0.2s ease;
+    }
+    .btn:hover{filter:brightness(1.15)}
+    .btn.primary{background:linear-gradient(180deg, var(--primary), var(--primary-2)); border-color:#065f92; color:#fff}
+    .btn.outline{background:transparent; color:var(--primary); border-color:var(--primary)}
+    .highlight{background:#0e2720; border:1px solid #1a3e33; color:#79f2a6; padding:12px; border-radius:8px; margin:16px 0}
+    .back-link{margin-top:20px; text-align:center}
+    .back-link a{color:#93c5fd; text-decoration:none; font-weight:600}
+    .back-link a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1><span class="logo">🧑‍⚕️</span> Como Funciona - Paciente</h1>
+      
+      <p style="color:var(--muted); margin-bottom:24px">
+        Entenda como marcar e participar de uma consulta na plataforma TeleMed em 4 passos simples:
+      </p>
+
+      <div class="stepper">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Cadastrar</h3>
+            <p>Faça seu cadastro preenchendo seus dados pessoais (CPF, nome, data de nascimento, etc.). Você receberá um Patient ID único que deve guardar para futuras consultas.</p>
+          </div>
+          <div class="step-arrow"></div>
+        </div>
+
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Fazer pedido (gera BID)</h3>
+            <p>Crie um pedido de consulta informando a especialidade, valor máximo que pode pagar e se prefere consulta imediata ou agendada. Isto gera um lance (BID) para os médicos.</p>
+          </div>
+          <div class="step-arrow"></div>
+        </div>
+
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Aguardar</h3>
+            <p>Médicos da especialidade escolhida podem aceitar seu lance. Quando isso acontecer, você receberá uma notificação e poderá prosseguir para o pagamento.</p>
+          </div>
+          <div class="step-arrow"></div>
+        </div>
+
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Entrar na consulta</h3>
+            <p>Após o pagamento, você receberá o ID da consulta. Use este ID para entrar na sala de espera e depois na videochamada com o médico.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight">
+        <strong>💡 Dica:</strong> Guarde sempre seu Patient ID! Ele é necessário para fazer novos pedidos de consulta e acessar seu histórico médico.
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h2>Pronto para começar?</h2>
+      <a href="/cadastro.html" class="btn primary" data-testid="button-iniciar">Iniciar</a>
+      <a href="/paciente/pedido.html" class="btn outline" data-testid="button-fazer-pedido">Já tenho cadastro - Fazer pedido</a>
+    </div>
+
+    <div class="back-link">
+      <a href="/example-integration.html" data-testid="link-hub">← Voltar ao Hub</a>
+    </div>
+  </div>
+</body>
+</html>

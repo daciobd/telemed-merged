@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integração - Automação de Documentos TeleMed</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>🏥 TeleMed - Automação de Documentos</h1>
+    
+    <div class="section">
+        <h2>📋 Gerar Receita Médica</h2>
+        <p>Gera receita automática baseada no resumo da consulta.</p>
+        <button onclick="generatePrescription()">Gerar Receita</button>
+        <div id="prescription-result" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>📄 Gerar Atestado Médico</h2>
+        <p>Cria atestado com dias de afastamento.</p>
+        <button onclick="generateAttestation()">Gerar Atestado</button>
+        <div id="attestation-result" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>📱 Notificar Paciente</h2>
+        <p>Envia WhatsApp/e-mail com link do documento.</p>
+        <button onclick="notifyPatient()">Enviar Notificação</button>
+        <div id="notify-result" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>🧪 Teste Personalizado</h2>
+        <p>Cole seu JSON customizado:</p>
+        <textarea id="custom-json" placeholder='{"summary": {...}, "payload": {...}}'></textarea>
+        <br>
+        <button onclick="testCustomRequest('prescription')">Testar Receita</button>
+        <button onclick="testCustomRequest('attestation')">Testar Atestado</button>
+        <div id="custom-result" class="result"></div>
+    </div>
+
+    <!-- Importar config ANTES dos scripts -->
+    <script src="/js/config.js"></script>
+    
+    <script>
+        // Verificar se config foi carregado
+        if (!window.TELEMED_CFG?.DOCS_AUTOMATION_URL) {
+            document.body.innerHTML = '<h1>❌ Erro: Config não carregado</h1><p>Verifique se o arquivo /js/config.js está disponível.</p>';
+        }
+        
+        const DOCS_URL = window.TELEMED_CFG.DOCS_AUTOMATION_URL;
+        
+        // Dados de exemplo para testes
+        const EXAMPLE_SUMMARY = {
+            consultationId: "c-demo-123",
+            patient: {
+                id: "p-demo-1",
+                name: "João Silva",
+                email: "joao@email.com",
+                phone: "+5511999999999",
+                birthDate: "1985-03-15"
+            },
+            clinician: {
+                id: "m-demo-1",
+                name: "Dra. Maria Santos", 
+                crm: "12345-SP",
+                specialty: "Clínica Geral"
+            },
+            suggestedCid: "J06.9",
+            timestamp: new Date().toISOString()
+        };
+        
+        async function generatePrescription() {
+            const resultDiv = document.getElementById('prescription-result');
+            resultDiv.innerHTML = '⏳ Gerando receita...';
+            
+            try {
+                const payload = {
+                    summary: EXAMPLE_SUMMARY,
+                    payload: {
+                        type: 'prescription',
+                        items: [
+                            {
+                                drug: "Amoxicilina 500mg",
+                                dose: "1 cápsula",
+                                route: "VO",
+                                frequency: "8/8h",
+                                duration: "7 dias",
+                                notes: "Tomar após as refeições"
+                            },
+                            {
+                                drug: "Dipirona 500mg",
+                                dose: "1 comprimido",
+                                route: "VO", 
+                                frequency: "6/6h",
+                                duration: "3 dias",
+                                notes: "Se dor ou febre"
+                            }
+                        ],
+                        obs: "Repouso relativo, hidratação adequada"
+                    }
+                };
+                
+                const response = await fetch(`${DOCS_URL}/generate/prescription`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Receita gerada com sucesso!</strong><br>
+                        📄 Arquivo: ${data.doc.filename}<br>
+                        🆔 ID: ${data.doc.id}<br>
+                        📍 Caminho: ${data.doc.pdfPath}<br>
+                        ${data.receitaCerta?.ok ? '🔗 Enviado para Receita Certa' : '⚠️ Receita Certa não configurado'}
+                    `;
+                } else {
+                    throw new Error('Falha na geração');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Erro: ${error.message}`;
+            }
+        }
+        
+        async function generateAttestation() {
+            const resultDiv = document.getElementById('attestation-result');
+            resultDiv.innerHTML = '⏳ Gerando atestado...';
+            
+            try {
+                const payload = {
+                    summary: EXAMPLE_SUMMARY,
+                    payload: {
+                        type: 'attestation',
+                        reason: "Infecção viral das vias aéreas superiores",
+                        startDate: new Date().toISOString().split('T')[0],
+                        daysOff: 3,
+                        restrictions: "Evitar atividades físicas intensas e exposição ao frio"
+                    }
+                };
+                
+                const response = await fetch(`${DOCS_URL}/generate/attestation`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Atestado gerado com sucesso!</strong><br>
+                        📄 Arquivo: ${data.doc.filename}<br>
+                        🆔 ID: ${data.doc.id}<br>
+                        📍 Caminho: ${data.doc.pdfPath}
+                    `;
+                } else {
+                    throw new Error('Falha na geração');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Erro: ${error.message}`;
+            }
+        }
+        
+        async function notifyPatient() {
+            const resultDiv = document.getElementById('notify-result');
+            resultDiv.innerHTML = '⏳ Enviando notificação...';
+            
+            try {
+                const payload = {
+                    patient: {
+                        email: "joao@email.com",
+                        phone: "+5511999999999"
+                    },
+                    message: "Olá! Seus documentos médicos estão prontos. Acesse o link abaixo para visualizar.",
+                    attachmentUrl: "https://cdn.telemed.app/documents/prescription_123.pdf"
+                };
+                
+                const response = await fetch(`${DOCS_URL}/generate/notify`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Notificação enviada!</strong><br>
+                        📧 E-mail: ${payload.patient.email}<br>
+                        📱 WhatsApp: ${payload.patient.phone}<br>
+                        💬 Mensagem: "${payload.message}"
+                    `;
+                } else {
+                    throw new Error('Falha no envio');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Erro: ${error.message}`;
+            }
+        }
+        
+        async function testCustomRequest(type) {
+            const resultDiv = document.getElementById('custom-result');
+            const jsonInput = document.getElementById('custom-json').value.trim();
+            
+            if (!jsonInput) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ Por favor, insira um JSON válido';
+                return;
+            }
+            
+            resultDiv.innerHTML = '⏳ Processando...';
+            
+            try {
+                const payload = JSON.parse(jsonInput);
+                
+                const response = await fetch(`${DOCS_URL}/generate/${type}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Internal-Token': 'change-me-internal' // Em produção, usar variável de ambiente
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Sucesso: <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Erro: <pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Erro: ${error.message}`;
+            }
+        }
+        
+        // Log de debug
+        console.log('🔧 Docs Automation URL:', DOCS_URL);
+        console.log('📋 Summary de exemplo:', EXAMPLE_SUMMARY);
+    </script>
+</body>
+</html>

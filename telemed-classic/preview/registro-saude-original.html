@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Saúde • TeleMed Pro</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='12' width='64' height='64' fill='%231e40af'/%3E%3Ctext x='32' y='42' font-family='Inter,Arial' font-size='36' text-anchor='middle' fill='white'%3ETM%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --card: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --hover: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, #1a2332 50%, #0f1419 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 18px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--secondary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        .back-btn {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: var(--card);
+            transform: translateY(-1px);
+        }
+
+        .patient-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-section h3 {
+            color: var(--text);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item {
+            margin: 1rem 0;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item strong {
+            color: var(--text);
+            min-width: 150px;
+        }
+
+        .info-value {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .health-status {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .health-status h3 {
+            color: var(--text);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .status-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .status-card:hover {
+            background: var(--hover);
+            transform: translateY(-2px);
+        }
+
+        .status-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-card p {
+            margin: 0;
+            color: var(--secondary);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .status-normal {
+            border-left: 4px solid var(--success);
+        }
+
+        .status-warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .status-danger {
+            border-left: 4px solid var(--danger);
+        }
+
+        .patient-id {
+            font-family: 'Courier New', monospace;
+            background: var(--card);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .allergies {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .medications {
+            color: var(--primary-light);
+            font-weight: 500;
+        }
+
+        .last-visit {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .patient-info {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .print-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .header, .back-btn, .print-btn {
+                display: none;
+            }
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">TM</div>
+                <h1>TeleMed Pro</h1>
+            </div>
+            <nav class="nav-links">
+                <a href="/agenda/">Agenda</a>
+                <a href="/consulta/">Consultas</a>
+                <a href="/dashboard/">Dashboard</a>
+                <a href="/pacientes">Pacientes</a>
+                <a href="#" class="active">PHR</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h1 class="page-title">📋 Registro de Saúde do Paciente</h1>
+            <div class="actions">
+                <button class="print-btn" onclick="window.print()">
+                    🖨️ Imprimir PHR
+                </button>
+                <a href="/pacientes" class="back-btn">
+                    ← Voltar aos Pacientes
+                </a>
+            </div>
+        </div>
+
+        <div class="patient-info">
+            <div class="info-section">
+                <h3>👤 Informações Pessoais</h3>
+                <div class="info-item">
+                    <strong>ID Persona:</strong>
+                    <span class="info-value patient-id" id="patient-id">335602</span>
+                </div>
+                <div class="info-item">
+                    <strong>Nome Completo:</strong>
+                    <span class="info-value" id="patient-name">Dhelicane Da Silva Costa</span>
+                </div>
+                <div class="info-item">
+                    <strong>Nome da Mãe:</strong>
+                    <span class="info-value">Maria José Da Silva</span>
+                </div>
+                <div class="info-item">
+                    <strong>Identificação:</strong>
+                    <span class="info-value">032.689.843-70</span>
+                </div>
+                <div class="info-item">
+                    <strong>Data de Nascimento:</strong>
+                    <span class="info-value">23/09/1988</span>
+                </div>
+                <div class="info-item">
+                    <strong>Idade:</strong>
+                    <span class="info-value">36 anos</span>
+                </div>
+                <div class="info-item">
+                    <strong>Sexo:</strong>
+                    <span class="info-value">Feminino</span>
+                </div>
+                <div class="info-item">
+                    <strong>Email:</strong>
+                    <span class="info-value">dhelicanecosta@icloud.com</span>
+                </div>
+                <div class="info-item">
+                    <strong>Telefone:</strong>
+                    <span class="info-value">+55 21 99504-0225</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>🏥 Histórico Médico</h3>
+                <div class="info-item">
+                    <strong>Condições Pré-existentes:</strong>
+                    <span class="info-value">Hipertensão, Asma</span>
+                </div>
+                <div class="info-item">
+                    <strong>Alergias:</strong>
+                    <span class="info-value allergies">⚠️ Penicilina</span>
+                </div>
+                <div class="info-item">
+                    <strong>Medicamentos em Uso:</strong>
+                    <span class="info-value medications">💊 Losartana 50mg, Salbutamol (PRN)</span>
+                </div>
+                <div class="info-item">
+                    <strong>Última Consulta:</strong>
+                    <span class="info-value last-visit">📅 15/07/2025</span>
+                </div>
+                <div class="info-item">
+                    <strong>Especialista Responsável:</strong>
+                    <span class="info-value">👨‍⚕️ Dr. João Pereira (Clínica Geral)</span>
+                </div>
+                <div class="info-item">
+                    <strong>Convênio:</strong>
+                    <span class="info-value">Unimed Nacional</span>
+                </div>
+                <div class="info-item">
+                    <strong>Número da Carteirinha:</strong>
+                    <span class="info-value patient-id">4567891234567890</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="health-status">
+            <h3>📊 Status de Saúde Atual</h3>
+            <div class="status-grid">
+                <div class="status-card status-normal">
+                    <h4>Pressão Arterial</h4>
+                    <p>120/80 mmHg</p>
+                </div>
+                <div class="status-card status-normal">
+                    <h4>Glicemia</h4>
+                    <p>95 mg/dL</p>
+                </div>
+                <div class="status-card status-normal">
+                    <h4>Frequência Cardíaca</h4>
+                    <p>72 bpm</p>
+                </div>
+                <div class="status-card status-normal">
+                    <h4>IMC</h4>
+                    <p>24.5</p>
+                </div>
+                <div class="status-card status-normal">
+                    <h4>Temperatura</h4>
+                    <p>36.5°C</p>
+                </div>
+                <div class="status-card status-normal">
+                    <h4>Saturação O2</h4>
+                    <p>98%</p>
+                </div>
+                <div class="status-card status-warning">
+                    <h4>Colesterol Total</h4>
+                    <p>210 mg/dL</p>
+                </div>
+                <div class="status-card status-normal">
+                    <h4>Peso</h4>
+                    <p>65.2 kg</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        console.log('📋 PHR - Registro de Saúde do Paciente carregado');
+        
+        // Obter parâmetros da URL para personalizar os dados do paciente
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get('patientId');
+        
+        // Dados dos pacientes (mock data matching meus-pacientes.html)
+        const patientsData = {
+            '335602': {
+                name: 'Dhelicane Da Silva Costa',
+                motherName: 'Maria José Da Silva',
+                cpf: '032.689.843-70',
+                birth: '23/09/1988',
+                age: '36 anos',
+                gender: 'Feminino',
+                email: 'dhelicanecosta@icloud.com',
+                phone: '+55 21 99504-0225',
+                conditions: 'Hipertensão, Asma',
+                allergies: '⚠️ Penicilina',
+                medications: '💊 Losartana 50mg, Salbutamol (PRN)',
+                lastVisit: '📅 15/07/2025',
+                doctor: '👨‍⚕️ Dr. João Pereira (Clínica Geral)'
+            },
+            '4537263': {
+                name: 'Hadassa Da Silva Santos Garcia',
+                motherName: 'Ana Santos Garcia',
+                cpf: '141.080.897-60',
+                birth: '01/08/1991',
+                age: '34 anos',
+                gender: 'Feminino',
+                email: 'silvadassa@gmail.com',
+                phone: '+55 21 96018-4773',
+                conditions: 'Ansiedade, Depressão',
+                allergies: 'Nenhuma conhecida',
+                medications: '💊 Sertralina 50mg, Clonazepam 0,5mg (PRN)',
+                lastVisit: '📅 10/08/2025',
+                doctor: '👩‍⚕️ Dra. Maria Silva (Psiquiatria)'
+            },
+            '4849323': {
+                name: 'William Lopes Do Nascimento',
+                motherName: 'Carmen Lopes',
+                cpf: '028.762.671-79',
+                birth: '10/09/1997',
+                age: '27 anos',
+                gender: 'Masculino',
+                email: '02876267179@mail.com',
+                phone: '+55 21 96017-25613',
+                conditions: 'Nenhuma',
+                allergies: 'Nenhuma conhecida',
+                medications: 'Nenhum',
+                lastVisit: '📅 05/08/2025',
+                doctor: '👨‍⚕️ Dr. Carlos Santos (Clínica Geral)'
+            },
+            '5150400': {
+                name: 'Erika Carvalho Mendes',
+                motherName: 'Rosa Carvalho',
+                cpf: '118.922.797-22',
+                birth: '04/05/1987',
+                age: '38 anos',
+                gender: 'Feminino',
+                email: 'erka.c.mendes@gmail.com',
+                phone: '+55 21 96017-25613',
+                conditions: 'Hipertensão, Diabetes Tipo 2',
+                allergies: 'Sulfa',
+                medications: '💊 Metformina 850mg, Enalapril 10mg',
+                lastVisit: '📅 18/07/2025',
+                doctor: '👩‍⚕️ Dra. Ana Cardoso (Cardiologia)'
+            },
+            '5155665': {
+                name: 'Natália Da Silva Mello',
+                motherName: 'Joana Silva',
+                cpf: '099.415.657-08',
+                birth: '27/12/1982',
+                age: '42 anos',
+                gender: 'Feminino',
+                email: 'natalla.cathiva@gmail.com',
+                phone: '+55 19 61725-613',
+                conditions: 'Hipotireoidismo',
+                allergies: 'Nenhuma conhecida',
+                medications: '💊 Levotiroxina 75mcg',
+                lastVisit: '📅 22/07/2025',
+                doctor: '👨‍⚕️ Dr. Roberto Lima (Clínica Geral)'
+            }
+        };
+
+        // Se um paciente específico foi solicitado, atualizar os dados
+        if (patientId && patientsData[patientId]) {
+            const patient = patientsData[patientId];
+            document.getElementById('patient-id').textContent = patientId;
+            document.getElementById('patient-name').textContent = patient.name;
+            document.title = `PHR - ${patient.name} • TeleMed Pro`;
+            
+            // Atualizar outros campos conforme necessário
+            console.log(`📋 PHR carregado para paciente: ${patient.name} (ID: ${patientId})`);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+            if (e.key === 'Escape') {
+                window.history.back();
+            }
+        });
+
+        // Log de acesso para auditoria
+        console.log(`📋 PHR acessado em ${new Date().toLocaleString()} - Paciente ID: ${patientId || '335602'}`);
+    </script>
+</body>
+</html>

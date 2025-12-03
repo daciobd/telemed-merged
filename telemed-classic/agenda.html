@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed — Agenda Médica</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e2e8f0;
+      --primary:#0ea5e9; --primary-2:#0284c7; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+      --input:#0b1220; --border:#1e293b; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;padding:0}
+    body{
+      background:var(--bg); color:var(--text); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial;
+      padding:32px;
+    }
+    .container{
+      max-width:1200px; margin:0 auto; background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); padding:28px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    h1{margin:0 0 18px; font-size:28px; display:flex; align-items:center; gap:12px}
+    .logo{width:24px;height:24px;display:inline-grid;place-items:center;background:#10b981;color:white;border-radius:8px;font-weight:700}
+    p.muted{color:var(--muted); margin:0 0 16px}
+    
+    .table{width:100%; border-collapse:collapse; margin-top:20px}
+    .table th, .table td{padding:12px; text-align:left; border-bottom:1px solid var(--border)}
+    .table th{background:var(--input); color:#cbd5e1; font-weight:600}
+    .table tbody tr:hover{background:rgba(14, 165, 233, 0.05)}
+    
+    .blink { animation: bl 1s linear infinite; }
+    @keyframes bl { 50% { opacity: .3 } }
+    
+    .tag { padding:4px 8px; border-radius: 12px; font-size: 12px; font-weight:600; display:inline-flex; align-items:center; gap:4px }
+    .tag.waiting { background:#e8fff1; color:#137333 }
+    .tag.in_consult { background:#e6f0ff; color:#1a73e8 }
+    .tag.done { background:#f3f4f6; color:#6b7280 }
+    
+    .btn { 
+      padding:6px 12px; border-radius:8px; display:inline-block; text-decoration:none; 
+      font-size:13px; font-weight:600; border:1px solid var(--border); cursor:pointer;
+      margin-right:6px; margin-bottom:4px;
+    }
+    .btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary-2)); border-color:#065f92; color:white}
+    .btn.secondary{background:var(--input); color:var(--text)}
+    .btn.ghost{background:transparent; color:var(--muted)}
+    .btn:hover{filter:brightness(1.08)}
+    
+    .empty-state{text-align:center; padding:40px; color:var(--muted)}
+    .empty-state h3{margin:0 0 8px; color:var(--text)}
+    
+    .stats{display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap}
+    .stat{background:var(--input); padding:12px; border-radius:8px; border:1px solid var(--border)}
+    .stat-number{font-size:24px; font-weight:700; color:var(--primary)}
+    .stat-label{font-size:12px; color:var(--muted)}
+    
+    .refresh-btn{position:fixed; bottom:20px; right:20px; background:var(--primary); color:white; border:none; border-radius:50%; width:48px; height:48px; cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="logo">📅</span> Agenda Médica — Fila de Consultas</h1>
+    <p class="muted">
+      Quando um BID é aceito, a consulta aparece aqui. Clique no indicador para entrar na sala de vídeo.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-number" id="statWaiting">0</div>
+        <div class="stat-label">Aguardando</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="statInConsult">0</div>
+        <div class="stat-label">Em Consulta</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="statDone">0</div>
+        <div class="stat-label">Finalizadas</div>
+      </div>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Paciente</th>
+          <th>Especialidade</th>
+          <th>Appointment ID</th>
+          <th>Criado</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="agendaRows">
+        <tr>
+          <td colspan="6" class="empty-state">
+            <h3>Carregando agenda...</h3>
+            <p>Aguarde enquanto buscamos suas consultas.</p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap">
+      <a href="/demo.html" class="btn secondary">← Voltar ao Demo</a>
+      <button onclick="clearQueue()" class="btn ghost">Limpar Fila (Demo)</button>
+      <button onclick="addTestAppointment()" class="btn ghost">+ Adicionar Teste</button>
+    </div>
+  </div>
+
+  <button class="refresh-btn" onclick="render()" title="Atualizar">🔄</button>
+
+  <script>
+  (function(){
+    const queueKey = "telemed:agendaQueue";
+    const rows = document.getElementById("agendaRows");
+
+    function render() {
+      const q = JSON.parse(localStorage.getItem(queueKey) || "[]");
+      
+      // Atualizar estatísticas
+      const waiting = q.filter(x => x.status === 'waiting').length;
+      const inConsult = q.filter(x => x.status === 'in_consult').length;
+      const done = q.filter(x => x.status === 'done').length;
+      
+      document.getElementById('statWaiting').textContent = waiting;
+      document.getElementById('statInConsult').textContent = inConsult;
+      document.getElementById('statDone').textContent = done;
+
+      if (q.length === 0) {
+        rows.innerHTML = `
+          <tr>
+            <td colspan="6" class="empty-state">
+              <h3>Sem itens na agenda</h3>
+              <p>Aceite um BID na página de Demo para começar uma consulta.</p>
+              <a href="/demo.html" class="btn primary">Ir para Demo Médico</a>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      rows.innerHTML = q.map(item => {
+        const url = `/consulta/index.html?appointmentId=${encodeURIComponent(item.appointmentId)}&role=doctor&patientId=${encodeURIComponent(item.patientId)}`;
+        
+        let statusTag;
+        switch(item.status) {
+          case "waiting":
+            statusTag = `<span class="tag waiting"><span class="blink">📹</span> Aguardando</span>`;
+            break;
+          case "in_consult":
+            statusTag = `<span class="tag in_consult">🩺 Em Consulta</span>`;
+            break;
+          case "done":
+            statusTag = `<span class="tag done">✅ Finalizada</span>`;
+            break;
+          default:
+            statusTag = `<span class="tag">${item.status}</span>`;
+        }
+
+        const createdTime = new Date(item.createdAt).toLocaleTimeString('pt-BR');
+        
+        return `
+          <tr>
+            <td>${statusTag}</td>
+            <td><strong>${item.name}</strong></td>
+            <td>${item.specialty || '—'}</td>
+            <td><code>${item.appointmentId}</code></td>
+            <td>${createdTime}</td>
+            <td>
+              <a class="btn primary" href="${url}">Entrar na Consulta</a>
+              ${item.status === 'waiting' ? `<button class="btn secondary" onclick="marcarConsulta('${item.appointmentId}','in_consult')">Iniciar</button>` : ''}
+              ${item.status === 'in_consult' ? `<button class="btn secondary" onclick="marcarConsulta('${item.appointmentId}','done')">Finalizar</button>` : ''}
+              <button class="btn ghost" onclick="removerConsulta('${item.appointmentId}')">Remover</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // Simples atualização de status na fila local
+    window.marcarConsulta = (apptId, status) => {
+      const q = JSON.parse(localStorage.getItem(queueKey) || "[]");
+      const i = q.findIndex(x => x.appointmentId === apptId);
+      if (i >= 0) { 
+        q[i].status = status; 
+        q[i].updatedAt = Date.now();
+        localStorage.setItem(queueKey, JSON.stringify(q)); 
+        render(); 
+      }
+    };
+
+    window.removerConsulta = (apptId) => {
+      if (!confirm('Remover esta consulta da agenda?')) return;
+      const q = JSON.parse(localStorage.getItem(queueKey) || "[]");
+      const filtered = q.filter(x => x.appointmentId !== apptId);
+      localStorage.setItem(queueKey, JSON.stringify(filtered));
+      render();
+    };
+
+    window.clearQueue = () => {
+      if (!confirm('Limpar toda a fila de consultas? Esta ação não pode ser desfeita.')) return;
+      localStorage.removeItem(queueKey);
+      render();
+    };
+
+    window.addTestAppointment = () => {
+      const appointmentId = `appt_test_${Date.now()}`;
+      const q = JSON.parse(localStorage.getItem(queueKey) || "[]");
+      q.push({
+        appointmentId,
+        patientId: "paciente-test",
+        bidId: "bid-test",
+        name: "Paciente Teste",
+        specialty: "Cardiologia",
+        status: "waiting",
+        createdAt: Date.now()
+      });
+      localStorage.setItem(queueKey, JSON.stringify(q));
+      render();
+    };
+
+    // Renderizar inicial
+    render();
+
+    // Auto-refresh suave
+    setInterval(render, 5000);
+
+    // Verificar se veio de aceitar BID
+    const params = new URLSearchParams(location.search);
+    const appointmentId = params.get('appointmentId');
+    if (appointmentId) {
+      setTimeout(() => {
+        const element = document.querySelector(`[data-appointment="${appointmentId}"]`);
+        if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+
+  })();
+  </script>
+</body>
+</html>

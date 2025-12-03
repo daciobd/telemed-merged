@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Entrar – TeleMed Pro</title>
+  <meta name="description" content="Acesse sua conta TeleMed Pro para consultas médicas online, agendamento de horários e gestão do seu prontuário médico digital.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://telemed.pro/login">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Entrar – TeleMed Pro">
+  <meta property="og:description" content="Acesse sua conta TeleMed Pro para consultas médicas online, agendamento de horários e gestão do seu prontuário médico digital.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://telemed.pro/login">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root{--primary:#1e40af;--prim2:#3b82f6;--sec:#10b981;--bg:#0f172a;--card:#1f2937;--border:#2b3645;--text:#f8fafc;--mut:#94a3b8;--hero:linear-gradient(135deg,#1e40af 0%,#3b82f6 40%,#10b981 100%)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,var(--bg),#0b1220);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .wrap{max-width:460px;width:100%;padding:28px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:0 10px 26px rgba(0,0,0,.25)}
+    .brand{text-align:center;margin-bottom:24px}
+    .brand h1{font-size:2rem;font-weight:800;background:var(--hero);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .label{display:block;margin:.4rem 0;color:var(--mut);font-weight:500}
+    input{width:100%;background:#0b1220;border:1px solid var(--border);border-radius:12px;color:#fff;padding:.8rem 1rem;font-size:.95rem}
+    input:focus{outline:0;border-color:var(--prim2);box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:#0f172a;padding:.9rem 1.1rem;border-radius:12px;color:#fff;text-decoration:none;font-weight:700;cursor:pointer;transition:all 0.3s;width:100%}
+    .btn-primary{background:var(--hero);border-color:transparent}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(59,130,246,.3)}
+    .help{color:var(--mut);font-size:.9rem;text-align:center}
+    .sep{display:flex;align-items:center;gap:10px;margin:16px 0}
+    .sep:before,.sep:after{content:"";flex:1;height:1px;background:var(--border)}
+    .forgot{text-align:center;margin-top:12px}
+    .forgot a{color:var(--prim2);text-decoration:none}
+    .forgot a:hover{text-decoration:underline}
+    .signup{text-align:center;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+    .error{background:#dc2626;border:1px solid #ef4444;color:#fef2f2;padding:12px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand">
+        <h1>TeleMed Pro</h1>
+        <p class="help">Faça login para acessar sua conta</p>
+      </div>
+
+      <div id="error" class="error" style="display:none"></div>
+
+      <!-- Google Sign-In -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:16px">
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-auto_prompt="false"
+             data-callback="onGoogleCredential"></div>
+        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-shape="pill" data-text="signin_with" data-logo_alignment="left"></div>
+      </div>
+
+      <div class="sep"><span class="help">ou</span></div>
+
+      <!-- Email/Password Login -->
+      <form id="loginForm">
+        <div style="margin-bottom:16px">
+          <label class="label" for="email">E-mail</label>
+          <input id="email" type="email" placeholder="seu@email.com" autocomplete="email" required>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label class="label" for="password">Senha</label>
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10,17 15,12 10,7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Entrar
+        </button>
+      </form>
+
+      <div class="forgot">
+        <a href="/recuperar-senha">Esqueci minha senha</a>
+      </div>
+
+      <!-- Acesso Demo (1-clique) -->
+      <div class="card" style="margin-top:12px;padding:14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3)">
+        <div class="help" style="margin-bottom:8px;color:var(--secondary);font-weight:600">Acesso rápido para demonstração</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="demoLogin('doctor')" style="flex:1;min-width:180px">👨‍⚕️ Entrar como Médico demo</button>
+          <button class="btn" onclick="demoLogin('patient')" style="flex:1;min-width:180px">🧑‍🦰 Entrar como Paciente demo</button>
+        </div>
+        <div class="help" style="margin-top:8px;font-size:0.8rem">
+          Médico: <code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:4px">medico.demo@telemed.pro</code> / <code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:4px">demo1234</code> &nbsp;•&nbsp;
+          Paciente: <code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:4px">paciente.demo@telemed.pro</code> / <code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:4px">demo1234</code>
+        </div>
+      </div>
+
+      <div class="signup">
+        <p class="help">Não tem uma conta? <a href="/consulta/" style="color:var(--prim2);text-decoration:none;font-weight:600">Criar conta</a></p>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px">
+      <a href="/lp" class="help" style="text-decoration:none">← Voltar para início</a>
+    </div>
+  </div>
+
+<script>
+  const DEMO = {
+    doctor: { email:'medico.demo@telemed.pro', name:'Dr. Demo', type:'doctor', crm:'12345-SP', specialty:'Clínica Geral' },
+    patient:{ email:'paciente.demo@telemed.pro', name:'Paciente Demo', type:'patient', cpf:'000.000.000-00' }
+  };
+  const qs = new URLSearchParams(location.search);
+  const NEXT = qs.get('next');           // prioriza next se vier
+  const AFTER_PATIENT = "/como-funciona"; // troque para "/precos" se quiser
+
+  function go(kind){
+    if (NEXT) return (location.href = NEXT);
+    if (kind === 'doctor') return (location.href = '/medico');
+    return (location.href = AFTER_PATIENT);
+  }
+  function demoLogin(kind){
+    const u = DEMO[kind]; localStorage.setItem('telemed_user', JSON.stringify(u)); go(kind);
+  }
+  function loginEmail(){
+    const email = document.getElementById('email').value.trim();
+    const pw    = document.getElementById('password').value;
+    if (!email) return alert('Preencha o e-mail');
+    if (email === DEMO.doctor.email && pw === 'demo1234') return demoLogin('doctor');
+    if (email === DEMO.patient.email && pw === 'demo1234') return demoLogin('patient');
+    // fallback simples → paciente
+    const cur = { email, name: email.split('@')[0], type:'patient' };
+    localStorage.setItem('telemed_user', JSON.stringify(cur));
+    go('patient');
+  }
+  (function(){ const as = qs.get('demo'); if (as && DEMO[as]) demoLogin(as); })();
+  
+  function showError(message) {
+    const errorEl = $('#error');
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+    setTimeout(() => errorEl.style.display = 'none', 5000);
+  }
+
+  // Traditional login form
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    loginEmail();
+  });
+
+  // Google Identity Services callback
+  window.onGoogleCredential = (resp) => {
+    try {
+      const payload = JSON.parse(atob(resp.credential.split('.')[1]));
+      const profile = { 
+        name: payload.name, 
+        email: payload.email, 
+        picture: payload.picture, 
+        type: 'patient', // Default for Google auth
+        googleAuth: true,
+        loginTime: new Date().toISOString()
+      };
+      
+      localStorage.setItem('telemed_user', JSON.stringify(profile));
+      localStorage.setItem('telemed_auth', 'true');
+      window.location.href = '/dashboard';
+    } catch (e) { 
+      console.error('Google credential parse error', e); 
+      showError('Falha no login Google. Tente novamente.'); 
+    }
+  }
+
+  // Auto-focus email field
+  $('#email').focus();
+
+  // Enter key navigation
+  $('#email').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      $('#password').focus();
+    }
+  });
+</script>
+</body>
+</html>

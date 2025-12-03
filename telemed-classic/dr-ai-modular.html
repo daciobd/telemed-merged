@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dr. AI - Assistente Modular | TeleMed</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">🤖 Dr. AI - Versão Modular</h1>
+      <p class="text-gray-600">Interface construída com componentes separados e reutilizáveis</p>
+      <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <p class="text-sm text-blue-900"><strong>📦 Estrutura do Kit:</strong></p>
+        <ul class="text-xs text-blue-800 mt-2 space-y-1">
+          <li>✅ <code>api.ts</code> - Stubs de API (answers, tts, stt, auditLog)</li>
+          <li>✅ <code>hooks/use-telemed-ai.ts</code> - Hook com lógica de estado e guardrails</li>
+          <li>✅ <code>ConsentGate.tsx</code> - Gate de consentimento LGPD</li>
+          <li>✅ <code>MessageBubble.tsx</code> - Componente de mensagem</li>
+          <li>✅ <code>EmergencyCTA.tsx</code> - CTA de emergência</li>
+          <li>✅ <code>OutOfScopeDialog.tsx</code> - Modal fora do escopo</li>
+          <li>✅ <code>TelemedAIInterface.tsx</code> - Interface principal</li>
+          <li>✅ <code>index.ts</code> - Barrel exports</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="app-root"></div>
+
+    <div class="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">📝 Como usar os componentes:</h2>
+      <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm"><code>// Import completo do barrel
+import { TelemedAIInterface } from "@/components/telemed-ai";
+
+// Ou imports individuais
+import { 
+  ConsentGate, 
+  MessageBubble, 
+  useTelemedAI 
+} from "@/components/telemed-ai";
+
+// Usar o hook isoladamente
+const { messages, send, typing } = useTelemedAI(doctorInfo);
+
+// Substituir API stubs por HTTP real em api.ts
+export async function answers(question: string) {
+  const res = await fetch("/api/ai/answer", {
+    method: "POST",
+    body: JSON.stringify({ question })
+  });
+  return res.json();
+}</code></pre>
+    </div>
+  </div>
+
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // Simulação do TelemedAIInterface (versão simplificada para demo)
+    function TelemedAIDemo() {
+      const [screen, setScreen] = useState("info");
+
+      if (screen === "info") {
+        return (
+          <div className="bg-white rounded-xl shadow-2xl p-8 text-center">
+            <div className="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl">🤖</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Assistente Dr. AI - Modular</h2>
+            <p className="text-gray-600 mb-6">Componentes TypeScript prontos para integração</p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={() => window.location.href = '/dr-ai-assistant.html'}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                🚀 Ver Versão Completa (HTML/CDN)
+              </button>
+              
+              <a 
+                href="/"
+                className="block w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                ← Voltar para Homepage
+              </a>
+            </div>
+
+            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200 text-left">
+              <p className="text-sm font-semibold text-green-900 mb-2">✅ Componentes instalados em:</p>
+              <code className="text-xs text-green-800 block bg-white p-2 rounded">
+                apps/telemed-deploy-ready/src/components/telemed-ai/
+              </code>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app-root'));
+    root.render(<TelemedAIDemo />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed — Demo Médico</title>
+  <meta name="description" content="Fluxo guiado para médicos - cadastro, gestão de BIDs e atendimento online." />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121935;
+      --text: #eaf0ff;
+      --muted: #b9c2e2;
+      --accent: #16a34a;
+      --accent-strong: #15803d;
+      --ring: rgba(22,163,74,.5);
+      --ok: #39d98a;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(22,163,74,.15), transparent 60%),
+                  radial-gradient(900px 500px at -10% 10%, rgba(57,217,138,.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--ok));
+      box-shadow: 0 8px 24px rgba(22,163,74,.35);
+      font-weight: 900;
+    }
+    .brand-title { font-weight: 800; letter-spacing: .3px; color: var(--text); }
+    .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(22,163,74,.12); color: var(--accent); border: 1px solid rgba(22,163,74,.25); }
+    
+    h1 { font-size: clamp(28px, 3.8vw, 44px); line-height: 1.15; margin: 0 0 12px; }
+    p.lead { font-size: clamp(16px, 2.1vw, 20px); color: var(--muted); margin: 0 0 20px; }
+    
+    .card {
+      background: var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 20px; padding: 20px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,.18); margin-bottom: 20px;
+    }
+    
+    .step-list { display: grid; gap: 16px; margin: 20px 0; }
+    .step {
+      display: flex; gap: 16px; align-items: flex-start; padding: 16px; 
+      border-radius: 12px; background: rgba(255,255,255,.02);
+    }
+    .step-number {
+      flex: 0 0 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; 
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+    }
+    .step-content h3 { margin: 0 0 8px; font-size: 18px; }
+    .step-content p { margin: 0; color: var(--muted); }
+    
+    .btn {
+      appearance: none; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 18px; border-radius: 14px; font-weight: 700; font-size: 16px; letter-spacing: .2px; 
+      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+      color: white; background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      box-shadow: 0 12px 24px var(--ring); margin: 8px 8px 8px 0;
+    }
+    .btn:focus { outline: 3px solid var(--ring); outline-offset: 2px; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    
+    .ghost { background: transparent; color: var(--accent); border: 1px solid rgba(22,163,74,.4); }
+    
+    .warning {
+      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3); color: #fbbf24;
+      padding: 12px; border-radius: 12px; font-size: 14px; margin: 16px 0;
+    }
+    
+    footer { margin-top: 36px; padding: 18px 0; color: var(--muted); font-size: 14px; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="brand" href="/" aria-label="TeleMed Consulta">
+        <div class="logo" aria-hidden="true">Dr</div>
+        <strong class="brand-title">TeleMed Consulta</strong>
+      </a>
+      <span class="chip">Demo Médico</span>
+    </header>
+
+    <main>
+      <h1>👩‍⚕️ Bem-vindo, Doutor(a)!</h1>
+      <p class="lead">Siga este fluxo guiado para testar a plataforma como um médico oferecendo atendimento online.</p>
+
+      <div class="warning">
+        ⚠️ <strong>Área em desenvolvimento:</strong> Algumas funcionalidades médicas ainda estão sendo implementadas. Reportaremos o que está disponível vs. em construção.
+      </div>
+
+      <div class="card">
+        <h2 style="margin: 0 0 16px; font-size: 20px;">🏥 Seu percurso profissional no TeleMed</h2>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Entenda o modelo médico</h3>
+              <p>Como funciona o sistema BID, intervalos de agenda e modelo flexível</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Cadastro médico (CRM)</h3>
+              <p>Validação profissional, especialidades e dados do conselho</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Dashboard e agenda</h3>
+              <p>Ver BIDs pendentes, gerenciar horários e aceitar propostas</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h3>Consultório virtual</h3>
+              <p>Videochamada, MedicalDesk Advance, ReceitaCerta integrado</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <h3>Documentos e receitas</h3>
+              <p>Prescrições digitais válidas, atestados, laudos automáticos</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <a class="btn" href="/medico/como-funciona.html" data-testid="button-start-doctor-flow">
+          1️⃣ Começar fluxo médico →
+        </a>
+        <a class="btn ghost" href="/cadastro-medico.html" data-testid="button-direct-doctor-register">
+          ⚡ Pular para cadastro médico
+        </a>
+        <a class="btn ghost" href="/dashboard" data-testid="button-direct-dashboard">
+          🏥 Ver dashboard (demo)
+        </a>
+        <a class="btn ghost" href="/escolha-perfil.html" data-testid="button-back-choice">
+          ← Voltar à escolha
+        </a>
+      </div>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 style="margin: 0 0 12px; font-size: 18px; color: var(--accent);">🩺 Ferramentas médicas integradas</h3>
+        <div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+          <div style="background: rgba(255,255,255,.02); padding: 16px; border-radius: 12px;">
+            <h4 style="margin: 0 0 8px; font-size: 16px;">MedicalDesk Advance</h4>
+            <p style="margin: 0; color: var(--muted); font-size: 14px;">Protocolos clínicos e suporte diagnóstico em tempo real</p>
+          </div>
+          <div style="background: rgba(255,255,255,.02); padding: 16px; border-radius: 12px;">
+            <h4 style="margin: 0 0 8px; font-size: 16px;">ReceitaCerta</h4>
+            <p style="margin: 0; color: var(--muted); font-size: 14px;">Prescrições digitais válidas e integradas</p>
+          </div>
+          <div style="background: rgba(255,255,255,.02); padding: 16px; border-radius: 12px;">
+            <h4 style="margin: 0 0 8px; font-size: 16px;">IA Clínica</h4>
+            <p style="margin: 0; color: var(--muted); font-size: 14px;">Suporte diagnóstico e sugestões de especialidade</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 12px; font-size: 18px;">💡 Dicas para médicos testadores</h3>
+        <ul style="color: var(--muted); margin: 0; padding-left: 20px;">
+          <li>Use CRM real para validação (dados ficam seguros)</li>
+          <li>Teste a qualidade da videochamada em diferentes horários</li>
+          <li>Experimente aceitar/rejeitar BIDs com valores variados</li>
+          <li>Explore as ferramentas integradas (MDA, ReceitaCerta)</li>
+          <li>Reporte bugs específicos da área médica</li>
+        </ul>
+      </div>
+    </main>
+
+    <footer>
+      <div>TeleMed Consulta - Fluxo Demo Médico</div>
+      <div style="margin-top: 8px;">
+        <a href="/escolha-perfil.html">Voltar</a> · <a href="/">Início</a> · <a href="#suporte">Suporte</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

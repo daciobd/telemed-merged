@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard Piloto — Telemed</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;max-width:1100px;margin:32px auto;padding:0 16px}
+    h1{font-size:1.6rem;margin-bottom:6px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+    .card{border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+    .kpi{font-size:2rem;font-weight:700}
+    .muted{color:#6b7280}
+    .chart{display:flex;align-items:flex-end;height:160px;gap:4px;border:1px solid #e5e7eb;border-radius:12px;padding:8px;overflow-x:auto}
+    .bar{width:14px;background:#3b82f6;border-radius:6px 6px 0 0}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border:1px solid #e5e7eb;padding:8px 10px;text-align:left}
+    th{background:#f9fafb}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:.8rem}
+    .ok{background:#dcfce7;color:#065f46}
+    .warn{background:#fef9c3;color:#78350f}
+    .bad{background:#fee2e2;color:#7f1d1d}
+  </style>
+</head>
+<body>
+  <h1>Dashboard Piloto (demo)</h1>
+  <p class="muted">Janela: últimas 24h — Fuso: America/Sao_Paulo</p>
+
+  <div class="grid">
+    <div class="card"><div class="muted">Usuários ativos</div><div id="kpi-users" class="kpi">—</div></div>
+    <div class="card"><div class="muted">Perguntas simuladas</div><div id="kpi-asks" class="kpi">—</div></div>
+    <div class="card"><div class="muted">Erros/Fallbacks</div><div id="kpi-errors" class="kpi">—</div></div>
+    <div class="card"><div class="muted">Tempo médio resposta</div><div id="kpi-avg" class="kpi">—</div></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <h2 style="margin:0">Eventos por hora (24h)</h2>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button id="btn-spike" data-action="spike" style="padding:8px 16px;border:none;border-radius:6px;background:#3b82f6;color:white;cursor:pointer;font-weight:500">Spike de carga</button>
+        <div>Saúde: <span id="health" class="badge">—</span></div>
+      </div>
+    </div>
+    <div id="chart" class="chart" aria-label="Eventos por hora"></div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:12px">
+    <div class="card">
+      <h3 style="margin-top:0">Por evento (24h)</h3>
+      <table id="tbl-events"><thead><tr><th>Evento</th><th>Qtde</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Top páginas (24h)</h3>
+      <table id="tbl-pages"><thead><tr><th>Página</th><th>Qtde</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <script>
+    async function loadMetrics(range='24h'){
+      const r = await fetch(`/api/telemetry/metrics?range=${encodeURIComponent(range)}`);
+      if(!r.ok) throw new Error('Falha ao carregar métricas');
+      return r.json();
+    }
+    function updateCard(sel, val){ document.querySelector(sel).textContent = val == null ? '—' : String(val); }
+    function renderBars(el, points){
+      const max = Math.max(1, ...points.map(p=>Number(p.events)||0));
+      el.innerHTML='';
+      for(const p of points){
+        const h = Math.round((Number(p.events)||0)/max*150)+6;
+        const bar = document.createElement('div');
+        bar.className='bar'; bar.style.height = h+'px'; bar.title = `${p.hour} — ${p.events}`;
+        el.appendChild(bar);
+      }
+    }
+    function renderTable(tbodySel, rows, cols){
+      const tb = document.querySelector(tbodySel); tb.innerHTML='';
+      for(const r of rows){
+        const tr = document.createElement('tr');
+        for(const k of cols){
+          const td = document.createElement('td');
+          td.textContent = r[k];
+          tr.appendChild(td);
+        }
+        tb.appendChild(tr);
+      }
+    }
+    function setHealthBadge(errors, asks, avg){
+      const el = document.getElementById('health');
+      const ratio = (asks>0)? (errors/asks) : 0;
+      if(ratio < 0.05 && (avg==null || avg < 2000)){ el.textContent='Saudável'; el.className='badge ok'; }
+      else if(ratio < 0.15 && (avg==null || avg < 3500)){ el.textContent='Atenção'; el.className='badge warn'; }
+      else { el.textContent='Crítico'; el.className='badge bad'; }
+    }
+    (async function(){
+      try{
+        const m = await loadMetrics('24h');
+        updateCard('#kpi-users', m.totals.active_users);
+        updateCard('#kpi-asks', m.totals.asks);
+        updateCard('#kpi-errors', m.totals.errors);
+        updateCard('#kpi-avg', m.totals.avg_duration==null? '—' : Math.round(m.totals.avg_duration)+' ms');
+        renderBars(document.getElementById('chart'), m.series.by_hour);
+        renderTable('#tbl-events tbody', m.breakdowns.by_event, ['event_name','c']);
+        renderTable('#tbl-pages tbody', m.breakdowns.top_pages, ['page','c']);
+        setHealthBadge(Number(m.totals.errors||0), Number(m.totals.asks||0), m.totals.avg_duration==null? null : Number(m.totals.avg_duration));
+      } catch(e){
+        alert('Não foi possível carregar métricas.');
+      }
+    })();
+
+    (function(){
+      const FLAGS_KEY='telemed_flags_v1';
+      function flags(){ try { return JSON.parse(localStorage.getItem(FLAGS_KEY))||{} } catch { return {} } }
+      function on(){ const f = flags(); return !!(f.telemetry_enabled && f.telemetry_mode==='anonymous'); }
+
+      function uuidv4(){ return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+        const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+        const v = c==='x' ? r : (r&0x3|0x8); return v.toString(16);
+      });}
+      let sessionId = sessionStorage.getItem('telemed_session_id');
+      if(!sessionId){ sessionId = uuidv4(); sessionStorage.setItem('telemed_session_id', sessionId); }
+
+      function send(event_name, extra){
+        if(!on()) { console.warn('Telemetria desabilitada. Enviando evento sem verificação.'); }
+        const payload = {
+          event_name,
+          ts: new Date().toISOString(),
+          session_id: sessionId,
+          role: 'doctor',
+          page: location.pathname.slice(0,64),
+          version: 'demo',
+          duration_ms: extra?.duration_ms,
+          event_props: extra?.event_props || {}
+        };
+        fetch('/api/telemetry/event', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        }).then(r => {
+          if(r.ok) console.log('Evento enviado com sucesso:', event_name);
+          else console.error('Erro ao enviar evento:', r.status);
+        }).catch(err => console.error('Falha no envio:', err));
+      }
+
+      const spikeBtn = document.querySelector('[data-action="spike"]') || document.getElementById('btn-spike');
+      if (spikeBtn){
+        spikeBtn.addEventListener('click', async ()=>{
+          const t0 = performance.now();
+          
+          spikeBtn.textContent = 'Enviando...';
+          spikeBtn.disabled = true;
+          
+          const count = 50;
+          const promises = [];
+          
+          for(let i=0; i<count; i++){
+            const promise = new Promise((resolve) => {
+              setTimeout(() => {
+                const eventPromise = fetch('/api/telemetry/event', {
+                  method:'POST', 
+                  headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({
+                    event_name: 'cta_click',
+                    ts: new Date().toISOString(),
+                    session_id: sessionId,
+                    role: 'doctor',
+                    page: location.pathname.slice(0,64),
+                    version: 'demo',
+                    duration_ms: Math.floor(Math.random() * 100) + 50,
+                    event_props: { step_index: i % 5 }
+                  })
+                });
+                resolve(eventPromise);
+              }, i * 20);
+            });
+            promises.push(promise);
+          }
+
+          try {
+            const allRequests = await Promise.all(promises);
+            const results = await Promise.all(allRequests);
+            const failures = results.filter(r => !r.ok).length;
+            
+            const t1 = performance.now();
+            const duration = Math.floor(t1 - t0);
+            
+            if(failures > 0){
+              alert(`Spike completado com ${failures} falhas de ${count} eventos. Duração: ${duration}ms`);
+            } else {
+              alert(`Spike de carga enviado! ${count} eventos processados com sucesso. Duração: ${duration}ms`);
+            }
+            location.reload();
+          } catch(err){
+            console.error('Erro no spike:', err);
+            alert(`Erro ao enviar spike de carga: ${err.message}`);
+            spikeBtn.textContent = 'Spike de carga';
+            spikeBtn.disabled = false;
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

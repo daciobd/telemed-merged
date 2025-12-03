@@ -1,0 +1,31 @@
+<!-- Consentimento de telemetria (demo) -->
+<div id="consent-banner" style="position:fixed;left:0;right:0;bottom:0;background:#0b1320;color:#fff;padding:12px 16px;display:none;z-index:9999">
+  <div style="max-width:980px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px">
+      <strong>Demonstração:</strong> Coletamos <u>eventos técnicos anônimos</u> (tour/erros) por até <b>7 dias</b> para melhorar a experiência. <b>Não</b> armazenamos o que você digita. <a href="/termos-privacidade.html#demo-telemetria" target="_blank" style="color:#9dd6ff">Saiba mais</a>.
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="consent-accept" style="padding:8px 12px;border-radius:8px;border:none;background:#22c55e;color:#06250f">Aceitar</button>
+      <button id="consent-essential" style="padding:8px 12px;border-radius:8px;border:1px solid #9ca3af;background:transparent;color:#fff">Somente essenciais</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const FLAGS_KEY='telemed_flags_v1';
+  const CONSENT_KEY='demo_consent_v1';
+  function loadFlags(){try{return JSON.parse(localStorage.getItem(FLAGS_KEY))||{}}catch{return {}}}
+  function saveFlags(f){localStorage.setItem(FLAGS_KEY, JSON.stringify(f))}
+  function show(){document.getElementById('consent-banner').style.display='block'}
+  function hide(){document.getElementById('consent-banner').style.display='none'}
+  if(!localStorage.getItem(CONSENT_KEY) && navigator.doNotTrack !== '1') show();
+  document.getElementById('consent-accept').addEventListener('click',()=>{
+    const f=Object.assign({telemetry_mode:'anonymous',retention_days:7,redact_level:'strict'},loadFlags(),{telemetry_enabled:true});
+    saveFlags(f); localStorage.setItem(CONSENT_KEY,'accepted'); hide();
+  });
+  document.getElementById('consent-essential').addEventListener('click',()=>{
+    const f=Object.assign({telemetry_mode:'anonymous',retention_days:7,redact_level:'strict'},loadFlags(),{telemetry_enabled:false});
+    saveFlags(f); localStorage.setItem(CONSENT_KEY,'essentials'); hide();
+  });
+})();
+</script>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipe Médica - TeleMed Sistema</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #FAF8F5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #A7C7E7 0%, #92B4D7 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .back-btn {
+            background: #A7C7E7;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 2rem;
+            transition: all 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            background: #92B4D7;
+            transform: translateY(-2px);
+        }
+        
+        .stats-section {
+            background: linear-gradient(135deg, #E9F4FF 0%, #F0F8FF 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #A7C7E7;
+            margin-bottom: 0.5rem;
+        }
+        
+        .doctors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .doctor-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease;
+            position: relative;
+        }
+        
+        .doctor-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .doctor-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .doctor-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #A7C7E7, #F4D9B4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-right: 1rem;
+        }
+        
+        .doctor-info h3 {
+            color: #A7C7E7;
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .doctor-specialty {
+            background: #E9F4FF;
+            color: #A7C7E7;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .doctor-rating {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stars {
+            color: #FFD700;
+            margin-right: 0.5rem;
+        }
+        
+        .doctor-details {
+            margin: 1rem 0;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .detail-item i {
+            color: #A7C7E7;
+            width: 20px;
+            margin-right: 0.5rem;
+        }
+        
+        .price-range {
+            background: #F0F8FF;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        
+        .consult-btn {
+            width: 100%;
+            background: #A7C7E7;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        
+        .consult-btn:hover {
+            background: #92B4D7;
+        }
+        
+        .specialty-filter {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .filter-btn {
+            background: white;
+            border: 2px solid #A7C7E7;
+            color: #A7C7E7;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 0.3rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: #A7C7E7;
+            color: white;
+        }
+        
+        .online-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .doctors-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .doctor-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .doctor-avatar {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-user-md"></i> Nossa Equipe Médica</h1>
+        <p>Médicos qualificados e verificados à sua disposição</p>
+    </div>
+
+    <div class="container">
+        <a href="/" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Voltar ao Site
+        </a>
+
+        <div class="stats-section">
+            <h2>🩺 Nossos Números</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">1.247</div>
+                    <p>Médicos Credenciados</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">25</div>
+                    <p>Especialidades</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">4.9</div>
+                    <p>Avaliação Média ⭐</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <p>Satisfação</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24h</div>
+                    <p>Disponibilidade</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="specialty-filter">
+            <h3 style="margin-bottom: 1rem;">Filtrar por Especialidade:</h3>
+            <button class="filter-btn active" onclick="filterSpecialty('all')">Todos</button>
+            <button class="filter-btn" onclick="filterSpecialty('cardiologia')">Cardiologia</button>
+            <button class="filter-btn" onclick="filterSpecialty('pediatria')">Pediatria</button>
+            <button class="filter-btn" onclick="filterSpecialty('psiquiatria')">Psiquiatria</button>
+            <button class="filter-btn" onclick="filterSpecialty('ginecologia')">Ginecologia</button>
+            <button class="filter-btn" onclick="filterSpecialty('ortopedia')">Ortopedia</button>
+            <button class="filter-btn" onclick="filterSpecialty('dermatologia')">Dermatologia</button>
+        </div>
+
+        <div class="doctors-grid" id="doctors-container">
+            <!-- Dr. João Silva - Cardiologia -->
+            <div class="doctor-card" data-specialty="cardiologia">
+                <div class="online-indicator"></div>
+                <div class="doctor-header">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <div class="doctor-info">
+                        <h3>Dr. João Silva</h3>
+                        <div class="doctor-specialty">Cardiologia</div>
+                        <div class="doctor-rating">
+                            <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <span>4.9 (234 avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doctor-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>CRM 123456-SP | USP - Cardiologia</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>15 anos de experiência</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hospital"></i>
+                        <span>Hospital Sírio-Libanês</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-heart"></i>
+                        <span>Especialista em Hipertensão</span>
+                    </div>
+                </div>
+                
+                <div class="price-range">
+                    <strong>Faixa de Preço: R$ 180 - 350</strong>
+                </div>
+                
+                <a href="/agendamento?especialidade=cardiologia" class="consult-btn">
+                    <i class="fas fa-video"></i> Consultar Agora
+                </a>
+            </div>
+
+            <!-- Dra. Maria Santos - Pediatria -->
+            <div class="doctor-card" data-specialty="pediatria">
+                <div class="online-indicator"></div>
+                <div class="doctor-header">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <div class="doctor-info">
+                        <h3>Dra. Maria Santos</h3>
+                        <div class="doctor-specialty">Pediatria</div>
+                        <div class="doctor-rating">
+                            <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <span>4.8 (189 avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doctor-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>CRM 234567-RJ | UFRJ - Pediatria</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>12 anos de experiência</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hospital"></i>
+                        <span>Hospital Copa D'Or</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-baby"></i>
+                        <span>Especialista em Neonatologia</span>
+                    </div>
+                </div>
+                
+                <div class="price-range">
+                    <strong>Faixa de Preço: R$ 120 - 220</strong>
+                </div>
+                
+                <a href="/agendamento?especialidade=pediatria" class="consult-btn">
+                    <i class="fas fa-video"></i> Consultar Agora
+                </a>
+            </div>
+
+            <!-- Dr. Pedro Costa - Psiquiatria -->
+            <div class="doctor-card" data-specialty="psiquiatria">
+                <div class="online-indicator"></div>
+                <div class="doctor-header">
+                    <div class="doctor-avatar">🧠</div>
+                    <div class="doctor-info">
+                        <h3>Dr. Pedro Costa</h3>
+                        <div class="doctor-specialty">Psiquiatria</div>
+                        <div class="doctor-rating">
+                            <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <span>4.9 (312 avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doctor-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>CRM 345678-SP | UNIFESP - Psiquiatria</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>18 anos de experiência</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hospital"></i>
+                        <span>IPq - Instituto de Psiquiatria</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-brain"></i>
+                        <span>Especialista em Depressão</span>
+                    </div>
+                </div>
+                
+                <div class="price-range">
+                    <strong>Faixa de Preço: R$ 200 - 400</strong>
+                </div>
+                
+                <a href="/agendamento?especialidade=psiquiatria" class="consult-btn">
+                    <i class="fas fa-video"></i> Consultar Agora
+                </a>
+            </div>
+
+            <!-- Dra. Ana Oliveira - Ginecologia -->
+            <div class="doctor-card" data-specialty="ginecologia">
+                <div class="online-indicator"></div>
+                <div class="doctor-header">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <div class="doctor-info">
+                        <h3>Dra. Ana Oliveira</h3>
+                        <div class="doctor-specialty">Ginecologia</div>
+                        <div class="doctor-rating">
+                            <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <span>4.8 (156 avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doctor-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>CRM 456789-MG | UFMG - Ginecologia</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>10 anos de experiência</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hospital"></i>
+                        <span>Hospital Mater Dei</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-venus"></i>
+                        <span>Especialista em Reprodução</span>
+                    </div>
+                </div>
+                
+                <div class="price-range">
+                    <strong>Faixa de Preço: R$ 150 - 280</strong>
+                </div>
+                
+                <a href="/agendamento?especialidade=ginecologia" class="consult-btn">
+                    <i class="fas fa-video"></i> Consultar Agora
+                </a>
+            </div>
+
+            <!-- Dr. Carlos Mendes - Ortopedia -->
+            <div class="doctor-card" data-specialty="ortopedia">
+                <div class="online-indicator"></div>
+                <div class="doctor-header">
+                    <div class="doctor-avatar">🦴</div>
+                    <div class="doctor-info">
+                        <h3>Dr. Carlos Mendes</h3>
+                        <div class="doctor-specialty">Ortopedia</div>
+                        <div class="doctor-rating">
+                            <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <span>4.7 (203 avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doctor-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>CRM 567890-RS | UFRGS - Ortopedia</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>20 anos de experiência</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hospital"></i>
+                        <span>Hospital Moinhos de Vento</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-bone"></i>
+                        <span>Especialista em Coluna</span>
+                    </div>
+                </div>
+                
+                <div class="price-range">
+                    <strong>Faixa de Preço: R$ 170 - 320</strong>
+                </div>
+                
+                <a href="/agendamento?especialidade=ortopedia" class="consult-btn">
+                    <i class="fas fa-video"></i> Consultar Agora
+                </a>
+            </div>
+
+            <!-- Dra. Fernanda Lima - Dermatologia -->
+            <div class="doctor-card" data-specialty="dermatologia">
+                <div class="online-indicator"></div>
+                <div class="doctor-header">
+                    <div class="doctor-avatar">🔬</div>
+                    <div class="doctor-info">
+                        <h3>Dra. Fernanda Lima</h3>
+                        <div class="doctor-specialty">Dermatologia</div>
+                        <div class="doctor-rating">
+                            <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <span>4.9 (178 avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doctor-details">
+                    <div class="detail-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>CRM 678901-PR | UFPR - Dermatologia</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-clock"></i>
+                        <span>8 anos de experiência</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-hospital"></i>
+                        <span>Hospital Pequeno Príncipe</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-eye"></i>
+                        <span>Especialista em Acne</span>
+                    </div>
+                </div>
+                
+                <div class="price-range">
+                    <strong>Faixa de Preço: R$ 140 - 250</strong>
+                </div>
+                
+                <a href="/agendamento?especialidade=dermatologia" class="consult-btn">
+                    <i class="fas fa-video"></i> Consultar Agora
+                </a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 3rem 0; background: white; padding: 2rem; border-radius: 20px;">
+            <h2>Não encontrou o especialista ideal?</h2>
+            <p style="margin: 1rem 0;">Temos mais de 1.200 médicos em 25 especialidades diferentes</p>
+            <a href="/patient-bidding" style="background: #A7C7E7; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; margin: 0.5rem;">
+                <i class="fas fa-search"></i> Buscar Mais Especialistas
+            </a>
+            <a href="/dr-ai/" style="background: #F4D9B4; color: #333; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; margin: 0.5rem;">
+                <i class="fas fa-robot"></i> Usar Dr. AI para Orientação
+            </a>
+        </div>
+
+        <div style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <p><strong>Todos os médicos são verificados e licenciados pelo CFM</strong></p>
+            <p>Suporte: suporte@telemed-sistema.replit.dev | Dúvidas: <a href="/faq.html">FAQ</a></p>
+        </div>
+    </div>
+
+    <script>
+        function filterSpecialty(specialty) {
+            const cards = document.querySelectorAll('.doctor-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Remove active class from all buttons
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Show/hide cards based on specialty
+            cards.forEach(card => {
+                if (specialty === 'all' || card.dataset.specialty === specialty) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

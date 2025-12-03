@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Telemed – Dr. AI Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin:0; }
+    .wrap { display:grid; grid-template-columns: 1.2fr 1fr; height:100vh; }
+    header { padding:14px 18px; border-bottom:1px solid #eee; display:flex; gap:12px; align-items:center; }
+    .badge { padding:4px 8px; border-radius:999px; font-size:12px; background:#eef; margin-left:6px; }
+    .stage { padding:16px; border-bottom:1px dashed #ddd; }
+    .json { background:#0e1116; color:#c7e1ff; padding:12px; border-radius:8px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; }
+    .ok { color:#0a7a27; }
+    .warn { color:#b86b00; }
+    .err { color:#b00020; }
+    button { padding:10px 14px; border-radius:10px; border:0; box-shadow:0 1px 2px rgba(0,0,0,.08); cursor:pointer; }
+    button.primary { background:#1c64f2; color:#fff; }
+    button.ghost { background:#f3f4f6; }
+    iframe { width:100%; height:100%; border:0; }
+    .pill { display:inline-flex; gap:6px; align-items:center; margin-right:8px; }
+  </style>
+  <!-- DR-AI DEMO: BANNER & NAV -->
+  <style>
+    :root{
+      --tm-bg:#0b1220; --tm-card:#0f172a; --tm-text:#e2e8f0; --tm-muted:#94a3b8;
+      --tm-brand:#60a5fa; --tm-ok:#34d399; --tm-border:rgba(148,163,184,.22);
+    }
+    .tm-demo-bar{
+      position: sticky; top: 0; z-index: 1000;
+      background: linear-gradient(180deg, rgba(96,165,250,.10), rgba(96,165,250,0) 55%), var(--tm-card);
+      border-bottom: 1px solid var(--tm-border);
+      color: var(--tm-text);
+    }
+    .tm-demo-wrap{max-width:1100px; margin:0 auto; padding:10px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
+    .tm-demo-left{display:flex; gap:12px; align-items:center;}
+    .tm-badge{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:6px 10px; border:1px solid var(--tm-border); border-radius:999px;
+      background: rgba(255,255,255,.03); color:#c7d2fe; font-weight:700;
+    }
+    .tm-badge small{color:var(--tm-muted); font-weight:600}
+    .tm-nav{display:flex; gap:8px; flex-wrap:wrap}
+    .tm-btn{
+      appearance:none; border:1px solid var(--tm-border); background:#111827; color:#fff;
+      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+    }
+    .tm-btn:hover{filter:brightness(1.1)}
+    .tm-btn.primary{background:var(--tm-brand); border-color:transparent; color:#0b1220}
+    @media (max-width:720px){
+      .tm-demo-wrap{flex-direction:column; align-items:stretch}
+      .tm-demo-left{justify-content:space-between}
+      .tm-nav{justify-content:stretch}
+      .tm-btn{justify-content:center; flex:1}
+    }
+  </style>
+</head>
+<body>
+  <!-- DR-AI DEMO: BANNER TOPO -->
+  <div class="tm-demo-bar" role="region" aria-label="Barra de demonstração do Dr. AI">
+    <div class="tm-demo-wrap">
+      <div class="tm-demo-left">
+        <span class="tm-badge">🧪 Modo Demonstração <small>dados fictícios • mesmas regras de produção</small></span>
+      </div>
+      <nav class="tm-nav" aria-label="Atalhos da demonstração">
+        <a class="tm-btn" href="dr-ai-demo-intro.html">← Voltar para a introdução</a>
+        <a class="tm-btn primary" href="dr-ai-demo.html?autodemo=1">▶️ Reiniciar apresentação</a>
+      </nav>
+    </div>
+  </div>
+  
+  <header>
+    <strong>Apresentação automática – Dr. AI</strong>
+    <span class="badge">JSON + Zod</span>
+    <span class="badge">Anti-injeção</span>
+    <span class="badge">Rate limit</span>
+    <span class="badge">Políticas YAML</span>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button id="btnPlay" class="primary">▶ Iniciar</button>
+      <button id="btnSpike" class="ghost">⚡ Spike de carga</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main id="left">
+      <div id="log" class="stage"></div>
+      <div id="out" class="stage"></div>
+    </main>
+    <aside>
+      <iframe id="grafana" src="" title="Grafana"></iframe>
+    </aside>
+  </div>
+
+<script>
+const API = location.origin;
+const GRAFANA_URL = (new URLSearchParams(location.search).get("grafana") || "").trim();
+const logEl = document.getElementById('log');
+const outEl = document.getElementById('out');
+const btnPlay = document.getElementById('btnPlay');
+const btnSpike = document.getElementById('btnSpike');
+const grafana = document.getElementById('grafana');
+if (GRAFANA_URL) grafana.src = GRAFANA_URL;
+function line(html){ const d=document.createElement('div'); d.innerHTML=html; logEl.appendChild(d); }
+function showJSON(obj){ outEl.innerHTML = '<div class="json">'+JSON.stringify(obj,null,2)+'</div>'; }
+async function post(url, body){ const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}); return r.json(); }
+const steps = [
+  { title:'Seed de dados', run: async (ctx) => {
+      try{
+        const r = await post(`${API}/demo/seed`, {});
+        ctx.pRecent = r.patients?.recent;
+        ctx.pExpired = r.patients?.expired;
+        line(`<div class="pill ok">✅ Seed concluído</div>`);
+      }catch(e){ line(`<div class="pill err">⚠ seed indisponível (ok para DEMO_MODE)</div>`); }
+    }},
+  { title:'Esclarecimento baseado na última consulta', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 1, question: "Como devo tomar meu remédio conforme a última consulta?" });
+      showJSON(r); line(`<span class="ok">tipo:</span> <strong>${r.tipo}</strong> – esperado: esclarecimento`);
+    }},
+  { title:'Fora de escopo (remédio fora da receita)', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 1, question: "Posso tomar dipirona junto?" });
+      showJSON(r); line(`<span class="warn">guardrail:</span> <strong>${r.tipo}</strong> – esperado: fora_escopo`);
+    }},
+  { title:'Sintoma novo → escalar', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 1, question: "Comecei a sentir tontura agora" });
+      showJSON(r); line(`<span class="warn">guardrail:</span> <strong>${r.tipo}</strong> – esperado: escala_emergencia`);
+    }},
+  { title:'Emergência → escalar imediatamente', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 1, question: "Estou com dor no peito forte e falta de ar" });
+      showJSON(r); line(`<span class="err">emergência:</span> <strong>${r.tipo}</strong> – esperado: escala_emergencia`);
+    }},
+  { title:'Consulta expirada (política por especialidade)', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pExpired || 999, question: "Pode relembrar as orientações?" });
+      showJSON(r); line(`<span class="warn">política de idade:</span> resposta deve orientar a reagendar (limite atingido).`);
+    }},
+];
+async function play(){
+  btnPlay.disabled = true; logEl.innerHTML = ''; outEl.innerHTML = '';
+  const ctx = {}; for (let i=0;i<steps.length;i++){ line(`<h3>${i+1}. ${steps[i].title}</h3>`); await steps[i].run(ctx); await new Promise(r => setTimeout(r, 1000)); }
+  line(`<h3>✔ Demo concluída</h3>`); btnPlay.disabled = false;
+}
+btnPlay.addEventListener('click', play);
+btnSpike.addEventListener('click', async ()=>{
+  line(`<div class="pill">⚡ Spike simulado iniciado — use k6 para carga real.</div>`);
+});
+if (new URLSearchParams(location.search).get('autoplay') === '1') play();
+</script>
+
+<!-- ====== AJUDA VISUAL DR. AI – COLAR NA PÁGINA DA DEMO ====== -->
+<style>
+  /* Botão ℹ️ e tooltip acessível */
+  .tm-tooltip-wrap { position: relative; display: inline-flex; align-items: center; gap: .35rem; }
+  .tm-info-btn {
+    border: 0; background: #eef2ff; color: #1e3a8a; font-weight: 700; border-radius: 999px;
+    width: 1.35rem; height: 1.35rem; line-height: 1.35rem; text-align: center; cursor: pointer;
+  }
+  .tm-info-btn:focus { outline: 2px solid #3b82f6; outline-offset: 2px; }
+  .tm-tooltip {
+    position: absolute; left: 0; top: calc(100% + .35rem); z-index: 50; min-width: 280px;
+    background: #0f172a; color: #e2e8f0; border-radius: .5rem; padding: .65rem .75rem;
+    font-size: .92rem; line-height: 1.25rem; box-shadow: 0 10px 25px rgba(2,6,23,.35);
+    display: none;
+  }
+  .tm-tooltip a { color: #93c5fd; text-decoration: underline; }
+  .tm-tooltip[data-open="true"] { display: block; }
+  .tm-tooltip::before {
+    content: ""; position: absolute; top: -6px; left: 12px; border: 6px solid transparent;
+    border-bottom-color: #0f172a;
+  }
+  /* Modo "sempre visível" para apresentações */
+  .tm-show-all .tm-tooltip { display: block; position: static; box-shadow: none; margin-top: .35rem; }
+  .tm-help-toggle {
+    position: sticky; top: .5rem; float: right; margin-left: .75rem; padding: .45rem .7rem;
+    background: #ecfeff; color: #0e7490; border: 1px solid #67e8f9; border-radius: .5rem; font-weight: 600; cursor: pointer;
+  }
+</style>
+
+<script>
+(function () {
+  // Util: procura por elementos cujo texto contém o alvo (case-insensitive)
+  function byText(selector, text) {
+    const norm = s => (s || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const want = norm(text);
+    return [...document.querySelectorAll(selector)]
+      .find(el => norm(el.textContent).includes(want));
+  }
+
+  // Cria ícone ℹ️ com tooltip e acessibilidade
+  function attachHelp(el, helpHtml) {
+    if (!el) return;
+    if (el.dataset.tmHelpAttached === "1") return; // evita duplicar
+
+    const wrap = document.createElement("span");
+    wrap.className = "tm-tooltip-wrap";
+    const btn = document.createElement("button");
+    btn.className = "tm-info-btn";
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Mais informações");
+    btn.setAttribute("aria-expanded", "false");
+    btn.textContent = "ℹ️";
+
+    const tip = document.createElement("div");
+    tip.className = "tm-tooltip";
+    tip.setAttribute("role", "tooltip");
+    tip.innerHTML = helpHtml;
+
+    // interações
+    function toggle(open) {
+      const isOpen = open ?? tip.dataset.open !== "true";
+      tip.dataset.open = isOpen ? "true" : "false";
+      btn.setAttribute("aria-expanded", String(isOpen));
+    }
+    btn.addEventListener("click", () => toggle());
+    btn.addEventListener("keydown", e => { if (e.key === "Escape") toggle(false); });
+
+    // fecha ao clicar fora
+    document.addEventListener("click", e => {
+      if (!wrap.contains(e.target)) toggle(false);
+    });
+
+    // injeta na UI
+    el.appendChild(wrap);
+    wrap.appendChild(btn);
+    wrap.appendChild(tip);
+    el.dataset.tmHelpAttached = "1";
+  }
+
+  // Botão para ligar/desligar "mostrar tudo"
+  function addHelpToggle() {
+    const toggle = document.createElement("button");
+    toggle.className = "tm-help-toggle";
+    toggle.type = "button";
+    toggle.textContent = "🔎 Explicações: ligar/desligar";
+    toggle.addEventListener("click", () => {
+      document.documentElement.classList.toggle("tm-show-all");
+    });
+    // tenta colocar perto do header (fallback: body)
+    const header = document.querySelector("header, .header, .topbar") || document.body;
+    header.prepend(toggle);
+  }
+
+  // Mapeamentos (ajuste os rótulos se o texto do seu HTML for diferente)
+  const helps = [
+    // Botões/pílulas do topo
+    { sel: () => byText("button, .badge, .chip, .tag, .pill", "JSON + Zod"),
+      html: "<b>JSON + Zod</b><br>Garante que a resposta da IA vem no formato correto, evitando erros na integração." },
+    { sel: () => byText("button, .badge, .chip, .tag, .pill", "Anti-injeção"),
+      html: "<b>Anti-injeção</b><br>Protege contra tentativas de enganar a IA com textos maliciosos." },
+    { sel: () => byText("button, .badge, .chip, .tag, .pill", "Rate limit"),
+      html: "<b>Rate limit</b><br>Limita o número de pedidos por paciente/origem para manter o sistema estável." },
+    { sel: () => byText("button, .badge, .chip, .tag, .pill", "Políticas YAML"),
+      html: "<b>Políticas YAML</b><br>Regras médicas configuráveis (ex.: validade da consulta por especialidade)." },
+    { sel: () => byText("button, .btn, .button", "Iniciar"),
+      html: "<b>Iniciar</b><br>Executa todos os passos da demonstração em sequência." },
+    { sel: () => byText("button, .btn, .button", "Spike de carga"),
+      html: "<b>Spike de carga</b><br>Simula muitos acessos ao mesmo tempo para testar robustez." },
+
+    // Passo a passo (linhas 1–6)
+    { sel: () => byText("li, .step, h3, h4, .row", "1. Seed de dados"),
+      html: "Carrega dados fictícios apenas para a demonstração (um 'ensaio' seguro)." },
+    { sel: () => byText("li, .step, h3, h4, .row", "2. Esclarecimento"),
+      html: "Dúvida simples sobre a consulta anterior → IA responde direto, sem escalar." },
+    { sel: () => byText("li, .step, h3, h4, .row", "3. Fora de escopo"),
+      html: "Pedido fora da receita (ex.: remédio diferente) → bloqueia e pede nova consulta." },
+    { sel: () => byText("li, .step, h3, h4, .row", "4. Sintoma novo"),
+      html: "Surgiu algo diferente? Encaminha para avaliação médica (pode ser sério)." },
+    { sel: () => byText("li, .step, h3, h4, .row", "5. Emergência"),
+      html: "Sinais de urgência → orienta procurar atendimento imediato (sem só responder por texto)." },
+    { sel: () => byText("li, .step, h3, h4, .row", "6. Consulta expirada"),
+      html: "Consulta passou do prazo (ex.: 30 dias em Psiquiatria) → usuário deve reagendar." },
+
+    // Bloco JSON final
+    { sel: () => {
+        // Alvo: título da seção que antecede o bloco JSON ou o contêiner do code/pre
+        const jsonBlock = document.querySelector("pre code, pre, .json-output, .code-block, .json");
+        return jsonBlock ? jsonBlock.previousElementSibling || jsonBlock.parentElement : null;
+      },
+      html: "<b>Saída técnica (JSON)</b><br>Para programadores. O paciente vê apenas a <i>mensagem</i>; os <i>metadados</i> são para auditoria e rastreabilidade."
+    }
+  ];
+
+  // Inicializa quando o DOM estiver pronto
+  function initHelp() {
+    helps.forEach(h => attachHelp(h.sel(), h.html));
+    addHelpToggle();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initHelp);
+  } else {
+    initHelp();
+  }
+})();
+</script>
+<!-- ====== FIM DO PACOTE ====== -->
+
+<!-- DR-AI DEMO: SCRIPT UX -->
+<script>
+  (function(){
+    // Esconde a barra na impressão
+    const css = document.createElement('style');
+    css.media = 'print';
+    css.textContent = '.tm-demo-bar{display:none!important}';
+    document.head.appendChild(css);
+
+    // Se veio da intro, dá um foco de cortesia no primeiro botão da página
+    const params = new URLSearchParams(location.search);
+    if (params.has('from') && params.get('from') === 'intro') {
+      window.addEventListener('DOMContentLoaded', () => {
+        const firstBtn = document.querySelector('button, .btn, [role="button"]');
+        if (firstBtn) { try { firstBtn.focus(); } catch(e){} }
+      });
+    }
+  })();
+</script>
+
+<!-- Telemetry for Dr. AI -->
+<script src="/assets/js/telemetry-dr-ai.js"></script>
+
+</body>
+</html>

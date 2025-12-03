@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed • Dashboard Médico (MVP)</title>
+  <style>
+    :root{ --bg:#0b1020; --panel:#0f172a; --line:rgba(255,255,255,.08); --text:#eaf0ff; --muted:#9fb3ff; --ring:rgba(110,168,255,.5); }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    a{color:#7cb2ff}
+    .topbar{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);background:rgba(15,23,42,.85);border-bottom:1px solid var(--line)}
+    .wrap{max-width:1200px;margin:0 auto;padding:12px 16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+    .grid{display:grid;gap:12px}
+    .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+    @media(max-width:1100px){ .grid.cols-4{grid-template-columns:1fr 1fr} }
+    @media(max-width:720px){ .grid.cols-4{grid-template-columns:1fr} }
+
+    .h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .body{padding:10px 12px}
+    .badge{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;opacity:.9}
+    .stat{display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+
+    .filters{display:flex;gap:8px;align-items:center}
+    select,input{height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:inherit}
+
+    .card{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:6px;background:rgba(255,255,255,.02)}
+    .card .meta{font-size:12px;opacity:.8}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;cursor:pointer}
+    .btn.primary{background:rgba(110,168,255,.18)}
+    .btn.warn{background:rgba(245,158,11,.18)}
+    .ok{border-color:rgba(34,197,94,.35); background:rgba(34,197,94,.12)}
+
+    .empty{opacity:.8;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap row" style="justify-content:space-between">
+      <div class="row">
+        <strong>Dashboard Médico</strong>
+        <span id="doctor-name" class="badge">Dr(a). Nome</span>
+      </div>
+      <div class="filters">
+        <label>Especialidade
+          <select id="filter-spec">
+            <option value="all">Todas</option>
+            <option value="clinica_geral">Clínica Geral</option>
+            <option value="psiquiatria">Psiquiatria</option>
+          </select>
+        </label>
+        <label>Janela
+          <select id="filter-window">
+            <option value="today">Hoje</option>
+            <option value="next48">Próx. 48h</option>
+          </select>
+        </label>
+        <button id="btn-refresh" class="btn">Atualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap grid" style="margin-top:12px">
+    <section class="grid cols-4">
+      <div class="stat"><div class="meta">Na fila (agora)</div><div id="s-queue" style="font-size:22px">0</div></div>
+      <div class="stat"><div class="meta">Agendados (hoje)</div><div id="s-upcoming" style="font-size:22px">0</div></div>
+      <div class="stat"><div class="meta">Consultas concluídas (hoje)</div><div id="s-done" style="font-size:22px">0</div></div>
+      <div class="stat"><div class="meta">Prescrições (hoje)</div><div id="s-rx" style="font-size:22px">0</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><strong>Fila (atender agora)</strong><span class="badge" id="q-count">0 itens</span></div>
+      <div id="queue" class="body grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><strong>Agendados</strong><span class="badge" id="u-count">0 itens</span></div>
+      <div id="upcoming" class="body grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><strong>Histórico recente</strong><span class="badge" id="r-count">0 itens</span></div>
+      <div id="recent" class="body grid"></div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  const specSel = document.getElementById('filter-spec');
+  const winSel  = document.getElementById('filter-window');
+  const btnRefresh = document.getElementById('btn-refresh');
+  const qWrap = document.getElementById('queue');
+  const uWrap = document.getElementById('upcoming');
+  const rWrap = document.getElementById('recent');
+
+  function humanDate(iso){ const d=new Date(iso); return d.toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'}) }
+  function ago(iso){ const s=Math.floor((Date.now()-new Date(iso))/1000); const m=Math.floor(s/60); return m>0? m+" min": s+" s" }
+
+  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('GET fallback',e); return null; } }
+  async function postJSON(url, data){ try{ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch(e){ console.warn('POST fallback',e); return null; } }
+
+  function mockDashboard(spec = 'all'){
+    const now=new Date(); const inMin=(m)=> new Date(Date.now()+m*60e3).toISOString();
+    
+    // Dados completos (sempre os mesmos para consistência)
+    const allQueue=[
+      {appointmentId:'APT-101', person:'Karina Pinheiro', age:31, complaint:'ansiedade', offer:120, since:inMin(-12), specialty:'psiquiatria'},
+      {appointmentId:'APT-102', person:'William Nascimento', age:27, complaint:'dor de garganta', offer:90, since:inMin(-5), specialty:'clinica_geral'}
+    ];
+    const allUpcoming=[
+      {appointmentId:'APT-201', person:'Solange Vicentini', age:55, at:inMin(45), minPrice:110, specialty:'psiquiatria'},
+      {appointmentId:'APT-202', person:'Claudio Correa', age:36, at:inMin(120), minPrice:90, specialty:'clinica_geral'}
+    ];
+    const allRecent=[
+      {appointmentId:'APT-090', person:'Karina Pinheiro', age:31, finishedAt:inMin(-60), durationMin:20, specialty:'psiquiatria', rx:true},
+      {appointmentId:'APT-089', person:'Ramon Lima', age:23, finishedAt:inMin(-120), durationMin:18, specialty:'clinica_geral', rx:false}
+    ];
+
+    // Filtrar por especialidade se especificado
+    const filter = (items) => {
+      if (spec === 'all') return items;
+      return items.filter(item => item.specialty === spec);
+    };
+
+    const queue = filter(allQueue);
+    const upcoming = filter(allUpcoming);  
+    const recent = filter(allRecent);
+
+    return { 
+      queue, 
+      upcoming, 
+      recent, 
+      stats: { queue: queue.length, upcoming: upcoming.length, done: recent.length, rx: recent.filter(r => r.rx).length } 
+    };
+  }
+
+  async function refresh(){
+    const spec = specSel.value; const w = winSel.value;
+    // Usar dados mock por enquanto (Dr. AI integration phase)
+    // TODO: Implementar endpoint /api/doctor/dashboard quando necessário
+    console.log(`📊 Dashboard refresh - spec: ${spec}, window: ${w}`);
+    const data = mockDashboard(spec);
+    const {queue, upcoming, recent, stats} = data;
+
+    // counters
+    document.getElementById('s-queue').textContent = stats.queue;
+    document.getElementById('s-upcoming').textContent = stats.upcoming;
+    document.getElementById('s-done').textContent = stats.done||0;
+    document.getElementById('s-rx').textContent = stats.rx||0;
+
+    // queue
+    qWrap.innerHTML = '';
+    if(!queue.length){ qWrap.innerHTML='<div class="empty">Nada na fila agora.</div>'; }
+    queue.forEach(item=> qWrap.appendChild(cardQueue(item)) );
+    document.getElementById('q-count').textContent = queue.length+ ' itens';
+
+    // upcoming
+    uWrap.innerHTML = '';
+    if(!upcoming.length){ uWrap.innerHTML='<div class="empty">Sem agendamentos na janela.</div>'; }
+    upcoming.forEach(item=> uWrap.appendChild(cardUpcoming(item)) );
+    document.getElementById('u-count').textContent = upcoming.length+ ' itens';
+
+    // recent
+    rWrap.innerHTML = '';
+    if(!recent.length){ rWrap.innerHTML='<div class="empty">Sem histórico recente.</div>'; }
+    recent.forEach(item=> rWrap.appendChild(cardRecent(item)) );
+    document.getElementById('r-count').textContent = recent.length+ ' itens';
+  }
+
+  function cardQueue(x){
+    const c = el('div','card');
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span></div>
+      <div class="meta">Queixa: ${x.complaint || '—'} · Oferta: R$ ${x.offer} · em fila há ${ago(x.since)}</div>`;
+    const act = el('div','actions');
+    const b1 = btn('Aceitar', async()=>{ await postJSON(`/api/bids/${x.appointmentId}/accept`,{}); refresh(); });
+    const b2 = btn('Contraoferta', async()=>{
+      const v = prompt('Valor da contraoferta (R$)'); if(!v) return; await postJSON(`/api/bids/${x.appointmentId}/proposals`,{ price:Number(v), slot:'now' }); refresh();
+    });
+    const bSlots = btn('Ver slots', ()=> openSlots(x));
+    const b3 = linkBtn('Abrir consultório','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&role=medico','primary');
+    const b4 = linkBtn('PHR','/phr.html?person='+encodeURIComponent(x.person));
+    act.append(b1,b2,bSlots,b3,b4); c.appendChild(act); return c;
+  }
+  function cardUpcoming(x){
+    const c = el('div','card');
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span></div>
+      <div class="meta">${humanDate(x.at)} · piso ${x.minPrice? 'R$ '+x.minPrice:'—'}</div>`;
+    const act = el('div','actions');
+    const b1 = btn('Convidar', async()=>{ await postJSON(`/api/appointments/${x.appointmentId}/invite`,{}); alert('Convite enviado.'); });
+    const b2 = linkBtn('Abrir consultório','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&role=medico','primary');
+    const b3 = btn('Ver slots / Reagendar', ()=> openSlots(x));
+    act.append(b1,b3,b2); c.appendChild(act); return c;
+  }
+  function cardRecent(x){
+    const c = el('div','card');
+    const rxBadge = x.rx? ' <span class="badge ok">Receita emitida</span>':'';
+    c.innerHTML = `<div><strong>${x.person}</strong> · ${x.age} anos · <span class="badge">${x.specialty}</span>${rxBadge}</div>
+      <div class="meta">Finalizada ${ago(x.finishedAt)} · duração ${x.durationMin||'—'} min</div>`;
+    const act = el('div','actions');
+    const b1 = linkBtn('Ver registro','/consulta.html?appointmentId='+encodeURIComponent(x.appointmentId)+'&readOnly=1');
+    const b2 = linkBtn('PHR','/phr.html?person='+encodeURIComponent(x.person));
+    act.append(b1,b2); c.appendChild(act); return c;
+  }
+
+  function el(tag, cls){ const e=document.createElement(tag); if(cls) e.className=cls; return e; }
+  function btn(label, onClick, kind){ const b=el('button','btn'+(kind? ' '+kind:'')); b.textContent=label; b.onclick=onClick; return b; }
+  function linkBtn(label, href, kind){ const a=document.createElement('a'); a.className='btn'+(kind? ' '+kind:''); a.textContent=label; a.href=href; return a; }
+
+  btnRefresh.onclick = refresh;
+  specSel.onchange = refresh; winSel.onchange = refresh;
+  refresh();
+  setInterval(refresh, 10000);
+})();
+</script>
+
+<!-- Componente de Modal de Slots / Agenda para integrar ao Dashboard Médico -->
+<!-- Cole este bloco uma única vez (ex.: no fim de dashboard-medico.html, antes de </body>) -->
+
+<style>
+  .tm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:60 }
+  .tm-modal.show{ display:flex }
+  .tm-modal .card{ background:#0f172a; border:1px solid rgba(255,255,255,.08); border-radius:16px; width:min(760px,95vw); padding:12px; color:#eaf0ff }
+  .slots-grid{ display:grid; gap:8px; grid-template-columns:1fr 1fr }
+  @media(max-width:720px){ .slots-grid{ grid-template-columns:1fr } }
+  .slot{ border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.02) }
+  .muted{ opacity:.85; font-size:13px }
+  .btn{ height:34px; padding:0 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:inherit; cursor:pointer }
+  .btn.primary{ background:rgba(110,168,255,.18) }
+</style>
+
+<div id="tm-slots-modal" class="tm-modal" aria-hidden="true">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 8px 0">
+      <strong id="tm-slots-title">Agendar</strong>
+      <button class="btn" id="tm-slots-close">Fechar</button>
+    </div>
+    <div id="tm-slots-body"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById('tm-slots-modal');
+  const body  = document.getElementById('tm-slots-body');
+  document.getElementById('tm-slots-close').onclick = ()=> { modal.classList.remove('show'); body.innerHTML=''; };
+
+  const fmtBRL = (n)=> new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(n);
+  const human  = (iso)=> new Date(iso).toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'});
+
+  async function getJSON(url){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return await r.json(); }catch{ return null; } }
+  async function postJSON(url,data){ 
+    try{ 
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); 
+      if(!r.ok) throw new Error(`HTTP ${r.status} - ${r.statusText}`); 
+      return await r.json(); 
+    }catch(e){ 
+      console.error(`API error for ${url}:`, e);
+      throw e; // Re-throw para ser tratado pelo chamador
+    } 
+  }
+
+  // Mocks de segurança (funciona mesmo sem backend)
+  function mockFloor(){ return { now_floor:140, in_2h_floor:110, tomorrow_floor:90 }; }
+  function mockAvailability(offer){
+    return { offer,
+      immediate:{ doctors_available: offer>=140?3:0, eta_minutes: offer>=140?10:null },
+      next_2h:{ doctors_available: offer>=110?2:1, eta_minutes:60 },
+      tomorrow:{ doctors_available:5 },
+      suggested_slots:[
+        { start:new Date(Date.now()+60*60e3).toISOString(), min_price:110 },
+        { start:new Date(Date.now()+2*60*60e3).toISOString(), min_price:110 },
+        { start:new Date(Date.now()+26*60*60e3).toISOString(), min_price:90 }
+      ] };
+  }
+
+  async function refreshSlots(ctx){
+    const spec = ctx.specialty; const region = ctx.region||'sp-capital'; const offer = Number(document.getElementById('slot-offer').value||0);
+    const floors = await getJSON(`/api/market/price-floor?specialty=${encodeURIComponent(spec)}&region=${encodeURIComponent(region)}&urgency=immediate`) || mockFloor();
+    const av = await getJSON(`/api/market/availability?specialty=${encodeURIComponent(spec)}&region=${encodeURIComponent(region)}&offer=${offer}`) || mockAvailability(offer);
+
+    document.getElementById('slot-hints').innerHTML = `Hoje: <b>mín. imediato</b> ${fmtBRL(floors.now_floor)} · <b>até 2h</b> ${fmtBRL(floors.in_2h_floor)} · <b>amanhã</b> ${fmtBRL(floors.tomorrow_floor)}`;
+    document.getElementById('slot-availability').innerHTML = `No preço <b>${fmtBRL(offer)}</b>: <b>${av.immediate.doctors_available||0}</b> médicos agora ${av.immediate.eta_minutes? '· ETA ~'+av.immediate.eta_minutes+'min':''} · <b>${av.next_2h.doctors_available||0}</b> em 1–2h · <b>${av.tomorrow.doctors_available||0}</b> amanhã.`;
+
+    const slots = document.getElementById('slot-slots'); slots.innerHTML='';
+    (av.suggested_slots||[]).forEach(s=>{
+      const el = document.createElement('div'); el.className='slot';
+      el.innerHTML = `<div><div><strong>${human(s.start)}</strong></div><div class="muted">Mín.: ${fmtBRL(s.min_price)}</div></div>`;
+      const b = document.createElement('button'); b.className='btn primary'; b.textContent='Agendar';
+      b.onclick = async()=>{ 
+        try {
+          const result = await postJSON(`/api/appointments/${ctx.appointmentId}/schedule`, { start: s.start, price: Math.max(offer, s.min_price) }); 
+          if (result && result.ok !== false) {
+            modal.classList.remove('show'); 
+            body.innerHTML=''; 
+            alert('✅ Agendado com sucesso!'); 
+            refresh(); // Atualizar dashboard
+          } else {
+            throw new Error('Falha no agendamento - resposta inválida');
+          }
+        } catch (error) {
+          console.error('Erro no agendamento:', error);
+          alert('❌ Erro ao agendar consulta. Verifique se o backend está configurado ou tente novamente.');
+        }
+      };
+      el.appendChild(b); slots.appendChild(el);
+    });
+  }
+
+  // Exponde global para ser usado pelos cards do dashboard
+  window.openSlots = function(item){
+    modal.classList.add('show');
+    document.getElementById('tm-slots-title').textContent = `Agendar • ${item.person}`;
+    body.innerHTML = `
+      <div style="display:grid;gap:8px">
+        <div>
+          <label>Oferta (R$)</label>
+          <input id="slot-offer" type="number" min="0" step="5" value="${item.offer||120}" style="height:38px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:inherit">
+          <div id="slot-hints" class="muted" style="margin-top:6px"></div>
+        </div>
+        <div id="slot-availability" class="muted"></div>
+      </div>
+      <div style="margin-top:10px;font-size:14px">Horários sugeridos</div>
+      <div id="slot-slots" class="slots-grid" style="margin-top:6px"></div>
+    `;
+    const ctx = { appointmentId: item.appointmentId, specialty: item.specialty, region: 'sp-capital' };
+    const offerInput = document.getElementById('slot-offer');
+    offerInput.addEventListener('change', ()=> refreshSlots(ctx));
+    offerInput.addEventListener('keyup', (e)=>{ if(e.key==='Enter') refreshSlots(ctx) });
+    refreshSlots(ctx);
+  }
+})();
+</script>
+
+<!-- Widget de Suporte/Ajuda (Sprint Pack 02 - Módulo D) -->
+<style>
+  #tm-help{ position:fixed; right:16px; bottom:16px; z-index:70 }
+  #tm-help .btn-help{ height:46px; width:46px; border-radius:50%; border:none; background:#2563eb; color:#fff; cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,.35) }
+  #tm-help .panel{ position:absolute; right:0; bottom:56px; width:min(320px, 92vw); background:#0f172a; color:#eaf0ff; border:1px solid rgba(255,255,255,.1); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.35); display:none }
+  #tm-help .panel.show{ display:block }
+  #tm-help .help-row{ display:flex; gap:8px; padding:10px; border-bottom:1px solid rgba(255,255,255,.08) }
+  #tm-help a, #tm-help button.link{ color:#9fb3ff; background:none; border:none; padding:0; cursor:pointer; text-decoration:underline }
+</style>
+<div id="tm-help">
+  <button class="btn-help" title="Ajuda" data-testid="button-help">?</button>
+  <div class="panel" aria-hidden="true">
+    <div class="help-row"><strong>Ajuda rápida</strong></div>
+    <div class="help-row">
+      <button class="link" id="help-faq" data-testid="link-faq">Abrir FAQ</button>
+      <button class="link" id="help-report" data-testid="link-report">Reportar problema</button>
+    </div>
+    <div class="help-row" id="help-dev" hidden>
+      <a href="/hub" target="_blank">Hub</a>
+      <a href="/scribe" target="_blank">Scribe/CIDs</a>
+      <a href="/status" target="_blank">Status</a>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const helpWrap=document.getElementById('tm-help'); 
+  if(helpWrap) {
+    const btn=helpWrap.querySelector('.btn-help'); 
+    const panel=helpWrap.querySelector('.panel');
+    btn.onclick = ()=> panel.classList.toggle('show');
+    
+    const devOn = new URLSearchParams(location.search).get('dev')==='1' || localStorage.getItem('tm_dev')==='on';
+    if(devOn) document.getElementById('help-dev').hidden=false;
+    
+    document.getElementById('help-faq').onclick = ()=> window.open('/faq.html','_blank');
+    document.getElementById('help-report').onclick = async ()=>{
+      const msg = prompt('Descreva o problema:'); 
+      if(!msg) return;
+      try {
+        await fetch('/api/support/ticket',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ 
+            msg, 
+            url: location.href, 
+            ts: new Date().toISOString() 
+          })
+        });
+        alert('Obrigado! Ticket registrado.');
+      } catch (error) {
+        console.warn('Support ticket fallback:', error);
+        alert('Ticket registrado localmente. Obrigado pelo feedback!');
+      }
+    };
+  }
+})();
+</script>
+
+</body>
+</html>

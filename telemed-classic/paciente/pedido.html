@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fazer Pedido de Consulta – TeleMed</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e2e8f0;
+      --primary:#0ea5e9; --primary-2:#0284c7; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+      --input:#0b1220; --border:#1e293b; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      display:flex; align-items:flex-start; justify-content:center; padding:32px;
+    }
+    .card{
+      width:min(680px,100%); background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); padding:28px 26px 22px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    h1{margin:0 0 18px; font-size:28px; display:flex; align-items:center; gap:12px}
+    .logo{width:24px;height:24px;display:inline-grid;place-items:center;background:#10b981;color:white;border-radius:8px;font-weight:700}
+    p.muted{color:var(--muted); margin:0 0 16px}
+    .grid{display:grid; gap:14px}
+    @media(min-width:620px){ .grid-2{grid-template-columns:1fr 1fr} }
+    label{display:block; margin:8px 2px 6px; color:#cbd5e1; font-size:13px}
+    input, textarea, select{
+      width:100%; background:var(--input); color:var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:12px 14px;
+      outline:none; transition:.15s border, .15s box-shadow; font-size:15px;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color:var(--primary); box-shadow:0 0 0 4px rgb(14 165 233 / .15);
+    }
+    input:disabled{background:#071326; color:var(--muted); cursor:not-allowed}
+    .row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px}
+    .row .spacer{flex:1}
+    .btn{
+      padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+      color:var(--text); background:#0b1530; cursor:pointer; font-weight:600;
+      text-decoration:none; display:inline-block; text-align:center;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .btn.primary{background:linear-gradient(180deg, var(--primary), var(--primary-2)); border-color:#065f92; color:#fff}
+    .btn.outline{background:transparent; color:var(--primary); border-color:var(--primary)}
+    .info-box{margin:16px 0; padding:14px; border-radius:12px; background:#0e2720; border:1px solid #1a3e33; color:#79f2a6}
+    .checkbox-group{display:flex; align-items:center; gap:8px; margin:8px 0}
+    .checkbox-group input[type="checkbox"]{width:auto}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1><span class="logo">🩺</span> Fazer Pedido de Consulta</h1>
+    
+    <p class="muted">
+      Configure os detalhes da sua consulta. O sistema criará um lance (BID) que será processado pelos médicos disponíveis.
+    </p>
+
+    <form id="bid-form" class="grid">
+      <div>
+        <label for="patientId">Patient ID</label>
+        <input id="patientId" name="patientId" type="text" placeholder="ID será preenchido automaticamente do seu cadastro" readonly data-testid="input-patient-id" />
+      </div>
+
+      <div class="grid grid-2">
+        <div>
+          <label for="specialty">Especialidade</label>
+          <select id="specialty" name="specialty" data-testid="select-specialty">
+            <option value="clinica_geral">Clínica Geral</option>
+            <option value="cardiologia">Cardiologia</option>
+            <option value="dermatologia">Dermatologia</option>
+            <option value="ginecologia">Ginecologia</option>
+            <option value="neurologia">Neurologia</option>
+            <option value="pediatria">Pediatria</option>
+            <option value="psiquiatria">Psiquiatria</option>
+            <option value="ortopedia">Ortopedia</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="amount">Valor máximo (R$)</label>
+          <input id="amount" name="amount" type="number" min="50" max="500" step="10" value="120" data-testid="input-amount" />
+        </div>
+      </div>
+
+      <div class="checkbox-group">
+        <input id="immediate" name="immediate" type="checkbox" checked data-testid="checkbox-immediate" />
+        <label for="immediate">Consulta imediata (assim que possível)</label>
+      </div>
+
+      <div id="scheduled-section" style="display:none">
+        <label for="slot">Horário preferido</label>
+        <input id="slot" name="slot" type="datetime-local" data-testid="input-slot" />
+      </div>
+
+      <div class="info-box" id="bid-info">
+        <strong>Como funciona:</strong> Seu pedido será enviado como um lance (BID) para médicos da especialidade selecionada. 
+        Quando um médico aceitar, você receberá uma notificação e poderá prosseguir para o pagamento.
+      </div>
+
+      <div class="row" style="grid-column:1/-1">
+        <button type="submit" class="btn primary" data-testid="button-submit-bid">Enviar Pedido</button>
+        <button type="button" class="btn outline" id="btn-back" data-testid="button-back">Voltar</button>
+        <span class="spacer"></span>
+        <a href="/sala-de-espera.html" class="btn" data-testid="link-waiting-room">Sala de Espera</a>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    // Pré-preencher patientId conforme patch 2
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patientId') || localStorage.getItem('patientId') || '';
+    
+    const patientIdEl = document.getElementById('patientId');
+    if (patientIdEl) patientIdEl.value = patientId;
+
+    // Toggle de consulta imediata/agendada
+    const immediateEl = document.getElementById('immediate');
+    const scheduledSection = document.getElementById('scheduled-section');
+    
+    immediateEl.addEventListener('change', () => {
+      scheduledSection.style.display = immediateEl.checked ? 'none' : 'block';
+    });
+
+    // Botão voltar
+    document.getElementById('btn-back').addEventListener('click', () => {
+      window.history.back();
+    });
+
+    // Submit do formulário
+    document.getElementById('bid-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        patientId: formData.get('patientId'),
+        specialty: formData.get('specialty'),
+        amountCents: Math.round(parseFloat(formData.get('amount')) * 100),
+        mode: formData.get('immediate') ? 'immediate' : 'scheduled',
+        proposedSlot: formData.get('immediate') ? undefined : formData.get('slot')
+      };
+
+      if (!data.patientId) {
+        alert('Patient ID é obrigatório. Por favor, volte e complete o cadastro.');
+        return;
+      }
+
+      try {
+        // Modo DEMO: Simula criação de BID bem-sucedida localmente
+        const bidId = 'bid_' + Date.now();
+        const appointmentId = 'appt_' + Date.now();
+        
+        // Simula resultado bem-sucedido
+        const result = {
+          ok: true,
+          bid: {
+            id: bidId,
+            patientId: data.patientId,
+            specialty: data.specialty,
+            amountCents: data.amountCents,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+          },
+          appointmentId: appointmentId
+        };
+        
+        // Salvar resultado localmente para demo
+        localStorage.setItem('lastBid', JSON.stringify(result));
+        localStorage.setItem(`bid:${bidId}`, JSON.stringify(result.bid));
+        
+        console.log('✅ BID criado com sucesso (modo demo):', result);
+        
+        // Redirecionar para sala de espera com os IDs gerados
+        alert('✅ Pedido enviado com sucesso! Redirecionando para sala de espera...');
+        window.location.href = `/sala-de-espera.html?appointmentId=${appointmentId}&patientId=${data.patientId}`;
+        
+      } catch (error) {
+        console.error('Erro ao processar BID:', error);
+        alert('Erro interno. Tente novamente em alguns segundos.');
+      }
+    });
+  </script>
+</body>
+</html>

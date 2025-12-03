@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sala de Espera – TeleMed</title>
+  <link rel="stylesheet" href="/css/telemed-status.css">
+  <style>
+    :root {
+      --bg:#0b1220; --card:#111a2b; --muted:#a5b4c3; --fg:#e6edf3;
+      --ok:#17c964; --warn:#f5a524; --err:#f31260; --btn:#0072f5;
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:920px;margin:0 auto;padding:24px}
+    .card{background:var(--card);border:1px solid #21304b;border-radius:16px;padding:24px;box-shadow:0 6px 24px #0006}
+    h1{margin:0 0 8px;font-size:28px}
+    .muted{color:var(--muted)}
+    .row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+    .btn{appearance:none;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn-primary{background:var(--btn);color:#fff}
+    .btn-ghost{background:transparent;border:1px solid #2a3a59;color:#d9e3f0}
+    code{background:#071223;border:1px solid #1f2b44;border-radius:8px;padding:2px 6px}
+    .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .badge{font-size:12px;padding:6px 8px;border-radius:20px;border:1px solid #26344f}
+    .ok{background:#0e2720;border-color:#1a3e33;color:#79f2a6}
+    .err{background:#2a0e15;border-color:#51202a;color:#ffb3c0}
+    .warn{background:#2a2410;border-color:#53461a;color:#ffd27b}
+    .foot{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap}
+    .sep{border-top:1px dashed #22314d;margin:18px 0}
+    .copy{font-size:12px}
+    @media (max-width:640px){ .row{flex-direction:column} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Sala de Espera</h1>
+      <p class="muted">Aguarde aqui até o(a) médico(a) iniciar a chamada. Quando ele(a) entrar, você poderá seguir para a sala de vídeo.</p>
+
+      <div style="margin-top:12px">
+        <div class="muted">ID da consulta</div>
+        <div id="appt" style="font-size:20px;margin-top:4px"><code>-</code></div>
+        
+        <!-- Patch 3: Guard com input claro para appointmentId -->
+        <div style="margin-top:12px">
+          <label class="muted" style="display:block;margin-bottom:6px">Cole aqui o ID da sua consulta:</label>
+          <input id="appointmentInput" type="text" placeholder="Ex: apt_123456789" 
+                 style="width:100%;padding:8px;border:1px solid #26344f;border-radius:8px;background:#071223;color:#e6edf3;margin-bottom:8px" 
+                 data-testid="input-appointment-id" />
+          <button id="updateRoom" class="btn btn-ghost" style="margin-bottom:8px" data-testid="button-update-room">Atualizar Sala</button>
+        </div>
+
+        <!-- Status da sala -->
+        <div id="roomStatus" style="margin:12px 0;padding:10px;border:1px solid #26344f;border-radius:8px;background:#071223">
+          <span class="muted">Status:</span> <span id="statusText" class="warn" style="font-weight:600">🔄 Verificando disponibilidade...</span>
+        </div>
+
+        <div class="row">
+          <button id="join" class="btn btn-primary" data-testid="button-join-video" disabled style="opacity:0.5;cursor:not-allowed">Aguardando médico...</button>
+          <button id="copy" class="btn btn-ghost" data-testid="button-copy-link">Copiar link desta sala</button>
+        </div>
+        <div class="copy muted" id="copied" style="display:none;margin-top:6px">Link copiado ✔</div>
+        
+        <!-- Links claros com placeholders -->
+        <div style="margin-top:16px;padding:12px;background:#071223;border:1px solid #26344f;border-radius:8px">
+          <div class="muted" style="font-size:13px;margin-bottom:8px">Links diretos:</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:13px">
+            <a id="linkPatient" href="#" class="btn btn-ghost" style="padding:6px 10px" data-testid="link-patient-room">🧑‍⚕️ Sala do Paciente</a>
+            <a id="linkDoctor" href="#" class="btn btn-ghost" style="padding:6px 10px" data-testid="link-doctor-room">👨‍⚕️ Sala do Médico</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <!-- Status público + painel dev -->
+      <div id="telemed-status" 
+           data-endpoints='["/api/health","https://telemed-auction.onrender.com/api/health","https://telemed-internal.onrender.com/api/health","https://telemed-productivity.onrender.com/api/health"]'
+           data-hub-url="/hub.html"
+           data-scribe-url="/scribe-demo.html">
+      </div>
+
+      <!-- Informações técnicas antigas (agora ocultas para usuários finais) -->
+      <section class="dev-only">
+        <div>
+          <div class="muted">Verificações rápidas (saúde dos serviços) - LEGADO</div>
+          <div class="badges" id="checks">
+            <span class="badge warn">Testando…</span>
+          </div>
+        </div>
+
+        <div class="foot">
+          <a class="btn btn-ghost" href="/example-integration.html">Voltar ao Hub</a>
+          <a class="btn btn-ghost" href="/scribe-demo.html" target="_blank">Abrir Scribe/CIDs</a>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // 1) Resgata appointmentId -> vira a "room" do Jitsi
+    const p = new URLSearchParams(location.search);
+    let room = (p.get('appointmentId') || 'telemed-demo').trim();
+    
+    // Controle de estado da sala (host-first security)
+    let hostPresent = false;
+    let canJoin = false;
+    
+    function updateRoomDisplay(roomId) {
+      document.getElementById('appt').innerHTML = `<code>${roomId}</code>`;
+      document.getElementById('appointmentInput').value = roomId;
+      
+      // Atualizar links diretos
+      const patientUrl = `/consulta/?appointmentId=${encodeURIComponent(roomId)}&role=patient`;
+      const doctorUrl = `/consulta/?appointmentId=${encodeURIComponent(roomId)}&role=doctor`;
+      document.getElementById('linkPatient').href = patientUrl;
+      document.getElementById('linkDoctor').href = doctorUrl;
+      
+      // Iniciar verificação do estado da sala
+      checkRoomState(roomId);
+      
+      // Polling a cada 5 segundos
+      setInterval(() => checkRoomState(roomId), 5000);
+    }
+    
+    async function checkRoomState(appointmentId) {
+      try {
+        const response = await fetch(`/api/appointments/${appointmentId}/room-state`);
+        if (response.ok) {
+          const state = await response.json();
+          hostPresent = state.hostPresent || false;
+          canJoin = hostPresent || state.canJoin || false;
+        }
+      } catch (error) {
+        // Mock behavior: para demo, simula que médico não está presente
+        console.log('Mock: Verificando estado da sala...');
+        hostPresent = false;
+        canJoin = false;
+      }
+      
+      updateRoomUI(appointmentId);
+    }
+    
+    function updateRoomUI(appointmentId) {
+      const joinBtn = document.getElementById('join');
+      const statusText = document.getElementById('statusText');
+      
+      if (canJoin && hostPresent) {
+        // Médico presente - pode entrar
+        joinBtn.disabled = false;
+        joinBtn.style.opacity = '1';
+        joinBtn.style.cursor = 'pointer';
+        joinBtn.textContent = 'Entrar na Sala de Vídeo';
+        joinBtn.onclick = () => { 
+          location.href = `/consulta/?appointmentId=${encodeURIComponent(appointmentId)}&role=patient`; 
+        };
+        
+        statusText.textContent = '✅ Médico presente - pode entrar na sala';
+        statusText.className = '';
+        statusText.style.color = 'var(--ok)';
+      } else {
+        // Aguardando médico
+        joinBtn.disabled = true;
+        joinBtn.style.opacity = '0.5';
+        joinBtn.style.cursor = 'not-allowed';
+        joinBtn.textContent = 'Aguardando médico...';
+        joinBtn.onclick = null;
+        
+        statusText.textContent = '🔄 Aguardando o médico entrar na sala...';
+        statusText.className = 'warn';
+        statusText.style.color = 'var(--warn)';
+      }
+    }
+    
+    // Inicializar display
+    updateRoomDisplay(room);
+
+    // 2) Botão para atualizar sala com input personalizado
+    document.getElementById('updateRoom').onclick = () => {
+      const newRoom = document.getElementById('appointmentInput').value.trim();
+      if (newRoom) {
+        room = newRoom;
+        updateRoomDisplay(room);
+        // Atualizar URL sem recarregar
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('appointmentId', room);
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        alert('Digite um ID de consulta válido.');
+      }
+    };
+
+    // 3) Copiar link desta sala para o paciente
+    document.getElementById('copy').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        const el = document.getElementById('copied');
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 1800);
+      } catch(e) { alert('Não foi possível copiar o link.'); }
+    };
+
+    // 4) Healthchecks usando localStorage (ou defaults)
+    const AUCTION_URL = localStorage.getItem('AUCTION_URL') || 'https://telemed-auction.onrender.com';
+    const INTERNAL_URL = localStorage.getItem('INTERNAL_URL') || 'https://telemed-internal.onrender.com';
+    const PRODUCTIVITY_URL = localStorage.getItem('PRODUCTIVITY_URL') || 'https://telemed-productivity.onrender.com';
+
+    async function ping(url) {
+      try {
+        const r = await fetch(url + '/healthz', { mode:'cors' });
+        const isOk = r.ok;
+        return { url, ok:isOk };
+      } catch { return { url, ok:false }; }
+    }
+
+    (async () => {
+      const checks = await Promise.all([
+        ping(AUCTION_URL), ping(INTERNAL_URL), ping(PRODUCTIVITY_URL)
+      ]);
+      const $ = document.getElementById('checks');
+      $.innerHTML = '';
+      const label = u => (u.match(/^https?:\/\/([^/]+)/)||[])[1] || u;
+
+      checks.forEach(c => {
+        const span = document.createElement('span');
+        span.className = 'badge ' + (c.ok ? 'ok' : 'err');
+        span.textContent = (c.ok ? 'OK ' : 'FALHA ') + '– ' + label(c.url);
+        $.appendChild(span);
+      });
+    })();
+  </script>
+
+  <!-- Banner de Feedback (aparece após 120s ou em erro) -->
+  <div id="feedback-banner" style="display:none; position:fixed; left:16px; right:16px; bottom:16px; background:#121935; color:#eaf0ff; border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px 16px; box-shadow:0 10px 24px rgba(0,0,0,.25); z-index:9999">
+    <strong>Teve dificuldade para entrar?</strong> Conte para a gente (leva 1 min).
+    <a id="feedback-link" href="#" style="margin-left:12px; font-weight:700; color:#4da3ff; text-decoration:none" data-testid="link-feedback">Responder feedback →</a>
+    <button id="banner-close" aria-label="Fechar" style="float:right; background:transparent; border:none; color:#9fb1da; cursor:pointer" data-testid="button-close-banner">✕</button>
+  </div>
+
+  <!-- JS de exibição após 120s de espera ou em erro -->
+  <!-- Componente de status -->
+  <script src="/js/telemed-status.js"></script>
+
+  <script>
+    (function(){
+      const params = new URLSearchParams(location.search);
+      const appointmentId = params.get('appointmentId') || room;
+      const role = 'paciente'; // na sala de espera, assume paciente
+      const link = `/feedback.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=waiting`;
+      const banner = document.getElementById('feedback-banner');
+      const a = document.getElementById('feedback-link'); a.href = link;
+      document.getElementById('banner-close').onclick = ()=> banner.style.display = 'none';
+
+      // Exibe após 120s aguardando
+      let showed = false;
+      setTimeout(()=>{ if(!showed){ banner.style.display='block'; showed = true; } }, 120000);
+
+      // Opcional: se detectar erro na call, mostra imediatamente
+      window.addEventListener('telemed:call_error', ()=>{ if(!showed){ banner.style.display='block'; showed=true; } });
+    })();
+  </script>
+
+  <!-- Função para encerrar consulta -->
+  <script>
+    function encerrarConsulta(role, appointmentId){
+      const url = `/obrigado.html?role=${encodeURIComponent(role)}&appointmentId=${encodeURIComponent(appointmentId)}&step=end`;
+      window.location.href = url;
+    }
+    // Exemplo de uso no botão: <button onclick="encerrarConsulta('medico','APT-TESTE-001')">Encerrar consulta</button>
+  </script>
+</body>
+</html>

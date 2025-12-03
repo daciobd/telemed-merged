@@ -1,0 +1,177 @@
+/**
+ * TeleMed Status Component Styles
+ * Componente para mostrar status público + painel dev
+ */
+
+/* Status público (sempre visível) */
+.tm-status {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin: 8px 0;
+  font-weight: 500;
+}
+
+.tm-ok {
+  background: rgba(0, 200, 0, 0.08);
+  border: 1px solid rgba(0, 200, 0, 0.25);
+  color: #059669;
+}
+
+.tm-warn {
+  background: rgba(255, 180, 0, 0.08);
+  border: 1px solid rgba(255, 180, 0, 0.25);
+  color: #d97706;
+}
+
+.tm-down {
+  background: rgba(220, 0, 0, 0.08);
+  border: 1px solid rgba(220, 0, 0, 0.25);
+  color: #dc2626;
+}
+
+/* Painel dev (oculto por padrão) */
+.tm-dev-panel[hidden] {
+  display: none !important;
+}
+
+.tm-dev-panel {
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Dark theme para painel dev */
+[data-theme="dark"] .tm-dev-panel,
+body.dark .tm-dev-panel {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Light theme para painel dev */
+body:not(.dark) .tm-dev-panel,
+[data-theme="light"] .tm-dev-panel {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Layout flexbox */
+.tm-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tm-row:last-child {
+  margin-bottom: 0;
+}
+
+.tm-badges-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+/* Badges de status */
+.tm-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.tm-badge--ok {
+  background: rgba(0, 200, 0, 0.1);
+  border-color: rgba(0, 200, 0, 0.25);
+  color: #059669;
+}
+
+.tm-badge--down {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: rgba(255, 0, 0, 0.3);
+  color: #dc2626;
+}
+
+/* Botões do painel */
+.tm-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: #d9e3f0;
+  transition: background-color 0.2s;
+}
+
+.tm-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tm-btn-primary {
+  background: rgba(110, 168, 255, 0.18);
+  border-color: rgba(110, 168, 255, 0.3);
+  color: #60a5fa;
+}
+
+.tm-btn-primary:hover {
+  background: rgba(110, 168, 255, 0.25);
+}
+
+.tm-btn-ghost {
+  background: transparent;
+}
+
+/* Elementos dev-only (ocultos para usuários finais) */
+.dev-only[hidden],
+[data-dev-only][hidden] {
+  display: none !important;
+}
+
+.dev-only {
+  opacity: 0.9;
+  filter: saturate(0.8);
+}
+
+/* Responsividade */
+@media (max-width: 640px) {
+  .tm-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tm-badges-row {
+    flex-direction: column;
+  }
+  
+  .tm-btn {
+    justify-content: center;
+  }
+}
+
+/* Integração com temas existentes */
+:root {
+  --tm-bg-ok: rgba(0, 200, 0, 0.08);
+  --tm-bg-warn: rgba(255, 180, 0, 0.08);
+  --tm-bg-down: rgba(220, 0, 0, 0.08);
+}
+
+/* Override para temas escuros existentes */
+.dark .tm-status {
+  color: #e2e8f0;
+}
+
+.dark .tm-btn {
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.1);
+}

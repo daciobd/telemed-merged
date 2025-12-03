@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Consulta — DEMO (Dr. AI)</title>
+  <script>window.__BUILD='pilot-r1';</script>
+  <style>
+    :root{ --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e2e8f0; --brand:#60a5fa; --border:rgba(148,163,184,.22); --ok:#34d399; --warn:#fbbf24 }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto;padding:18px}
+    header.top{position:sticky;top:0;z-index:999;background:linear-gradient(180deg, rgba(96,165,250,.08), rgba(96,165,250,0));border-bottom:1px solid var(--border)}
+    .bar{max-width:980px;margin:0 auto;padding:10px 18px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .btn{appearance:none;border:1px solid var(--border);background:#111827;color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+    .btn:hover{filter:brightness(1.06)}
+    .btn.primary{background:var(--brand);border-color:transparent;color:#0b1220}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:14px}
+    h1{font-size:22px;margin:0 0 6px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0;color:var(--text)}
+    .muted{color:var(--muted)}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;font-weight:700;border:1px solid var(--border)}
+    .pill.ok{background:rgba(16,185,129,.12);color:#bbf7d0;border-color:rgba(16,185,129,.35)}
+    .pill.warn{background:rgba(245,158,11,.12);color:#fde68a;border-color:rgba(245,158,11,.35)}
+    .dl{display:grid;grid-template-columns:160px 1fr;gap:6px 12px;margin:10px 0}
+    .dl dt{color:var(--muted)}
+    .dl dd{margin:0}
+    pre{background:#0b1020;border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto}
+    footer{color:var(--muted);margin:18px 0}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="bar">
+      <nav style="display:flex;gap:8px;align-items:center">
+        <a class="btn" href="/public/minhas-consultas-demo.html">← Minhas consultas</a>
+        <a class="btn" href="/public/dr-ai-demo-intro.html">📘 Introdução</a>
+      </nav>
+      <div style="display:flex;gap:8px">
+        <a class="btn" id="btn-agendar" href="/agendamento.html" style="display:none">🗓️ Agendar nova consulta</a>
+        <button class="btn primary" id="btn-drai">💬 Tirar dúvida</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card" id="info">
+      <h1 id="title">Consulta</h1>
+      <div class="row" id="status"></div>
+
+      <dl class="dl">
+        <dt>Médico</dt><dd id="doctor">—</dd>
+        <dt>Especialidade</dt><dd id="specialty">—</dd>
+        <dt>Data</dt><dd id="date">—</dd>
+        <dt>Prescrição</dt><dd id="rx">—</dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2 style="margin:0 0 6px">Resumo da consulta</h2>
+      <p id="summary" class="muted">—</p>
+    </section>
+
+    <section class="card">
+      <h2 style="margin:0 0 6px">Observações do Dr. AI</h2>
+      <p class="muted">Ao clicar em <strong>"Tirar dúvida"</strong>, o Dr. AI responde com base na consulta e nas políticas de segurança. Abaixo você verá a saída técnica (JSON) quando houver interação.</p>
+      <pre id="json" aria-live="polite" aria-atomic="true">(aguardando interação)</pre>
+    </section>
+
+    <footer>© TeleMed — página de demonstração</footer>
+  </main>
+
+  <script>
+    const DATA = {
+      cons_ana: {
+        id: 'cons_ana', doctor: 'Dra. Ana Silva', specialty: 'Psiquiatria',
+        date: '28/09/2025', rx: 'Fluoxetina 20mg', limitDays: 30,
+        summary: 'Acompanhamento de humor; manutenção da medicação, retorno em 30 dias.'
+      },
+      cons_carlos: {
+        id: 'cons_carlos', doctor: 'Dr. Carlos Mendes', specialty: 'Cardiologia',
+        date: '30/09/2025', rx: 'Losartana 50mg', limitDays: 30,
+        summary: 'Ajuste de anti-hipertensivo; orientação de aferição domiciliar.'
+      },
+      cons_beatriz: {
+        id: 'cons_beatriz', doctor: 'Dra. Beatriz Costa', specialty: 'Dermatologia',
+        date: '20/08/2025', rx: 'Ácido salicílico tópico', limitDays: 30,
+        summary: 'Lesões acneiformes; controle e reavaliação em 30 dias.'
+      },
+      cons_eduardo: {
+        id: 'cons_eduardo', doctor: 'Dr. Eduardo Santos', specialty: 'Clínica Geral',
+        date: '03/10/2025', rx: 'Amoxicilina 500mg', limitDays: 30,
+        summary: 'Infecção bacteriana; início de antibiótico e sinais de alarme.'
+      }
+    };
+
+    const $ = sel => document.querySelector(sel);
+    function qparam(k){ return new URLSearchParams(location.search).get(k); }
+    function parseDate(input){
+      if(!input) return null; const m2=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(input); if(m2){return new Date(+m2[3],+m2[2]-1,+m2[1]);}
+      const m1=/^(\d{4})-(\d{2})-(\d{2})$/.exec(input); if(m1){return new Date(+m1[1],+m1[2]-1,+m1[3]);}
+      const t=Date.parse(input); return isNaN(t)?null:new Date(t);
+    }
+    function daysSince(dateStr){ const d=parseDate(dateStr); if(!d) return null; return Math.floor((Date.now()-d.getTime())/86400000); }
+
+    const id = qparam('id') || 'cons_ana';
+    const c = DATA[id];
+
+    if(!c){
+      $('#info').innerHTML = '<h1>Consulta não encontrada</h1><p class="muted">Verifique o link ou volte para <a href="/public/minhas-consultas-demo.html">Minhas consultas</a>.</p>';
+      $('#btn-drai').disabled = true; $('#btn-agendar').style.display='inline-flex';
+    } else {
+      $('#title').textContent = `Consulta com ${c.doctor}`;
+      $('#doctor').textContent = c.doctor;
+      $('#specialty').textContent = c.specialty;
+      $('#date').textContent = c.date;
+      $('#rx').textContent = c.rx;
+      $('#summary').textContent = c.summary;
+
+      const dias = daysSince(c.date); const lim = c.limitDays || 30;
+      const ok = dias == null || dias <= lim;
+      const status = ok ? `<span class="pill ok">✔︎ Dentro do prazo (${dias ?? 0} dias)</span>` : `<span class="pill warn">⛔ Fora do prazo (${dias - lim} dias além do limite)</span>`;
+      $('#status').innerHTML = status;
+      if(!ok) $('#btn-agendar').style.display='inline-flex';
+
+      document.body.dataset.consultationId = c.id;
+      document.body.dataset.consultationDate = c.date;
+      document.body.dataset.specialty = c.specialty;
+      document.body.dataset.doctor = c.doctor;
+      document.body.dataset.limitDays = String(c.limitDays||30);
+
+      $('#btn-drai').addEventListener('click', () => {
+        if(typeof window.showModal === 'function'){
+          window.showModal({
+            consultationId: c.id,
+            consultationDate: c.date,
+            specialty: c.specialty,
+            doctor: c.doctor,
+            limitDays: c.limitDays
+          });
+        } else {
+          location.href = '/public/dr-ai-demo-intro.html';
+        }
+      });
+
+      const _renderAnswer = window.renderAnswer;
+      window.renderAnswer = function(data){
+        try{ $('#json').textContent = JSON.stringify(data, null, 2); }catch(e){}
+        return _renderAnswer ? _renderAnswer.apply(this, arguments) : undefined;
+      };
+    }
+  </script>
+
+  <script src="/js/dr-ai-integration.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+import { Routes, Route } from 'react-router-dom'; import ProductivityRail from './Rail'; export default function ProductivityRoutes(){ return (<Routes><Route path='/productivity-demo' element={<ProductivityRail/>}/><Route path='/consult/:id/productivity' element={<ProductivityRail/>}/></Routes>); }

@@ -1,0 +1,15 @@
+# TeleMed — política de validade por especialidade (dias)
+# Mantém a estrutura existente (max_days_since_consultation + messages)
+
+max_days_since_consultation:
+  default: 30
+  Psiquiatria: 30
+  Cardiologia: 30
+  Dermatologia: 30
+
+# (Opcional) quantos dias antes do limite começamos a avisar
+warning_threshold_days: 5
+
+messages:
+  warning_near_limit: "Sua última consulta foi há {days} dias. Considere agendar um retorno em breve."
+  expired: "Sua consulta foi há {days} dias (limite: {limit} dias para {specialty}). Você precisa agendar uma nova consulta para atualizar suas orientações."

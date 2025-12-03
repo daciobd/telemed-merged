@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Consulta Avançada • TeleMed</title>
+  <style>
+    :root{
+      --bg:#0f172a;            /* fundo vídeo */
+      --panel:#ffffff;         /* painéis/brancos */
+      --ink:#111827;           /* texto escuro */
+      --muted:#6B7280;         /* texto fraco */
+      --line:1px solid rgba(0,0,0,.08);
+      --blue:#60a5fa;          /* botões azuis */
+      --blue-600:#3b82f6;
+      --green:#22c55e;         /* status conectado */
+      --amber:#f59e0b;         /* enviar p/ espera */
+      --red:#ef4444;           /* encerrar */
+      --shadow:0 10px 30px rgba(0,0,0,.16);
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f4f7fb;color:var(--ink)}
+    .page{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:auto 1fr;gap:0;height:100vh}
+    /* ====== COLUNA VÍDEO ====== */
+    .videoWrap{position:relative;background:var(--bg);display:flex;align-items:center;justify-content:center;grid-row:2}
+    .room{color:#cbd5e1;text-align:center}
+    .room .cam{font-size:44px}
+    .badge{display:inline-flex;align-items:center;gap:6px;background:#0f172a;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:#d1d5db;font-size:12px}
+    .uptime{position:absolute;top:14px;right:14px;background:#111827;color:#fff;padding:6px 10px;border-radius:10px;font-variant-numeric:tabular-nums}
+    /* controles embaixo */
+    .controls{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:10px;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08)}
+    .control{width:42px;height:42px;border-radius:999px;border:1px solid rgba(255,255,255,.15);display:grid;place-items:center;color:#e5e7eb;cursor:pointer;transition:.15s}
+    .control:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+    .control.red{background:var(--red);border-color:var(--red);color:#fff}
+    .control.amber{background:var(--amber);border-color:var(--amber);color:#111}
+    .control.blue{background:#1f2937;border-color:#334155}
+    .notif .dot{position:absolute;right:-2px;top:-2px;width:16px;height:16px;background:#ef4444;color:#fff;border-radius:999px;display:grid;place-items:center;font-size:11px;border:2px solid #0f172a}
+    /* ====== COLUNA PAINEL ====== */
+    .panel{background:#f8fafc;overflow:auto;grid-row:2}
+    .topbar{position:sticky;top:0;background:#fff;border-bottom:var(--line);padding:12px 14px;z-index:2;grid-column:1 / 3;grid-row:1}
+    .row{display:flex;gap:16px;align-items:center;justify-content:space-between}
+    .pInfo{display:flex;gap:12px;align-items:center}
+    .avatar{width:30px;height:30px;border-radius:50%;background:#e5e7eb;display:grid;place-items:center}
+    .pill{padding:6px 10px;border-radius:999px;border:var(--line);background:#fff;font-size:12px}
+    .status{display:flex;gap:16px;align-items:center}
+    .status .state{display:inline-flex;gap:6px;align-items:center;background:#f1f5f9;padding:6px 10px;border-radius:999px;border:var(--line);font-size:12px}
+    .state .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8}
+    .state.wait .dot{background:#f59e0b}
+    .state.live .dot{background:#22c55e}
+    .btn{display:inline-flex;gap:8px;align-items:center;border:1px solid transparent;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer;background:transparent}
+    .btn.primary{background:var(--blue);color:#fff}
+    .btn.primary:hover{background:var(--blue-600)}
+    .btn.ghost{background:#fff;border:var(--line)}
+    .btn.fail{background:#ef4444;color:#fff}
+    .tabs{display:flex;gap:6px;border-bottom:var(--line);background:#fff}
+    .tab{padding:10px 12px;cursor:pointer;border-bottom:2px solid transparent}
+    .tab.active{border-color:var(--blue);color:#0f172a;font-weight:600}
+    .pad{padding:16px}
+    .field{margin-bottom:14px}
+    .label{font-size:13px;color:#374151;margin:0 0 6px;display:flex;gap:6px;align-items:center}
+    .label .req{color:#ef4444}
+    .inp, .area, .select{width:100%;border:var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+    .area{min-height:88px;resize:vertical}
+    .segRow{display:flex;gap:8px;background:#f3f4f6;border-radius:10px;border:var(--line);overflow:hidden}
+    .seg{flex:1;text-align:center;padding:8px 10px;cursor:pointer}
+    .seg.active{background:#fff;border-bottom:2px solid var(--blue);font-weight:600}
+    .chips{display:flex;gap:10px;flex-wrap:wrap}
+    .switch{display:flex;gap:10px;align-items:center}
+    .switch input{appearance:none;width:42px;height:24px;background:#e5e7eb;border-radius:999px;position:relative;outline:none;cursor:pointer;border:1px solid rgba(0,0,0,.08)}
+    .switch input:checked{background:#bbf7d0}
+    .switch input:before{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:999px;background:#fff;transition:.18s}
+    .switch input:checked:before{left:21px}
+    .actions{display:flex;gap:12px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;padding:12px 14px;border-top:var(--line)}
+    .warn{background:#fff7ed;border:1px solid #fed7aa;color:#92400e;border-radius:8px;padding:8px 10px;margin-top:10px;font-size:13px}
+    /* Exames */
+    .templates{display:flex;flex-direction:column;gap:8px;border:var(--line);padding:10px;border-radius:10px;background:#fff;max-height:160px;overflow:auto}
+    .tpl{padding:8px;border-radius:10px;border:1px dashed rgba(0,0,0,.1);cursor:pointer;display:flex;align-items:center;gap:8px}
+    .tpl:hover{background:#f8fafc}
+    .examList{border:var(--line);border-radius:10px;background:#fff;min-height:90px;padding:12px;color:#475569}
+    /* Memed */
+    .memedCard{border:var(--line);border-radius:12px;background:#fff;padding:16px}
+    .memedHead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .ok{color:#16a34a}
+    /* Dr AI Panel */
+    .ai-panel{position:fixed;right:20px;bottom:20px;width:420px;max-height:72vh;display:none;flex-direction:column;background:#fff;border-radius:12px;box-shadow:var(--shadow);border:var(--line);overflow:hidden;z-index:9999}
+    .ai-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:var(--line);background:#F8FAFF}
+    .ai-disclaimer{padding:10px 14px;font-size:12px;color:#6B7280;background:#FBFDFF}
+    .ai-thread{flex:1;padding:14px;overflow:auto;background:#FAFBFF}
+    .ai-msg{display:flex;gap:8px;margin-bottom:12px}
+    .ai-msg.assistant .bubble{background:#EEF6FF;border:1px solid rgba(162,210,255,.6)}
+    .ai-msg.user .bubble{background:#F1F5F9;border:var(--line)}
+    .bubble{padding:10px 12px;border-radius:12px;max-width:85%}
+    .ai-form{display:flex;gap:8px;padding:10px;border-top:var(--line);background:#fff}
+    #ai-input{flex:1;resize:none;border:var(--line);border-radius:10px;padding:10px}
+    .ai-send{background:#60a5fa;border:1px solid #60a5fa;border-radius:10px;padding:0 14px;cursor:pointer;font-weight:600;color:#fff}
+    .ai-send:hover{background:#3b82f6}
+    
+    /* Barra de receitas fixa */
+    .rx-bar{position:fixed;bottom:20px;left:20px;background:#fff;border:var(--line);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);z-index:1000;display:flex;align-items:center;gap:12px;min-width:280px}
+    .rx-count{background:#22c55e;color:#fff;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:600}
+    .rx-links{display:flex;gap:8px}
+    .rx-link{padding:6px 12px;border-radius:8px;border:var(--line);background:#f8fafc;color:#374151;text-decoration:none;font-size:12px;cursor:pointer}
+    .rx-link:hover{background:#e2e8f0}
+    
+    /* Barra horizontal de exames */
+    .examBar{
+      display:flex; gap:8px; overflow:auto; padding:8px; background:#fff;
+      border:var(--line); border-radius:10px; white-space:nowrap; scroll-behavior:smooth;
+    }
+    .examChip{
+      display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border:var(--line);
+      border-radius:999px; background:#f8fafc; cursor:pointer; font-size:14px;
+    }
+    .examChip:hover{ background:#eef2ff; border-color:#c7d2fe }
+    .examBar::-webkit-scrollbar{ height:8px } .examBar::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:99px }
+    
+    @media (max-width:980px){.page{grid-template-columns:1fr}}
+  </style>
+  <script src="https://meet.jit.si/external_api.js"></script>
+  <style>
+    /* container para o Jitsi ocupar toda a área de vídeo */
+    #jitsi { position:absolute; inset:0; border-radius:12px; overflow:hidden }
+  </style></head>
+<body>
+<div class="page">
+  <!-- topo full width -->
+  <div class="topbar">
+    <div class="row">
+      <div class="pInfo">
+        <div class="avatar">👤</div>
+        <div>
+          <div><strong id="pName">Ana Costa Silva</strong> <span class="pill" id="pAge">32 anos</span></div>
+          <div style="font-size:12px;color:#64748b">📞 <span id="pPhone">11987654321</span> • <span class="pill">Particular</span></div>
+        </div>
+      </div>
+      <div class="status">
+        <button class="btn ghost" id="btn-invite" title="Enviar convite ao paciente">Convite</button>
+        <span class="state wait" id="state"><span class="dot"></span> Aguardando</span>
+        <span class="pill" id="elapsed">18m 19s</span>
+        <button class="btn primary" id="btn-start">Iniciar Consulta</button>
+        <button class="btn ghost" id="btn-back">Voltar</button>
+        <button class="btn ghost" id="btn-form">Formulário</button>
+        <button class="btn ghost" id="btn-narrow">Faixa ↓/↑</button>
+        <button class="btn ghost" id="btn-exit">Sair</button>
+        <div class="control blue notif" title="Notificações" id="btn-bell">🔔<span class="dot" id="bellDot" style="display:none">1</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== COLUNA VÍDEO ========= -->
+  <section class="videoWrap">
+    <div class="uptime" id="uptime">00:00</div>
+
+    <div id="jitsi"></div>
+
+
+    <div class="room">
+      <div class="cam">📹</div>
+      <div style="font-size:18px;margin-top:8px">Aguardando paciente…</div>
+      <div style="margin-top:6px">A chamada será iniciada quando o paciente entrar</div>
+      <div style="margin-top:10px" class="badge"><span style="width:8px;height:8px;border-radius:999px;background:var(--green)"></span> Conectado</div>
+      <div style="margin-top:6px;color:#9ca3af">Sala: <strong>#ABC123</strong></div>
+    </div>
+
+    <!-- botões inferiores -->
+    <div class="controls">
+      <button class="control blue" id="btn-attach" title="Anexar arquivo">📎</button>
+      <input type="file" id="filepick" hidden />
+      <button class="control blue" id="btn-shot" title="Capturar imagem">📸</button>
+      <button class="control blue" id="btn-chat" title="Abrir chat">💬</button>
+      <button class="control blue" id="btn-ai" title="Dr. AI – Assistente clínico">🧠</button>
+      <button class="control blue" id="btn-mic" title="Microfone on/off">🎙️</button>
+      <button class="control blue" id="btn-cam" title="Vídeo on/off">🎥</button>
+      <button class="control amber" id="btn-wait" title="Enviar para sala de espera">⏳</button>
+      <button class="control red" id="btn-hang" title="Finalizar chamada">⛔</button>
+    </div>
+  </section>
+
+  <!-- ======== COLUNA PAINEL ========= -->
+  <section class="panel">
+    <!-- abas -->
+    <div class="tabs">
+      <div class="tab" data-tab="chat">💬 Chat</div>
+      <div class="tab active" data-tab="care">🩺 Atendimento</div>
+      <div class="tab" data-tab="exams">🧪 Exames</div>
+      <div class="tab" data-tab="receitas">🧾 Receitas</div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="pad" id="tab-chat" hidden>
+      <div id="chatBox" style="height:54vh;overflow:auto;border:var(--line);border-radius:10px;background:#fff;padding:10px">
+        <div style="max-width:70%;background:#f1f5f9;border-radius:12px;padding:10px;margin-bottom:8px">Olá, doutor! Como está?</div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <input id="chatInput" class="inp" placeholder="Digite uma mensagem…" />
+        <button id="chatSend" class="btn primary">Enviar</button>
+      </div>
+    </div>
+
+    <!-- ATENDIMENTO -->
+    <div class="pad" id="tab-care">
+      <div class="field">
+        <label class="label req">Queixa principal <span class="req">*</span></label>
+        <input class="inp area" name="chief_complaint" placeholder="Dor de cabeça intensa há 3 dias" required />
+      </div>
+      <div class="field">
+        <label class="label req">História da doença atual <span class="req">*</span></label>
+        <textarea class="area" name="hpi" placeholder="Paciente refere..." required></textarea>
+      </div>
+      <div class="field">
+        <label class="label req">Hipótese diagnóstica <span class="req">*</span></label>
+        <input class="inp" id="dx" name="dx" list="cid10" placeholder="Digite para buscar CID-10 (ex: 'transtorno ansioso')" required />
+        <datalist id="cid10"></datalist>
+      </div>
+      <div class="field">
+        <label class="label req">Conduta terapêutica <span class="req">*</span></label>
+        <textarea class="area" name="plan" placeholder="Conduta: ..." required></textarea>
+      </div>
+      <div class="field">
+        <label class="label">Sinais de alerta</label>
+        <input class="inp" name="red_flags" placeholder="Dor torácica, ideação suicida, etc." />
+      </div>
+      <div class="field">
+        <label class="label">Complexidade/Gravidade</label>
+        <div class="chips">
+          <label class="switch"><input type="checkbox" id="cmp1" /> Mental</label>
+          <label class="switch"><input type="checkbox" id="cmp2" /> Clínica</label>
+          <label class="switch"><input type="checkbox" id="cmp3" /> Inconsistência</label>
+        </div>
+      </div>
+      <div class="segRow">
+        <div class="seg active" data-seg="plan">Conduta</div>
+        <div class="seg" data-seg="exams">Exames</div>
+      </div>
+      <div id="seg-plan">
+        <!-- Já coberto pelas caixas acima -->
+      </div>
+      <div id="seg-exams" hidden>
+        <div style="margin-bottom:10px">
+          <div style="font-weight:600;margin-bottom:8px">Exames mais comuns</div>
+          <div class="examBar" id="examBar"></div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-weight:600;margin-bottom:8px">Templates comuns</div>
+          <div class="templates" id="tplBox">
+            <div class="tpl" data-name="Hemograma completo" data-inst="Jejum de 8h"><span style="color:red">🩸</span> Hemograma completo</div>
+            <div class="tpl" data-name="Glicemia de jejum" data-inst="Jejum"><span style="color:orange">🍎</span> Glicemia de jejum</div>
+            <div class="tpl" data-name="Perfil lipídico" data-inst=""><span style="color:green">💉</span> Perfil lipídico</div>
+            <div class="tpl" data-name="TSH" data-inst="Sem jejum"><span style="color:blue">🦋</span> TSH</div>
+            <div class="tpl" data-name="Creatinina" data-inst="Jejum opcional"><span style="color:purple">🩸</span> Creatinina</div>
+            <div class="tpl" data-name="Urina tipo 1" data-inst="Primeira urina da manhã"><span style="color:yellow">🚽</span> Urina tipo 1</div>
+            <div class="tpl" data-name="Raio-X de tórax" data-inst="Inspiração profunda"><span style="color:gray">🩻</span> Raio-X de tórax</div>
+            <div class="tpl" data-name="Eletrocardiograma" data-inst="Repouso"><span style="color:red">❤️</span> Eletrocardiograma</div>
+            <div class="tpl" data-name="Vitamina D" data-inst="Sem jejum"><span style="color:orange">☀️</span> Vitamina D</div>
+            <div class="tpl" data-name="PSA" data-inst="Homens acima de 50 anos"><span style="color:blue">🧑‍⚕️</span> PSA</div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Nome do exame</label>
+          <input class="inp" id="exName" placeholder="Hemograma completo" />
+        </div>
+        <div class="field">
+          <label class="label">Prioridade</label>
+          <select class="select" id="exPriority">
+            <option>Rotina</option>
+            <option>Prioritário</option>
+            <option>Urgente</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">Instruções específicas</label>
+          <textarea class="area" id="exNotes" placeholder="Jejum de 8h, trazer documento..."></textarea>
+        </div>
+        <button class="btn primary" id="exAdd" style="width:100%">Adicionar Exame</button>
+        <div style="margin-top:14px">
+          <div style="font-weight:600;margin-bottom:8px">Exames Solicitados</div>
+          <div class="examList" id="examList">Nenhum exame adicionado ainda</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="btn-save">💾 Salvar</button>
+        <button class="btn fail" id="btn-no-finish">Não Foi Possível Finalizar Consulta</button>
+        <button class="btn primary" id="btn-finish">✅ Finalizar</button>
+      </div>
+    </div>
+
+    <!-- EXAMES -->
+    <div class="pad" id="tab-exams" hidden>
+      <!-- Mirror do seg-exams para aba completa -->
+      <div id="examsMirror"></div>
+    </div>
+
+    <!-- RECEITAS -->
+    <div class="pad" id="tab-receitas" hidden>
+      <div class="memedCard">
+        <div class="memedHead"><strong>🧾 Integração Memed</strong></div>
+        <p>Prescreva medicamentos de forma segura e rápida com assinatura digital automática.</p>
+        <button class="btn primary" id="memedBtn">Nova Receita Memed</button>
+        <ul style="margin:12px 0 0 20px;font-size:14px;color:#374151">
+          <li class="ok">Base farmacológica completa</li>
+          <li class="ok">Assinatura digital ICP-Brasil</li>
+          <li class="ok">Verificação de interações</li>
+        </ul>
+      </div>
+      <div style="margin-top:14px">
+        <div style="font-weight:600;margin-bottom:8px">Receitas do Atendimento</div>
+        <div class="examList" id="rxList">Nenhuma receita ainda</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== Dr. AI Panel ===== -->
+<div id="dr-ai" class="ai-panel">
+  <header class="ai-header">
+    <div style="font-weight:700">🧠 Dr. AI</div>
+    <button id="ai-close" class="btn ghost">✕</button>
+  </header>
+  <div class="ai-disclaimer">
+    As respostas são apoio à decisão e <b>não substituem</b> o julgamento do médico.
+  </div>
+  <div id="ai-thread" class="ai-thread"></div>
+  <form id="ai-form" class="ai-form">
+    <textarea id="ai-input" rows="2" placeholder="Digite sua pergunta clínica…"></textarea>
+    <button class="ai-send" type="submit">Enviar</button>
+  </form>
+</div>
+<!-- ===== /Dr. AI Panel ===== -->
+
+<!-- Barra de receitas fixa -->
+<div class="rx-bar" id="rxBar" style="display:none">
+  <div>🧾 Receitas: <span class="rx-count" id="rxCount">0</span></div>
+  <div class="rx-links">
+    <a href="#" class="rx-link" id="rxMemedLink">Memed</a>
+    <a href="#" class="rx-link" id="rxScroll">Ver Lista</a>
+  </div>
+</div>
+
+<script>
+/** ========= CONFIG (troque se quiser) ========= */
+const API = {
+  start  : (id)=> `/api/consults/${id}/start`,
+  notes  : (id)=> `/api/consults/${id}/notes`,
+  finish : (id)=> `/api/consults/${id}/finalize`,
+  cid10  : (q)=> `/api/cid10/search?q=${encodeURIComponent(q)}`,
+  aiAsk  : '/api/ai/ask'
+};
+const CONSULT_ID = new URLSearchParams(location.search).get('consultId') || 'demo-123';
+
+/** ========= util ========= */
+const $ = (s,root=document)=> root.querySelector(s);
+const $$= (s,root=document)=> [...root.querySelectorAll(s)];
+const post= async (url, body)=> {
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json().catch(()=> ({}));
+};
+
+/** ===== CID-10 autocomplete ===== */
+const CID_FALLBACK = [
+  { code:'F41.1', name:'Transtorno de ansiedade generalizada' },
+  { code:'J06.9', name:'Infecções agudas das vias aéreas superiores, não especificada' },
+  { code:'M54.5', name:'Dor lombar' },
+  { code:'R51',   name:'Cefaleia' },
+  { code:'I10',   name:'Hipertensão essencial (primária)' },
+  { code:'E11.9', name:'Diabetes mellitus tipo 2 sem complicações' },
+  { code:'J45.9', name:'Asma, não especificada' },
+];
+
+let cidAbort = null, cidTimer = null;
+const dxInput = $('#dx'), cidList = $('#cid10');
+
+function normalizeCidList(list){
+  // aceita [{code,name}] ou [{cid,descricao}] etc.
+  return (list||[]).map(x=>{
+    const code = x.code || x.cid || x.codigo || '';
+    const name = x.name || x.term || x.descricao || x.descr || '';
+    return code && name ? {code, name} : null;
+  }).filter(Boolean);
+}
+async function searchCid(q){
+  if (!q || q.length < 2) return normalizeCidList(CID_FALLBACK);
+  try{
+    if (cidAbort) cidAbort.abort();
+    cidAbort = new AbortController();
+    const r = await fetch(API.cid10(q), { signal: cidAbort.signal });
+    if (!r.ok) throw 0;
+    const data = await r.json().catch(()=>[]);
+    const out = normalizeCidList(data);
+    return out.length ? out : normalizeCidList(CID_FALLBACK);
+  }catch{
+    return normalizeCidList(CID_FALLBACK);
+  }
+}
+function renderCidOptions(items){
+  if (cidList) cidList.innerHTML = items.map(i=>`<option value="${i.code} — ${i.name}"></option>`).join('');
+}
+
+if (dxInput) dxInput.addEventListener('input', e=>{
+  const q = e.target.value.trim();
+  clearTimeout(cidTimer);
+  cidTimer = setTimeout(async ()=>{
+    const items = await searchCid(q);
+    renderCidOptions(items);
+  }, 250);
+});
+// 1ª carga
+renderCidOptions(CID_FALLBACK);
+
+/** ========= timer / uptime ========= */
+let sec=0; setInterval(()=>{sec++; const m=String(Math.floor(sec/60)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); $('#uptime').textContent=`${m}:${s}`},1000);
+
+/** ===== Abas principais (mover DOM de Exames) ===== */
+$$('.tab').forEach(t=>t.addEventListener('click', ()=>{
+  $$('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+
+  const which = t.dataset.tab;
+  $('#tab-chat').hidden     = which!=='chat';
+  $('#tab-care').hidden     = which!=='care';
+  $('#tab-exams').hidden    = which!=='exams';
+  $('#tab-receitas').hidden = which!=='receitas';
+
+  // move o bloco de exames (um único DOM) entre segmento e aba
+  const segEx = $('#seg-exams');
+  if (which==='exams') {
+    if (segEx && segEx.parentElement !== $('#tab-exams')) {
+      $('#tab-exams').innerHTML = ''; // limpa espelhos antigos
+      $('#tab-exams').appendChild(segEx);
+      segEx.hidden = false;
+    }
+  } else {
+    if (segEx && segEx.parentElement !== $('#tab-care')) {
+      const segPlan = $('#seg-plan');
+      if (segPlan) segPlan.insertAdjacentElement('beforebegin', segEx); // volta para o atendimento
+      segEx.hidden = true; // fica oculto dentro do atendimento até clicar no segmento "Exames"
+    }
+  }
+}));
+
+/** ===== Segmentador Conduta/Exames dentro do Atendimento ===== */
+$$('.seg').forEach(s=>s.addEventListener('click', ()=>{
+  $$('.seg').forEach(x=>x.classList.remove('active'));
+  s.classList.add('active');
+  $('#seg-plan').hidden  = s.dataset.seg!=='plan';
+  $('#seg-exams').hidden = s.dataset.seg!=='exams';
+}));
+
+/** ===== Exames comuns (chips horizontais) ===== */
+const COMMON_EXAMS = [
+  { n:'Hemograma completo',       inst:'Jejum 8h',        icon:'🩸' },
+  { n:'Glicemia de jejum',        inst:'Jejum',           icon:'🍎' },
+  { n:'Perfil lipídico',          inst:'',                icon:'💉' },
+  { n:'TSH',                      inst:'Sem jejum',       icon:'🦋' },
+  { n:'T4 livre',                 inst:'Sem jejum',       icon:'🦋' },
+  { n:'Creatinina',               inst:'Jejum opcional',  icon:'🧪' },
+  { n:'Ureia',                    inst:'Jejum opcional',  icon:'🧪' },
+  { n:'Urina tipo 1',             inst:'1ª urina manhã',  icon:'🚽' },
+  { n:'PCR',                      inst:'Sem jejum',       icon:'🧫' },
+  { n:'Vitamina D',               inst:'Sem jejum',       icon:'☀️' },
+  { n:'Raio-X de tórax (PA)',     inst:'Insp. profunda',  icon:'🩻' },
+  { n:'Eletrocardiograma',        inst:'Repouso',         icon:'❤️' },
+  { n:'PSA',                      inst:'≥ 50 anos',       icon:'🧑‍⚕️' },
+];
+
+function renderExamBar(){
+  const bar = $('#examBar');
+  if (!bar) return;
+  bar.innerHTML = COMMON_EXAMS.map(e=>(
+    `<button class="examChip" type="button" data-name="${e.n}" data-inst="${e.inst}">
+      <span>${e.icon}</span> ${e.n}
+    </button>`
+  )).join('');
+  bar.querySelectorAll('.examChip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if ($('#exName')) $('#exName').value  = btn.dataset.name || '';
+      if ($('#exNotes')) $('#exNotes').value = btn.dataset.inst  || '';
+      if ($('#exPriority')) $('#exPriority').value = 'Rotina';
+      // Adiciona direto (se preferir só preencher, comente a linha abaixo)
+      if ($('#exAdd')) $('#exAdd').click();
+      // garante que o usuário "vê" o pedido sendo adicionado
+      if ($('#examList')) $('#examList').scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
+}
+
+/** ========= botões topo ========= */
+if ($('#btn-invite')) $('#btn-invite').onclick = ()=>{ alert('Convite enviado para o paciente na sala de espera.'); };
+if ($('#btn-start')) $('#btn-start').onclick  = async ()=>{
+  try{ await post(API.start(CONSULT_ID)); $('#state').classList.remove('wait'); $('#state').classList.add('live'); $('#state').innerHTML='<span class="dot"></span> Em atendimento'; }
+  catch(e){ alert('Falha ao iniciar: '+e.message); }
+};
+if ($('#btn-back')) $('#btn-back').onclick   = ()=> history.back();
+if ($('#btn-form')) $('#btn-form').onclick   = ()=> alert('Abrir formulário de anamnese (WIP).');
+if ($('#btn-narrow')) $('#btn-narrow').onclick = ()=> document.body.classList.toggle('narrow');
+if ($('#btn-exit')) $('#btn-exit').onclick   = ()=> { if(confirm('Sair desta tela?')) location.href='/'; };
+if ($('#btn-bell')) $('#btn-bell').onclick   = ()=> { if ($('#bellDot')) $('#bellDot').style.display='none'; };
+
+/** ========= barra de vídeo ========= */
+if ($('#btn-attach')) $('#btn-attach').onclick = ()=> { if ($('#filepick')) $('#filepick').click(); };
+if ($('#filepick')) $('#filepick').onchange  = (e)=> { if(e.target.files[0]) { if ($('#bellDot')) $('#bellDot').style.display='grid'; alert('Arquivo anexado: '+e.target.files[0].name); } };
+if ($('#btn-shot')) $('#btn-shot').onclick   = ()=> alert('Captura de imagem (mock).');
+if ($('#btn-chat')) $('#btn-chat').onclick   = ()=> { const chatTab = $('.tab[data-tab="chat"]'); if (chatTab) chatTab.click(); };
+if ($('#btn-mic')) $('#btn-mic').onclick    = (ev)=> ev.currentTarget.classList.toggle('red');
+if ($('#btn-cam')) $('#btn-cam').onclick    = (ev)=> ev.currentTarget.classList.toggle('red');
+if ($('#btn-wait')) $('#btn-wait').onclick   = ()=> alert('Paciente enviado para sala de espera.');
+if ($('#btn-hang')) $('#btn-hang').onclick   = ()=> alert('Chamada finalizada.');
+
+/** ========= chat simples ========= */
+if ($('#chatSend')) $('#chatSend').onclick = ()=>{
+  const v = $('#chatInput') ? $('#chatInput').value.trim() : ''; if(!v) return;
+  if ($('#chatInput')) $('#chatInput').value='';
+  const b = document.createElement('div'); b.style.maxWidth='70%'; b.style.background='#3b82f6'; b.style.color='#fff'; b.style.borderRadius='12px'; b.style.padding='10px'; b.style.margin='8px 0 8px auto'; b.textContent=v;
+  if ($('#chatBox')) { $('#chatBox').appendChild(b); $('#chatBox').scrollTop=$('#chatBox').scrollHeight; }
+};
+
+
+
+/** ========= salvar / finalizar ========= */
+if ($('#btn-save')) $('#btn-save').onclick = async ()=>{
+  const payload = {
+    chiefComplaint: $('[name="chief_complaint"]') ? $('[name="chief_complaint"]').value || '' : '',
+    hpi: $('[name="hpi"]') ? $('[name="hpi"]').value || '' : '',
+    dx:  $('[name="dx"]') ? $('[name="dx"]').value || '' : '',
+    plan: $('[name="plan"]') ? $('[name="plan"]').value || '' : '',
+    redFlags: $('[name="red_flags"]') ? $('[name="red_flags"]').value || '' : '',
+    complexity:{
+      mental: $('#cmp1') ? $('#cmp1').checked : false, 
+      clinical: $('#cmp2') ? $('#cmp2').checked : false, 
+      inconsistency: $('#cmp3') ? $('#cmp3').checked : false
+    }
+  };
+  try{ await post(API.notes(CONSULT_ID), payload); alert('Anotações salvas.'); }
+  catch(e){ alert('Falha ao salvar: '+e.message); }
+};
+if ($('#btn-finish')) $('#btn-finish').onclick = async ()=>{
+  try{ await post(API.finish(CONSULT_ID)); alert('Consulta finalizada.'); }
+  catch(e){ alert('Falha ao finalizar: '+e.message); }
+};
+if ($('#btn-no-finish')) $('#btn-no-finish').onclick = ()=> alert('Consulta não pode ser finalizada (motivo: campos obrigatórios incompletos).');
+
+/** ========= Exames ========= */
+const examList = [];
+function renderExamList(){
+  const box = $('#examList'); if (!box) return;
+  box.innerHTML='';
+  if(!examList.length){ box.textContent='Nenhum exame adicionado ainda'; return; }
+  examList.forEach((ex,i)=>{
+    const row=document.createElement('div');
+    row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center';
+    row.style.border='1px solid rgba(0,0,0,.06)'; row.style.padding='8px 10px'; row.style.borderRadius='8px'; row.style.margin='6px 0';
+    row.innerHTML = `<div><b>${ex.name}</b> • ${ex.priority}<br><small>${ex.notes||''}</small></div><button data-i="${i}" class="btn ghost">Excluir</button>`;
+    const btn = row.querySelector('button');
+    if (btn) btn.onclick=(ev)=>{ examList.splice(Number(ev.target.dataset.i),1); renderExamList(); };
+    box.appendChild(row);
+  });
+}
+if ($('#exAdd')) $('#exAdd').onclick = ()=>{
+  const name = $('#exName') ? $('#exName').value.trim() : ''; 
+  if(!name) return alert('Informe o nome do exame.');
+  examList.push({
+    name, 
+    priority: $('#exPriority') ? $('#exPriority').value : 'Rotina', 
+    notes: $('#exNotes') ? $('#exNotes').value.trim() : ''
+  });
+  if ($('#exName')) $('#exName').value=''; 
+  if ($('#exNotes')) $('#exNotes').value=''; 
+  renderExamList();
+};
+if ($('#tplBox')) $('#tplBox').onclick = (ev)=>{
+  const el = ev.target.closest('.tpl'); if(!el) return;
+  if ($('#exName')) $('#exName').value = el.dataset.name;
+  if ($('#exNotes')) $('#exNotes').value = el.dataset.inst;
+};
+
+/** ========= Memed ========= */
+function buildMemedURL() {
+  const patient = {
+    name: $('#pName') ? $('#pName').textContent : 'Paciente', 
+    age: $('#pAge') ? $('#pAge').textContent.replace(' anos','') : '0', 
+    phone: $('#pPhone') ? $('#pPhone').textContent : ''
+  };
+  return 'https://memed.com.br/?demo=1&patient='+encodeURIComponent(JSON.stringify(patient));
+}
+
+function updateRxCount() {
+  const count = $('#rxList') ? $('#rxList').children.length : 0;
+  if ($('#rxCount')) $('#rxCount').textContent = count;
+  if ($('#rxBar')) $('#rxBar').style.display = count > 0 ? 'flex' : 'none';
+}
+
+if ($('#memedBtn')) $('#memedBtn').onclick = ()=>{
+  window.open(buildMemedURL(), '_blank','noopener');
+  // adiciona receita fictícia na lista
+  const li = document.createElement('div');
+  li.style.padding='10px'; li.style.border='1px solid rgba(0,0,0,.06)'; li.style.borderRadius='10px'; li.style.margin='6px 0';
+  li.innerHTML = `<b>Receita #MEMED-${Math.random().toString(36).slice(2,8).toUpperCase()}</b> <span style="color:#16a34a">✔ Assinada</span><br><small>${new Date().toLocaleString()}</small><br><div style="margin-top:6px">Dipirona Sódica – 500mg • 1 comprimido se dor ou febre</div>`;
+  if ($('#rxList')) {
+    if ($('#rxList').textContent.includes('Nenhuma')) $('#rxList').innerHTML='';
+    $('#rxList').appendChild(li);
+    updateRxCount();
+  }
+};
+
+// Barra de receitas
+if ($('#rxMemedLink')) $('#rxMemedLink').onclick = (e) => {
+  e.preventDefault();
+  window.open(buildMemedURL(), '_blank', 'noopener');
+  const receitasTab = $('.tab[data-tab="receitas"]');
+  if (receitasTab) receitasTab.click();
+};
+if ($('#rxScroll')) $('#rxScroll').onclick = (e) => {
+  e.preventDefault();
+  const receitasTab = $('.tab[data-tab="receitas"]');
+  if (receitasTab) receitasTab.click();
+  if ($('#tab-receitas')) $('#tab-receitas').scrollIntoView({behavior:'smooth', block:'start'});
+};
+
+/** ========= Dr. AI ========= */
+function addMsg(role, txt){
+  const row=document.createElement('div');
+  row.className='ai-msg '+(role==='assistant'?'assistant':'user');
+  row.innerHTML='<div class="bubble"></div>';
+  const bubble = row.querySelector('.bubble');
+  if (bubble) bubble.textContent=txt;
+  if ($('#ai-thread')) {
+    $('#ai-thread').appendChild(row);
+    $('#ai-thread').scrollTop = $('#ai-thread').scrollHeight;
+  }
+}
+if ($('#btn-ai')) $('#btn-ai').onclick = ()=> { if ($('#dr-ai')) $('#dr-ai').style.display='flex'; };
+if ($('#ai-close')) $('#ai-close').onclick = ()=> { if ($('#dr-ai')) $('#dr-ai').style.display='none'; };
+if ($('#ai-form')) $('#ai-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const q = $('#ai-input') ? $('#ai-input').value.trim() : ''; 
+  if(!q) return;
+  if ($('#ai-input')) $('#ai-input').value=''; 
+  addMsg('user', q);
+  const ctx = {
+    chiefComplaint: $('[name="chief_complaint"]') ? $('[name="chief_complaint"]').value : '',
+    hpi: $('[name="hpi"]') ? $('[name="hpi"]').value : '', 
+    dx: $('[name="dx"]') ? $('[name="dx"]').value : '', 
+    redFlags: $('[name="red_flags"]') ? $('[name="red_flags"]').value : ''
+  };
+  try{
+    const r = await fetch(API.aiAsk,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q, context:ctx})});
+    const data = await r.json().catch(()=>({}));
+    addMsg('assistant', data.answer || data.message || 'OK');
+  }catch(err){ addMsg('assistant','⚠️ Erro ao consultar IA: '+err.message); }
+});
+
+console.log('🎯 Enhanced Teste loaded - TeleMed Professional Interface v2.2');
+renderExamBar();
+updateRxCount();
+</script>
+
+  <!-- Tour multi-página -->
+  <script>
+(function(){
+  const $ = (s)=>document.querySelector(s);
+  const overlay = $("#tourOverlay"), spot = $("#tourSpot"), tip = $("#tourTip");
+  const tipTitle = $("#tourTitle"), tipText = $("#tourText");
+  const btnNext = $("#tourNext"), btnSkip = $("#tourSkip");
+
+  const tours = {
+    paciente: [
+      { token:'dashboard',     sel:'a[href*="agenda"]',           t:'Agenda',            d:'Confira seus horários e próximas consultas.' },
+      { token:'agenda',        sel:'a[href*="sala-de-espera"]',   t:'Sala de Espera',    d:'Teste câmera/microfone e aguarde o chamado.' },
+      { token:'sala-de-espera',sel:'a[href*="consulta"]',         t:'Consulta Online',   d:'Entre com 1 clique na sala de vídeo segura.' },
+      { token:'consulta',      sel:'a[href*="registro-saude"]',   t:'Registro de Saúde', d:'Envie exames e veja seu histórico organizado.' },
+      { token:'registro-saude',sel:'a[href*="paciente"]',         t:'Área do Paciente',  d:'Gerencie documentos, prescrições e dados.' }
+    ],
+    medico: [
+      { token:'dashboard',     sel:'a[href*="dashboard"]',        t:'Dashboard',         d:'Visão geral, atalhos para pacientes e laudos.' },
+      { token:'dashboard',     sel:'a[href*="agenda"]',           t:'Agenda',            d:'Gerencie horários, confirmações e atendimentos.' },
+      { token:'agenda',        sel:'a[href*="medico"]',           t:'Perfil Médico',     d:'Ajuste dados profissionais e configurações.' },
+      { token:'medico',        sel:'a[href*="consulta"]',         t:'Atendimento',       d:'Inicie teleconsulta com chat e prescrição.' },
+      { token:'consulta',      sel:'a[href*="centro-de-testes"]', t:'Centro de Testes',  d:'Aplique GAD‑7/PHQ‑9 e gere relatórios.' }
+    ]
+  };
+
+  const QS = new URLSearchParams(location.search);
+
+  // --- Auto-detecção de prefixo (/preview/) e extensão (.html)
+  const path = location.pathname;
+  const prefix = path.startsWith('/preview/') ? '/preview/' : '/';
+  const usesHtml = /\.html?$/.test(path);
+
+  // Monta URL segura para um token de página
+  function urlFor(token){
+    if (usesHtml) return prefix + token + '.html';
+    return prefix + token;
+  }
+
+  // Checa se estou nesta página por token
+  function isOn(token){
+    return location.pathname.includes(token);
+  }
+
+  const K_FLAG='telemed_autotour', K_ROLE='telemed_autotour_role', K_IDX='telemed_autotour_step';
+
+  function saveState(role, idx){
+    try { localStorage.setItem(K_FLAG,'1'); localStorage.setItem(K_ROLE,role); localStorage.setItem(K_IDX,String(idx)); } catch(e){}
+  }
+  function loadState(){
+    try {
+      return {
+        has: localStorage.getItem(K_FLAG)==='1',
+        role: localStorage.getItem(K_ROLE),
+        idx: Number(localStorage.getItem(K_IDX)||'0')||0
+      };
+    } catch(e){ return {has:false,role:null,idx:0}; }
+  }
+  function clearState(){
+    try { localStorage.removeItem(K_FLAG); localStorage.removeItem(K_ROLE); localStorage.removeItem(K_IDX); } catch(e){}
+  }
+
+  function waitForElement(selector, {tries=30, interval=200}={}){
+    return new Promise((resolve,reject)=>{
+      let count = 0;
+      const iv = setInterval(()=>{
+        const el = document.querySelector(selector);
+        if (el){
+          clearInterval(iv);
+          resolve(el);
+        } else if (++count >= tries){
+          clearInterval(iv);
+          reject(new Error('Elemento não encontrado: '+selector));
+        }
+      }, interval);
+    });
+  }
+
+  function place(el, title, text){
+    if (!overlay || !spot || !tip) return;
+    const r = el.getBoundingClientRect();
+    overlay.style.display = 'block';
+    spot.style.display = 'block';
+    tip.style.display  = 'block';
+    spot.style.left = (window.scrollX + r.left - 6) + "px";
+    spot.style.top  = (window.scrollY + r.top  - 6) + "px";
+    spot.style.width  = (r.width + 12) + "px";
+    spot.style.height = (r.height + 12) + "px";
+    if (tipTitle) tipTitle.textContent = title;
+    if (tipText) tipText.textContent = text;
+    tip.style.left = (window.scrollX + r.left) + "px";
+    tip.style.top  = (window.scrollY + r.bottom + 12) + "px";
+  }
+
+  let role = null, steps = [], idx = 0;
+
+  async function showStep(){
+    const s = steps[idx];
+    if (!s){ endTour(); return; }
+
+    if (!isOn(s.token)){
+      if (overlay) overlay.style.display = 'none';
+      if (spot) spot.style.display = 'none';
+      if (tip) tip.style.display  = 'none';
+      saveState(role, idx);
+      const url = urlFor(s.token) + '?autotour='+encodeURIComponent(role)+'&tourStep='+idx;
+      location.assign(url);
+      return;
+    }
+
+    try {
+      const el = await waitForElement(s.sel, {tries:30, interval:200});
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(()=> place(el, s.t, s.d), 250);
+      if (btnNext) btnNext.textContent = (idx === steps.length - 1) ? 'Concluir' : 'Próximo';
+    } catch(e){
+      idx++;
+      showStep();
+    }
+  }
+
+  function next(){
+    idx++;
+    if (idx >= steps.length){ endTour(); return; }
+    showStep();
+  }
+
+  function endTour(){
+    if (overlay) overlay.style.display = 'none';
+    if (spot) spot.style.display = 'none';
+    if (tip) tip.style.display  = 'none';
+    clearState();
+  }
+
+  async function startTour(requestedRole, startIndex=0){
+    role  = requestedRole;
+    steps = (tours[role]||[]);
+    if (!steps.length){ return; }
+    idx = Math.max(0, Math.min(startIndex, steps.length-1));
+    saveState(role, idx);
+    showStep();
+  }
+
+  window._telemedStartTour = (r)=> startTour(r, 0);
+
+  document.addEventListener('keydown', (ev)=>{
+    if (ev.key === 'Escape') endTour();
+  });
+
+  if (btnNext) btnNext.addEventListener('click', next);
+  if (btnSkip) btnSkip.addEventListener('click', endTour);
+
+  window.addEventListener('load', ()=>{
+    const qRole = QS.get('autotour');
+    const qStep = Number(QS.get('tourStep') || '0');
+
+    const s = loadState();
+
+    if (qRole){ startTour(qRole, qStep); return; }
+    if (s.has && s.role){ startTour(s.role, s.idx); }
+  });
+
+  console.log('💬 Consulta carregada com tour multi-página');
+})();
+  </script>
+
+  <!-- Tour overlay elements -->
+  <div id="tourOverlay" style="position:fixed;inset:0;background:rgba(2,6,23,.55);backdrop-filter:blur(2px);z-index:9998;display:none"></div>
+  <div id="tourSpot" style="position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(2,6,23,.55), 0 0 0 3px #0ea5e9;transition:all .2s;z-index:9999;display:none"></div>
+  <div id="tourTip" style="position:absolute;max-width:320px;background:#fff;border-radius:12px;box-shadow:0 10px 26px rgba(2,6,23,.18);padding:14px;z-index:10000;display:none">
+    <h4 id="tourTitle" style="margin:0 0 6px;font-size:1rem;color:#111827"></h4>
+    <p id="tourText" style="margin:0 0 12px;font-size:.9rem;color:#374151"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="tourSkip" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:transparent;color<script>
+(function(){
+  const p    = new URLSearchParams(location.search);
+  const room = (p.get('appointmentId') || p.get('room') || 'telemed-demo').trim();
+  const role = (p.get('role') || 'doctor').toLowerCase();
+
+  // Ajusta textos auxiliares
+  const state = document.getElementById('state');
+  if (state) state.innerHTML = '<span class="dot"></span> Conectando…';
+
+  // Copiar link do paciente pelo botão "Convite"
+  const inviteBtn = document.getElementById('btn-invite');
+  if (inviteBtn) inviteBtn.onclick = async () => {
+    const url = `${location.origin}/consulta.html?appointmentId=${encodeURIComponent(room)}&role=patient`;
+    try { await navigator.clipboard.writeText(url); alert('Link do paciente copiado!'); }
+    catch { prompt('Copie o link do paciente:', url); }
+  };
+
+  // Botão "Enviar para sala de espera" abre a sala (útil na demo)
+  const waitBtn = document.getElementById('btn-wait');
+  if (waitBtn) waitBtn.onclick = () => {
+    window.open(`/sala-de-espera.html?appointmentId=${encodeURIComponent(room)}`, '_blank');
+  };
+
+  // Inicia o vídeo automaticamente (o "Iniciar Consulta" segue funcionando p/ seu backend)
+  const mount = document.getElementById('jitsi');
+  try{
+    const api = new JitsiMeetExternalAPI('meet.jit.si', {
+      roomName: room,
+      parentNode: mount,
+      userInfo: { displayName: role === 'doctor' ? 'Dr(a). Demo' : 'Paciente Demo' },
+      configOverwrite: {
+        startWithAudioMuted: role === 'patient',
+        prejoinConfig: { enabled: role !== 'doctor' }
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: ['microphone','camera','desktop','chat','tileview','raisehand','hangup']
+      }
+    });
+
+    // Esconde o “placeholder” de câmera quando conectar
+    const placeholder = document.querySelector('.videoWrap .room');
+    api.addListener('videoConferenceJoined', () => {
+      if (placeholder) placeholder.style.display = 'none';
+      if (state) state.innerHTML = '<span class="dot"></span> Em atendimento';
+      state?.classList.remove('wait'); state?.classList.add('live');
+    });
+    api.addListener('readyToClose', () => {
+      if (state) state.innerHTML = '<span class="dot"></span> Encerrado';
+    });
+
+  } catch(e){
+    console.error(e);
+    if (state) state.innerHTML = '<span class="dot"></span> Falha no vídeo';
+    alert('Não foi possível iniciar o vídeo. Verifique sua conexão/permissões.');
+  }
+})();
+</script>:#0ea5e9;font-weight:600;cursor:pointer">Pular</button>
+      <button id="tourNext" style="padding:8px 12px;border-radius:10px;border:2px solid #0ea5e9;background:#0ea5e9;color:#fff;font-weight:600;cursor:pointer">Próximo</button>
+    </div>
+  </div>
+</body>
+</html>
+

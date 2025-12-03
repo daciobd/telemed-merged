@@ -1,0 +1,139 @@
+/* Centro responsivo e sem arrasto lateral */
+html,body{height:100%; margin:0; padding:0}
+*{box-sizing:border-box}
+body{overflow-x:hidden}
+
+.enhanced-shell{min-height:100vh; display:grid; grid-template-columns:minmax(0,1fr)}
+/* usar praticamente a largura toda em desktop, sem barra horizontal */
+.enhanced-wrap{
+  width: clamp(1100px, 96vw, 1680px);
+  margin-inline:auto;
+  padding:16px;
+}
+
+/* layout em duas colunas (esquerda: vídeo/status | direita: formulário) */
+.enhanced-columns{
+  display:grid;
+  grid-template-columns: minmax(360px, 42%) 1fr;
+  gap:16px;
+  align-items:start;
+  min-height: calc(100vh - 96px);
+}
+
+/* coluna esquerda fixa durante a rolagem */
+.enhanced-left{
+  position: sticky;
+  top: 12px;
+}
+
+/* rolagem só na direita; evita que a página inteira role demais */
+.enhanced-right{
+  min-height: calc(100vh - 96px);
+  overflow: auto;
+}
+
+/* Responsivo para telas menores */
+@media (max-width: 1100px){
+  .enhanced-columns{ 
+    grid-template-columns: 1fr; 
+    gap: 12px;
+  }
+  .enhanced-left{ 
+    position: static; 
+  }
+  .enhanced-wrap{
+    width: min(100%, 95vw);
+    padding: 12px;
+  }
+}
+
+/* Overrides defensivos se alguém alinhou à direita */
+.enhanced-wrap,.enhanced-container,.enh-split{margin-left:auto;margin-right:auto}
+.enhanced-container,.enh-split{display:block !important; max-width:1200px}
+.enhanced-right, [data-align="end"]{justify-content:unset !important}
+
+/* 100vw costuma quebrar quando DevTools está docked */
+:where(.enhanced-root, .enhanced-wrap, .enhanced-container, .enh-split){width:100%}
+:where(.enhanced-root, .enhanced-wrap, .enhanced-container, .enh-split)[data-full="true"]{width:100%}
+
+/* Fix para split layout específico */
+.enh-split{
+  display:flex !important;
+  max-width:100% !important;
+  margin:0 auto !important;
+  justify-content:center !important;
+}
+
+/* Previne overflow horizontal em qualquer elemento */
+.split-left, .split-right, .tm-stage, .consult-panel{
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+/* Centraliza o app container */
+.app{
+  max-width:1200px;
+  margin:0 auto;
+  width:100%;
+}
+
+/* === Z-INDEX FIXES PARA VÍDEO OVERLAYS === */
+
+/* 1. Garantir hierarquia de camadas estável */
+.enhanced-video-shell {
+    isolation: isolate; /* Nova stack de contexto */
+    contain: paint; /* Isola contexto de renderização */
+    position: relative;
+}
+
+/* 2. Elementos de vídeo ficam na base (nível 5) */
+.enhanced-video-shell video,
+.enhanced-video-shell canvas {
+    z-index: 5 !important; /* Base do vídeo */
+    position: absolute;
+    pointer-events: none; /* Vídeo não intercepta cliques */
+}
+
+/* 3. PIP (picture-in-picture) fica acima do vídeo principal (nível 15) */
+.enhanced-video-shell video[data-rtc-role="local"],
+.enhanced-video-shell .pip-video {
+    z-index: 15 !important;
+    pointer-events: auto; /* PIP pode ser clicável */
+}
+
+/* 4. Overlays e HUD ficam acima do vídeo (nível 20) */
+.enhanced-video-shell .overlay,
+.enhanced-video-shell .hud,
+.enhanced-video-shell .patient-info-card,
+.enhanced-video-shell .video-toolbar,
+.enhanced-video-shell [data-overlay] {
+    z-index: 20 !important;
+    pointer-events: auto;
+    position: absolute;
+}
+
+/* 5. Controles ficam no topo (nível 25) */
+.enhanced-controls,
+.controls,
+.video-controls {
+    z-index: 25 !important; /* Topo da hierarquia */
+    pointer-events: auto;
+    position: absolute;
+}
+
+/* 6. Fix específico para botões que ficam invisíveis */
+.enhanced-controls button,
+.controls button,
+.video-controls button {
+    z-index: 26 !important;
+    pointer-events: auto;
+    position: relative;
+}
+
+/* 7. Garantir que cards de paciente sejam visíveis */
+.patient-card,
+.patient-info-overlay,
+.consultation-header {
+    z-index: 22 !important;
+    pointer-events: auto;
+}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Integração Lances | TeleMed Sistema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">🔍 Teste Integração Lances</h1>
+            
+            <!-- Test Controls -->
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Create Test Bid -->
+                <div class="bg-blue-50 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-blue-800 mb-4">1. Criar Lance Teste</h3>
+                    <input type="text" id="testSpecialty" placeholder="Especialidade" value="Cardiologia" class="w-full p-3 border rounded mb-3">
+                    <input type="number" id="testValue" placeholder="Valor" value="200" class="w-full p-3 border rounded mb-3">
+                    <input type="text" id="testPatient" placeholder="Nome Paciente" value="João Silva" class="w-full p-3 border rounded mb-4">
+                    <button onclick="createTestBid()" class="w-full bg-blue-600 text-white py-3 px-4 rounded hover:bg-blue-700">
+                        <i class="fas fa-plus mr-2"></i>Criar Lance
+                    </button>
+                </div>
+
+                <!-- View Stored Bids -->
+                <div class="bg-green-50 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-green-800 mb-4">2. Ver Lances Salvos</h3>
+                    <div id="storedBids" class="text-sm text-gray-600 mb-4 max-h-48 overflow-y-auto">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                    <button onclick="refreshStoredBids()" class="w-full bg-green-600 text-white py-3 px-4 rounded hover:bg-green-700">
+                        <i class="fas fa-refresh mr-2"></i>Atualizar Lista
+                    </button>
+                </div>
+
+                <!-- Clear and Debug -->
+                <div class="bg-red-50 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-red-800 mb-4">3. Debug e Limpeza</h3>
+                    <button onclick="clearAllBids()" class="w-full bg-red-600 text-white py-3 px-4 rounded hover:bg-red-700 mb-3">
+                        <i class="fas fa-trash mr-2"></i>Limpar Tudo
+                    </button>
+                    <button onclick="debugInfo()" class="w-full bg-gray-600 text-white py-3 px-4 rounded hover:bg-gray-700">
+                        <i class="fas fa-bug mr-2"></i>Debug Console
+                    </button>
+                </div>
+            </div>
+
+            <!-- Integration Test -->
+            <div class="bg-yellow-50 rounded-lg p-6 mt-8">
+                <h3 class="text-lg font-bold text-yellow-800 mb-4">🧪 Teste Integração Completa</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <button onclick="goToConsultaValor()" class="bg-purple-600 text-white py-4 px-6 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-arrow-right mr-2"></i>Ir para Consulta por Valor
+                    </button>
+                    <button onclick="goToMedicalDashboard()" class="bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-arrow-right mr-2"></i>Ir para Dashboard Médico
+                    </button>
+                </div>
+            </div>
+
+            <!-- Debug Output -->
+            <div class="bg-gray-100 rounded-lg p-6 mt-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📋 Log Debug</h3>
+                <div id="debugOutput" class="text-sm font-mono bg-black text-green-400 p-4 rounded max-h-64 overflow-y-auto">
+                    Console output will appear here...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debugLog = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            debugLog.push(logMessage);
+            console.log(logMessage);
+            updateDebugOutput();
+        }
+
+        function updateDebugOutput() {
+            const output = document.getElementById('debugOutput');
+            output.innerHTML = debugLog.slice(-20).join('\n');
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function createTestBid() {
+            const specialty = document.getElementById('testSpecialty').value;
+            const value = document.getElementById('testValue').value;
+            const patient = document.getElementById('testPatient').value;
+
+            if (!specialty || !value || !patient) {
+                log('❌ ERROR: Todos os campos são obrigatórios');
+                return;
+            }
+
+            const testBid = {
+                id: Date.now(),
+                specialty: specialty,
+                value: value,
+                status: 'aguardando',
+                timestamp: new Date().toISOString(),
+                patient: patient,
+                consultType: 'Teleconsulta'
+            };
+
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            bids.push(testBid);
+            localStorage.setItem('telemed_bids', JSON.stringify(bids));
+
+            log(`✅ Lance criado: ${specialty} - R$ ${value} - ${patient}`);
+            log(`📊 Total de lances: ${bids.length}`);
+            
+            refreshStoredBids();
+        }
+
+        function refreshStoredBids() {
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            const container = document.getElementById('storedBids');
+            
+            log(`🔍 Carregando lances... Encontrados: ${bids.length}`);
+            
+            if (bids.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">Nenhum lance encontrado</p>';
+                return;
+            }
+
+            container.innerHTML = bids.map((bid, index) => `
+                <div class="bg-white p-3 rounded border mb-2">
+                    <div class="font-bold text-sm">${bid.specialty} - R$ ${bid.value}</div>
+                    <div class="text-xs text-gray-600">
+                        ${bid.patient} • ${bid.status} • ID: ${bid.id}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        ${new Date(bid.timestamp).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearAllBids() {
+            if (confirm('Tem certeza que deseja limpar todos os lances?')) {
+                localStorage.removeItem('telemed_bids');
+                log('🗑️ Todos os lances foram removidos');
+                refreshStoredBids();
+            }
+        }
+
+        function debugInfo() {
+            log('🔍 === DEBUG INFO ===');
+            log(`📊 localStorage keys: ${Object.keys(localStorage).join(', ')}`);
+            log(`📊 telemed_bids size: ${(localStorage.getItem('telemed_bids') || '').length} chars`);
+            
+            const bids = JSON.parse(localStorage.getItem('telemed_bids') || '[]');
+            log(`📊 Parsed bids count: ${bids.length}`);
+            
+            bids.forEach((bid, index) => {
+                log(`  ${index + 1}. ${bid.specialty} - R$ ${bid.value} - ${bid.patient} (${bid.status})`);
+            });
+        }
+
+        function goToConsultaValor() {
+            log('🚀 Redirecionando para Consulta por Valor...');
+            window.location.href = '/consulta-por-valor.html';
+        }
+
+        function goToMedicalDashboard() {
+            log('🚀 Redirecionando para Dashboard Médico...');
+            window.location.href = '/index.html';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🏥 Página de teste carregada');
+            refreshStoredBids();
+        });
+    </script>
+</body>
+</html>

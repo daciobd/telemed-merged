@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toast Notifications Demo - TeleMed</title>
+  <link href="/toast.css" rel="stylesheet"/>
+  <link href="/tour.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #1e40af;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --text: #f8fafc;
+      --border: #475569;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, #1a2332 50%, #0f1419 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 3rem;
+    }
+
+    .demo-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .demo-btn {
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+
+    .demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .btn-error {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+    }
+
+    .btn-info {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+    }
+
+    .code-block {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #10b981;
+      overflow-x: auto;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 Toast Notifications Demo</h1>
+    <p class="subtitle">Sistema de notificações profissional para TeleMed</p>
+
+    <div class="demo-section">
+      <h2>🎨 Tipos de Toast</h2>
+      <p style="color: #94a3b8; margin-bottom: 1rem;">
+        Clique nos botões para testar cada tipo de notificação:
+      </p>
+      
+      <div class="button-grid">
+        <button class="demo-btn btn-success" onclick="showSuccess()">
+          ✅ Success Toast
+        </button>
+        <button class="demo-btn btn-error" onclick="showError()">
+          ❌ Error Toast
+        </button>
+        <button class="demo-btn btn-warning" onclick="showWarning()">
+          ⚠️ Warning Toast
+        </button>
+        <button class="demo-btn btn-info" onclick="showInfo()">
+          ℹ️ Info Toast
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>⚡ Exemplos de Uso</h2>
+      <p style="color: #94a3b8; margin-bottom: 1rem;">
+        Simulações de casos de uso reais:
+      </p>
+      
+      <div class="button-grid">
+        <button class="demo-btn btn-success" onclick="simulateSave()">
+          💾 Salvar Dados
+        </button>
+        <button class="demo-btn btn-info" onclick="simulateLoading()">
+          🔄 Carregando...
+        </button>
+        <button class="demo-btn btn-warning" onclick="simulateValidation()">
+          📝 Validação
+        </button>
+        <button class="demo-btn btn-error" onclick="simulateNetworkError()">
+          🌐 Erro de Rede
+        </button>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>💡 Como Usar</h2>
+      
+      <div class="code-block">
+// Adicione no HTML:<br>
+&lt;link href="/toast.css" rel="stylesheet"/&gt;<br>
+&lt;script src="/toast.js"&gt;&lt;/script&gt;<br>
+<br>
+// Use em JavaScript:<br>
+toast.success('Título', 'Descrição opcional');<br>
+toast.error('Erro!', 'Algo deu errado...');<br>
+toast.warning('Atenção', 'Verifique os dados.');<br>
+toast.info('Informação', 'Processo iniciado.');
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>🎯 Teste Múltiplos Toasts</h2>
+      <button class="demo-btn btn-info" onclick="showMultiple()" style="width: 100%;">
+        🚀 Mostrar Múltiplos Toasts
+      </button>
+    </div>
+
+    <a href="/meus-pacientes/" class="back-link">← Voltar para Meus Pacientes</a>
+  </div>
+
+  <button id="start-demo">▶ Iniciar Tour Guiado</button>
+
+  <script src="/toast.js"></script>
+  <script src="/tour.js"></script>
+  <script>
+    // === DEBUG: Verificar carregamento ===
+    console.log('📍 toast-demo.html: Scripts loaded');
+    setTimeout(() => {
+      console.log('📍 Tour globals check:', {
+        tourNext: typeof window.tourNext,
+        tourPrev: typeof window.tourPrev,
+        tourEnd: typeof window.tourEnd,
+        autodemo: new URL(location.href).searchParams.get('autodemo')
+      });
+    }, 1000);
+    
+    // Exemplos básicos
+    function showSuccess() {
+      toast.success('Operação concluída!', 'Tudo funcionou perfeitamente.');
+    }
+
+    function showError() {
+      toast.error('Erro ao processar', 'Não foi possível completar a operação.');
+    }
+
+    function showWarning() {
+      toast.warning('Atenção necessária', 'Verifique os dados antes de continuar.');
+    }
+
+    function showInfo() {
+      toast.info('Informação', 'Processo iniciado com sucesso.');
+    }
+
+    // Simulações realistas
+    function simulateSave() {
+      toast.success('💾 Dados salvos', 'Suas alterações foram salvas com sucesso.');
+    }
+
+    function simulateLoading() {
+      toast.info('🔄 Carregando', 'Aguarde enquanto buscamos os dados...', 3000);
+      setTimeout(() => {
+        toast.success('Carregamento concluído!', 'Dados carregados com sucesso.');
+      }, 3000);
+    }
+
+    function simulateValidation() {
+      toast.warning('⚠️ Campos obrigatórios', 'Preencha todos os campos antes de continuar.');
+    }
+
+    function simulateNetworkError() {
+      toast.error('🌐 Erro de conexão', 'Não foi possível conectar ao servidor. Tente novamente.');
+    }
+
+    function showMultiple() {
+      toast.info('Primeira notificação', 'Enviando múltiplos toasts...');
+      setTimeout(() => toast.warning('Segunda notificação', 'Processando dados...'), 500);
+      setTimeout(() => toast.success('Terceira notificação', 'Processo concluído!'), 1000);
+      setTimeout(() => toast.info('Quarta notificação', 'Sistema atualizado.'), 1500);
+    }
+
+    // Toast de boas-vindas (apenas se NÃO for autodemo)
+    const url = new URL(location.href);
+    const isAutodemo = url.searchParams.get('autodemo') === '1';
+    
+    if (!isAutodemo) {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          toast.success('👋 Bem-vindo à Demo!', 'Teste os diferentes tipos de notificações.');
+        }, 500);
+      });
+    }
+  </script>
+</body>
+</html>

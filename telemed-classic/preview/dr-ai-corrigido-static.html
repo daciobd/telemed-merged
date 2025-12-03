@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+  <base href="/">
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Dr. AI - Inteligência Artificial Médica | TeleMed</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+        />
+        <style>
+            .gradient-bg {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            }
+
+            .pulse-animation {
+                animation: pulse-custom 2s infinite;
+            }
+
+            @keyframes pulse-custom {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
+                }
+            }
+
+            .typing-demo {
+                border-right: 2px solid #3b82f6;
+                animation:
+                    typing 3s steps(40) infinite,
+                    blink-caret 1s step-end infinite;
+            }
+
+            @keyframes typing {
+                from {
+                    width: 0;
+                }
+                to {
+                    width: 100%;
+                }
+            }
+
+            @keyframes blink-caret {
+                from,
+                to {
+                    border-color: transparent;
+                }
+                50% {
+                    border-color: #3b82f6;
+                }
+            }
+
+            .ai-glow {
+                box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+            }
+
+            .demo-step {
+                animation: fadeInUp 0.6s ease-out forwards;
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            .demo-step.active {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            @keyframes fadeInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50">
+        <!-- Header -->
+        <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <button
+                            onclick="goBack()"
+                            class="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <i class="fas fa-arrow-left text-gray-600"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <i
+                                class="fas fa-robot text-blue-600 text-xl mr-3"
+                            ></i>
+                            <h1 class="text-xl font-semibold text-gray-900">
+                                Dr. AI
+                            </h1>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <a
+                            href="index.html"
+                            class="text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                            <i class="fas fa-home mr-1"></i>Início
+                        </a>
+                        <button
+                            onclick="startDemo()"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <i class="fas fa-play mr-2"></i>Experimentar Agora
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="gradient-bg text-white py-20">
+            <div class="max-w-6xl mx-auto px-4 text-center">
+                <div class="mb-8">
+                    <div
+                        class="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6 ai-glow"
+                    >
+                        <i
+                            class="fas fa-robot text-white text-4xl pulse-animation"
+                        ></i>
+                    </div>
+                    <h1 class="text-5xl font-bold mb-4">
+                        Conheça o <span class="text-yellow-300">Dr. AI</span>
+                    </h1>
+                    <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+                        Sua Inteligência Artificial médica pessoal que analisa
+                        sintomas, identifica riscos e recomenda especialistas em
+                        segundos
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button
+                            onclick="scrollToDemo()"
+                            class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center"
+                        >
+                            <i class="fas fa-play-circle mr-2"></i>Ver
+                            Demonstração
+                        </button>
+                        <button
+                            onclick="startTriagem()"
+                            class="bg-yellow-400 text-gray-800 px-8 py-4 rounded-lg font-semibold hover:bg-yellow-300 transition-colors flex items-center justify-center"
+                        >
+                            <i class="fas fa-stethoscope mr-2"></i>Iniciar
+                            Triagem Agora
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Como Funciona -->
+        <section class="py-16 bg-white" id="como-funciona">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                        Como o Dr. AI Funciona
+                    </h2>
+                    <p class="text-xl text-gray-600">
+                        Inteligência artificial avançada para cuidar da sua
+                        saúde
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div
+                        class="text-center card-hover bg-blue-50 p-8 rounded-xl"
+                    >
+                        <div
+                            class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                        >
+                            <i class="fas fa-comments text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">
+                            1. Conversação Natural
+                        </h3>
+                        <p class="text-gray-600">
+                            Descreva seus sintomas em linguagem natural, como se
+                            estivesse falando com um médico
+                        </p>
+                    </div>
+
+                    <div
+                        class="text-center card-hover bg-purple-50 p-8 rounded-xl"
+                    >
+                        <div
+                            class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                        >
+                            <i class="fas fa-brain text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">
+                            2. Análise Inteligente
+                        </h3>
+                        <p class="text-gray-600">
+                            IA médica analisa seus sintomas, intensidade,
+                            duração e histórico médico
+                        </p>
+                    </div>
+
+                    <div
+                        class="text-center card-hover bg-green-50 p-8 rounded-xl"
+                    >
+                        <div
+                            class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                        >
+                            <i class="fas fa-user-md text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">
+                            3. Recomendação Precisa
+                        </h3>
+                        <p class="text-gray-600">
+                            Receba avaliação de risco e recomendação da
+                            especialidade médica ideal
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Demonstração Interativa -->
+        <section class="py-16 bg-gray-50" id="demo">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                        Veja o Dr. AI em Ação
+                    </h2>
+                    <p class="text-xl text-gray-600">
+                        Exemplo real de como funciona a triagem inteligente
+                    </p>
+                </div>
+
+                <div
+                    class="bg-white rounded-2xl shadow-xl overflow-hidden max-w-4xl mx-auto"
+                >
+                    <div
+                        class="bg-gradient-to-r from-blue-600 to-purple-600 p-4"
+                    >
+                        <div class="flex items-center">
+                            <div
+                                class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-3"
+                            >
+                                <i class="fas fa-robot text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold">
+                                    Dr. AI - Demonstração
+                                </h3>
+                                <p class="text-blue-100 text-sm">
+                                    Simulação de triagem médica
+                                </p>
+                            </div>
+                            <div class="ml-auto">
+                                <button
+                                    onclick="restartDemo()"
+                                    class="text-white hover:text-blue-200"
+                                >
+                                    <i class="fas fa-redo mr-1"></i>Reiniciar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        id="demoChat"
+                        class="h-96 overflow-y-auto p-6 space-y-4"
+                    >
+                        <!-- Mensagens da demonstração serão inseridas aqui -->
+                    </div>
+
+                    <div class="border-t p-4 bg-gray-50">
+                        <button
+                            onclick="startDemo()"
+                            class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                        >
+                            <i class="fas fa-play mr-2"></i>Iniciar Demonstração
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Especialidades Cobertas -->
+        <section class="py-16 bg-white">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                        Especialidades Cobertas
+                    </h2>
+                    <p class="text-xl text-gray-600">
+                        O Dr. AI conhece mais de 10 especialidades médicas
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+                    <div
+                        class="text-center p-4 rounded-xl hover:bg-red-50 transition-colors card-hover"
+                    >
+                        <i class="fas fa-heart text-red-500 text-3xl mb-3"></i>
+                        <h4 class="font-semibold text-gray-800">Cardiologia</h4>
+                        <p class="text-sm text-gray-600">
+                            Coração e sistema cardiovascular
+                        </p>
+                    </div>
+
+                    <div
+                        class="text-center p-4 rounded-xl hover:bg-blue-50 transition-colors card-hover"
+                    >
+                        <i class="fas fa-brain text-blue-500 text-3xl mb-3"></i>
+                        <h4 class="font-semibold text-gray-800">Neurologia</h4>
+                        <p class="text-sm text-gray-600">
+                            Sistema nervoso e cérebro
+                        </p>
+                    </div>
+
+                    <div
+                        class="text-center p-4 rounded-xl hover:bg-green-50 transition-colors card-hover"
+                    >
+                        <i
+                            class="fas fa-lungs text-green-500 text-3xl mb-3"
+                        ></i>
+                        <h4 class="font-semibold text-gray-800">Pneumologia</h4>
+                        <p class="text-sm text-gray-600">
+                            Pulmões e vias respiratórias
+                        </p>
+                    </div>
+
+                    <div
+                        class="text-center p-4 rounded-xl hover:bg-yellow-50 transition-colors card-hover"
+                    >
+                        <i
+                            class="fas fa-procedures text-yellow-500 text-3xl mb-3"
+                        ></i>
+                        <h4 class="font-semibold text-gray-800">Gastro</h4>
+                        <p class="text-sm text-gray-600">Sistema digestivo</p>
+                    </div>
+
+                    <div
+                        class="text-center p-4 rounded-xl hover:bg-purple-50 transition-colors card-hover"
+                    >
+                        <i
+                            class="fas fa-user-md text-purple-500 text-3xl mb-3"
+                        ></i>
+                        <h4 class="font-semibold text-gray-800">+6 Mais</h4>
+                        <p class="text-sm text-gray-600">
+                            Outras especialidades
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benefícios -->
+        <section class="py-16 bg-gradient-to-r from-blue-50 to-purple-50">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                        Por que Usar o Dr. AI?
+                    </h2>
+                    <p class="text-xl text-gray-600">
+                        Vantagens da triagem inteligente
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="flex items-start">
+                            <div
+                                class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"
+                            >
+                                <i
+                                    class="fas fa-clock text-blue-600 text-xl"
+                                ></i>
+                            </div>
+                            <div>
+                                <h3
+                                    class="text-xl font-semibold text-gray-800 mb-2"
+                                >
+                                    Triagem em Segundos
+                                </h3>
+                                <p class="text-gray-600">
+                                    Análise instantânea dos seus sintomas, 24
+                                    horas por dia, 7 dias por semana
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="flex items-start">
+                            <div
+                                class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"
+                            >
+                                <i
+                                    class="fas fa-bullseye text-green-600 text-xl"
+                                ></i>
+                            </div>
+                            <div>
+                                <h3
+                                    class="text-xl font-semibold text-gray-800 mb-2"
+                                >
+                                    Precisão Avançada
+                                </h3>
+                                <p class="text-gray-600">
+                                    Algoritmo treinado com milhares de casos
+                                    clínicos reais
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="flex items-start">
+                            <div
+                                class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"
+                            >
+                                <i
+                                    class="fas fa-route text-purple-600 text-xl"
+                                ></i>
+                            </div>
+                            <div>
+                                <h3
+                                    class="text-xl font-semibold text-gray-800 mb-2"
+                                >
+                                    Direcionamento Inteligente
+                                </h3>
+                                <p class="text-gray-600">
+                                    Conecta você diretamente com o especialista
+                                    correto
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="flex items-start">
+                            <div
+                                class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"
+                            >
+                                <i
+                                    class="fas fa-shield-alt text-red-600 text-xl"
+                                ></i>
+                            </div>
+                            <div>
+                                <h3
+                                    class="text-xl font-semibold text-gray-800 mb-2"
+                                >
+                                    Detecção de Urgências
+                                </h3>
+                                <p class="text-gray-600">
+                                    Identifica casos que precisam de atendimento
+                                    imediato
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Depoimentos -->
+        <section class="py-16 bg-white">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                        O que Nossos Pacientes Dizem
+                    </h2>
+                    <p class="text-xl text-gray-600">
+                        Experiências reais com o Dr. AI
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-gray-50 p-6 rounded-xl card-hover">
+                        <div class="flex mb-4">
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                        <p class="text-gray-700 mb-4">
+                            "O Dr. AI identificou que minha dor no peito
+                            precisava de atenção imediata. Me direcionou para
+                            cardiologia e foi fundamental!"
+                        </p>
+                        <div class="flex items-center">
+                            <div
+                                class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3"
+                            >
+                                <span class="text-white font-semibold">M</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">
+                                    Maria Silva
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    45 anos, São Paulo
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-xl card-hover">
+                        <div class="flex mb-4">
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                        <p class="text-gray-700 mb-4">
+                            "Incrível como o Dr. AI conseguiu analisar meus
+                            sintomas neurológicos e me conectar com o
+                            especialista certo em segundos."
+                        </p>
+                        <div class="flex items-center">
+                            <div
+                                class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3"
+                            >
+                                <span class="text-white font-semibold">J</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">
+                                    João Santos
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    38 anos, Rio de Janeiro
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-xl card-hover">
+                        <div class="flex mb-4">
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <i class="fas fa-star text-yellow-400"></i>
+                        </div>
+                        <p class="text-gray-700 mb-4">
+                            "Como mãe, o Dr. AI me dá tranquilidade para saber
+                            quando levar meus filhos ao médico. Muito útil!"
+                        </p>
+                        <div class="flex items-center">
+                            <div
+                                class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3"
+                            >
+                                <span class="text-white font-semibold">A</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">
+                                    Ana Costa
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    32 anos, Belo Horizonte
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Final -->
+        <section class="gradient-bg text-white py-16">
+            <div class="max-w-4xl mx-auto px-4 text-center">
+                <h2 class="text-4xl font-bold mb-4">
+                    Pronto para Experimentar?
+                </h2>
+                <p class="text-xl text-blue-100 mb-8">
+                    Faça sua primeira triagem com o Dr. AI agora mesmo
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                        onclick="startTriagem()"
+                        class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center"
+                    >
+                        <i class="fas fa-robot mr-2"></i>Iniciar Triagem com Dr.
+                        AI
+                    </button>
+                    <button
+                        onclick="goBack()"
+                        class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors flex items-center justify-center"
+                    >
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar ao
+                        Dashboard
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <script>
+            let demoStep = 0;
+            const demoMessages = [
+                {
+                    type: "bot",
+                    message:
+                        "Olá! Sou o Dr. AI. Como posso ajudá-lo hoje? Descreva os sintomas que está sentindo.",
+                    delay: 1000,
+                },
+                {
+                    type: "user",
+                    message: "Estou com uma dor forte no peito há 2 horas",
+                    delay: 2000,
+                },
+                {
+                    type: "bot",
+                    message:
+                        "Entendi. Em uma escala de 1 a 10, qual é a intensidade da dor?",
+                    delay: 1500,
+                },
+                {
+                    type: "user",
+                    message: "8 - está bem intensa",
+                    delay: 1000,
+                },
+                {
+                    type: "bot",
+                    message: "Vou analisar seus sintomas... 🤖",
+                    delay: 2000,
+                },
+                {
+                    type: "analysis",
+                    message:
+                        "Análise concluída! Baseado nos seus sintomas, recomendo: <br><br><strong>🚨 ALTO RISCO</strong><br><strong>📍 Especialidade: Cardiologia</strong><br><strong>⚡ Urgência: Procure atendimento imediato</strong>",
+                    delay: 3000,
+                },
+            ];
+
+            function startDemo() {
+                demoStep = 0;
+                document.getElementById("demoChat").innerHTML = "";
+                showNextDemoMessage();
+            }
+
+            function showNextDemoMessage() {
+                if (demoStep >= demoMessages.length) return;
+
+                const message = demoMessages[demoStep];
+
+                setTimeout(() => {
+                    addDemoMessage(message);
+                    demoStep++;
+                    if (demoStep < demoMessages.length) {
+                        showNextDemoMessage();
+                    }
+                }, message.delay);
+            }
+
+            function addDemoMessage(message) {
+                const chatContainer = document.getElementById("demoChat");
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "demo-step";
+
+                if (message.type === "bot") {
+                    messageDiv.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-3 max-w-xs">
+                            <p class="text-sm text-gray-800">${message.message}</p>
+                        </div>
+                    </div>
+                `;
+                } else if (message.type === "user") {
+                    messageDiv.innerHTML = `
+                    <div class="flex items-start justify-end">
+                        <div class="bg-blue-600 text-white rounded-lg p-3 max-w-xs">
+                            <p class="text-sm">${message.message}</p>
+                        </div>
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                            <i class="fas fa-user text-gray-600 text-sm"></i>
+                        </div>
+                    </div>
+                `;
+                } else if (message.type === "analysis") {
+                    messageDiv.innerHTML = `
+                    <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border-2 border-green-200">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                            <h4 class="font-semibold text-gray-800">Resultado da Análise</h4>
+                        </div>
+                        <div class="text-sm text-gray-700">${message.message}</div>
+                    </div>
+                `;
+                }
+
+                chatContainer.appendChild(messageDiv);
+
+                // Trigger animation
+                setTimeout(() => {
+                    messageDiv.classList.add("active");
+                }, 100);
+
+                // Scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            function restartDemo() {
+                startDemo();
+            }
+
+            function scrollToDemo() {
+                document
+                    .getElementById("demo")
+                    .scrollIntoView({ behavior: "smooth" });
+                setTimeout(() => {
+                    startDemo();
+                }, 1000);
+            }
+
+            function startTriagem() {
+                // Simular redirecionamento para triagem real
+                if (confirm("Deseja iniciar uma triagem real com o Dr. AI?")) {
+                    // Aqui você redirecionaria para a página de triagem funcional
+                    showNotification("Redirecionando para triagem...", "info");
+                    setTimeout(() => {
+                        // window.location.href = 'dr-ai-triagem.html'; // Página funcional
+                        alert("Em breve: Triagem funcional será implementada!");
+                    }, 1500);
+                }
+            }
+
+            function goBack() {
+                window.location.href = "index.html";
+            }
+
+            function showNotification(message, type) {
+                // Sistema simples de notificação
+                const notification = document.createElement("div");
+                notification.className = `fixed top-4 right-4 z-50 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300`;
+                notification.textContent = message;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.classList.remove("translate-x-full");
+                }, 100);
+
+                setTimeout(() => {
+                    notification.classList.add("translate-x-full");
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+
+            // Auto-start demo quando a página carrega
+            document.addEventListener("DOMContentLoaded", function () {
+                // Pequeno delay para a página carregar completamente
+                setTimeout(() => {
+                    startDemo();
+                }, 2000);
+            });
+        </script>
+    </body>
+</html>

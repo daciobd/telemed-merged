@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>Telemed – Dr. AI Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin:0; }
+    .wrap { display:grid; grid-template-columns: 1.2fr 1fr; height:100vh; }
+    header { padding:14px 18px; border-bottom:1px solid #eee; display:flex; gap:12px; align-items:center; }
+    .badge { padding:4px 8px; border-radius:999px; font-size:12px; background:#eef; margin-left:6px; }
+    .stage { padding:16px; border-bottom:1px dashed #ddd; }
+    .json { background:#0e1116; color:#c7e1ff; padding:12px; border-radius:8px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; }
+    .ok { color:#0a7a27; }
+    .warn { color:#b86b00; }
+    .err { color:#b00020; }
+    button { padding:10px 14px; border-radius:10px; border:0; box-shadow:0 1px 2px rgba(0,0,0,.08); cursor:pointer; }
+    button.primary { background:#1c64f2; color:#fff; }
+    button.ghost { background:#f3f4f6; }
+    iframe { width:100%; height:100%; border:0; }
+    .pill { display:inline-flex; gap:6px; align-items:center; margin-right:8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Apresentação automática – Dr. AI</strong>
+    <span class="badge">JSON + Zod</span>
+    <span class="badge">Anti-injeção</span>
+    <span class="badge">Rate limit</span>
+    <span class="badge">Políticas YAML</span>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button id="btnPlay" class="primary">▶ Iniciar</button>
+      <button id="btnSpike" class="ghost">⚡ Spike de carga</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main id="left">
+      <div id="log" class="stage"></div>
+      <div id="out" class="stage"></div>
+    </main>
+    <aside>
+      <iframe id="grafana" src="" title="Grafana"></iframe>
+    </aside>
+  </div>
+
+<script>
+const API = location.origin;
+const GRAFANA_URL = (new URLSearchParams(location.search).get("grafana") || "").trim();
+const logEl = document.getElementById('log');
+const outEl = document.getElementById('out');
+const btnPlay = document.getElementById('btnPlay');
+const btnSpike = document.getElementById('btnSpike');
+const grafana = document.getElementById('grafana');
+if (GRAFANA_URL) grafana.src = GRAFANA_URL;
+function line(html){ const d=document.createElement('div'); d.innerHTML=html; logEl.appendChild(d); }
+function showJSON(obj){ outEl.innerHTML = '<div class="json">'+JSON.stringify(obj,null,2)+'</div>'; }
+async function post(url, body){ const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}); return r.json(); }
+const steps = [
+  { title:'Seed de dados', run: async (ctx) => {
+      try{
+        const r = await post(`${API}/demo/seed`, {});
+        ctx.pRecent = r.patients?.recent;
+        ctx.pExpired = r.patients?.expired;
+        line(`<div class="pill ok">✅ Seed concluído</div>`);
+      }catch(e){ line(`<div class="pill err">⚠ seed indisponível (ok para DEMO_MODE)</div>`); }
+    }},
+  { title:'Esclarecimento baseado na última consulta', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 'demo', question: "Como devo tomar meu remédio conforme a última consulta?" });
+      showJSON(r); line(`<span class="ok">tipo:</span> <strong>${r.tipo}</strong> – esperado: esclarecimento`);
+    }},
+  { title:'Fora de escopo (remédio fora da receita)', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 'demo', question: "Posso tomar dipirona junto?" });
+      showJSON(r); line(`<span class="warn">guardrail:</span> <strong>${r.tipo}</strong> – esperado: fora_escopo`);
+    }},
+  { title:'Sintoma novo → escalar', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 'demo', question: "Comecei a sentir tontura agora" });
+      showJSON(r); line(`<span class="warn">guardrail:</span> <strong>${r.tipo}</strong> – esperado: escala_emergencia`);
+    }},
+  { title:'Emergência → escalar imediatamente', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pRecent || 'demo', question: "Estou com dor no peito forte e falta de ar" });
+      showJSON(r); line(`<span class="err">emergência:</span> <strong>${r.tipo}</strong> – esperado: escala_emergencia`);
+    }},
+  { title:'Consulta expirada (política por especialidade)', run: async (ctx) => {
+      const r = await post(`${API}/api/ai/answer`, { patientId: ctx.pExpired || 'demo-exp', question: "Pode relembrar as orientações?" });
+      showJSON(r); line(`<span class="warn">política de idade:</span> resposta deve orientar a reagendar (limite atingido).`);
+    }},
+];
+async function play(){
+  btnPlay.disabled = true; logEl.innerHTML = ''; outEl.innerHTML = '';
+  const ctx = {};
+  for (let i=0;i<steps.length;i++){
+    line(`<h3>${i+1}. ${steps[i].title}</h3>`);
+    if (window.Telemetry) window.Telemetry.trackTourStep(i);
+    await steps[i].run(ctx);
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  line(`<h3>✔ Demo concluída</h3>`);
+  btnPlay.disabled = false;
+}
+btnPlay.addEventListener('click', play);
+btnSpike.addEventListener('click', async ()=>{
+  line(`<div class="pill">⚡ Spike simulado iniciado — use k6 para carga real.</div>`);
+});
+if (new URLSearchParams(location.search).get('autoplay') === '1') play();
+</script>
+
+<script>
+/**
+ * Telemetria anônima para a DEMO (dr-ai-demo.html)
+ * - NÃO envia texto do usuário
+ * - Usa flags do localStorage (telemed_flags_v1)
+ * - Emite: page_view, tour_start, tour_step, ask_submitted, ask_error, cta_click
+ */
+(function(){
+  const FLAGS_KEY='telemed_flags_v1';
+
+  function loadFlags(){ try { return JSON.parse(localStorage.getItem(FLAGS_KEY)) || {}; } catch { return {}; } }
+  const f = loadFlags();
+  const enabled = !!(f.telemetry_enabled && (f.telemetry_mode === 'anonymous'));
+  if (!enabled) return;
+
+  function uuidv4(){
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+      const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  let sessionId = sessionStorage.getItem('telemed_session_id');
+  if (!sessionId) { sessionId = uuidv4(); sessionStorage.setItem('telemed_session_id', sessionId); }
+
+  function send(event_name, extra){
+    const payload = {
+      event_name,
+      ts: new Date().toISOString(),
+      session_id: sessionId,
+      role: (window.IS_DOCTOR_VIEW ? 'doctor' : 'patient'),
+      page: location.pathname.slice(0,64),
+      version: (window.__BUILD || 'demo').toString().slice(0,32),
+      trace_id: (extra && extra.trace_id) || undefined,
+      duration_ms: (extra && typeof extra.duration_ms === 'number')
+        ? Math.max(0, Math.floor(extra.duration_ms)) : undefined,
+      event_props: (extra && extra.event_props) ? extra.event_props : undefined
+    };
+    fetch('/api/telemetry/event', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(()=>{ });
+  }
+
+  send('page_view');
+
+  const startSelectors = ['#btnPlay','[data-tour-start]','[aria-label="Iniciar tour"]','button'];
+  const startBtns = Array.from(document.querySelectorAll(startSelectors.join(',')))
+    .filter(b => /iniciar|start|play/i.test(b.textContent || b.getAttribute('aria-label') || ''));
+  function onStart(){
+    send('tour_start');
+    startBtns.forEach(btn => btn.removeEventListener('click', onStart));
+  }
+  startBtns.forEach(btn => btn.addEventListener('click', onStart, { once:true }));
+
+  window.Telemetry = Object.assign({}, window.Telemetry, {
+    trackTourStep: function(index){
+      const i = Number.isFinite(index) ? index : 0;
+      send('tour_step', { event_props: { step_index: i } });
+    },
+    trackCTA: function(labelEnum){
+      send('cta_click', { event_props: { step_index: 0 } });
+    }
+  });
+
+  const origFetch = window.fetch;
+  window.fetch = async function(input, init){
+    const url = (typeof input === 'string') ? input : (input && input.url) || '';
+    if (url && (url.includes('/api/ai/answer') || url.includes('/api/ai/ask'))) {
+      const t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+      try {
+        const resp = await origFetch.apply(this, arguments);
+        const t1 = (window.performance && performance.now) ? performance.now() : Date.now();
+        send('ask_submitted', {
+          duration_ms: t1 - t0,
+          event_props: { http_status: resp.status }
+        });
+        if (!resp.ok) {
+          send('ask_error', {
+            event_props: {
+              http_status: resp.status,
+              retry_count: (init && init.__retryCount) || 0
+            }
+          });
+        }
+        return resp;
+      } catch (err) {
+        const t1 = (window.performance && performance.now) ? performance.now() : Date.now();
+        send('ask_error', {
+          duration_ms: t1 - t0,
+          event_props: {
+            http_status: 0,
+            retry_count: (init && init.__retryCount) || 0
+          }
+        });
+        throw err;
+      }
+    }
+    return origFetch.apply(this, arguments);
+  };
+
+})();
+</script>
+
+<!-- Consentimento de telemetria (demo) -->
+<div id="consent-banner" style="position:fixed;left:0;right:0;bottom:0;background:#0b1320;color:#fff;padding:12px 16px;display:none;z-index:9999">
+  <div style="max-width:980px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px">
+      <strong>Demonstração:</strong> Coletamos <u>eventos técnicos anônimos</u> (tour/erros) por até <b>7 dias</b>. <b>Não</b> armazenamos o que você digita.
+      <a href="/termos-privacidade.html#demo-telemetria" target="_blank" style="color:#9dd6ff">Saiba mais</a>.
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="consent-accept" style="padding:8px 12px;border-radius:8px;border:none;background:#22c55e;color:#06250f">Aceitar</button>
+      <button id="consent-essential" style="padding:8px 12px;border-radius:8px;border:1px solid #9ca3af;background:transparent;color:#fff">Somente essenciais</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const FLAGS_KEY='telemed_flags_v1', CONSENT_KEY='demo_consent_v1';
+  function load(){try{return JSON.parse(localStorage.getItem(FLAGS_KEY))||{}}catch{return{}}}
+  function save(f){localStorage.setItem(FLAGS_KEY, JSON.stringify(f))}
+  const show=()=>document.getElementById('consent-banner').style.display='block';
+  const hide=()=>document.getElementById('consent-banner').style.display='none';
+  if(!localStorage.getItem(CONSENT_KEY) && navigator.doNotTrack !== '1') show();
+  document.getElementById('consent-accept').onclick=()=>{
+    save(Object.assign({telemetry_mode:'anonymous',retention_days:7,redact_level:'strict'},load(),{telemetry_enabled:true}));
+    localStorage.setItem(CONSENT_KEY,'accepted'); hide();
+  };
+  document.getElementById('consent-essential').onclick=()=>{
+    save(Object.assign({telemetry_mode:'anonymous',retention_days:7,redact_level:'strict'},load(),{telemetry_enabled:false}));
+    localStorage.setItem(CONSENT_KEY,'essentials'); hide();
+  };
+})();
+</script>
+
+  <!-- Telemetry for Dr. AI demo (tour + ask) -->
+  <script src="/assets/js/telemetry-dr-ai.js"></script>
+</body>
+</html>

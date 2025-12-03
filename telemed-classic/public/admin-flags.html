@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Flags — Telemed Demo</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;max-width:860px;margin:40px auto;padding:0 16px}
+    h1{font-size:1.6rem;margin-bottom:8px}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:16px 0;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+    .row{display:flex;gap:12px;align-items:center;margin:10px 0}
+    label{min-width:220px;font-weight:600}
+    input[type="number"],select{padding:6px 8px;border:1px solid #d1d5db;border-radius:8px}
+    .muted{color:#6b7280;font-size:.9rem}
+    .tooltip{color:#6b7280;font-size:.85rem;margin-left:8px}
+    .btn{background:#111827;color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .ok{color:#065f46}
+  </style>
+</head>
+<body>
+  <h1>Flags e Recursos — Demo</h1>
+  <p class="muted">Altere as preferências abaixo. Salvas no navegador (localStorage) para a <em>demo</em>.</p>
+
+  <div class="card">
+    <h2>Telemetria (demo)</h2>
+    <div class="row">
+      <label>Telemetria Anônima</label>
+      <input id="f-enabled" type="checkbox"/>
+      <span class="tooltip">Coleta somente <b>eventos técnicos</b>. Sem texto digitado.</span>
+    </div>
+    <div class="row">
+      <label>Modo de telemetria</label>
+      <select id="f-mode">
+        <option value="off">Desligada (off)</option>
+        <option value="anonymous">Anônima (anonymous)</option>
+      </select>
+      <span class="tooltip">Em <b>Anônima</b>, não há PII nem conteúdo.</span>
+    </div>
+    <div class="row">
+      <label>Retenção (dias)</label>
+      <input id="f-retention" type="number" min="1" max="30"/>
+      <span class="tooltip">Após o prazo, os eventos são apagados.</span>
+    </div>
+    <div class="row">
+      <label>Nível de redação</label>
+      <select id="f-redact">
+        <option value="strict">Estrito (strict)</option>
+        <option value="moderate">Moderado (moderate)</option>
+      </select>
+      <span class="tooltip">Estrito bloqueia qualquer campo fora do schema.</span>
+    </div>
+    <p class="muted">Persistência de conteúdo: <b>Indisponível</b> nesta demo.</p>
+    <div class="row">
+      <button class="btn" id="btn-save">Salvar</button>
+      <span id="msg" class="ok" aria-live="polite" style="margin-left:8px"></span>
+    </div>
+  </div>
+
+  <script>
+    const FLAGS_KEY = 'telemed_flags_v1';
+    function loadFlags(){
+      const raw = localStorage.getItem(FLAGS_KEY);
+      if(!raw) return { telemetry_enabled:false, telemetry_mode:'anonymous', retention_days:7, redact_level:'strict' };
+      try { return JSON.parse(raw); } catch { return { telemetry_enabled:false, telemetry_mode:'anonymous', retention_days:7, redact_level:'strict' }; }
+    }
+    function saveFlags(f){ localStorage.setItem(FLAGS_KEY, JSON.stringify(f)); }
+
+    const $ = (s)=>document.querySelector(s);
+    const f = loadFlags();
+    document.querySelector('#f-enabled').checked = !!f.telemetry_enabled;
+    document.querySelector('#f-mode').value = f.telemetry_mode || 'anonymous';
+    document.querySelector('#f-retention').value = f.retention_days ?? 7;
+    document.querySelector('#f-redact').value = f.redact_level || 'strict';
+
+    document.querySelector('#btn-save').addEventListener('click', ()=>{
+      const next = {
+        telemetry_enabled: document.querySelector('#f-enabled').checked,
+        telemetry_mode: document.querySelector('#f-mode').value,
+        retention_days: Math.max(1, Math.min(30, parseInt(document.querySelector('#f-retention').value,10) || 7)),
+        redact_level: document.querySelector('#f-redact').value
+      };
+      saveFlags(next);
+      const m = document.querySelector('#msg'); m.textContent = 'Salvo!'; setTimeout(()=>m.textContent='', 1800);
+    });
+  </script>
+</body>
+</html>

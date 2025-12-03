@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed — Demo Paciente</title>
+  <meta name="description" content="Fluxo guiado para pacientes - cadastro, pedido de consulta e sala de espera." />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121935;
+      --text: #eaf0ff;
+      --muted: #b9c2e2;
+      --accent: #4da3ff;
+      --accent-strong: #1c7bff;
+      --ring: rgba(77,163,255,.5);
+      --ok: #39d98a;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 80% -10%, rgba(77,163,255,.15), transparent 60%),
+                  radial-gradient(900px 500px at -10% 10%, rgba(57,217,138,.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--ok));
+      box-shadow: 0 8px 24px rgba(28,123,255,.35);
+      font-weight: 900;
+    }
+    .brand-title { font-weight: 800; letter-spacing: .3px; color: var(--text); }
+    .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: rgba(77,163,255,.12); color: var(--accent); border: 1px solid rgba(77,163,255,.25); }
+    
+    h1 { font-size: clamp(28px, 3.8vw, 44px); line-height: 1.15; margin: 0 0 12px; }
+    p.lead { font-size: clamp(16px, 2.1vw, 20px); color: var(--muted); margin: 0 0 20px; }
+    
+    .card {
+      background: var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 20px; padding: 20px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,.18); margin-bottom: 20px;
+    }
+    
+    .step-list { display: grid; gap: 16px; margin: 20px 0; }
+    .step {
+      display: flex; gap: 16px; align-items: flex-start; padding: 16px; 
+      border-radius: 12px; background: rgba(255,255,255,.02);
+    }
+    .step-number {
+      flex: 0 0 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; 
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 14px;
+    }
+    .step-content h3 { margin: 0 0 8px; font-size: 18px; }
+    .step-content p { margin: 0; color: var(--muted); }
+    
+    .btn {
+      appearance: none; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 18px; border-radius: 14px; font-weight: 700; font-size: 16px; letter-spacing: .2px; 
+      transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+      color: white; background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      box-shadow: 0 12px 24px var(--ring); margin: 8px 8px 8px 0;
+    }
+    .btn:focus { outline: 3px solid var(--ring); outline-offset: 2px; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    
+    .ghost { background: transparent; color: var(--accent); border: 1px solid rgba(77,163,255,.4); }
+    
+    footer { margin-top: 36px; padding: 18px 0; color: var(--muted); font-size: 14px; }
+    footer a { color: var(--accent); }
+  </style>
+  
+  <!-- Estilos do widget de negociação -->
+  <style>
+    /* Estilos mínimos (dark friendly) */
+    #tm-negotiation.tm-card { border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:16px; background:rgba(255,255,255,.02); }
+    #tm-negotiation .tm-head h3 { margin:0 0 4px; font-size:18px; }
+    #tm-negotiation .tm-sub { margin:0; opacity:.75; font-size:13px; }
+    #tm-negotiation .tm-row { margin-top:12px; }
+    #tm-negotiation label { display:block; font-size:14px; margin-bottom:6px; }
+    #tm-offer-input { width:220px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.12); padding:0 10px; background:rgba(0,0,0,.25); color:inherit; }
+    .tm-hints { font-size:13px; opacity:.8; }
+    .tm-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .tm-chip { border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.04); padding:8px 10px; border-radius:999px; font-size:13px; cursor:pointer; }
+    .tm-chip:hover { filter:brightness(1.08); }
+    .tm-checkbox { display:flex; align-items:center; gap:8px; font-size:14px; }
+    .tm-availability { font-size:14px; }
+    .tm-availability b { font-weight:600; }
+    .tm-banner { border:1px dashed rgba(255,255,255,.25); border-radius:12px; padding:12px; font-size:14px; background:rgba(255,255,255,.03); }
+    .tm-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .tm-btn { height:38px; padding:0 14px; border-radius:10px; border:1px solid rgba(255,255,255,.15); background:rgba(110,168,255,.18); cursor:pointer; font-weight:600; }
+    .tm-btn.secondary { background:rgba(131,255,217,.15); }
+    .tm-schedule-head { font-size:14px; opacity:.85; margin-bottom:8px; }
+    .tm-slots { display:flex; flex-wrap:wrap; gap:8px; }
+    .tm-slot { border:1px solid rgba(255,255,255,.15); padding:8px 10px; border-radius:10px; font-size:13px; cursor:pointer; background:rgba(255,255,255,.04); }
+    .tm-slot small { opacity:.75; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="brand" href="/" aria-label="TeleMed Consulta">
+        <div class="logo" aria-hidden="true">Tm</div>
+        <strong class="brand-title">TeleMed Consulta</strong>
+      </a>
+      <span class="chip">Demo Paciente</span>
+    </header>
+
+    <main>
+      <h1>👤 Bem-vindo, Paciente!</h1>
+      <p class="lead">Siga este fluxo guiado para testar a plataforma como um paciente buscando atendimento médico.</p>
+
+      <div class="card">
+        <h2 style="margin: 0 0 16px; font-size: 20px;">🎯 Seu percurso no TeleMed</h2>
+        <div class="step-list">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Entenda como funciona</h3>
+              <p>Conheça o sistema de consultas, BID (propostas de valor) e Dr. AI</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Faça seu cadastro</h3>
+              <p>Informações pessoais e médicas para personalizar seu atendimento</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Crie pedido de consulta</h3>
+              <p>Especialidade, valor máximo e tipo de atendimento (imediato/agendado)</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h3>Aguarde na sala de espera</h3>
+              <p>Médicos verão sua proposta e decidirão se aceitam ou agendam</p>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <h3>Participe da consulta</h3>
+              <p>Videochamada com ferramentas médicas integradas (receitas, atestados)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <a class="btn" href="/paciente/como-funciona.html" data-testid="button-start-patient-flow">
+          1️⃣ Começar fluxo paciente →
+        </a>
+        <a class="btn ghost" href="/cadastro.html" data-testid="button-direct-register">
+          ⚡ Pular direto para cadastro
+        </a>
+        <a class="btn ghost" href="/escolha-perfil.html" data-testid="button-back-choice">
+          ← Voltar à escolha
+        </a>
+      </div>
+
+      <!-- Widget de negociação de preços e disponibilidade -->
+      <section id="tm-negotiation" data-specialty="clinica_geral" data-region="sp-capital" class="tm-card" style="margin-top: 24px;">
+        <header class="tm-head">
+          <h3>🎯 Demo: Sistema de Ofertas Inteligentes</h3>
+          <p class="tm-sub">Teste o sistema que mostra pisos de preço em tempo real e disponibilidade médica por região/especialidade.</p>
+        </header>
+
+        <div class="tm-row tm-offer">
+          <label for="tm-offer-input">Minha oferta (R$)</label>
+          <input id="tm-offer-input" type="number" inputmode="decimal" min="0" step="5" value="120" />
+        </div>
+
+        <div class="tm-row tm-hints" id="tm-hints">
+          <!-- preenchido via JS: pisos dinâmicos (agora/2h/amanhã) -->
+        </div>
+
+        <div class="tm-row tm-chips" id="tm-chips">
+          <!-- preenchido via JS: chips com valores sugeridos -->
+        </div>
+
+        <div class="tm-row tm-immediate">
+          <label class="tm-checkbox">
+            <input type="checkbox" id="tm-immediate-check" checked>
+            <span>Consulta imediata (assim que possível)</span>
+          </label>
+        </div>
+
+        <div class="tm-row tm-availability" id="tm-availability">
+          <!-- preenchido via JS: disponibilidade por janela de tempo -->
+        </div>
+
+        <div class="tm-row tm-banner" id="tm-banner" hidden>
+          <!-- preenchido via JS: sugestão de negociação (subir preço ou agendar) -->
+        </div>
+
+        <div class="tm-row tm-schedule" id="tm-schedule" hidden>
+          <div class="tm-schedule-head">Escolha um horário sugerido</div>
+          <div class="tm-slots" id="tm-slots">
+            <!-- preenchido via JS: slots sugeridos com preço mínimo -->
+          </div>
+        </div>
+      </section>
+
+      <div class="card" style="margin-top: 24px;">
+        <h3 style="margin: 0 0 12px; font-size: 18px;">💡 Dicas para um teste eficaz</h3>
+        <ul style="color: var(--muted); margin: 0; padding-left: 20px;">
+          <li>Use dados reais (ficam seguros no navegador)</li>
+          <li>Teste câmera e microfone antes da consulta</li>
+          <li>Anote o Patient ID quando receber</li>
+          <li>Experimente valores diferentes na proposta BID</li>
+          <li>Relate problemas técnicos para melhorarmos</li>
+        </ul>
+      </div>
+    </main>
+
+    <footer>
+      <div>TeleMed Consulta - Fluxo Demo Paciente</div>
+      <div style="margin-top: 8px;">
+        <a href="/escolha-perfil.html">Voltar</a> · <a href="/">Início</a> · <a href="#suporte">Suporte</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Widget de negociação - JavaScript -->
+  <script>
+  (function(){
+    const el = (id) => document.getElementById(id);
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const root = el('tm-negotiation');
+    const specialty = root?.dataset?.specialty || 'clinica_geral';
+    const region = root?.dataset?.region || 'sp-capital';
+
+    const offerInput = el('tm-offer-input');
+    const hints = el('tm-hints');
+    const chips = el('tm-chips');
+    const availabilityBox = el('tm-availability');
+    const banner = el('tm-banner');
+    const slotsWrap = el('tm-slots');
+    const scheduleWrap = el('tm-schedule');
+    const immediateCheck = el('tm-immediate-check');
+
+    const fmtBRL = (n) => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0}).format(n);
+    const humanTime = (iso) => new Date(iso).toLocaleString('pt-BR', { weekday:'short', hour:'2-digit', minute:'2-digit'});
+
+    async function getJSON(url){
+      try{
+        const r = await fetch(url);
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return await r.json();
+      }catch(e){ console.warn('[tm-negotiation] usando mock por falha no fetch', e); return null; }
+    }
+
+    function mockFloor(){
+      return {
+        specialty, now_floor: 140, in_2h_floor: 110, tomorrow_floor: 90,
+        typical_range: [90, 160],
+        acceptance_probabilities: { '120': { now:0.05, in_2h:0.6, tomorrow:0.9 }, '140': { now:0.7, in_2h:0.9, tomorrow:0.98 } }
+      };
+    }
+    function mockAvailability(offer){
+      return {
+        offer, immediate:{ doctors_available: offer>=140? 3:0, eta_minutes: offer>=140? 10:null },
+        next_2h:{ doctors_available: offer>=110? 2:1, eta_minutes: 60 },
+        tomorrow:{ doctors_available: 5 },
+        suggested_slots:[
+          { start: new Date(Date.now()+2*60*60e3).toISOString(), min_price: 110 },
+          { start: new Date(Date.now()+3*60*60e3).toISOString(), min_price: 110 },
+          { start: new Date(Date.now()+27*60*60e3).toISOString(), min_price: 90 }
+        ]
+      };
+    }
+
+    let floorData = null;
+
+    async function refreshFloor(){
+      const url = `/api/market/price-floor?specialty=${encodeURIComponent(specialty)}&region=${encodeURIComponent(region)}&urgency=${immediateCheck.checked? 'immediate':'scheduled'}`;
+      floorData = await getJSON(url) || mockFloor();
+      hints.innerHTML = `Hoje: <b>mínimo para imediato</b> ${fmtBRL(floorData.now_floor)} · <b>até 2h</b> ${fmtBRL(floorData.in_2h_floor)} · <b>amanhã</b> ${fmtBRL(floorData.tomorrow_floor)}`;
+      chips.innerHTML = '';
+      [
+        { label:`${fmtBRL(floorData.now_floor)} – agora`, value: floorData.now_floor },
+        { label:`${fmtBRL(floorData.in_2h_floor)} – até 2h`, value: floorData.in_2h_floor },
+        { label:`${fmtBRL(floorData.tomorrow_floor)} – amanhã`, value: floorData.tomorrow_floor }
+      ].forEach(c=>{
+        const b=document.createElement('button'); b.className='tm-chip'; b.type='button'; b.textContent=c.label; b.addEventListener('click',()=>{ offerInput.value=c.value; refreshAvailability(); }); chips.appendChild(b);
+      });
+    }
+
+    function probBadge(p){
+      if(p>=0.75) return '✅ alta chance';
+      if(p>=0.4) return '🟡 pode demorar';
+      return '🔴 pouca chance';
+    }
+
+    async function refreshAvailability(){
+      const offer = Number(offerInput.value||0);
+      const url = `/api/market/availability?specialty=${encodeURIComponent(specialty)}&region=${encodeURIComponent(region)}&offer=${offer}`;
+      const data = await getJSON(url) || mockAvailability(offer);
+
+      // disponibilidade resumo
+      const im = data.immediate;
+      const n2 = data.next_2h;
+      const tm = data.tomorrow;
+      availabilityBox.innerHTML = `No seu preço (<b>${fmtBRL(offer)}</b>): <b>${im.doctors_available||0}</b> médicos agora ${im.eta_minutes? `· ETA ~${im.eta_minutes}min`:''} · <b>${n2.doctors_available||0}</b> médicos em ~1–2h · <b>${tm.doctors_available||0}</b> amanhã.`;
+
+      // banner de sugestão
+      const needBump = immediateCheck.checked && (!im.doctors_available || im.doctors_available===0);
+      const betterSlot = (data.suggested_slots||[])[0];
+      const nowFloor = floorData?.now_floor || 0;
+
+      banner.hidden = !(needBump || (!immediateCheck.checked && betterSlot));
+      if(!banner.hidden){
+        banner.innerHTML = '';
+        const p = document.createElement('div');
+        if(needBump){
+          p.innerHTML = `No momento, ninguém aceita <b>${fmtBRL(offer)}</b> para atendimento imediato. `+
+            `👉 Tente <b>${fmtBRL(nowFloor)}</b> para iniciar já, ou agende <b>${humanTime(betterSlot.start)}</b> por <b>${fmtBRL(betterSlot.min_price)}</b>.`;
+        } else if(!immediateCheck.checked && betterSlot){
+          p.innerHTML = `Oferta registrada em <b>${fmtBRL(offer)}</b>. Se preferir, há horário <b>${humanTime(betterSlot.start)}</b> por <b>${fmtBRL(betterSlot.min_price)}</b>.`;
+        }
+        banner.appendChild(p);
+        const actions = document.createElement('div'); actions.className='tm-actions';
+        if(needBump){
+          const b1 = document.createElement('button'); b1.className='tm-btn'; b1.textContent = `Ofertar ${fmtBRL(nowFloor)} agora`; b1.onclick = ()=>{ offerInput.value = nowFloor; refreshAvailability(); };
+          const b2 = document.createElement('button'); b2.className='tm-btn secondary'; b2.textContent = `Agendar ${humanTime(betterSlot.start)} por ${fmtBRL(betterSlot.min_price)}`; b2.onclick = ()=> selectSlot(betterSlot);
+          actions.append(b1,b2);
+        } else if(betterSlot){
+          const b2 = document.createElement('button'); b2.className='tm-btn'; b2.textContent = `Agendar ${humanTime(betterSlot.start)} por ${fmtBRL(betterSlot.min_price)}`; b2.onclick = ()=> selectSlot(betterSlot);
+          actions.append(b2);
+        }
+        banner.appendChild(actions);
+      }
+
+      // slots
+      scheduleWrap.hidden = immediateCheck.checked; // mostra agenda só quando desmarca imediato
+      slotsWrap.innerHTML = '';
+      (data.suggested_slots||[]).forEach(s=>{
+        const d = document.createElement('button'); d.className='tm-slot'; d.type='button'; d.innerHTML = `<b>${humanTime(s.start)}</b><br><small>Mín.: ${fmtBRL(s.min_price)}</small>`; d.onclick=()=> selectSlot(s);
+        slotsWrap.appendChild(d);
+      });
+    }
+
+    function selectSlot(slot){
+      console.log('[tm-negotiation] slot escolhido', slot);
+      // Aqui você pode disparar seu fluxo real (criar bid/agendamento):
+      // fetch('/api/bids', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ offer:Number(offerInput.value), slot: slot.start }) })
+      alert(`🎯 Demo funcionando! Selecionado: ${humanTime(slot.start)} · mínimo ${fmtBRL(slot.min_price)}`);
+    }
+
+    // Eventos
+    offerInput.addEventListener('change', refreshAvailability);
+    offerInput.addEventListener('keyup', (e)=>{ if(e.key==='Enter') refreshAvailability(); });
+    immediateCheck.addEventListener('change', ()=>{ refreshFloor(); refreshAvailability(); });
+
+    // Boot
+    (async function init(){ await refreshFloor(); await refreshAvailability(); })();
+  })();
+  </script>
+
+  <!-- Sistema para ocultar seções técnicas -->
+  <script>
+  (function(){
+    const showDev = new URLSearchParams(location.search).get('dev') === '1' || localStorage.getItem('tm_dev') === 'on';
+    const nodes = document.querySelectorAll('.dev-only, [data-dev-only]');
+    nodes.forEach(n=> n.hidden = !showDev);
+    window.TeleMedDevToggle = function(on){ localStorage.setItem('tm_dev', on? 'on':'off'); location.reload(); };
+    document.addEventListener('keydown', (e)=>{
+      if(e.ctrlKey && e.altKey && e.key.toLowerCase()==='d'){
+        const next = !(localStorage.getItem('tm_dev')==='on');
+        window.TeleMedDevToggle(next);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

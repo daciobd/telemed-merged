@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin - Telemetria | TeleMed</title>
+  <script>window.__BUILD='pilot-r1';</script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --border: rgba(148, 163, 184, 0.2);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 2rem; }
+    .subtitle { color: var(--muted); margin: 0 0 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .status-badge.ok {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--ok);
+    }
+    .status-badge.off {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warn);
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: transform 0.1s ease;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn.success {
+      background: var(--ok);
+      color: white;
+    }
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .info-grid {
+      display: grid;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(148, 163, 184, 0.05);
+      border-radius: 8px;
+    }
+    .info-label { color: var(--muted); }
+    .info-value { font-weight: 600; }
+    code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 13px;
+    }
+    .test-output {
+      background: #000;
+      color: #0f0;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      margin-top: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .kbd {
+      display: inline-block;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Admin - Telemetria</h1>
+    <p class="subtitle">Configuração e testes do sistema de telemetria anônima</p>
+
+    <!-- Status Card -->
+    <div class="card">
+      <h2 style="margin: 0 0 16px;">Status da Telemetria</h2>
+      <div style="margin-bottom: 16px;">
+        <span id="status-badge" class="status-badge off">
+          <span>●</span>
+          <span>Desabilitada</span>
+        </span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-label">Flag telemetry_enabled</span>
+          <span id="flag-enabled" class="info-value">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Modo telemetry_mode</span>
+          <span id="flag-mode" class="info-value">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Session ID</span>
+          <span id="session-id" class="info-value">—</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button id="btn-enable" class="btn success">✓ Ativar Telemetria</button>
+        <button id="btn-disable" class="btn ghost">✗ Desativar Telemetria</button>
+      </div>
+    </div>
+
+    <!-- Test Card -->
+    <div class="card">
+      <h2 style="margin: 0 0 16px;">Testes do Endpoint</h2>
+      <p style="color: var(--muted); margin: 0 0 16px;">
+        Testa se os endpoints de telemetria estão respondendo corretamente.
+      </p>
+
+      <div style="margin-bottom: 12px;">
+        <button id="btn-ping" class="btn primary">🏓 Ping Endpoint</button>
+        <button id="btn-send-test" class="btn primary">📤 Enviar Evento de Teste</button>
+        <button id="btn-metrics" class="btn primary">📊 Buscar Métricas</button>
+      </div>
+
+      <div id="test-output" class="test-output" style="display: none;"></div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="card">
+      <h2 style="margin: 0 0 16px;">Como Usar</h2>
+      <ol style="margin: 0; padding-left: 24px; color: var(--muted);">
+        <li>Clique em <strong>"Ativar Telemetria"</strong> para habilitar o sistema</li>
+        <li>Navegue pelo site normalmente - os eventos serão capturados</li>
+        <li>Use <span class="kbd">Alt</span> + <span class="kbd">T</span> em qualquer página para disparar 10 eventos de teste</li>
+        <li>Acesse <code>/dashboard-piloto.html</code> para ver as métricas</li>
+        <li>Logs no console: abra DevTools e veja <code>[telemetry]</code> logs</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2 style="margin: 0 0 12px;">Links Úteis</h2>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="/dashboard-piloto.html" class="btn ghost" style="text-decoration: none;">📊 Dashboard Piloto</a>
+        <a href="/public/dr-ai-demo.html" class="btn ghost" style="text-decoration: none;">🤖 Demo Dr. AI</a>
+        <a href="/" class="btn ghost" style="text-decoration: none;">🏠 Página Inicial</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FLAGS_KEY = 'telemed_flags_v1';
+
+    // Funções helper
+    function getFlags() {
+      try {
+        return JSON.parse(localStorage.getItem(FLAGS_KEY)) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function setFlags(flags) {
+      localStorage.setItem(FLAGS_KEY, JSON.stringify(flags));
+      updateUI();
+    }
+
+    function isEnabled() {
+      const f = getFlags();
+      return !!(f.telemetry_enabled && f.telemetry_mode === 'anonymous');
+    }
+
+    function getSessionId() {
+      let sid = sessionStorage.getItem('telemed_session_id');
+      if (!sid) {
+        sid = uuidv4();
+        sessionStorage.setItem('telemed_session_id', sid);
+      }
+      return sid;
+    }
+
+    function uuidv4() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function log(message, type = 'info') {
+      const output = document.getElementById('test-output');
+      output.style.display = 'block';
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+      output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function updateUI() {
+      const flags = getFlags();
+      const enabled = isEnabled();
+      const statusBadge = document.getElementById('status-badge');
+      
+      // Update status badge
+      if (enabled) {
+        statusBadge.className = 'status-badge ok';
+        statusBadge.innerHTML = '<span>●</span><span>Habilitada</span>';
+      } else {
+        statusBadge.className = 'status-badge off';
+        statusBadge.innerHTML = '<span>●</span><span>Desabilitada</span>';
+      }
+
+      // Update info
+      document.getElementById('flag-enabled').textContent = flags.telemetry_enabled ? 'true' : 'false';
+      document.getElementById('flag-mode').textContent = flags.telemetry_mode || 'não definido';
+      document.getElementById('session-id').textContent = getSessionId();
+    }
+
+    // Event handlers
+    document.getElementById('btn-enable').addEventListener('click', () => {
+      setFlags({ telemetry_enabled: true, telemetry_mode: 'anonymous' });
+      log('Telemetria habilitada com sucesso!', 'success');
+    });
+
+    document.getElementById('btn-disable').addEventListener('click', () => {
+      setFlags({ telemetry_enabled: false, telemetry_mode: null });
+      log('Telemetria desabilitada.', 'info');
+    });
+
+    document.getElementById('btn-ping').addEventListener('click', async () => {
+      try {
+        log('Testando endpoint /api/telemetry/ping...');
+        const response = await fetch('/api/telemetry/ping');
+        const data = await response.json();
+        log(`Resposta: ${JSON.stringify(data)}`, response.ok ? 'success' : 'error');
+      } catch (err) {
+        log(`Erro: ${err.message}`, 'error');
+      }
+    });
+
+    document.getElementById('btn-send-test').addEventListener('click', async () => {
+      try {
+        log('Enviando evento de teste...');
+        const payload = {
+          event_name: 'cta_click',
+          ts: new Date().toISOString(),
+          session_id: getSessionId(),
+          role: 'patient',
+          page: '/admin-telemetry.html',
+          version: 'admin-test',
+          event_props: { step_index: 999 }
+        };
+        
+        const response = await fetch('/api/telemetry/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        log(`Status: ${response.status}`, response.ok ? 'success' : 'error');
+        log(`Resposta: ${JSON.stringify(data)}`);
+      } catch (err) {
+        log(`Erro: ${err.message}`, 'error');
+      }
+    });
+
+    document.getElementById('btn-metrics').addEventListener('click', async () => {
+      try {
+        log('Buscando métricas...');
+        const response = await fetch('/api/telemetry/metrics?range=24h');
+        const data = await response.json();
+        log(`Métricas (últimas 24h):`, 'success');
+        log(`  Usuários ativos: ${data.totals.active_users}`);
+        log(`  Total de eventos: ${data.breakdowns.by_event.reduce((sum, e) => sum + e.c, 0)}`);
+        log(`  Eventos por tipo: ${JSON.stringify(data.breakdowns.by_event)}`);
+      } catch (err) {
+        log(`Erro: ${err.message}`, 'error');
+      }
+    });
+
+    // Initialize UI
+    updateUI();
+    log('Admin de telemetria inicializado. Pronto para testes!', 'success');
+  </script>
+</body>
+</html>

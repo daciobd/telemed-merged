@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TeleMed — Avaliação da Experiência</title>
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; 
+      margin: 0; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px 0;
+    }
+    
+    .container { 
+      max-width: 880px; 
+      margin: 24px auto; 
+      background: #fff; 
+      padding: 32px; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    h1 { 
+      margin: 0 0 8px; 
+      font-size: 2rem; 
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .subtitle {
+      color: #6b7280; 
+      font-size: 1rem;
+      margin: 0;
+    }
+    
+    .badge { 
+      display: inline-block; 
+      padding: 4px 12px; 
+      border-radius: 999px; 
+      background: #eef2ff; 
+      color: #3730a3; 
+      font-size: 14px; 
+      font-weight: 600;
+      margin-left: 8px; 
+    }
+    
+    fieldset { 
+      border: 2px solid #f3f4f6; 
+      padding: 24px; 
+      border-radius: 16px; 
+      margin-bottom: 24px;
+      background: #fafbfb;
+    }
+    
+    legend {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #374151;
+      padding: 0 12px;
+    }
+    
+    label { 
+      display: block; 
+      margin: 16px 0 8px; 
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    input[type="text"], textarea, select { 
+      width: 100%; 
+      padding: 12px 16px; 
+      border: 2px solid #e5e7eb; 
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+    
+    input[type="text"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .row { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 20px; 
+    }
+    
+    @media (max-width: 768px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .actions { 
+      display: flex; 
+      gap: 16px; 
+      justify-content: flex-end; 
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .btn { 
+      border: 0; 
+      border-radius: 12px; 
+      padding: 14px 24px; 
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary { 
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary { 
+      background: #f3f4f6; 
+      color: #374151;
+      border: 2px solid #e5e7eb;
+    }
+    
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+    
+    .hint { 
+      color: #6b7280; 
+      font-size: 0.9rem;
+      margin: 8px 0 0;
+    }
+    
+    #status {
+      text-align: center;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .status-error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .nps-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    
+    .nps-option {
+      text-align: center;
+      padding: 12px 8px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: white;
+    }
+    
+    .nps-option:hover {
+      border-color: #667eea;
+      background: #f0f4ff;
+    }
+    
+    .nps-option.selected {
+      border-color: #667eea;
+      background: #667eea;
+      color: white;
+    }
+    
+    .required {
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Avaliação da Experiência <span class="badge">TeleMed</span></h1>
+      <p class="subtitle">Leva menos de 2 minutos. Seus comentários ajudam a melhorar o produto. 🙏</p>
+    </div>
+
+    <form id="form">
+      <fieldset>
+        <legend>📋 Identificação</legend>
+        <div class="row">
+          <div>
+            <label for="role">Quem está avaliando? <span class="required">*</span></label>
+            <select id="role" name="role" required data-testid="select-role">
+              <option value="">Selecione</option>
+              <option value="paciente">Paciente</option>
+              <option value="medico">Médico</option>
+            </select>
+          </div>
+          <div>
+            <label for="appointmentId">ID da Consulta (opcional)</label>
+            <input type="text" id="appointmentId" name="appointmentId" placeholder="ex.: APT-12345" data-testid="input-appointment-id" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>⭐ Experiência de Uso</legend>
+        
+        <label for="facilidade_uso">Facilidade de uso <span class="required">*</span></label>
+        <select id="facilidade_uso" name="facilidade_uso" required data-testid="select-ease-of-use">
+          <option value="">Selecione</option>
+          <option value="1">1 - Muito difícil</option>
+          <option value="2">2 - Difícil</option>
+          <option value="3">3 - Neutro</option>
+          <option value="4">4 - Fácil</option>
+          <option value="5">5 - Muito fácil</option>
+        </select>
+
+        <label for="clareza_fluxo">O fluxo ficou claro? <span class="required">*</span></label>
+        <select id="clareza_fluxo" name="clareza_fluxo" required data-testid="select-flow-clarity">
+          <option value="">Selecione</option>
+          <option value="sim">Sim, muito claro</option>
+          <option value="parcial">Parcialmente claro</option>
+          <option value="nao">Não, ficou confuso</option>
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>🛠️ Funcionalidades</legend>
+        
+        <label for="recurso_mais_util">Qual recurso foi mais útil? <span class="required">*</span></label>
+        <select id="recurso_mais_util" name="recurso_mais_util" required data-testid="select-most-useful-feature">
+          <option value="">Selecione</option>
+          <option value="dr_ai">Dr. AI (assistente inteligente)</option>
+          <option value="mda">Consultas online</option>
+          <option value="receita_certa">Receita Certa (prescrições)</option>
+          <option value="video_consulta">Videochamada</option>
+          <option value="outro">Outro</option>
+        </select>
+
+        <label for="outro_qual">Se marcou "Outro", qual?</label>
+        <input type="text" id="outro_qual" name="outro_qual" placeholder="Descreva brevemente" data-testid="input-other-feature" />
+
+        <label for="dificuldades_texto">Houve algum ponto de dificuldade ou confusão?</label>
+        <textarea id="dificuldades_texto" name="dificuldades_texto" rows="3" placeholder="Conte um pouco do que aconteceu" data-testid="textarea-difficulties"></textarea>
+
+        <label for="sugestoes_texto">O que você adicionaria ou mudaria?</label>
+        <textarea id="sugestoes_texto" name="sugestoes_texto" rows="3" placeholder="Suas sugestões ajudam muito!" data-testid="textarea-suggestions"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>📊 Recomendação (NPS)</legend>
+        <label for="nps">De 0 a 10, o quanto você recomendaria o TeleMed? <span class="required">*</span></label>
+        <p class="hint">0 = Não recomendaria | 10 = Recomendaria totalmente</p>
+        
+        <div class="nps-grid">
+          <div class="nps-option" data-value="0">0</div>
+          <div class="nps-option" data-value="1">1</div>
+          <div class="nps-option" data-value="2">2</div>
+          <div class="nps-option" data-value="3">3</div>
+          <div class="nps-option" data-value="4">4</div>
+          <div class="nps-option" data-value="5">5</div>
+          <div class="nps-option" data-value="6">6</div>
+          <div class="nps-option" data-value="7">7</div>
+          <div class="nps-option" data-value="8">8</div>
+          <div class="nps-option" data-value="9">9</div>
+          <div class="nps-option" data-value="10">10</div>
+        </div>
+        
+        <input type="hidden" id="nps" name="nps" required data-testid="input-nps-score" />
+      </fieldset>
+
+      <fieldset>
+        <legend>🐛 Qualidade & Bugs</legend>
+        
+        <label for="bugs_ou_erros">Encontrou bugs ou erros? <span class="required">*</span></label>
+        <select id="bugs_ou_erros" name="bugs_ou_erros" required data-testid="select-found-bugs">
+          <option value="">Selecione</option>
+          <option value="nao">Não</option>
+          <option value="sim">Sim</option>
+        </select>
+        
+        <label for="qual_bugs">Se sim, descreva</label>
+        <textarea id="qual_bugs" name="qual_bugs" rows="2" placeholder="Passos para reproduzir, screenshots, etc." data-testid="textarea-bug-description"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>📱 Metadados (preenchido automaticamente)</legend>
+        <div class="row">
+          <div>
+            <label for="device">Dispositivo</label>
+            <select id="device" name="device" data-testid="select-device">
+              <option value="">Detectado automaticamente</option>
+              <option value="mobile">Mobile</option>
+              <option value="desktop">Desktop</option>
+              <option value="tablet">Tablet</option>
+            </select>
+          </div>
+          <div>
+            <label for="navegador">Navegador</label>
+            <input type="text" id="navegador" name="navegador" placeholder="auto" readonly data-testid="input-browser" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="app_version">Versão do app</label>
+            <input type="text" id="app_version" name="app_version" placeholder="ex.: demo-0.1.0" data-testid="input-app-version" />
+          </div>
+          <div>
+            <label for="user_agent">User Agent</label>
+            <input type="text" id="user_agent" name="user_agent" placeholder="auto" readonly data-testid="input-user-agent" />
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" onclick="history.back()" data-testid="button-back">Voltar</button>
+        <button type="submit" class="btn btn-primary" data-testid="button-submit">Enviar Avaliação</button>
+      </div>
+    </form>
+
+    <p id="status" class="hint" data-testid="status-message"></p>
+  </div>
+
+  <script>
+    // Usar proxy interno para evitar CORS
+    const WEBAPP_URL = '/api/avaliacao-proxy';
+    
+    // Versão atual do app TeleMed
+    const APP_VERSION = 'telemed-1.0.0';
+
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name) || '';
+    }
+
+    // Pré-preenche role & appointmentId pela URL
+    (function hydrateFromQuery() {
+      const role = getQueryParam('role');
+      const appointmentId = getQueryParam('appointmentId');
+      if (role) document.getElementById('role').value = role;
+      if (appointmentId) document.getElementById('appointmentId').value = appointmentId;
+    })();
+
+    // Detecta automaticamente metadados do dispositivo
+    (function autoMeta() {
+      const ua = navigator.userAgent || '';
+      document.getElementById('user_agent').value = ua;
+      
+      // Detecta tipo de dispositivo
+      const isMobile = /Mobi|Android/i.test(ua);
+      const isTablet = /iPad|Tablet/i.test(ua);
+      let deviceType = 'desktop';
+      if (isTablet) deviceType = 'tablet';
+      else if (isMobile) deviceType = 'mobile';
+      
+      if (!document.getElementById('device').value) {
+        document.getElementById('device').value = deviceType;
+      }
+      
+      // Detecta navegador
+      const browser = (() => {
+        if (ua.includes('Chrome') && !ua.includes('Edg/')) return 'Chrome';
+        if (ua.includes('Edg/')) return 'Edge';
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+        if (ua.includes('Opera')) return 'Opera';
+        return 'Desconhecido';
+      })();
+      
+      document.getElementById('navegador').value = browser;
+      document.getElementById('app_version').value = APP_VERSION;
+    })();
+
+    // Sistema de NPS interativo
+    (function setupNPS() {
+      const npsOptions = document.querySelectorAll('.nps-option');
+      const npsInput = document.getElementById('nps');
+      
+      npsOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          // Remove seleção anterior
+          npsOptions.forEach(opt => opt.classList.remove('selected'));
+          
+          // Adiciona nova seleção
+          option.classList.add('selected');
+          npsInput.value = option.dataset.value;
+        });
+      });
+    })();
+
+    // Envio do formulário
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('status');
+      
+      status.textContent = 'Enviando avaliação...';
+      status.className = 'hint';
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      // Validação obrigatória
+      const required = ['role', 'facilidade_uso', 'clareza_fluxo', 'recurso_mais_util', 'nps', 'bugs_ou_erros'];
+      const missing = required.filter(field => !data[field]);
+      
+      if (missing.length > 0) {
+        status.textContent = 'Por favor, preencha todos os campos obrigatórios.';
+        status.className = 'status-error';
+        return;
+      }
+
+      // Adiciona timestamp e IP (se necessário)
+      data.timestamp = new Date().toISOString();
+      
+      try {
+        // Usar form-encoded para evitar preflight CORS
+        const formParams = new URLSearchParams();
+        Object.entries(data).forEach(([key, value]) => {
+          formParams.append(key, value);
+        });
+
+        const response = await fetch(WEBAPP_URL, {
+          method: 'POST',
+          body: formParams
+        });
+        
+        const result = await response.json();
+        
+        if (result.ok) {
+          status.textContent = '✅ Obrigado! Sua avaliação foi registrada com sucesso.';
+          status.className = 'status-success';
+          
+          // Redireciona após 2 segundos
+          setTimeout(() => {
+            window.location.href = '/obrigado.html';
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Erro desconhecido');
+        }
+      } catch (error) {
+        console.error('Erro ao enviar avaliação:', error);
+        status.textContent = '❌ Erro ao enviar: ' + error.message + ' - Tente novamente.';
+        status.className = 'status-error';
+      }
+    });
+
+    // Animação suave no carregamento
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('.container').style.opacity = '0';
+      document.querySelector('.container').style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        document.querySelector('.container').style.transition = 'all 0.5s ease';
+        document.querySelector('.container').style.opacity = '1';
+        document.querySelector('.container').style.transform = 'translateY(0)';
+      }, 100);
+    });
+  </script>
+</body>
+</html>
