@@ -208,14 +208,3 @@ router.post("/:customUrl/book", async (req, res) => {
 });
 
 export default router;
-```
-
----
-
-## 🚀 **COMO APLICAR:**
-
-### **1️⃣ Abra o Replit**
-
-### **2️⃣ Abra o arquivo:**
-```;
-apps / telemed - internal / src / virtual - office.routes.js;
