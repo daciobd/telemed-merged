@@ -1326,8 +1326,6 @@ import MyPatientsPage from './pages/doctor/my-patients';
 import PricingPage from './pages/pricing';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-function App() {
-  const [darkMode, setDarkMode] = useState(false);
 
   return (
     <Switch>

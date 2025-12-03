@@ -450,75 +450,46 @@ console.log('🔁 Redirects 301 configurados: stubs QA → páginas reais + docs
 // Arquivos estáticos gerais (imagens, etc)
 app.use("/assets", express.static(path.join(__dirname, "attached_assets")));
 
-// =======================
-// CONSULTÓRIO VIRTUAL (React, tema teal)
-// servido em /consultorio/*
-// =======================
-app.use(
-  "/consultorio",
-  express.static(path.join(__dirname, "client/dist"))
-);
+// ====== CONSULTÓRIO VIRTUAL (React) — Tema Teal ======
+const consultorioDist = path.join(__dirname, "client/dist");
+app.use("/consultorio", express.static(consultorioDist));
 
-// SPA fallback para Consultório Virtual (qualquer rota não-estática)
+// Fallback SPA — React precisa disso (usando regex para Express 5 compatibilidade)
 app.use("/consultorio", (req, res, next) => {
-  // Se é arquivo estático, passa para o express.static
+  // Só interceptar GET requests
+  if (req.method !== 'GET') return next();
+  // Se é arquivo estático, deixa passar
   const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
-  if (isStaticAsset) {
-    return next();
-  }
-  // Caso contrário, retorna o index.html do React SPA
-  res.sendFile(path.join(__dirname, "client/dist/index.html"));
+  if (isStaticAsset) return next();
+  // Retorna index.html do React SPA
+  res.sendFile(path.join(consultorioDist, "index.html"));
 });
 
-// =======================
-// TELEMED CLÁSSICO (HTML antigo)
-// servido na raiz /
-// =======================
-app.use(
-  "/",
-  express.static(path.join(__dirname, "telemed-classic"))
-);
+// ====== TELEMED CLÁSSICO ======
+const telemedClassic = path.join(__dirname, "telemed-classic");
+app.use("/", express.static(telemedClassic));
+
+// Fallback para TeleMed clássico (raiz)
+app.use((req, res, next) => {
+  // Só interceptar GET requests
+  if (req.method !== 'GET') return next();
+  // Não interceptar APIs
+  if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) return next();
+  // Não interceptar MedicalDesk
+  if (req.path.startsWith('/medicaldesk')) return next();
+  // Não interceptar Consultório (já tratado acima)
+  if (req.path.startsWith('/consultorio')) return next();
+  // Não interceptar arquivos estáticos
+  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
+  if (isStaticAsset) return next();
+  // Fallback para index.html do TeleMed clássico
+  res.sendFile(path.join(telemedClassic, "index.html"));
+});
 
 console.log("📁 Arquivos estáticos configurados:");
 console.log("   - /assets → attached_assets/");
 console.log("   - /consultorio → client/dist (CONSULTÓRIO VIRTUAL - TEMA TEAL)");
 console.log("   - / → telemed-classic (PLATAFORMA TELEMED COMPLETA)");
-
-// ===== SPA FALLBACK =====
-// Para React Router - retorna index.html para rotas não-API (DEPOIS do static!)
-// Usando app.use() em vez de app.get("*") para compatibilidade com Express 5 / path-to-regexp v8
-app.use((req, res, next) => {
-  // Só interceptar GET requests
-  if (req.method !== 'GET') {
-    return next();
-  }
-  
-  // Se é uma chamada de API, não interceptar
-  if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) {
-    return next();
-  }
-  
-  // IMPORTANTE: NÃO interceptar rotas do MedicalDesk (já processadas pelo proxy)
-  if (req.path.startsWith('/medicaldesk')) {
-    return next();
-  }
-  
-  // NÃO interceptar rotas do Consultório Virtual (já tratadas acima)
-  if (req.path.startsWith('/consultorio')) {
-    return next();
-  }
-  
-  // NÃO interceptar páginas HTML estáticas ou arquivos estáticos
-  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
-  if (isStaticAsset) {
-    return next();
-  }
-  
-  // Fallback para TeleMed clássico (raiz)
-  res.sendFile(
-    path.join(__dirname, "telemed-classic/index.html")
-  );
-});
 
 const requireToken = (req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
