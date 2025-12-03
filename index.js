@@ -446,46 +446,78 @@ console.log('🔁 Redirects 301 configurados: stubs QA → páginas reais + docs
 
 // ===== SERVE FRONTEND ESTÁTICO =====
 // IMPORTANTE: express.static DEVE vir DEPOIS do proxy MedicalDesk e ANTES do SPA Fallback!
-// USANDO O NOVO CONSULTÓRIO VIRTUAL COM TEMA TEAL
-const frontendPathHere = path.join(__dirname, 'client/dist');
 
-// attached_assets -> /assets (imagens anexadas pelo usuário)
-app.use('/assets', express.static(path.join(__dirname, 'attached_assets')));
+// Arquivos estáticos gerais (imagens, etc)
+app.use("/assets", express.static(path.join(__dirname, "attached_assets")));
 
-// Frontend build (client) - CSS, JS, HTML DO CONSULTÓRIO VIRTUAL
-app.use(express.static(frontendPathHere));
+// =======================
+// CONSULTÓRIO VIRTUAL (React, tema teal)
+// servido em /consultorio/*
+// =======================
+app.use(
+  "/consultorio",
+  express.static(path.join(__dirname, "client/dist"))
+);
 
-console.log('📁 Arquivos estáticos configurados:');
-console.log(`   - /assets → attached_assets/`);
-console.log(`   - / → client/dist/ (CONSULTÓRIO VIRTUAL - TEMA TEAL)`);
+// SPA fallback para Consultório Virtual (qualquer rota não-estática)
+app.use("/consultorio", (req, res, next) => {
+  // Se é arquivo estático, passa para o express.static
+  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
+  if (isStaticAsset) {
+    return next();
+  }
+  // Caso contrário, retorna o index.html do React SPA
+  res.sendFile(path.join(__dirname, "client/dist/index.html"));
+});
+
+// =======================
+// TELEMED CLÁSSICO (HTML antigo)
+// servido na raiz /
+// =======================
+app.use(
+  "/",
+  express.static(path.join(__dirname, "telemed-frontend/dist"))
+);
+
+console.log("📁 Arquivos estáticos configurados:");
+console.log("   - /assets → attached_assets/");
+console.log("   - /consultorio → client/dist (CONSULTÓRIO VIRTUAL - TEMA TEAL)");
+console.log("   - / → telemed-frontend/dist (PLATAFORMA TELEMED COMPLETA)");
 
 // ===== SPA FALLBACK =====
 // Para React Router - retorna index.html para rotas não-API (DEPOIS do static!)
+// Usando app.use() em vez de app.get("*") para compatibilidade com Express 5 / path-to-regexp v8
 app.use((req, res, next) => {
-  // Se é uma chamada de API, continua para os handlers
+  // Só interceptar GET requests
+  if (req.method !== 'GET') {
+    return next();
+  }
+  
+  // Se é uma chamada de API, não interceptar
   if (req.path.startsWith('/api/') || req.path.startsWith('/internal/')) {
     return next();
   }
+  
   // IMPORTANTE: NÃO interceptar rotas do MedicalDesk (já processadas pelo proxy)
   if (req.path.startsWith('/medicaldesk')) {
     return next();
   }
   
-  // NÃO interceptar páginas HTML estáticas ou arquivos estáticos
-  // Isso permite que galeria-paginas.html, tour.html, etc funcionem diretamente
-  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
-  if (isStaticAsset) {
-    // Deixa express.static tentar servir, se não existir vai dar 404 natural
+  // NÃO interceptar rotas do Consultório Virtual (já tratadas acima)
+  if (req.path.startsWith('/consultorio')) {
     return next();
   }
   
-  // Se é uma rota do frontend que não foi encontrada nos arquivos estáticos, retorna index.html
-  res.sendFile(path.join(frontendPathHere, 'index.html'), (err) => {
-    if (err) {
-      console.error('Erro ao servir index.html:', err);
-      res.status(404).json({ error: 'not_found' });
-    }
-  });
+  // NÃO interceptar páginas HTML estáticas ou arquivos estáticos
+  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json|txt|pdf)$/i.test(req.path);
+  if (isStaticAsset) {
+    return next();
+  }
+  
+  // Fallback para TeleMed clássico (raiz)
+  res.sendFile(
+    path.join(__dirname, "telemed-frontend/dist/index.html")
+  );
 });
 
 const requireToken = (req, res, next) => {
