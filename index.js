@@ -476,13 +476,13 @@ app.use("/consultorio", (req, res, next) => {
 // =======================
 app.use(
   "/",
-  express.static(path.join(__dirname, "telemed-frontend/dist"))
+  express.static(path.join(__dirname, "telemed-classic"))
 );
 
 console.log("📁 Arquivos estáticos configurados:");
 console.log("   - /assets → attached_assets/");
 console.log("   - /consultorio → client/dist (CONSULTÓRIO VIRTUAL - TEMA TEAL)");
-console.log("   - / → telemed-frontend/dist (PLATAFORMA TELEMED COMPLETA)");
+console.log("   - / → telemed-classic (PLATAFORMA TELEMED COMPLETA)");
 
 // ===== SPA FALLBACK =====
 // Para React Router - retorna index.html para rotas não-API (DEPOIS do static!)
@@ -516,7 +516,7 @@ app.use((req, res, next) => {
   
   // Fallback para TeleMed clássico (raiz)
   res.sendFile(
-    path.join(__dirname, "telemed-frontend/dist/index.html")
+    path.join(__dirname, "telemed-classic/index.html")
   );
 });
 
