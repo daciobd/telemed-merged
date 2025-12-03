@@ -28,7 +28,7 @@ router.get("/:customUrl", async (req, res) => {
     const settings = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, req.user.doctorId)) // ✅ COM doctor_id
+      .where(eq(virtualOfficeSettings.custom_url, customUrl)) // ✅ CORRIGIDO: custom_url + removido req.user
       .limit(1);
 
     if (!settings || settings.length === 0) {
@@ -39,7 +39,7 @@ router.get("/:customUrl", async (req, res) => {
     const doctor = await db
       .select()
       .from(users)
-      .where(eq(users.id, setting.doctorId))
+      .where(eq(users.id, setting.doctor_id)) // ✅ CORRIGIDO: doctor_id
       .limit(1);
 
     if (!doctor || doctor.length === 0) {
@@ -52,7 +52,7 @@ router.get("/:customUrl", async (req, res) => {
         fullName: doctor[0].fullName,
         specialties: doctor[0].specialties || [],
         bio: doctor[0].bio,
-        consultationPricing: setting.consultationPricing || {},
+        consultationPricing: setting.consultation_pricing || {}, // ✅ CORRIGIDO: consultation_pricing
       },
     });
   } catch (error) {
@@ -67,7 +67,7 @@ router.get("/settings", authenticate, async (req, res) => {
     const settings = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctorId, req.user.id))
+      .where(eq(virtualOfficeSettings.doctor_id, req.user.id)) // ✅ CORRIGIDO: doctor_id
       .limit(1);
 
     if (!settings || settings.length === 0) {
@@ -93,17 +93,17 @@ router.patch("/settings", authenticate, async (req, res) => {
     const existing = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctorId, req.user.id))
+      .where(eq(virtualOfficeSettings.doctor_id, req.user.id)) // ✅ CORRIGIDO: doctor_id
       .limit(1);
 
     if (existing && existing.length > 0) {
       const updated = await db
         .update(virtualOfficeSettings)
         .set({
-          customUrl: customUrl.toLowerCase(),
-          consultationPricing: consultationPricing || {},
+          custom_url: customUrl.toLowerCase(), // ✅ CORRIGIDO: custom_url
+          consultation_pricing: consultationPricing || {}, // ✅ CORRIGIDO: consultation_pricing
         })
-        .where(eq(virtualOfficeSettings.doctorId, req.user.id))
+        .where(eq(virtualOfficeSettings.doctor_id, req.user.id)) // ✅ CORRIGIDO: doctor_id
         .returning();
 
       return res.json({ settings: updated[0] });
@@ -111,9 +111,9 @@ router.patch("/settings", authenticate, async (req, res) => {
       const created = await db
         .insert(virtualOfficeSettings)
         .values({
-          doctorId: req.user.id,
-          customUrl: customUrl.toLowerCase(),
-          consultationPricing: consultationPricing || {},
+          doctor_id: req.user.id, // ✅ CORRIGIDO: doctor_id
+          custom_url: customUrl.toLowerCase(), // ✅ CORRIGIDO: custom_url
+          consultation_pricing: consultationPricing || {}, // ✅ CORRIGIDO: consultation_pricing
         })
         .returning();
 
@@ -131,9 +131,9 @@ router.get("/my-patients", authenticate, async (req, res) => {
     const consultsByDoc = await db
       .select()
       .from(consultations)
-      .where(eq(consultations.doctorId, req.user.id));
+      .where(eq(consultations.doctor_id, req.user.id)); // ✅ CORRIGIDO: doctor_id
 
-    const patientIds = [...new Set(consultsByDoc.map((c) => c.patientId))];
+    const patientIds = [...new Set(consultsByDoc.map((c) => c.patient_id))]; // ✅ CORRIGIDO: patient_id
 
     const patients = [];
     for (const patientId of patientIds) {
@@ -145,7 +145,7 @@ router.get("/my-patients", authenticate, async (req, res) => {
 
       if (patient && patient.length > 0) {
         const totalConsults = consultsByDoc.filter(
-          (c) => c.patientId === patientId,
+          (c) => c.patient_id === patientId, // ✅ CORRIGIDO: patient_id
         ).length;
         patients.push({
           id: patient[0].id,
@@ -174,7 +174,7 @@ router.post("/:customUrl/book", async (req, res) => {
     const settings = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.customUrl, customUrl))
+      .where(eq(virtualOfficeSettings.custom_url, customUrl)) // ✅ CORRIGIDO: custom_url
       .limit(1);
 
     if (!settings || settings.length === 0) {
@@ -182,18 +182,18 @@ router.post("/:customUrl/book", async (req, res) => {
     }
 
     const [setting] = settings;
-    const doctorId = setting.doctorId;
+    const doctorId = setting.doctor_id; // ✅ CORRIGIDO: doctor_id
 
     const created = await db
       .insert(consultations)
       .values({
-        patientId: patientId || 1,
-        doctorId,
-        consultationType: consultationType || "primeira_consulta",
-        scheduledFor: new Date(scheduledFor),
-        chiefComplaint: chiefComplaint || "",
+        patient_id: patientId || 1, // ✅ CORRIGIDO: patient_id
+        doctor_id: doctorId, // ✅ CORRIGIDO: doctor_id
+        consultation_type: consultationType || "primeira_consulta", // ✅ CORRIGIDO: consultation_type
+        scheduled_for: new Date(scheduledFor), // ✅ CORRIGIDO: scheduled_for
+        chief_complaint: chiefComplaint || "", // ✅ CORRIGIDO: chief_complaint
         status: "agendada",
-        price: setting.consultationPricing?.[consultationType] || 0,
+        price: setting.consultation_pricing?.[consultationType] || 0, // ✅ CORRIGIDO: consultation_pricing
       })
       .returning();
 
