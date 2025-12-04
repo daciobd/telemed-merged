@@ -65,8 +65,8 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-ID', req.id);
   next(); 
 });
-// Porta: Render (RENDER=true) usa PORT env, Replit usa 5000 fixo
-const PORT = process.env.RENDER ? (process.env.PORT || 10000) : 5000;
+// Porta: usa PORT do ambiente (Render, Heroku, etc.) ou 5000 como fallback (Replit)
+const PORT = process.env.PORT || 5000;
 
 // Health check endpoints para observabilidade (PÚBLICO - sem auth)
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
