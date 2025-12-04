@@ -1,9 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Router } from 'wouter';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
 import './index.css';
+
+// Base path para o Consultório Virtual (deve ser igual ao vite.config.ts)
+const BASE_PATH = '/consultorio';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,9 +45,11 @@ if (!rootElement) throw new Error('Failed to find the root element');
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <Router base={BASE_PATH}>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   </StrictMode>
 );
