@@ -1,283 +1,221 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiRequest } from '@/lib/api';
+import ConsultorioLayout from '@/components/ConsultorioLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { FileText, DollarSign, Clock, TrendingDown } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Calendar, 
+  ShoppingCart, 
+  FileText, 
+  TrendingUp,
+  Clock,
+  ArrowRight
+} from 'lucide-react';
+import { Link } from 'wouter';
+
+interface DashboardStats {
+  consultasHoje: number;
+  consultasSemana: number;
+  novasMarketplace: number;
+  ganhosEsteMes: number;
+}
 
 interface Consultation {
-  id: number;
-  consultationType: string;
-  isMarketplace: boolean;
-  status: string;
-  patientOffer: string | null;
-  agreedPrice: string | null;
-  chiefComplaint: string;
-  scheduledFor: string | null;
-  createdAt: string;
+  id: string;
+  paciente: string;
+  dataHora: string;
+  especialidade: string;
 }
 
 export default function DoctorDashboard() {
-  const { user, logout } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [bidForms, setBidForms] = useState<Record<number, { amount: string; message: string }>>({});
+  const { user } = useAuth();
 
-  const { data: marketplaceConsultations, isLoading: isLoadingMarketplace } = useQuery<Consultation[]>({
-    queryKey: ['/api/consultorio/consultations/marketplace'],
+  const { data: stats, isLoading: isLoadingStats } = useQuery<DashboardStats>({
+    queryKey: ['/api/consultorio/dashboard/stats'],
   });
 
-  const { data: myConsultations, isLoading: isLoadingMine } = useQuery<Consultation[]>({
-    queryKey: ['/api/consultorio/consultations'],
+  const { data: proximasConsultas, isLoading: isLoadingProximas } = useQuery<Consultation[]>({
+    queryKey: ['/api/consultorio/dashboard/proximas'],
   });
 
-  const createBidMutation = useMutation({
-    mutationFn: async ({ consultationId, bidAmount, message }: { consultationId: number; bidAmount: number; message: string }) => {
-      return apiRequest('/api/consultorio/bids', {
-        method: 'POST',
-        body: JSON.stringify({ consultationId, bidAmount, message }),
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/consultorio/consultations/marketplace'] });
-      toast({
-        title: 'Lance enviado!',
-        description: 'O paciente foi notificado',
-      });
-      setBidForms((prev) => {
-        const newForms = { ...prev };
-        delete newForms[variables.consultationId];
-        return newForms;
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao enviar lance',
-        description: error instanceof Error ? error.message : 'Tente novamente',
-      });
-    },
-  });
-
-  const handleBidSubmit = (consultationId: number) => {
-    const form = bidForms[consultationId];
-    if (!form || !form.amount) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Informe o valor do lance',
-      });
-      return;
-    }
-
-    createBidMutation.mutate({
-      consultationId,
-      bidAmount: parseFloat(form.amount),
-      message: form.message,
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  const statusLabels: Record<string, string> = {
-    pending: 'Aguardando',
-    doctor_matched: 'Confirmado',
-    in_progress: 'Em Andamento',
-    completed: 'Concluída',
-    cancelled: 'Cancelada',
-  };
+  const StatCard = ({ 
+    title, 
+    value, 
+    icon: Icon, 
+    color,
+    testId 
+  }: { 
+    title: string; 
+    value: number | string; 
+    icon: React.ElementType; 
+    color: string;
+    testId: string;
+  }) => (
+    <Card data-testid={testId}>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+            <p className="text-3xl font-bold mt-1">{value}</p>
+          </div>
+          <div className={`p-3 rounded-full ${color}`}>
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto p-4 md:p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard do Médico</h1>
-            <p className="text-gray-600 dark:text-gray-400">Bem-vindo, {user?.fullName}</p>
-          </div>
-          <Button variant="outline" onClick={logout} data-testid="button-logout">
-            Sair
-          </Button>
+    <ConsultorioLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Olá, {user?.fullName?.split(' ')[0] || 'Doutor'}!
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Aqui está um resumo do seu consultório virtual
+          </p>
         </div>
 
-        <Tabs defaultValue="marketplace" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="marketplace" data-testid="tab-marketplace">
-              Marketplace
-            </TabsTrigger>
-            <TabsTrigger value="myconsultations" data-testid="tab-myconsultations">
-              Minhas Consultas
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="marketplace" className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Consultas Disponíveis no Marketplace
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Envie lances para as consultas que você pode atender
-              </p>
-            </div>
-
-            {isLoadingMarketplace ? (
-              <p className="text-center py-8">Carregando...</p>
-            ) : marketplaceConsultations && marketplaceConsultations.length > 0 ? (
-              <div className="grid gap-4">
-                {marketplaceConsultations.map((consultation) => (
-                  <Card key={consultation.id} data-testid={`card-marketplace-${consultation.id}`}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" />
-                            {consultation.consultationType.replace('_', ' ')}
-                          </CardTitle>
-                          <CardDescription className="mt-2">{consultation.chiefComplaint}</CardDescription>
-                        </div>
-                        {consultation.patientOffer && (
-                          <div className="text-right">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Oferta do Paciente</p>
-                            <p className="text-xl font-bold text-teal-600">
-                              R$ {parseFloat(consultation.patientOffer).toFixed(2)}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-4 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {new Date(consultation.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Seu Lance (R$)</label>
-                            <Input
-                              type="number"
-                              placeholder="120.00"
-                              value={bidForms[consultation.id]?.amount || ''}
-                              onChange={(e) => setBidForms({
-                                ...bidForms,
-                                [consultation.id]: {
-                                  ...bidForms[consultation.id],
-                                  amount: e.target.value,
-                                },
-                              })}
-                              data-testid={`input-bid-amount-${consultation.id}`}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Mensagem (opcional)</label>
-                            <Input
-                              placeholder="Ex: Posso atendê-lo hoje às 15h"
-                              value={bidForms[consultation.id]?.message || ''}
-                              onChange={(e) => setBidForms({
-                                ...bidForms,
-                                [consultation.id]: {
-                                  ...bidForms[consultation.id],
-                                  message: e.target.value,
-                                },
-                              })}
-                              data-testid={`input-bid-message-${consultation.id}`}
-                            />
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => handleBidSubmit(consultation.id)}
-                          disabled={createBidMutation.isPending}
-                          className="w-full"
-                          data-testid={`button-submit-bid-${consultation.id}`}
-                        >
-                          <TrendingDown className="mr-2 h-4 w-4" />
-                          {createBidMutation.isPending ? 'Enviando...' : 'Enviar Lance'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Nenhuma consulta disponível no marketplace no momento
-                  </p>
+        {isLoadingStats ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
                 </CardContent>
               </Card>
-            )}
-          </TabsContent>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              title="Consultas Hoje"
+              value={stats?.consultasHoje ?? 0}
+              icon={Clock}
+              color="bg-blue-500"
+              testId="stat-consultas-hoje"
+            />
+            <StatCard
+              title="Esta Semana"
+              value={stats?.consultasSemana ?? 0}
+              icon={Calendar}
+              color="bg-teal-500"
+              testId="stat-consultas-semana"
+            />
+            <StatCard
+              title="Novas no Marketplace"
+              value={stats?.novasMarketplace ?? 0}
+              icon={ShoppingCart}
+              color="bg-orange-500"
+              testId="stat-marketplace"
+            />
+            <StatCard
+              title="Ganhos do Mês"
+              value={`R$ ${(stats?.ganhosEsteMes ?? 0).toFixed(2)}`}
+              icon={TrendingUp}
+              color="bg-green-500"
+              testId="stat-ganhos"
+            />
+          </div>
+        )}
 
-          <TabsContent value="myconsultations" className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Minhas Consultas</h2>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-teal-600" />
+                Próximas Consultas
+              </CardTitle>
+              <CardDescription>Suas consultas agendadas para hoje</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingProximas ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : proximasConsultas && proximasConsultas.length > 0 ? (
+                <div className="space-y-3">
+                  {proximasConsultas.slice(0, 3).map((consulta) => (
+                    <div 
+                      key={consulta.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                      data-testid={`proxima-${consulta.id}`}
+                    >
+                      <div>
+                        <p className="font-medium">{consulta.paciente}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {consulta.especialidade}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-teal-600">{formatTime(consulta.dataHora)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                  Nenhuma consulta agendada para hoje
+                </p>
+              )}
+              
+              <Link href="/agenda">
+                <Button variant="outline" className="w-full mt-4" data-testid="button-ver-agenda">
+                  Ver Agenda Completa
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
 
-            {isLoadingMine ? (
-              <p className="text-center py-8">Carregando...</p>
-            ) : myConsultations && myConsultations.length > 0 ? (
-              <div className="grid gap-4">
-                {myConsultations.map((consultation) => (
-                  <Card key={consultation.id} data-testid={`card-consultation-${consultation.id}`}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <FileText className="h-5 w-5" />
-                            {consultation.consultationType.replace('_', ' ')}
-                          </CardTitle>
-                          <CardDescription className="mt-2">{consultation.chiefComplaint}</CardDescription>
-                        </div>
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          consultation.status === 'doctor_matched' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' :
-                          consultation.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' :
-                          consultation.status === 'completed' ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100' :
-                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
-                        }`} data-testid={`status-${consultation.id}`}>
-                          {statusLabels[consultation.status] || consultation.status}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {consultation.agreedPrice && (
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-green-500" />
-                            <div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Preço Acordado</p>
-                              <p className="font-semibold text-green-600">
-                                R$ {parseFloat(consultation.agreedPrice).toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-500" />
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Data</p>
-                            <p className="font-semibold">{new Date(consultation.createdAt).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500 dark:text-gray-400">Você ainda não tem consultas confirmadas</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-teal-600" />
+                Ações Rápidas
+              </CardTitle>
+              <CardDescription>Acesse as principais funcionalidades</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Link href="/marketplace">
+                <Button className="w-full justify-start bg-teal-600 hover:bg-teal-700" data-testid="button-ir-marketplace">
+                  <ShoppingCart className="h-4 w-4 mr-3" />
+                  Ir para o Marketplace
+                  <ArrowRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </Link>
+              
+              <Link href="/minhas-consultas">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-ver-consultas">
+                  <FileText className="h-4 w-4 mr-3" />
+                  Ver Minhas Consultas
+                  <ArrowRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </Link>
+              
+              <Link href="/agenda">
+                <Button variant="outline" className="w-full justify-start" data-testid="button-abrir-agenda">
+                  <Calendar className="h-4 w-4 mr-3" />
+                  Abrir Agenda
+                  <ArrowRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </ConsultorioLayout>
   );
 }

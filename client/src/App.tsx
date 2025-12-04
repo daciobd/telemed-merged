@@ -6,6 +6,11 @@ import RegisterDoctor from './pages/RegisterDoctor';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import PublicOfficePage from './pages/PublicOfficePage';
+import Marketplace from './pages/Marketplace';
+import MinhasConsultas from './pages/MinhasConsultas';
+import ConsultaDetails from './pages/ConsultaDetails';
+import Agenda from './pages/Agenda';
+import Settings from './pages/Settings';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -54,6 +59,24 @@ export default function App() {
       </Route>
       <Route path="/dashboard">
         <ProtectedRoute component={DashboardRouter} />
+      </Route>
+      <Route path="/marketplace">
+        <ProtectedRoute component={Marketplace} />
+      </Route>
+      <Route path="/marketplace/:id">
+        <ProtectedRoute component={ConsultaDetails} />
+      </Route>
+      <Route path="/minhas-consultas">
+        <ProtectedRoute component={MinhasConsultas} />
+      </Route>
+      <Route path="/consultas/:id">
+        <ProtectedRoute component={ConsultaDetails} />
+      </Route>
+      <Route path="/agenda">
+        <ProtectedRoute component={Agenda} />
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute component={Settings} />
       </Route>
       <Route path="/">
         <Redirect to={user ? "/dashboard" : "/login"} />

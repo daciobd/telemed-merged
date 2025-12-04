@@ -1200,4 +1200,231 @@ router.patch("/doctor/account-type", authenticate, async (req, res) => {
   }
 });
 
+// ============================================
+// MOCK ENDPOINTS PARA DEMONSTRAÇÃO
+// ============================================
+
+// GET /api/consultorio/marketplace - Lista de consultas disponíveis (mock)
+router.get("/marketplace", authenticate, async (req, res) => {
+  try {
+    // Dados mock para demonstração
+    const mockConsultas = [
+      {
+        id: "c1",
+        especialidade: "Psiquiatria Adulto",
+        inicio: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        duracaoMinutos: 50,
+        valorBase: 180.0,
+        cidade: "São Paulo - SP",
+        origem: "Marketplace TeleMed",
+        status: "disponivel",
+        chiefComplaint: "Paciente busca avaliação psiquiátrica para ansiedade"
+      },
+      {
+        id: "c2",
+        especialidade: "Clínica Geral",
+        inicio: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        duracaoMinutos: 30,
+        valorBase: 120.0,
+        cidade: "Rio de Janeiro - RJ",
+        origem: "Marketplace TeleMed",
+        status: "disponivel",
+        chiefComplaint: "Check-up de rotina e renovação de receitas"
+      },
+      {
+        id: "c3",
+        especialidade: "Dermatologia",
+        inicio: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+        duracaoMinutos: 30,
+        valorBase: 150.0,
+        cidade: "Belo Horizonte - MG",
+        origem: "Marketplace TeleMed",
+        status: "disponivel",
+        chiefComplaint: "Avaliação de manchas na pele"
+      },
+      {
+        id: "c4",
+        especialidade: "Cardiologia",
+        inicio: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+        duracaoMinutos: 45,
+        valorBase: 200.0,
+        cidade: "Curitiba - PR",
+        origem: "Marketplace TeleMed",
+        status: "disponivel",
+        chiefComplaint: "Acompanhamento de hipertensão arterial"
+      },
+      {
+        id: "c5",
+        especialidade: "Endocrinologia",
+        inicio: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        duracaoMinutos: 40,
+        valorBase: 170.0,
+        cidade: "Porto Alegre - RS",
+        origem: "Marketplace TeleMed",
+        status: "disponivel",
+        chiefComplaint: "Controle de diabetes tipo 2"
+      }
+    ];
+
+    res.json(mockConsultas);
+  } catch (error) {
+    console.error("Erro ao buscar marketplace:", error);
+    res.status(500).json({ error: "Erro ao buscar consultas do marketplace" });
+  }
+});
+
+// GET /api/consultorio/minhas-consultas - Consultas do médico (mock)
+router.get("/minhas-consultas", authenticate, async (req, res) => {
+  try {
+    const mockConsultas = [
+      {
+        id: "mc1",
+        paciente: "Maria Silva",
+        especialidade: "Psiquiatria Adulto",
+        dataHora: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+        duracao: 50,
+        status: "agendada",
+        valorAcordado: 180.0
+      },
+      {
+        id: "mc2",
+        paciente: "João Santos",
+        especialidade: "Clínica Geral",
+        dataHora: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+        duracao: 30,
+        status: "agendada",
+        valorAcordado: 120.0
+      },
+      {
+        id: "mc3",
+        paciente: "Ana Oliveira",
+        especialidade: "Psiquiatria Adulto",
+        dataHora: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        duracao: 50,
+        status: "concluida",
+        valorAcordado: 180.0
+      },
+      {
+        id: "mc4",
+        paciente: "Carlos Ferreira",
+        especialidade: "Clínica Geral",
+        dataHora: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        duracao: 30,
+        status: "concluida",
+        valorAcordado: 120.0
+      }
+    ];
+
+    res.json(mockConsultas);
+  } catch (error) {
+    console.error("Erro ao buscar minhas consultas:", error);
+    res.status(500).json({ error: "Erro ao buscar consultas" });
+  }
+});
+
+// GET /api/consultorio/dashboard/stats - Estatísticas do dashboard
+router.get("/dashboard/stats", authenticate, async (req, res) => {
+  try {
+    // Dados mock para demonstração
+    const stats = {
+      consultasHoje: 2,
+      consultasSemana: 8,
+      novasMarketplace: 5,
+      ganhosEsteMes: 2340.00
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error("Erro ao buscar stats:", error);
+    res.status(500).json({ error: "Erro ao buscar estatísticas" });
+  }
+});
+
+// GET /api/consultorio/dashboard/proximas - Próximas consultas do dia
+router.get("/dashboard/proximas", authenticate, async (req, res) => {
+  try {
+    const hoje = new Date();
+    hoje.setHours(hoje.getHours() + 2);
+    
+    const mockProximas = [
+      {
+        id: "p1",
+        paciente: "Maria Silva",
+        dataHora: hoje.toISOString(),
+        especialidade: "Psiquiatria Adulto"
+      },
+      {
+        id: "p2",
+        paciente: "João Santos",
+        dataHora: new Date(hoje.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        especialidade: "Clínica Geral"
+      }
+    ];
+
+    res.json(mockProximas);
+  } catch (error) {
+    console.error("Erro ao buscar próximas:", error);
+    res.status(500).json({ error: "Erro ao buscar próximas consultas" });
+  }
+});
+
+// GET /api/consultorio/consultas/:id - Detalhes de uma consulta
+router.get("/consultas/:id", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Dados mock para demonstração
+    const mockConsulta = {
+      id,
+      especialidade: "Psiquiatria Adulto",
+      dataHora: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      duracao: 50,
+      status: "agendada",
+      valorAcordado: 180.0,
+      paciente: {
+        nome: "Maria Silva",
+        idade: 35,
+        sexo: "Feminino",
+        email: "maria.silva@email.com",
+        telefone: "(11) 99999-8888"
+      },
+      queixaPrincipal: "Paciente relata sintomas de ansiedade e dificuldade para dormir há cerca de 3 meses.",
+      observacoes: "Primeira consulta. Paciente encaminhada pelo clínico geral."
+    };
+
+    res.json(mockConsulta);
+  } catch (error) {
+    console.error("Erro ao buscar consulta:", error);
+    res.status(500).json({ error: "Erro ao buscar detalhes da consulta" });
+  }
+});
+
+// POST /api/consultorio/lances - Enviar lance em uma consulta
+router.post("/lances", authenticate, async (req, res) => {
+  try {
+    const { consultationId, bidAmount } = req.body;
+    
+    if (!consultationId || !bidAmount) {
+      return res.status(400).json({ error: "consultationId e bidAmount são obrigatórios" });
+    }
+    
+    // Simular salvamento do lance
+    const lance = {
+      id: `lance_${Date.now()}`,
+      consultationId,
+      bidAmount,
+      doctorId: req.user.id,
+      status: "pending",
+      createdAt: new Date().toISOString()
+    };
+    
+    console.log("Lance enviado:", lance);
+    
+    res.json({ success: true, lance });
+  } catch (error) {
+    console.error("Erro ao enviar lance:", error);
+    res.status(500).json({ error: "Erro ao enviar lance" });
+  }
+});
+
 export default router;
