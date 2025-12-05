@@ -1,15 +1,226 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>TeleMed Platform</title>
-    <!-- Redireciona automaticamente para a home clássica -->
-    <meta http-equiv="refresh" content="0; url=/demo.html" />
-  </head>
-  <body>
-    <p>
-      Redirecionando para a plataforma TeleMed...
-      <a href="/demo.html">Clique aqui se não for redirecionado automaticamente.</a>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeleMed - Plataforma de Telemedicina</title>
+  <meta name="description" content="TeleMed - Sua plataforma completa de telemedicina. Conectando pacientes e médicos com tecnologia e segurança.">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #0284c7 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: bold;
+      color: #0d9488;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    
+    .logo-text {
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .subtitle {
+      color: rgba(255,255,255,0.9);
+      font-size: 20px;
+      margin-bottom: 50px;
+      font-weight: 300;
+    }
+    
+    .question {
+      color: white;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+    
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    
+    .btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      background: white;
+      border-radius: 20px;
+      text-decoration: none;
+      color: #1f2937;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      min-height: 180px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .btn-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+    
+    .btn-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .btn-desc {
+      font-size: 14px;
+      color: #6b7280;
+      max-width: 200px;
+    }
+    
+    .btn-paciente:hover { background: #ecfdf5; }
+    .btn-medico:hover { background: #f0fdfa; }
+    .btn-admin:hover { background: #eff6ff; }
+    
+    .demo-links {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .demo-title {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .demo-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .demo-btn {
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .demo-btn:hover {
+      background: rgba(255,255,255,0.25);
+    }
+    
+    .footer {
+      margin-top: 50px;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+    }
+    
+    .footer a {
+      color: white;
+      text-decoration: none;
+    }
+    
+    @media (max-width: 768px) {
+      .logo-text { font-size: 36px; }
+      .subtitle { font-size: 16px; }
+      .question { font-size: 22px; }
+      .btn { min-height: 150px; padding: 20px 15px; }
+      .btn-icon { font-size: 36px; }
+      .btn-title { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-icon">T</div>
+      <span class="logo-text">TeleMed</span>
+    </div>
+    
+    <p class="subtitle">Sua plataforma completa de telemedicina</p>
+    
+    <h1 class="question">Quem é você?</h1>
+    
+    <div class="buttons">
+      <a href="/escolha-perfil.html" class="btn btn-paciente" data-testid="btn-paciente">
+        <span class="btn-icon">👤</span>
+        <span class="btn-title">Sou Paciente</span>
+        <span class="btn-desc">Agende consultas, acesse sua sala de espera e prontuário</span>
+      </a>
+      
+      <a href="/consultorio/login" class="btn btn-medico" data-testid="btn-medico">
+        <span class="btn-icon">🩺</span>
+        <span class="btn-title">Sou Médico</span>
+        <span class="btn-desc">Acesse seu consultório virtual e gerencie suas consultas</span>
+      </a>
+      
+      <a href="/hub.html" class="btn btn-admin" data-testid="btn-admin">
+        <span class="btn-icon">🏥</span>
+        <span class="btn-title">Sou Clínica / Admin</span>
+        <span class="btn-desc">Administre sua clínica e equipe médica</span>
+      </a>
+    </div>
+    
+    <div class="demo-links">
+      <p class="demo-title">Acesso Rápido para Testes</p>
+      <div class="demo-buttons">
+        <a href="/demo-paciente.html" class="demo-btn">Demo Paciente</a>
+        <a href="/demo-medico.html" class="demo-btn">Demo Médico</a>
+        <a href="/consultorio/login" class="demo-btn">Consultório Virtual</a>
+        <a href="/healthz" class="demo-btn">Health Check</a>
+      </div>
+    </div>
+    
+    <p class="footer">
+      TeleMed Platform &copy; 2025 | 
+      <a href="/healthz">Status</a>
     </p>
-  </body>
+  </div>
+</body>
 </html>
