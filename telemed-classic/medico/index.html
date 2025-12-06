@@ -775,6 +775,25 @@ body{background:linear-gradient(135deg,#6366f1 0%,#22d3ee 100%);min-height:100vh
 </head>
 <body class="tm">
     <div class="container">
+        <!-- Acesso Rápido para Médicos -->
+        <div style="background:linear-gradient(135deg,#2bb3a8 0%,#0d9488 100%);border-radius:16px;padding:20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 4px 12px rgba(43,179,168,0.3)">
+            <div style="color:white">
+                <h2 style="margin:0 0 4px;font-size:1.3rem">Acesso Rápido</h2>
+                <p style="margin:0;opacity:0.9;font-size:0.9rem">Navegue rapidamente para as principais áreas do TeleMed</p>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <a href="/consultorio/login" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:white;color:#0d9488;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.9rem;box-shadow:0 2px 6px rgba(0,0,0,0.15)" data-testid="quick-consultorio">
+                    <i class="fas fa-laptop-medical"></i> Consultório Virtual
+                </a>
+                <a href="/medico/como-funciona.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.9rem;border:1px solid rgba(255,255,255,0.4)" data-testid="quick-como-funciona">
+                    <i class="fas fa-info-circle"></i> Como Funciona
+                </a>
+                <a href="/hub.html" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.9rem;border:1px solid rgba(255,255,255,0.4)" data-testid="quick-hub">
+                    <i class="fas fa-th-large"></i> Hub TeleMed
+                </a>
+            </div>
+        </div>
+
         <!-- Header -->
         <div class="header">
             <div class="header-left">
