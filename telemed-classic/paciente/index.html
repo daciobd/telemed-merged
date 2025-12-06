@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>TeleMed – Acesso do Paciente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Portal do paciente TeleMed. Acesse seu atendimento, entenda como funciona a plataforma e conheça o sistema de ofertas.">
+  <style>
+    body { 
+      font-family: system-ui, sans-serif; 
+      background: #f4f5f7; 
+      margin: 0;
+      padding: 40px;
+      color: #1f2937;
+    }
+    .box {
+      max-width: 680px; 
+      margin: auto; 
+      background: white; 
+      padding: 32px; 
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    }
+    h1 { margin-top: 0; color: #2bb3a8; font-size: 1.8rem; }
+    p { color: #4b5563; line-height: 1.6; }
+    a.btn {
+      display: block; 
+      margin-top: 16px; 
+      padding: 12px 20px;
+      border-radius: 8px; 
+      text-decoration: none; 
+      font-weight: 600; 
+      text-align: center;
+    }
+    .primary { background: #2bb3a8; color: white; }
+    .primary:hover { background: #239e94; }
+    .outline { background: white; border: 1px solid #2bb3a8; color: #2bb3a8; }
+    .outline:hover { background: #f0fdfa; }
+    .back-link { 
+      display: block; 
+      text-align: center; 
+      margin-top: 24px; 
+      color: #6b7280; 
+      text-decoration: none; 
+      font-size: 0.9rem;
+    }
+    .back-link:hover { color: #2bb3a8; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Acesso do Paciente</h1>
+    <p>Como você deseja continuar?</p>
+
+    <a class="btn primary" href="/escolha-perfil.html" data-testid="btn-comecar">Começar meu atendimento</a>
+    <a class="btn outline" href="/paciente/como-funciona.html" data-testid="btn-como-funciona">Como funciona o TeleMed</a>
+    <a class="btn outline" href="/paciente/como-funciona-bids.html" data-testid="btn-bids">O que é o sistema de ofertas (bids)?</a>
+    <a class="btn outline" href="/consultorio/login" data-testid="btn-login">Já tenho conta - Fazer login</a>
+    
+    <a class="back-link" href="/hub.html">← Voltar ao Hub TeleMed</a>
+  </div>
+</body>
+</html>

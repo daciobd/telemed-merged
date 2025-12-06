@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Página Pública do Médico – TeleMed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Acesse o perfil público de um médico no TeleMed usando a URL personalizada.">
+  <style>
+    body { 
+      font-family: system-ui, sans-serif; 
+      background: #f4f5f7; 
+      margin: 0;
+      padding: 40px;
+      color: #1f2937;
+    }
+    .box {
+      max-width: 680px; 
+      margin: auto; 
+      background: white; 
+      padding: 32px; 
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    }
+    h1 { margin-top: 0; color: #2bb3a8; font-size: 1.8rem; }
+    p { color: #4b5563; line-height: 1.6; }
+    pre {
+      background: #f0f0f0;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.95rem;
+    }
+    .example-link {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 20px;
+      background: #2bb3a8;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .example-link:hover { background: #239e94; }
+    .info-box {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f0fdfa;
+      border-left: 4px solid #2bb3a8;
+      border-radius: 8px;
+    }
+    .info-box h3 { margin: 0 0 8px; color: #0d9488; font-size: 1rem; }
+    .info-box p { margin: 0; font-size: 0.9rem; }
+    .back-link { 
+      display: block; 
+      text-align: center; 
+      margin-top: 24px; 
+      color: #6b7280; 
+      text-decoration: none; 
+      font-size: 0.9rem;
+    }
+    .back-link:hover { color: #2bb3a8; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Página Pública do Médico</h1>
+    <p>Para acessar o perfil público de um médico e agendar uma consulta diretamente, use a URL no formato:</p>
+    
+    <pre>https://seu-dominio.com/dr/NOME-DO-MEDICO</pre>
+    
+    <p><strong>Exemplo:</strong></p>
+    <a class="example-link" href="/dr/dr-joao-silva" data-testid="link-exemplo">/dr/dr-joao-silva</a>
+    
+    <div class="info-box">
+      <h3>Como funciona?</h3>
+      <p>
+        Cada médico cadastrado no TeleMed pode ter uma URL personalizada. 
+        Os pacientes podem usar esse link para ver o perfil público, 
+        consultar a agenda disponível e agendar uma consulta diretamente.
+      </p>
+    </div>
+    
+    <div class="info-box" style="border-color: #3b82f6; background: #eff6ff;">
+      <h3 style="color: #1d4ed8;">Sou médico, como configuro minha URL?</h3>
+      <p>
+        Acesse o <a href="/consultorio/login" style="color:#1d4ed8">Consultório Virtual</a>, 
+        vá em "Consultório Virtual" no menu e configure sua URL personalizada.
+      </p>
+    </div>
+    
+    <a class="back-link" href="/hub.html">← Voltar ao Hub TeleMed</a>
+  </div>
+</body>
+</html>
