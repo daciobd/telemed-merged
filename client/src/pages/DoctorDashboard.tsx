@@ -86,6 +86,34 @@ export default function DoctorDashboard() {
           </p>
         </div>
 
+        {/* Banner: Saiba como funciona o TeleMed */}
+        <div className="p-4 bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500 rounded-md">
+          <h2 className="text-teal-700 dark:text-teal-300 font-semibold text-lg">Saiba como funciona o TeleMed</h2>
+          <p className="text-gray-700 dark:text-gray-300 mt-1 text-sm">
+            Entenda como usar o Consultório Virtual e, se quiser, como receber pacientes via Marketplace.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <a
+              href="/medico/como-funciona-marketplace.html"
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2 bg-teal-600 text-white rounded-md text-sm font-semibold hover:bg-teal-700 transition-colors"
+              data-testid="btn-como-funciona-medico"
+            >
+              Como funciona para médicos
+            </a>
+            <a
+              href="/paciente/como-funciona-bids.html"
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2 bg-white dark:bg-gray-800 border border-teal-300 dark:border-teal-600 text-teal-700 dark:text-teal-300 rounded-md text-sm font-semibold hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"
+              data-testid="btn-como-funciona-paciente"
+            >
+              Como funciona para pacientes
+            </a>
+          </div>
+        </div>
+
         {isLoadingStats ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
