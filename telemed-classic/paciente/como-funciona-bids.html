@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Como funciona o sistema de ofertas (bids) - TeleMed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/css/phr.css" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5fb;
+      margin: 0;
+      color: #1f2933;
+    }
+    .tm-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    .tm-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+      margin-bottom: 16px;
+    }
+    .tm-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #161e2e;
+    }
+    .tm-subtitle {
+      font-size: 1rem;
+      color: #4b5563;
+      margin-bottom: 24px;
+    }
+    h2 {
+      margin-top: 24px;
+      font-size: 1.3rem;
+    }
+    .tm-steps {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .tm-step {
+      border-left: 4px solid #2bb3a8;
+      padding-left: 12px;
+    }
+    .tm-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #e0f7f4;
+      color: #04706a;
+      margin-bottom: 6px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .tm-footer {
+      margin-top: 24px;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    .tm-actions {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tm-btn {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .tm-btn-primary {
+      background: #2bb3a8;
+      color: #ffffff;
+    }
+    .tm-btn-outline {
+      border: 1px solid #cbd5e1;
+      color: #374151;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="tm-page">
+    <div class="tm-card">
+      <div class="tm-pill">Para Pacientes</div>
+      <h1 class="tm-title">Como funciona o sistema de ofertas (bids) do TeleMed?</h1>
+      <p class="tm-subtitle">
+        O sistema de ofertas permite que você encontre atendimento médico de forma rápida,
+        com mais opções de profissionais e horários. Você continua no controle da escolha.
+      </p>
+
+      <h2>1. Consultar o seu médico de confiança</h2>
+      <p>
+        Se você já tem um médico que atende pelo TeleMed, você pode continuar consultando
+        normalmente:
+      </p>
+      <ul>
+        <li>Seu médico envia o link da consulta ou da sala de espera.</li>
+        <li>Você entra na <strong>Sala de Espera</strong> no horário combinado.</li>
+        <li>A consulta acontece por vídeo, com toda a segurança do consultório.</li>
+      </ul>
+
+      <h2>2. Encontrar um médico usando ofertas (bids)</h2>
+      <p>Se você ainda não tem médico definido, pode criar um pedido de consulta:</p>
+
+      <div class="tm-steps">
+        <div class="tm-step">
+          <strong>Passo 1 — Você faz um pedido</strong>
+          <p>Descreva sua necessidade (ex.: ansiedade, dor, retorno, medicação) e o período em que pode ser atendido.</p>
+        </div>
+        <div class="tm-step">
+          <strong>Passo 2 — Médicos disponíveis veem o seu caso</strong>
+          <p>Médicos que atendem o seu tipo de queixa recebem o pedido e podem enviar uma <strong>oferta de atendimento</strong>.</p>
+        </div>
+        <div class="tm-step">
+          <strong>Passo 3 — Você escolhe o profissional</strong>
+          <p>Você vê as ofertas com horário, valor, especialidade e avaliação do médico e decide com quem quer consultar.</p>
+        </div>
+        <div class="tm-step">
+          <strong>Passo 4 — Consulta agendada automaticamente</strong>
+          <p>Assim que você escolhe um médico, a consulta entra na agenda e você recebe o link da Sala de Espera.</p>
+        </div>
+      </div>
+
+      <h2>Isso é um leilão de preço?</h2>
+      <p>
+        Não. O objetivo não é "quem cobra menos", e sim
+        <strong>dar opções de profissionais</strong> para você, com transparência de:
+      </p>
+      <ul>
+        <li>horário disponível</li>
+        <li>experiência e especialidade</li>
+        <li>valor da consulta</li>
+        <li>avaliações de outros pacientes (quando existirem)</li>
+      </ul>
+
+      <h2>E onde entra a inteligência artificial (Dr. AI)?</h2>
+      <p>
+        Se você quiser, pode responder a um breve questionário inteligente (Dr. AI) antes da consulta.
+        Isso <strong>não substitui o médico</strong>, mas ajuda a organizar seu relato e destacar os pontos
+        mais importantes para o profissional.
+      </p>
+
+      <h2>Segurança e privacidade</h2>
+      <p>
+        Suas informações são utilizadas apenas para o atendimento e seguem as boas práticas de
+        segurança de dados em saúde. O médico só visualiza o que é relevante para cuidar de você.
+      </p>
+
+      <div class="tm-actions">
+        <a href="/escolha-perfil.html" class="tm-btn tm-btn-primary" data-testid="btn-comecar-atendimento">Começar meu atendimento</a>
+        <a href="/paciente/como-funciona.html" class="tm-btn tm-btn-outline" data-testid="btn-como-funciona">Ver como funciona o TeleMed</a>
+      </div>
+
+      <p class="tm-footer">
+        Dúvidas adicionais? Fale com a equipe responsável pela sua clínica ou operadora.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

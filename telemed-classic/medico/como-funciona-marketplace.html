@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Como usar o TeleMed (Consultório Virtual + Marketplace)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/css/phr.css" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5fb;
+      margin: 0;
+      color: #1f2933;
+    }
+    .tm-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    .tm-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+      margin-bottom: 16px;
+    }
+    .tm-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #e0ecff;
+      color: #1d4ed8;
+      margin-bottom: 6px;
+    }
+    .tm-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #161e2e;
+    }
+    .tm-subtitle {
+      font-size: 1rem;
+      color: #4b5563;
+      margin-bottom: 24px;
+    }
+    h2 {
+      margin-top: 24px;
+      font-size: 1.3rem;
+    }
+    .tm-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+    @media (min-width: 800px) {
+      .tm-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    .tm-box {
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      background: #f9fafb;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .tm-actions {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tm-btn {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .tm-btn-primary {
+      background: #2bb3a8;
+      color: #ffffff;
+    }
+    .tm-btn-outline {
+      border: 1px solid #cbd5e1;
+      color: #374151;
+      background: #ffffff;
+    }
+    .tm-footer {
+      margin-top: 24px;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="tm-page">
+    <div class="tm-card">
+      <div class="tm-pill">Para Médicos</div>
+      <h1 class="tm-title">Como usar o TeleMed: Consultório Virtual e Marketplace</h1>
+      <p class="tm-subtitle">
+        O TeleMed pode funcionar como <strong>seu consultório virtual completo</strong> e,
+        se você desejar, também como um canal de <strong>novos pacientes via marketplace</strong>.
+      </p>
+
+      <div class="tm-grid">
+        <div class="tm-box">
+          <h2>Consultório Virtual (uso privado)</h2>
+          <p>Você pode usar o TeleMed apenas com seus próprios pacientes, sem participar do marketplace:</p>
+          <ul>
+            <li>Agenda online e sala de vídeo integrada.</li>
+            <li>Histórico clínico e Registro de Saúde (PHR).</li>
+            <li>Prescrição digital com modelos de receita.</li>
+            <li>Dr. AI auxiliando na triagem e organização do caso.</li>
+            <li>ScribeMedical gerando rascunhos de evolução e resumos.</li>
+            <li>Painel analítico com seus principais indicadores.</li>
+          </ul>
+          <p><strong>Você mantém total controle da sua agenda e da sua base de pacientes.</strong></p>
+        </div>
+
+        <div class="tm-box">
+          <h2>Marketplace (sistema de ofertas/bids)</h2>
+          <p>Se quiser, você também pode receber novos pacientes pela fila de pedidos:</p>
+          <ul>
+            <li>Pacientes descrevem sua necessidade de consulta.</li>
+            <li>O sistema sugere médicos compatíveis (especialidade, disponibilidade).</li>
+            <li>Você pode <strong>enviar uma oferta</strong> de atendimento (valor e horário).</li>
+            <li>O paciente escolhe entre as ofertas recebidas.</li>
+            <li>A consulta entra automaticamente na sua agenda do TeleMed.</li>
+          </ul>
+          <p>
+            Você pode <strong>ativar ou desativar</strong> o marketplace conforme sua disponibilidade
+            e estratégia de atendimento.
+          </p>
+        </div>
+      </div>
+
+      <h2>Ferramentas que trabalham a seu favor</h2>
+      <ul>
+        <li><strong>Dr. AI</strong> – triagem assistida, questionários inteligentes, resumos de queixa.</li>
+        <li><strong>ScribeMedical</strong> – rascunhos de evolução e resumos de consulta.</li>
+        <li><strong>ReceitaCerta</strong> – modelos de prescrição, orientações e receitas digitais.</li>
+        <li><strong>PHR/Registro de Saúde</strong> – histórico longitudinal do paciente.</li>
+        <li><strong>Dashboard analítico</strong> – consultas, NPS, horários de pico, prescrição, etc.</li>
+      </ul>
+
+      <h2>Como começar a usar</h2>
+      <ol>
+        <li>Acesse o <strong>Consultório Virtual</strong> pelo link:<br /> <code>/consultorio/login</code></li>
+        <li>Configure seu perfil e sua agenda.</li>
+        <li>Atenda seus pacientes habituais normalmente.</li>
+        <li>Quando desejar, ative o recebimento de pedidos do marketplace.</li>
+      </ol>
+
+      <div class="tm-actions">
+        <a href="/consultorio/login" class="tm-btn tm-btn-primary" data-testid="btn-consultorio">Entrar no Consultório Virtual</a>
+        <a href="/dashboard/index.html" class="tm-btn tm-btn-outline" data-testid="btn-dashboard">Ver Painel Analítico</a>
+        <a href="/hub.html" class="tm-btn tm-btn-outline" data-testid="btn-hub">Ir para o Hub TeleMed</a>
+      </div>
+
+      <p class="tm-footer">
+        Em caso de dúvidas sobre ativação do marketplace, combos de serviços ou integração com sua clínica,
+        entre em contato com a equipe TeleMed responsável pelo seu credenciamento.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
