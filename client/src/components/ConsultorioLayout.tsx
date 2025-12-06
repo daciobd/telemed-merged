@@ -10,7 +10,9 @@ import {
   LogOut, 
   Home,
   Menu,
-  X
+  X,
+  BarChart3,
+  ExternalLink
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,6 +31,10 @@ export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) 
     { href: '/minhas-consultas', label: 'Minhas Consultas', icon: FileText },
     { href: '/agenda', label: 'Agenda', icon: Calendar },
     { href: '/settings', label: 'Configurações', icon: Settings },
+  ];
+
+  const externalLinks = [
+    { href: '/dashboard/index.html', label: 'Painel Analítico', icon: BarChart3, external: true },
   ];
 
   const isActive = (href: string) => location === href;
@@ -68,6 +74,23 @@ export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) 
                       {item.label}
                     </button>
                   </Link>
+                );
+              })}
+              {externalLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                    data-testid="nav-painel-analitico"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 );
               })}
             </nav>
@@ -135,6 +158,18 @@ export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) 
                 })}
                 
                 <div className="border-t border-gray-200 dark:border-gray-700 my-2 pt-2">
+                  <a
+                    href="/dashboard/index.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                    data-testid="mobile-nav-painel-analitico"
+                  >
+                    <BarChart3 className="h-5 w-5" />
+                    Painel Analítico
+                    <ExternalLink className="h-4 w-4 ml-auto" />
+                  </a>
                   <a 
                     href="/" 
                     className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"

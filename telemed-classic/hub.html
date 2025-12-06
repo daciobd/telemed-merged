@@ -3,115 +3,334 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TeleMed — Hub</title>
+  <title>TeleMed Ecosystem Hub</title>
   <link rel="stylesheet" href="/css/telemed-status.css">
   <style>
     :root{
-      --brand:#0ea5e9; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
+      --brand:#0ea5e9; --teal:#2BB3A8; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
       --text:#0f172a; --muted:#64748b; --card:#fff; --border:#e2e8f0; --bg:#f8fafc;
+      --purple:#8b5cf6; --orange:#f97316; --pink:#ec4899;
     }
-    *{box-sizing:border-box} body{margin:0;padding:28px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
-    header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
-    .tag{background:var(--brand);color:#fff;padding:6px 10px;border-radius:999px;font-size:.85rem}
-    h1{margin:0}
-    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-    .muted{color:var(--muted)}
-    .btn{background:var(--brand);color:#fff;border:0;padding:9px 12px;border-radius:10px;cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center}
+    *{box-sizing:border-box} 
+    body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
+    
+    .hub-header{
+      background:linear-gradient(135deg, #1a1b23 0%, #2c2d39 100%);
+      color:white;
+      padding:32px 28px;
+      text-align:center;
+    }
+    .hub-header h1{margin:0 0 8px;font-size:2rem}
+    .hub-header p{margin:0;color:#9ca3af;font-size:1rem}
+    .hub-header .back-link{
+      display:inline-flex;align-items:center;gap:6px;
+      color:#9ca3af;text-decoration:none;font-size:0.9rem;
+      margin-bottom:16px;
+    }
+    .hub-header .back-link:hover{color:white}
+    
+    .hub-container{padding:28px;max-width:1400px;margin:0 auto}
+    
+    .hub-grid{
+      display:grid;
+      gap:24px;
+      grid-template-columns:repeat(3, 1fr);
+    }
+    @media(max-width:1024px){.hub-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.hub-grid{grid-template-columns:1fr}}
+    
+    .hub-column{display:flex;flex-direction:column;gap:16px}
+    .hub-column-title{
+      font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;
+      color:var(--muted);font-weight:600;margin-bottom:4px;
+      display:flex;align-items:center;gap:8px;
+    }
+    
+    .hub-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,.04);
+      transition:all 0.2s ease;
+      text-decoration:none;
+      color:inherit;
+      display:block;
+    }
+    .hub-card:hover{
+      box-shadow:0 8px 24px rgba(0,0,0,.1);
+      transform:translateY(-2px);
+      border-color:var(--brand);
+    }
+    .hub-card-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+    .hub-card-icon{
+      width:48px;height:48px;
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;
+      flex-shrink:0;
+    }
+    .hub-card-icon.teal{background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669}
+    .hub-card-icon.blue{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#2563eb}
+    .hub-card-icon.purple{background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#7c3aed}
+    .hub-card-icon.orange{background:linear-gradient(135deg,#ffedd5,#fed7aa);color:#ea580c}
+    .hub-card-icon.pink{background:linear-gradient(135deg,#fce7f3,#fbcfe8);color:#db2777}
+    .hub-card-icon.gray{background:linear-gradient(135deg,#f3f4f6,#e5e7eb);color:#4b5563}
+    
+    .hub-card-title{font-size:1.1rem;font-weight:600;color:var(--text);margin:0 0 4px}
+    .hub-card-desc{font-size:0.9rem;color:var(--muted);margin:0;line-height:1.4}
+    
+    .hub-card-links{
+      display:flex;flex-direction:column;gap:8px;
+      margin-top:12px;padding-top:12px;
+      border-top:1px solid var(--border);
+    }
+    .hub-card-links a{
+      display:flex;align-items:center;gap:8px;
+      padding:8px 12px;
+      background:#f9fafb;
+      border:1px solid var(--border);
+      border-radius:8px;
+      text-decoration:none;
+      color:var(--text);
+      font-size:0.85rem;
+      transition:all 0.15s;
+    }
+    .hub-card-links a:hover{
+      background:var(--brand);
+      color:white;
+      border-color:var(--brand);
+    }
+    
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      background:var(--brand);color:#fff;border:0;
+      padding:12px 20px;border-radius:10px;cursor:pointer;
+      text-decoration:none;font-weight:500;font-size:0.95rem;
+      transition:all 0.2s;
+    }
+    .btn:hover{background:#0284c7;transform:translateY(-1px)}
     .btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--border)}
-    input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff}
-    .row{display:flex;gap:8px;align-items:center}.row>*{flex:1}
-    .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid var(--border)}
-    .ok{color:var(--ok);border-color:#bbf7d0;background:#ecfdf5}
-    .bad{color:var(--bad);border-color:#fecaca;background:#fef2f2}
-    ul.linklist{list-style:none;padding:0;margin:8px 0 0}
-    ul.linklist li{display:flex;justify-content:space-between;gap:10px;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:#fff}
-    ul.linklist a{color:var(--brand);text-decoration:none;font-weight:600}
-    footer{margin-top:28px;color:var(--muted);font-size:.9rem}
-    code{background:#e2e8f0;padding:2px 6px;border-radius:6px}
+    .btn.ghost:hover{background:#f0f9ff;border-color:var(--brand)}
+    .btn.teal{background:var(--teal)}
+    .btn.teal:hover{background:#239e94}
+    
+    footer{
+      margin-top:40px;padding:24px 28px;
+      background:#1a1b23;color:#9ca3af;
+      text-align:center;font-size:0.9rem;
+    }
+    footer a{color:var(--brand);text-decoration:none}
+    footer a:hover{text-decoration:underline}
+    
+    .section-divider{
+      margin:32px 0 24px;
+      padding-bottom:8px;
+      border-bottom:2px solid var(--border);
+    }
+    .section-divider h2{
+      margin:0;font-size:1.3rem;color:var(--text);
+      display:flex;align-items:center;gap:10px;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <span class="tag">TeleMed</span>
-    <h1>Hub de Apresentação</h1>
-  </header>
 
-  <section class="card">
-    <h2>📝 Sistema de Avaliação</h2>
-    <p class="muted">Coleta feedback de médicos e pacientes sobre a experiência TeleMed</p>
-    <div style="display:flex;gap:12px;margin-bottom:16px">
-      <a href="/avaliacao.html?role=medico" class="btn" target="_blank">📝 Avaliação Médico</a>
-      <a href="/avaliacao.html?role=paciente" class="btn ghost" target="_blank">📝 Avaliação Paciente</a>
-      <a href="/obrigado.html" class="btn ghost" target="_blank">🙏 Página Obrigado</a>
+<header class="hub-header">
+  <a href="/index.html" class="back-link">← Voltar ao Início</a>
+  <h1>TeleMed Ecosystem Hub</h1>
+  <p>Escolha o módulo que deseja acessar</p>
+</header>
+
+<div class="hub-container">
+  
+  <div class="hub-grid">
+    
+    <!-- COLUNA 1: Médico Operacional -->
+    <div class="hub-column">
+      <div class="hub-column-title">
+        <span>🩺</span> Médico Operacional
+      </div>
+      
+      <a href="/consultorio/login" class="hub-card" data-testid="card-consultorio">
+        <div class="hub-card-header">
+          <div class="hub-card-icon teal">🏥</div>
+          <div>
+            <h3 class="hub-card-title">Consultório Virtual</h3>
+            <p class="hub-card-desc">Agenda, consultas, marketplace e gestão diária.</p>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <span class="btn teal">Acessar Consultório</span>
+        </div>
+      </a>
+      
+      <a href="/dashboard/index.html" class="hub-card" data-testid="card-dashboard">
+        <div class="hub-card-header">
+          <div class="hub-card-icon blue">📊</div>
+          <div>
+            <h3 class="hub-card-title">Painel Analítico</h3>
+            <p class="hub-card-desc">Indicadores de volume, NPS, prescrição e fila.</p>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <span class="btn">Ver Dashboard</span>
+        </div>
+      </a>
     </div>
-  </section>
+    
+    <!-- COLUNA 2: IA e Suporte ao Médico -->
+    <div class="hub-column">
+      <div class="hub-column-title">
+        <span>🤖</span> IA e Suporte ao Médico
+      </div>
+      
+      <a href="/dr-ai.html" class="hub-card" data-testid="card-dr-ai">
+        <div class="hub-card-header">
+          <div class="hub-card-icon purple">🤖</div>
+          <div>
+            <h3 class="hub-card-title">Dr. AI – Triagem</h3>
+            <p class="hub-card-desc">Questionários inteligentes e triagem assistida por IA.</p>
+          </div>
+        </div>
+      </a>
+      
+      <a href="/scribe-demo.html" class="hub-card" data-testid="card-scribe">
+        <div class="hub-card-header">
+          <div class="hub-card-icon orange">📝</div>
+          <div>
+            <h3 class="hub-card-title">ScribeMedical</h3>
+            <p class="hub-card-desc">Notas clínicas e resumos automáticos de consulta.</p>
+          </div>
+        </div>
+      </a>
+      
+      <a href="/rx-template.html" class="hub-card" data-testid="card-rx">
+        <div class="hub-card-header">
+          <div class="hub-card-icon pink">💊</div>
+          <div>
+            <h3 class="hub-card-title">ReceitaCerta</h3>
+            <p class="hub-card-desc">Modelos de prescrição e receita digital.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    
+    <!-- COLUNA 3: Operação e Monitoramento -->
+    <div class="hub-column">
+      <div class="hub-column-title">
+        <span>⚙️</span> Operação e Monitoramento
+      </div>
+      
+      <div class="hub-card">
+        <div class="hub-card-header">
+          <div class="hub-card-icon gray">⚙️</div>
+          <div>
+            <h3 class="hub-card-title">Painel Administrativo</h3>
+            <p class="hub-card-desc">Ferramentas de configuração, telemetria e status.</p>
+          </div>
+        </div>
+        <div class="hub-card-links">
+          <a href="/admin-flags.html" data-testid="link-admin-flags">
+            <span>🚩</span> Feature Flags
+          </a>
+          <a href="/public/admin-telemetry.html" data-testid="link-telemetry">
+            <span>📡</span> Telemetria
+          </a>
+          <a href="/status.html" data-testid="link-status">
+            <span>💚</span> Status dos Serviços
+          </a>
+        </div>
+      </div>
+      
+      <div class="hub-card">
+        <div class="hub-card-header">
+          <div class="hub-card-icon gray">📋</div>
+          <div>
+            <h3 class="hub-card-title">Recursos Adicionais</h3>
+            <p class="hub-card-desc">Demos, guias e centro de testes.</p>
+          </div>
+        </div>
+        <div class="hub-card-links">
+          <a href="/centro-de-testes/index.html" data-testid="link-testes">
+            <span>🧪</span> Centro de Testes
+          </a>
+          <a href="/guia-teste.html" data-testid="link-guia">
+            <span>📖</span> Guia de Testes
+          </a>
+          <a href="/demo.html" data-testid="link-demo">
+            <span>🎬</span> Demo Interativa
+          </a>
+        </div>
+      </div>
+    </div>
+    
+  </div>
 
-  <!-- Status público + painel dev -->
+  <!-- Seção de Status Técnico (mantida do original) -->
+  <div class="section-divider">
+    <h2><span>🔧</span> Console Técnico (Dev)</h2>
+  </div>
+  
   <div id="telemed-status" 
        data-endpoints='["/api/health","https://telemed-auction.onrender.com/api/health","https://telemed-internal.onrender.com/api/health","https://telemed-productivity.onrender.com/api/health"]'
        data-hub-url="/hub.html"
        data-scribe-url="/scribe-demo.html">
   </div>
 
-  <section class="card dev-only">
-    <h2>Serviços (health) - Console técnico</h2>
-    <p class="muted">Edite os endpoints se necessário e clique em “Testar”. Use “Abrir” para ver o <code>/healthz</code> em nova aba.</p>
-    <div class="grid">
+  <section class="hub-card" style="margin-top:16px">
+    <h3 style="margin:0 0 12px;font-size:1rem">Serviços (health) - Console técnico</h3>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">
+      Edite os endpoints se necessário e clique em "Testar". Use "Abrir" para ver o <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px">/healthz</code> em nova aba.
+    </p>
+    <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
       <div>
-        <label>AUCTION_URL</label>
-        <div class="row">
-          <input id="auUrl" placeholder="https://telemed-auction.onrender.com" />
-          <button class="btn" id="checkAuction">Testar</button>
-          <a class="btn ghost" id="openAuction" target="_blank" rel="noopener">Abrir</a>
+        <label style="font-weight:500;font-size:0.85rem">AUCTION_URL</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input id="auUrl" placeholder="https://telemed-auction.onrender.com" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px" />
+          <button class="btn ghost" id="checkAuction" style="padding:8px 12px;font-size:0.85rem">Testar</button>
+          <a class="btn ghost" id="openAuction" target="_blank" rel="noopener" style="padding:8px 12px;font-size:0.85rem">Abrir</a>
         </div>
-        <div id="outAuction" class="muted" style="margin-top:6px"></div>
-      </div>
-      <div>
-        <label>INTERNAL_URL</label>
-        <div class="row">
-          <input id="inUrl" placeholder="https://telemed-internal.onrender.com" />
-          <button class="btn" id="checkInternal">Testar</button>
-          <a class="btn ghost" id="openInternal" target="_blank" rel="noopener">Abrir</a>
-        </div>
-        <div id="outInternal" class="muted" style="margin-top:6px"></div>
+        <div id="outAuction" style="margin-top:6px;font-size:0.85rem;color:var(--muted)"></div>
       </div>
       <div>
-        <label>PRODUCTIVITY_URL</label>
-        <div class="row">
-          <input id="prodUrl" placeholder="https://telemed-productivity.onrender.com" />
-          <button class="btn" id="checkProd">Testar</button>
-          <a class="btn ghost" id="openProd" target="_blank" rel="noopener">Abrir</a>
+        <label style="font-weight:500;font-size:0.85rem">INTERNAL_URL</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input id="inUrl" placeholder="https://telemed-internal.onrender.com" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px" />
+          <button class="btn ghost" id="checkInternal" style="padding:8px 12px;font-size:0.85rem">Testar</button>
+          <a class="btn ghost" id="openInternal" target="_blank" rel="noopener" style="padding:8px 12px;font-size:0.85rem">Abrir</a>
         </div>
-        <div id="outProd" class="muted" style="margin-top:6px"></div>
+        <div id="outInternal" style="margin-top:6px;font-size:0.85rem;color:var(--muted)"></div>
       </div>
-    </div>
-
-    <!-- ==== MDA SERVICE ==== -->
-    <div class="card" style="margin-top:12px">
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-        <label for="mdaUrl" style="min-width:160px;font-weight:600">MDA_SERVICE_URL</label>
-        <input id="mdaUrl" type="url" placeholder="https://medical-desk-advanced.onrender.com"
-               style="min-width:360px;flex:1;padding:8px;border:1px solid #ddd;border-radius:6px" />
-        <button onclick="saveMdaUrl()" style="padding:8px 12px;border-radius:6px">Salvar</button>
-        <button onclick="openMda()"  style="padding:8px 12px;border-radius:6px">Abrir</button>
-        <button onclick="testMda()"  style="padding:8px 12px;border-radius:6px">Testar</button>
-        <span id="mdaBadge" style="margin-left:8px;font-size:12px;color:#666;"></span>
+      <div>
+        <label style="font-weight:500;font-size:0.85rem">PRODUCTIVITY_URL</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input id="prodUrl" placeholder="https://telemed-productivity.onrender.com" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px" />
+          <button class="btn ghost" id="checkProd" style="padding:8px 12px;font-size:0.85rem">Testar</button>
+          <a class="btn ghost" id="openProd" target="_blank" rel="noopener" style="padding:8px 12px;font-size:0.85rem">Abrir</a>
+        </div>
+        <div id="outProd" style="margin-top:6px;font-size:0.85rem;color:var(--muted)"></div>
       </div>
-      <div style="font-size:12px;color:#666;margin-top:4px">Dica: use "Abrir" para ver <code>/api/mda/health</code> em nova aba.</div>
     </div>
   </section>
 
-  <section class="card">
-    <h2>Páginas & Rotas</h2>
-    <p class="muted">O hub verifica se a rota existe (200) antes de exibir o selo ✅.</p>
-    <ul id="routes" class="linklist"></ul>
+  <!-- Seção de Páginas & Rotas (verificação de disponibilidade) -->
+  <div class="section-divider">
+    <h2><span>📄</span> Páginas & Rotas</h2>
+  </div>
+  
+  <section class="hub-card">
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">
+      O hub verifica se a rota existe (200) antes de exibir o selo ✅.
+    </p>
+    <ul id="routes" style="list-style:none;padding:0;margin:0"></ul>
   </section>
 
-  <footer>
-    Dica: o serviço estático no Render usa <code>Root Directory = apps/telemed-deploy-ready</code>,
-    <code>Build Command = :</code> e <code>Publish Directory = .</code>
-  </footer>
+</div>
+
+<footer>
+  <p>TeleMed Ecosystem Hub &bull; <a href="/index.html">Página Inicial</a> &bull; <a href="/consultorio/login">Consultório Virtual</a></p>
+</footer>
 
 <script>
   const DEFAULTS = {
@@ -119,32 +338,6 @@
     internal: 'https://telemed-internal.onrender.com',
     prod    : 'https://telemed-productivity.onrender.com',
   };
-  const PAGES = [
-    { label:'Cadastro de Paciente',        url:'/cadastro.html' },
-    { label:'Cadastro de Médico',          url:'/cadastro-medico.html' },
-    { label:'Como Funciona (Geral)',       url:'/como-funciona/' },
-    { label:'Como Funciona (Paciente)',    url:'/paciente/como-funciona.html' },
-    { label:'Como Funciona (Médico)',      url:'/medico/como-funciona.html' },
-    { label:'Dr. AI - Assistente Médico',  url:'/dr-ai/' },
-    { label:'Agenda Médica',               url:'/agenda/' },
-    { label:'Consulta Online',             url:'/consulta/' },
-    { label:'Dashboard',                   url:'/dashboard/' },
-    { label:'Sala de Espera',              url:'/sala-de-espera/' },
-    { label:'Preços',                      url:'/precos/' },
-    { label:'Landing Page',                url:'/lp.html' },
-    { label:'Meus Pacientes',              url:'/meus-pacientes/' },
-    { label:'Portal Médico',               url:'/medico/' },
-    { label:'Pedido de Consulta',          url:'/paciente/pedido.html' },
-    { label:'Centro de Testes',            url:'/centro-de-testes/' },
-    { label:'Video Conferência',           url:'/video.html' },
-    { label:'Roteiro 1 página (PDF)', url:'/demo-ativo/roteiro-1pagina.html' },
-    { label:'Guia imprimível (PDF)', url:'/demo-ativo/roteiro-print.html' },
-    { label:'Demo médico (GUI)',           url:'/demo.html' },
-    { label:'Exemplo de integração',       url:'/example-integration.html' },
-    { label:'Gestão avançada (pasta)',     url:'/gestao-avancada/' },
-    { label:'Demo ativo / Configurações',  url:'/demo-ativo/configuracoes.html' },
-    { label:'Atalho /enhanced → demo',     url:'/enhanced/' },
-  ];
   const AU = document.getElementById('auUrl');
   const IN = document.getElementById('inUrl');
   const PR = document.getElementById('prodUrl');
@@ -169,72 +362,72 @@
       const ok = r.ok; let j = {};
       try{ j = await r.json(); }catch{}
       out.innerHTML = ok && j?.ok
-        ? `<span class="badge ok">OK</span> <code>${url}/healthz</code>`
-        : `<span class="badge bad">Erro ${r.status}</span> <code>${url}/healthz</code>`;
+        ? `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid #bbf7d0;background:#ecfdf5;color:#059669">OK</span> <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px">${url}/healthz</code>`
+        : `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid #fecaca;background:#fef2f2;color:#dc2626">Erro ${r.status}</span>`;
     }catch(e){
-      out.innerHTML = `<span class="badge bad">Falha</span> <small class="muted">${String(e)}</small>`;
+      out.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid #fecaca;background:#fef2f2;color:#dc2626">Falha</span> <small style="color:var(--muted)">${String(e)}</small>`;
     }
   }
   document.getElementById('checkAuction').onclick = ()=>{ health(AU.value,'outAuction'); syncOpenLinks(); };
   document.getElementById('checkInternal').onclick= ()=>{ health(IN.value,'outInternal'); syncOpenLinks(); };
   document.getElementById('checkProd').onclick    = ()=>{ health(PR.value,'outProd'); syncOpenLinks(); };
 
+  // Páginas & Rotas - verificação de disponibilidade
+  const PAGES = [
+    { label:'Consultório Virtual',        url:'/consultorio/login' },
+    { label:'Dashboard Analítico',        url:'/dashboard/index.html' },
+    { label:'Dr. AI - Triagem',           url:'/dr-ai.html' },
+    { label:'ScribeMedical',              url:'/scribe-demo.html' },
+    { label:'ReceitaCerta',               url:'/rx-template.html' },
+    { label:'Feature Flags',              url:'/admin-flags.html' },
+    { label:'Status dos Serviços',        url:'/status.html' },
+    { label:'Centro de Testes',           url:'/centro-de-testes/' },
+    { label:'Cadastro de Paciente',       url:'/cadastro.html' },
+    { label:'Cadastro de Médico',         url:'/cadastro-medico.html' },
+    { label:'Como Funciona (Geral)',      url:'/como-funciona/' },
+    { label:'Dr. AI - Assistente Médico', url:'/dr-ai/' },
+    { label:'Agenda Médica',              url:'/agenda/' },
+    { label:'Consulta Online',            url:'/consulta/' },
+    { label:'Sala de Espera',             url:'/sala-de-espera/' },
+    { label:'Preços',                     url:'/precos/' },
+    { label:'Meus Pacientes',             url:'/meus-pacientes/' },
+    { label:'Portal Médico',              url:'/medico/' },
+    { label:'Demo Interativa',            url:'/demo.html' },
+  ];
+
   async function buildRoutes(){
-    const ul = document.getElementById('routes'); ul.innerHTML = '';
+    const ul = document.getElementById('routes'); 
+    if (!ul) return;
+    ul.innerHTML = '';
     for (const p of PAGES){
       const li = document.createElement('li');
+      li.style.cssText = 'display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:#fff;align-items:center';
       const left = document.createElement('div');
       const right= document.createElement('div');
 
-      left.innerHTML = `<a href="${p.url}">${p.label}</a><div class="muted" style="font-size:.85rem">${p.url}</div>`;
-      right.innerHTML= `<span class="badge" id="b-${btoa(p.url)}">verificando…</span>`;
+      left.innerHTML = `<a href="${p.url}" style="color:var(--brand);text-decoration:none;font-weight:600">${p.label}</a><div style="font-size:.85rem;color:var(--muted)">${p.url}</div>`;
+      right.innerHTML= `<span id="b-${btoa(p.url)}" style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid var(--border)">verificando…</span>`;
       li.appendChild(left); li.appendChild(right); ul.appendChild(li);
 
       try{
         const r = await fetch(p.url, {method:'GET'});
         const badge = document.getElementById(`b-${btoa(p.url)}`);
-        if (r.ok) badge.className='badge ok', badge.textContent='Existe';
-        else      badge.className='badge bad', badge.textContent='404';
+        if (r.ok) {
+          badge.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid #bbf7d0;background:#ecfdf5;color:#059669';
+          badge.textContent = '✅ Existe';
+        } else {
+          badge.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid #fecaca;background:#fef2f2;color:#dc2626';
+          badge.textContent = '❌ 404';
+        }
       }catch{
         const badge = document.getElementById(`b-${btoa(p.url)}`);
-        badge.className='badge bad'; badge.textContent='Erro';
+        badge.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;font-size:.8rem;border:1px solid #fecaca;background:#fef2f2;color:#dc2626';
+        badge.textContent = '⚠️ Erro';
       }
     }
   }
   buildRoutes();
 
-  // ==== MDA Functions ====
-  document.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('mdaUrl');
-    if (el) el.value = localStorage.getItem('MDA_SERVICE_URL') || '';
-  });
-  function normalizeUrl(u){ if(!u) return ''; const t=u.trim().replace(/\s+/g,''); return /^https?:\/\//i.test(t)? t.replace(/\/+$/,'') : ('https://'+t); }
-  function setMdaBadge(t){ const el=document.getElementById('mdaBadge'); if(el) el.textContent=t; }
-  function saveMdaUrl(){
-    const url = normalizeUrl(document.getElementById('mdaUrl').value);
-    if(!url){ alert('Informe a URL do MDA.'); return; }
-    localStorage.setItem('MDA_SERVICE_URL', url);
-    setMdaBadge('Salvo ✓');
-  }
-  function openMda(){
-    const url = normalizeUrl(localStorage.getItem('MDA_SERVICE_URL') || document.getElementById('mdaUrl').value);
-    if(!url){ alert('Configure o MDA_SERVICE_URL primeiro.'); return; }
-    // abre diretamente o /api/mda/health para feedback visual imediato
-    window.open(url + '/api/mda/health', '_blank', 'noopener');
-  }
-  async function testMda(){
-    const base = normalizeUrl(document.getElementById('mdaUrl').value);
-    if(!base){ alert('Informe a URL do MDA para testar.'); return; }
-    setMdaBadge('Testando…');
-    try{
-      const r = await fetch(base + '/api/mda/health', { method: 'GET' });
-      setMdaBadge(r.ok ? 'OK ✓' : 'Falhou ('+r.status+')');
-    }catch(e){
-      setMdaBadge('Erro/CORS');
-    }
-  }
-
-  <!-- Componente de status -->
   const statusScript = document.createElement('script');
   statusScript.src = '/js/telemed-status.js';
   document.head.appendChild(statusScript);
