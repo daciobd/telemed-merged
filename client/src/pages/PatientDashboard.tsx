@@ -558,17 +558,18 @@ export default function PatientDashboard() {
                 onClick={() => setShowNewConsultation(true)}
                 className="bg-teal-600 hover:bg-teal-700"
                 data-testid="shortcut-new-consultation"
+                title="Clique aqui para descrever sua necessidade de atendimento. Médicos compatíveis poderão enviar ofertas (bids) com horário e valor, e você escolhe com quem quer se consultar."
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Fazer novo pedido de consulta
               </Button>
-              <a href="/medicos" className="inline-block">
+              <a href="/consultorio/medicos" className="inline-block" title="Veja os médicos com quem você já se consultou e seus links diretos">
                 <Button variant="outline" data-testid="shortcut-doctors">
                   <Users className="h-4 w-4 mr-2" />
                   Ver meus médicos
                 </Button>
               </a>
-              <a href="/phr" className="inline-block">
+              <a href="/consultorio/phr" className="inline-block" title="Se você desejar, pode responder a perguntas guiadas pelo Dr. AI. Isso não substitui o médico, mas ajuda a organizar seus sintomas e histórico.">
                 <Button variant="outline" data-testid="shortcut-phr">
                   <Heart className="h-4 w-4 mr-2" />
                   Atualizar meu registro de saúde

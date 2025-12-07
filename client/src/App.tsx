@@ -47,7 +47,13 @@ export default function App() {
 
   return (
     <Switch>
+      {/* Public pages */}
       <Route path="/dr/:customUrl" component={PublicOfficePage} />
+      
+      {/* Auth routes */}
+      <Route path="/consultorio/login">
+        {user ? <Redirect to="/consultorio/dashboard" /> : <Login />}
+      </Route>
       <Route path="/login">
         {user ? <Redirect to="/dashboard" /> : <Login />}
       </Route>
@@ -57,6 +63,34 @@ export default function App() {
       <Route path="/register/doctor">
         {user ? <Redirect to="/dashboard" /> : <RegisterDoctor />}
       </Route>
+      
+      {/* Consultório Virtual routes (with /consultorio prefix) */}
+      <Route path="/consultorio/paciente/dashboard">
+        <ProtectedRoute component={PatientDashboard} />
+      </Route>
+      <Route path="/consultorio/dashboard">
+        <ProtectedRoute component={DashboardRouter} />
+      </Route>
+      <Route path="/consultorio/marketplace">
+        <ProtectedRoute component={Marketplace} />
+      </Route>
+      <Route path="/consultorio/marketplace/:id">
+        <ProtectedRoute component={ConsultaDetails} />
+      </Route>
+      <Route path="/consultorio/minhas-consultas">
+        <ProtectedRoute component={MinhasConsultas} />
+      </Route>
+      <Route path="/consultorio/consultas/:id">
+        <ProtectedRoute component={ConsultaDetails} />
+      </Route>
+      <Route path="/consultorio/agenda">
+        <ProtectedRoute component={Agenda} />
+      </Route>
+      <Route path="/consultorio/settings">
+        <ProtectedRoute component={Settings} />
+      </Route>
+      
+      {/* Legacy routes (without /consultorio prefix) */}
       <Route path="/dashboard">
         <ProtectedRoute component={DashboardRouter} />
       </Route>
@@ -78,6 +112,8 @@ export default function App() {
       <Route path="/settings">
         <ProtectedRoute component={Settings} />
       </Route>
+      
+      {/* Default redirect */}
       <Route path="/">
         <Redirect to={user ? "/dashboard" : "/login"} />
       </Route>
