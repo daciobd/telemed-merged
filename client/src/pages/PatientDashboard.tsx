@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
+import PatientOnboardingCard from '@/components/PatientOnboardingCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -132,7 +133,7 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto p-4 md:p-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard do Paciente</h1>
             <p className="text-gray-600 dark:text-gray-400">Bem-vindo, {user?.fullName}</p>
@@ -140,6 +141,11 @@ export default function PatientDashboard() {
           <Button variant="outline" onClick={logout} data-testid="button-logout">
             Sair
           </Button>
+        </div>
+
+        {/* Bloco de Onboarding Interativo */}
+        <div className="mb-6">
+          <PatientOnboardingCard />
         </div>
 
         <div className="mb-6">
