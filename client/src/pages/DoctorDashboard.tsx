@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import ConsultorioLayout from '@/components/ConsultorioLayout';
+import TelemedOnboardingCard from '@/components/TelemedOnboardingCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -129,69 +130,8 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Bloco Educacional Premium */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700" data-testid="bloco-educacional">
-          <h2 className="text-lg font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-2">
-            🧭 Bem-vindo(a) ao TeleMed – Guia Rápido do Médico
-          </h2>
-
-          <p className="text-gray-700 dark:text-gray-300 mt-2 text-sm leading-relaxed">
-            Aqui você encontra tudo o que precisa para usar a plataforma como{' '}
-            <strong>consultório virtual completo</strong>{' '}
-            e, se desejar, também para{' '}
-            <strong>receber novos pacientes através do Marketplace</strong>.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            {/* Card 1: Consultório Virtual */}
-            <div className="bg-teal-50 dark:bg-teal-900/30 border-l-4 border-teal-500 p-4 rounded-md">
-              <h3 className="font-semibold text-teal-700 dark:text-teal-300 text-sm">🏥 Consultório Virtual</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Use o TeleMed para atender seus próprios pacientes com:
-                agenda online, sala de vídeo, prontuário, PHR e prescrição.
-              </p>
-              <a
-                href="/medico/como-funciona.html"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-3 text-teal-700 dark:text-teal-300 font-semibold text-sm hover:underline"
-                data-testid="link-como-funciona-consultorio"
-              >
-                Ver como funciona →
-              </a>
-            </div>
-
-            {/* Card 2: Marketplace */}
-            <div className="bg-orange-50 dark:bg-orange-900/30 border-l-4 border-orange-500 p-4 rounded-md">
-              <h3 className="font-semibold text-orange-700 dark:text-orange-300 text-sm">🛒 Marketplace de Pacientes</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Ative quando quiser para receber pedidos de consulta de novos pacientes
-                e decidir se deseja atendê-los enviando uma oferta (bid).
-              </p>
-              <a
-                href="/medico/como-funciona-marketplace.html"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-3 text-orange-700 dark:text-orange-300 font-semibold text-sm hover:underline"
-                data-testid="link-como-funciona-marketplace"
-              >
-                Entender o marketplace →
-              </a>
-            </div>
-          </div>
-
-          <div className="mt-4 text-right">
-            <a
-              href="/dashboard/index.html"
-              target="_blank"
-              rel="noreferrer"
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm font-medium"
-              data-testid="link-painel-analitico"
-            >
-              📊 Ver Painel Analítico Avançado →
-            </a>
-          </div>
-        </div>
+        {/* Bloco Educacional Premium Interativo */}
+        <TelemedOnboardingCard />
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
