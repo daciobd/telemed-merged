@@ -5,7 +5,6 @@ import RegisterPatient from './pages/RegisterPatient';
 import RegisterDoctor from './pages/RegisterDoctor';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
-import PublicOfficePage from './pages/PublicOfficePage';
 import Marketplace from './pages/Marketplace';
 import MinhasConsultas from './pages/MinhasConsultas';
 import ConsultaDetails from './pages/ConsultaDetails';
@@ -47,13 +46,9 @@ export default function App() {
 
   return (
     <Switch>
-      {/* Public pages */}
-      <Route path="/dr/:customUrl" component={PublicOfficePage} />
+      {/* Public pages - note: /dr/:customUrl is outside /consultorio base */}
       
-      {/* Auth routes */}
-      <Route path="/consultorio/login">
-        {user ? <Redirect to="/consultorio/dashboard" /> : <Login />}
-      </Route>
+      {/* Auth routes - paths are relative to base="/consultorio" */}
       <Route path="/login">
         {user ? <Redirect to="/dashboard" /> : <Login />}
       </Route>
@@ -64,41 +59,25 @@ export default function App() {
         {user ? <Redirect to="/dashboard" /> : <RegisterDoctor />}
       </Route>
       
-      {/* Consultório Virtual routes (with /consultorio prefix) */}
-      <Route path="/consultorio/paciente/dashboard">
+      {/* Role-specific dashboard routes */}
+      <Route path="/paciente/dashboard">
         <ProtectedRoute component={PatientDashboard} />
       </Route>
-      <Route path="/consultorio/dashboard">
-        <ProtectedRoute component={DashboardRouter} />
-      </Route>
-      <Route path="/consultorio/marketplace">
-        <ProtectedRoute component={Marketplace} />
-      </Route>
-      <Route path="/consultorio/marketplace/:id">
-        <ProtectedRoute component={ConsultaDetails} />
-      </Route>
-      <Route path="/consultorio/minhas-consultas">
-        <ProtectedRoute component={MinhasConsultas} />
-      </Route>
-      <Route path="/consultorio/consultas/:id">
-        <ProtectedRoute component={ConsultaDetails} />
-      </Route>
-      <Route path="/consultorio/agenda">
-        <ProtectedRoute component={Agenda} />
-      </Route>
-      <Route path="/consultorio/settings">
-        <ProtectedRoute component={Settings} />
+      <Route path="/medico/dashboard">
+        <ProtectedRoute component={DoctorDashboard} />
       </Route>
       
-      {/* Legacy routes (without /consultorio prefix) */}
+      {/* Dynamic dashboard based on role */}
       <Route path="/dashboard">
         <ProtectedRoute component={DashboardRouter} />
       </Route>
-      <Route path="/marketplace">
-        <ProtectedRoute component={Marketplace} />
-      </Route>
+      
+      {/* Protected routes */}
       <Route path="/marketplace/:id">
         <ProtectedRoute component={ConsultaDetails} />
+      </Route>
+      <Route path="/marketplace">
+        <ProtectedRoute component={Marketplace} />
       </Route>
       <Route path="/minhas-consultas">
         <ProtectedRoute component={MinhasConsultas} />
