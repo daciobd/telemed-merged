@@ -36,7 +36,7 @@ export default function App() {
     <Switch>
       {/* Auth routes - paths are relative to base="/consultorio" */}
       <Route path="/login">
-        {user ? <Redirect to="/dashboard" /> : <Login />}
+        {user ? <Redirect to={user.role === 'patient' ? "/paciente/dashboard" : "/dashboard"} /> : <Login />}
       </Route>
       <Route path="/register/patient">
         {user ? <Redirect to="/paciente/dashboard" /> : <RegisterPatient />}
@@ -77,7 +77,7 @@ export default function App() {
       
       {/* Default redirect */}
       <Route path="/">
-        <Redirect to={user ? "/dashboard" : "/login"} />
+        <Redirect to={user ? (user.role === 'patient' ? "/paciente/dashboard" : "/dashboard") : "/login"} />
       </Route>
     </Switch>
   );

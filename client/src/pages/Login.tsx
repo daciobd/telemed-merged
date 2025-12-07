@@ -19,12 +19,17 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      const loggedUser = await login(email, password);
       toast({
         title: 'Login realizado!',
         description: 'Redirecionando...',
       });
-      setLocation('/dashboard');
+      
+      if (loggedUser.role === 'patient') {
+        setLocation('/paciente/dashboard');
+      } else {
+        setLocation('/dashboard');
+      }
     } catch (error) {
       toast({
         variant: 'destructive',

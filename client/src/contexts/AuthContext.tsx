@@ -13,9 +13,9 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  registerPatient: (data: { email: string; password: string; fullName: string; phone?: string }) => Promise<void>;
-  registerDoctor: (data: { email: string; password: string; fullName: string; crm: string; specialty: string; phone?: string }) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  registerPatient: (data: { email: string; password: string; fullName: string; phone?: string }) => Promise<User>;
+  registerDoctor: (data: { email: string; password: string; fullName: string; crm: string; specialty: string; phone?: string }) => Promise<User>;
   logout: () => void;
 }
 
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const response = await apiRequest<{ token: string; user: User }>('/api/consultorio/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -69,9 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(response.token);
     setUser(response.user);
     localStorage.setItem('consultorio_token', response.token);
+    return response.user;
   };
 
-  const registerPatient = async (data: { email: string; password: string; fullName: string; phone?: string }) => {
+  const registerPatient = async (data: { email: string; password: string; fullName: string; phone?: string }): Promise<User> => {
     const response = await apiRequest<{ token: string; user: User }>('/api/consultorio/auth/register/patient', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -80,9 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(response.token);
     setUser(response.user);
     localStorage.setItem('consultorio_token', response.token);
+    return response.user;
   };
 
-  const registerDoctor = async (data: { email: string; password: string; fullName: string; crm: string; specialty: string; phone?: string }) => {
+  const registerDoctor = async (data: { email: string; password: string; fullName: string; crm: string; specialty: string; phone?: string }): Promise<User> => {
     const response = await apiRequest<{ token: string; user: User }>('/api/consultorio/auth/register/doctor', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -91,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(response.token);
     setUser(response.user);
     localStorage.setItem('consultorio_token', response.token);
+    return response.user;
   };
 
   const logout = () => {
