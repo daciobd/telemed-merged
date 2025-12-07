@@ -29,47 +29,30 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
   return <Component />;
 }
 
-function DashboardRouter() {
-  const { user } = useAuth();
-
-  if (user?.role === 'patient') {
-    return <PatientDashboard />;
-  } else if (user?.role === 'doctor') {
-    return <DoctorDashboard />;
-  }
-
-  return <Redirect to="/login" />;
-}
-
 export default function App() {
   const { user } = useAuth();
 
   return (
     <Switch>
-      {/* Public pages - note: /dr/:customUrl is outside /consultorio base */}
-      
       {/* Auth routes - paths are relative to base="/consultorio" */}
       <Route path="/login">
         {user ? <Redirect to="/dashboard" /> : <Login />}
       </Route>
       <Route path="/register/patient">
-        {user ? <Redirect to="/dashboard" /> : <RegisterPatient />}
+        {user ? <Redirect to="/paciente/dashboard" /> : <RegisterPatient />}
       </Route>
       <Route path="/register/doctor">
         {user ? <Redirect to="/dashboard" /> : <RegisterDoctor />}
       </Route>
       
-      {/* Role-specific dashboard routes */}
+      {/* Patient Dashboard - EXCLUSIVE route for patients */}
       <Route path="/paciente/dashboard">
         <ProtectedRoute component={PatientDashboard} />
       </Route>
-      <Route path="/medico/dashboard">
-        <ProtectedRoute component={DoctorDashboard} />
-      </Route>
       
-      {/* Dynamic dashboard based on role */}
+      {/* Doctor Dashboard - /dashboard is EXCLUSIVELY for doctors */}
       <Route path="/dashboard">
-        <ProtectedRoute component={DashboardRouter} />
+        <ProtectedRoute component={DoctorDashboard} />
       </Route>
       
       {/* Protected routes */}
