@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useState, useEffect } from 'react';
+import { useLocation, useSearch } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,25 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login } = useAuth();
+  const searchString = useSearch();
+  const { login, user } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const params = new URLSearchParams(searchString);
+  const profileParam = params.get('profile');
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'patient') {
+        setLocation('/paciente/dashboard');
+      } else {
+        setLocation('/dashboard');
+      }
+    }
+  }, [user, setLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +55,23 @@ export default function Login() {
     }
   };
 
+  const getDescription = () => {
+    if (profileParam === 'paciente') {
+      return 'Acesse sua área de paciente';
+    }
+    if (profileParam === 'medico') {
+      return 'Acesse seu consultório virtual';
+    }
+    return 'Entre com suas credenciais para acessar';
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Consultório Virtual</CardTitle>
           <CardDescription className="text-center">
-            Entre com suas credenciais para acessar
+            {getDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>

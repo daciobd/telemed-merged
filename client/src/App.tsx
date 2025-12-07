@@ -35,9 +35,8 @@ export default function App() {
   return (
     <Switch>
       {/* Auth routes - paths are relative to base="/consultorio" */}
-      <Route path="/login">
-        {user ? <Redirect to={user.role === 'patient' ? "/paciente/dashboard" : "/dashboard"} /> : <Login />}
-      </Route>
+      {/* Login: sempre mostra o componente, redirect é feito pelo Login.tsx após autenticar */}
+      <Route path="/login" component={Login} />
       <Route path="/register/patient">
         {user ? <Redirect to="/paciente/dashboard" /> : <RegisterPatient />}
       </Route>
