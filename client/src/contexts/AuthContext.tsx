@@ -32,6 +32,7 @@ interface AuthContextType {
   registerPatient: (data: { email: string; password: string; fullName: string; phone?: string }) => Promise<User>;
   registerDoctor: (data: { email: string; password: string; fullName: string; crm: string; specialty: string; phone?: string }) => Promise<User>;
   logout: () => void;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -165,7 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, 
       registerPatient, 
       registerDoctor, 
-      logout 
+      logout,
+      setUser
     }}>
       {children}
     </AuthContext.Provider>

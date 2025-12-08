@@ -6,10 +6,36 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
+const DEMO_USERS: Record<string, { name: string; role: 'doctor' | 'patient' }> = {
+  'dra.anasilva@teste.com': {
+    name: 'Dra. Ana Silva',
+    role: 'doctor',
+  },
+  'paciente@teste.com': {
+    name: 'João da Silva',
+    role: 'patient',
+  },
+};
+
+const isDemoEnv =
+  typeof window !== 'undefined' &&
+  window.location.hostname.includes('onrender.com');
+
+function buildDemoUser(email: string) {
+  const cfg = DEMO_USERS[email.toLowerCase()];
+  if (!cfg) return null;
+  return {
+    id: 'demo-' + cfg.role,
+    email,
+    fullName: cfg.name,
+    role: cfg.role,
+  };
+}
+
 export default function Login() {
   const [, setLocation] = useLocation();
   const searchString = useSearch();
-  const { login, user } = useAuth();
+  const { login, user, setUser } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +44,17 @@ export default function Login() {
   const params = new URLSearchParams(searchString);
   const profileParam = params.get('profile');
 
+  const redirectByRole = (u: { role: string }) => {
+    if (u.role === 'patient') {
+      setLocation('/paciente/dashboard');
+    } else {
+      setLocation('/dashboard');
+    }
+  };
+
   useEffect(() => {
     if (user) {
-      if (user.role === 'patient') {
-        setLocation('/paciente/dashboard');
-      } else {
-        setLocation('/dashboard');
-      }
+      redirectByRole(user);
     }
   }, [user, setLocation]);
 
@@ -34,17 +64,58 @@ export default function Login() {
 
     try {
       const loggedUser = await login(email, password);
-      toast({
-        title: 'Login realizado!',
-        description: 'Redirecionando...',
-      });
       
-      if (loggedUser.role === 'patient') {
-        setLocation('/paciente/dashboard');
-      } else {
-        setLocation('/dashboard');
+      if (loggedUser) {
+        toast({
+          title: 'Login realizado!',
+          description: 'Redirecionando...',
+        });
+        redirectByRole(loggedUser);
+        return;
       }
+
+      if (isDemoEnv && password === '123456') {
+        const demoUser = buildDemoUser(email);
+        if (demoUser) {
+          console.warn('[Login] Usando modo DEMO para', email);
+          setUser(demoUser as any);
+          try {
+            localStorage.setItem('consultorio_token', 'demo-token-' + demoUser.role);
+            localStorage.setItem('telemed_demo_user', JSON.stringify(demoUser));
+          } catch {}
+          toast({
+            title: 'Login DEMO realizado!',
+            description: 'Modo demonstração ativo',
+          });
+          redirectByRole(demoUser);
+          return;
+        }
+      }
+
+      toast({
+        variant: 'destructive',
+        title: 'Erro no login',
+        description: 'Email ou senha inválidos',
+      });
     } catch (error) {
+      if (isDemoEnv && password === '123456') {
+        const demoUser = buildDemoUser(email);
+        if (demoUser) {
+          console.warn('[Login] Usando modo DEMO (erro na API) para', email);
+          setUser(demoUser as any);
+          try {
+            localStorage.setItem('consultorio_token', 'demo-token-' + demoUser.role);
+            localStorage.setItem('telemed_demo_user', JSON.stringify(demoUser));
+          } catch {}
+          toast({
+            title: 'Login DEMO realizado!',
+            description: 'Modo demonstração ativo',
+          });
+          redirectByRole(demoUser);
+          return;
+        }
+      }
+
       toast({
         variant: 'destructive',
         title: 'Erro no login',
