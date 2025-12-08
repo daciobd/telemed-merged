@@ -1,8 +1,23 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { apiRequest } from '@/lib/api';
 
+const DEMO_USERS: Record<string, { name: string; role: 'doctor' | 'patient' }> = {
+  'dra.anasilva@teste.com': {
+    name: 'Dra. Ana Silva',
+    role: 'doctor',
+  },
+  'paciente@teste.com': {
+    name: 'João da Silva',
+    role: 'patient',
+  },
+};
+
+const isDemoEnv =
+  typeof window !== 'undefined' &&
+  window.location.hostname.includes('onrender.com');
+
 interface User {
-  id: number;
+  id: number | string;
   email: string;
   role: 'patient' | 'doctor';
   fullName: string;
@@ -38,6 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = async (authToken: string) => {
     try {
+      if (authToken.startsWith('demo-token-')) {
+        const storedDemoUser = localStorage.getItem('telemed_demo_user');
+        if (storedDemoUser) {
+          const demoUser = JSON.parse(storedDemoUser);
+          setUser(demoUser);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const response = await fetch('/api/consultorio/auth/me', {
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -49,11 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
       } else {
         localStorage.removeItem('consultorio_token');
+        localStorage.removeItem('telemed_demo_user');
         setToken(null);
       }
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
       localStorage.removeItem('consultorio_token');
+      localStorage.removeItem('telemed_demo_user');
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -61,15 +88,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string): Promise<User> => {
-    const response = await apiRequest<{ token: string; user: User }>('/api/consultorio/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await apiRequest<{ token: string; user: User }>('/api/consultorio/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
 
-    setToken(response.token);
-    setUser(response.user);
-    localStorage.setItem('consultorio_token', response.token);
-    return response.user;
+      setToken(response.token);
+      setUser(response.user);
+      localStorage.setItem('consultorio_token', response.token);
+      return response.user;
+    } catch (err: any) {
+      const demoConfig = DEMO_USERS[email.toLowerCase()];
+
+      if (isDemoEnv && demoConfig && password === '123456') {
+        console.warn('[Auth] Usando modo DEMO para login de', email);
+
+        const demoUser: User = {
+          id: 'demo-' + demoConfig.role,
+          email,
+          fullName: demoConfig.name,
+          role: demoConfig.role,
+        };
+
+        setUser(demoUser);
+        setToken('demo-token-' + demoConfig.role);
+        try {
+          localStorage.setItem('consultorio_token', 'demo-token-' + demoConfig.role);
+          localStorage.setItem('telemed_demo_user', JSON.stringify(demoUser));
+        } catch {}
+
+        return demoUser;
+      }
+
+      throw err;
+    }
   };
 
   const registerPatient = async (data: { email: string; password: string; fullName: string; phone?: string }): Promise<User> => {
@@ -100,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem('consultorio_token');
+    localStorage.removeItem('telemed_demo_user');
   };
 
   return (
