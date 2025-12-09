@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertTriangle, Clock, CheckCircle, XCircle, Activity, Zap, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { apiRequest } from '@/lib/queryClient';
 
 interface CareChain {
@@ -54,6 +55,7 @@ interface AutomationRequest {
 const CareChainDashboard: React.FC = () => {
   const [selectedChain, setSelectedChain] = useState<CareChain | null>(null);
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch care chains
@@ -230,7 +232,10 @@ const CareChainDashboard: React.FC = () => {
                     className={`cursor-pointer transition-all hover:shadow-md ${
                       selectedChain?.id === chain.id ? 'ring-2 ring-blue-500' : ''
                     } ${chain.emergencyOverride ? 'border-red-500' : ''}`}
-                    onClick={() => setSelectedChain(chain)}
+                    onClick={() => {
+                      setSelectedChain(chain);
+                      setShowDetailsModal(true);
+                    }}
                     data-testid={`chain-${chain.id}`}
                   >
                     <CardHeader className="pb-2">
@@ -657,6 +662,218 @@ const CareChainDashboard: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Detalhes da Cadeia */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Activity className="h-6 w-6 text-primary" />
+              {selectedChain?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Detalhes completos da cadeia de cuidado
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedChain && (
+            <div className="space-y-6 mt-4">
+              {/* Informações Gerais */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                  <div className="text-sm text-blue-600 dark:text-blue-300 font-medium mb-1">Tempo Total Estimado</div>
+                  <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{selectedChain.totalEstimatedTime}</div>
+                </div>
+                <div className="p-4 bg-purple-50 dark:bg-purple-900 rounded-lg">
+                  <div className="text-sm text-purple-600 dark:text-purple-300 font-medium mb-1">Sequência de Execução</div>
+                  <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">{selectedChain.timeSequence}</div>
+                </div>
+              </div>
+
+              {/* Gatilhos */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-600" />
+                  Gatilhos de Ativação
+                </h3>
+                <div className="space-y-2">
+                  {selectedChain.trigger.symptoms.length > 0 && (
+                    <div>
+                      <span className="font-medium text-sm text-gray-600 dark:text-gray-400">Sintomas:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {selectedChain.trigger.symptoms.map((symptom, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded text-xs">
+                            {symptom}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedChain.trigger.conditions.length > 0 && (
+                    <div>
+                      <span className="font-medium text-sm text-gray-600 dark:text-gray-400">Condições:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {selectedChain.trigger.conditions.map((condition, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded text-xs">
+                            {condition}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Ações Detalhadas */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Ações da Cadeia ({selectedChain.actions.length})
+                </h3>
+                <div className="space-y-4">
+                  {selectedChain.actions.map((action, index) => (
+                    <div 
+                      key={action.id} 
+                      className={`border-l-4 pl-4 py-3 ${
+                        action.priority === 'CRITICAL' ? 'border-red-500 bg-red-50 dark:bg-red-900/30' :
+                        action.priority === 'HIGH' || action.priority === 'STAT' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30' :
+                        action.priority === 'MEDIUM' || action.priority === 'URGENT' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30' :
+                        'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-sm font-bold">
+                            {index + 1}
+                          </span>
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{action.description}</h4>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            action.priority === 'CRITICAL' ? 'bg-red-200 text-red-900 dark:bg-red-800 dark:text-red-100' :
+                            action.priority === 'HIGH' || action.priority === 'STAT' ? 'bg-orange-200 text-orange-900 dark:bg-orange-800 dark:text-orange-100' :
+                            action.priority === 'MEDIUM' || action.priority === 'URGENT' ? 'bg-yellow-200 text-yellow-900 dark:bg-yellow-800 dark:text-yellow-100' :
+                            'bg-blue-200 text-blue-900 dark:bg-blue-800 dark:text-blue-100'
+                          }`}>
+                            {action.priority}
+                          </span>
+                          {action.approvalRequired && (
+                            <span className="px-2 py-1 bg-purple-200 text-purple-900 dark:bg-purple-800 dark:text-purple-100 rounded text-xs font-medium">
+                              Aprovação Necessária
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+                        <div>
+                          <span className="text-gray-600 dark:text-gray-400 font-medium">Tipo:</span>
+                          <span className="ml-2 text-gray-900 dark:text-gray-100">{action.type}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600 dark:text-gray-400 font-medium">Tempo Estimado:</span>
+                          <span className="ml-2 text-gray-900 dark:text-gray-100">{action.estimatedTime}</span>
+                        </div>
+                      </div>
+
+                      {action.prerequisites && action.prerequisites.length > 0 && (
+                        <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Pré-requisitos:</span>
+                          <ul className="mt-1 space-y-1">
+                            {action.prerequisites.map((prereq, idx) => (
+                              <li key={idx} className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                {prereq}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {action.contraindications && action.contraindications.length > 0 && (
+                        <div className="mt-3 p-2 bg-red-50 dark:bg-red-900/50 rounded border border-red-200 dark:border-red-700">
+                          <span className="text-xs font-medium text-red-800 dark:text-red-200">Contraindicações:</span>
+                          <ul className="mt-1 space-y-1">
+                            {action.contraindications.map((contra, idx) => (
+                              <li key={idx} className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1">
+                                <XCircle className="h-3 w-3 text-red-600" />
+                                {contra}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {Object.keys(action.parameters).length > 0 && (
+                        <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Parâmetros:</span>
+                          <div className="mt-1 grid grid-cols-2 gap-2">
+                            {Object.entries(action.parameters).map(([key, value]) => (
+                              <div key={key} className="text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">{key}:</span>
+                                <span className="ml-1 text-gray-900 dark:text-gray-100 font-medium">{String(value)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Alertas Especiais */}
+              {(selectedChain.emergencyOverride || selectedChain.criticalTiming) && (
+                <div className="border-2 border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2">Alertas Críticos</h3>
+                      <div className="space-y-2 text-sm text-red-800 dark:text-red-200">
+                        {selectedChain.emergencyOverride && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                            <span>Protocolo de EMERGÊNCIA - Pode ser iniciado sem aprovação prévia</span>
+                          </div>
+                        )}
+                        {selectedChain.criticalTiming && selectedChain.timeWindow && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-red-600" />
+                            <span>JANELA TERAPÊUTICA CRÍTICA: {selectedChain.timeWindow}</span>
+                          </div>
+                        )}
+                        {selectedChain.medicalApprovalRequired && (
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                            <span>Aprovação médica obrigatória antes da execução</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Botão de Ação */}
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
+                <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
+                  Fechar
+                </Button>
+                <Button 
+                  className="bg-primary"
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    setSelectedActions(selectedChain.actions.map(a => a.id));
+                  }}
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Selecionar Todas as Ações
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
