@@ -21,8 +21,16 @@ import {
   Users,
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  Star,
+  UserCircle,
+  MessageSquare
 } from 'lucide-react';
+import { 
+  isDemo, 
+  DEMO_DOCTORS, 
+  DEMO_PATIENT_PEDIDOS 
+} from '@/demo/demoData';
 
 interface Consultation {
   id: number;
@@ -545,6 +553,130 @@ export default function PatientDashboard() {
           </Card>
         </div>
 
+        {/* Meus Médicos - Seção Demo */}
+        {isDemo && (
+          <Card className="bg-white dark:bg-gray-800">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  Meus Médicos
+                </CardTitle>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {DEMO_DOCTORS.length} profissionais
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {DEMO_DOCTORS.map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 rounded-lg border border-blue-100 dark:border-gray-600"
+                    data-testid={`card-doctor-${doctor.id}`}
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <UserCircle className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                          {doctor.name}
+                        </p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          {doctor.specialty}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        <span>{doctor.rating}</span>
+                        <span className="mx-1">•</span>
+                        <span>{doctor.consultations} consultas</span>
+                      </div>
+                      <p>Última: {new Date(doctor.lastConsult).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 text-xs h-8">
+                        Ver perfil
+                      </Button>
+                      <Button size="sm" className="flex-1 text-xs h-8 bg-blue-600 hover:bg-blue-700">
+                        Agendar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Meus Pedidos com Ofertas - Seção Demo */}
+        {isDemo && DEMO_PATIENT_PEDIDOS.filter(p => p.status === 'em_andamento').length > 0 && (
+          <Card className="bg-white dark:bg-gray-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-emerald-600" />
+                Meus Pedidos em Andamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {DEMO_PATIENT_PEDIDOS.filter(p => p.status === 'em_andamento').map((pedido) => (
+                <div
+                  key={pedido.id}
+                  className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800"
+                  data-testid={`card-pedido-${pedido.id}`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {pedido.motivo}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Enviado em {new Date(pedido.dataEnvio).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-800 dark:text-emerald-200 text-xs rounded-full font-medium">
+                      {pedido.ofertas.length} ofertas
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {pedido.ofertas.map((oferta) => (
+                      <div
+                        key={oferta.id}
+                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                            <UserCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {oferta.medico}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {oferta.specialty} • {oferta.mensagem}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                            R$ {oferta.valor}
+                          </span>
+                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                            Aceitar
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Atalhos Rápidos */}
         <Card className="bg-white dark:bg-gray-800">
           <CardHeader className="pb-3">
@@ -556,7 +688,7 @@ export default function PatientDashboard() {
             <div className="flex flex-wrap gap-3">
               <Button
                 onClick={() => setShowNewConsultation(true)}
-                className="bg-teal-600 hover:bg-teal-700"
+                className="bg-blue-600 hover:bg-blue-700"
                 data-testid="shortcut-new-consultation"
                 title="Clique aqui para descrever sua necessidade de atendimento. Médicos compatíveis poderão enviar ofertas (bids) com horário e valor, e você escolhe com quem quer se consultar."
               >
