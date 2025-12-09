@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
@@ -598,12 +599,16 @@ export default function PatientDashboard() {
                       <p>Última: {new Date(doctor.lastConsult).toLocaleDateString('pt-BR')}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 text-xs h-8">
-                        Ver perfil
-                      </Button>
-                      <Button size="sm" className="flex-1 text-xs h-8 bg-blue-600 hover:bg-blue-700">
-                        Agendar
-                      </Button>
+                      <Link href={`/paciente/medicos/${doctor.id}`}>
+                        <Button size="sm" variant="outline" className="flex-1 text-xs h-8" data-testid={`button-profile-${doctor.id}`}>
+                          Ver perfil
+                        </Button>
+                      </Link>
+                      <Link href={`/paciente/agendar/${doctor.id}`}>
+                        <Button size="sm" className="flex-1 text-xs h-8 bg-blue-600 hover:bg-blue-700" data-testid={`button-schedule-${doctor.id}`}>
+                          Agendar
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 ))}

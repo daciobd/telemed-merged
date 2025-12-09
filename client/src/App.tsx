@@ -4,6 +4,8 @@ import Login from './pages/Login';
 import RegisterPatient from './pages/RegisterPatient';
 import RegisterDoctor from './pages/RegisterDoctor';
 import PatientDashboard from './pages/PatientDashboard';
+import PatientDoctorProfile from './pages/PatientDoctorProfile';
+import PatientDoctorScheduling from './pages/PatientDoctorScheduling';
 import DoctorDashboard from './pages/DoctorDashboard';
 import Marketplace from './pages/Marketplace';
 import MinhasConsultas from './pages/MinhasConsultas';
@@ -46,6 +48,10 @@ export default function App() {
       
       {/* Patient Dashboard DEMO - public route for presentations */}
       <Route path="/paciente/dashboard-demo" component={PatientDashboard} />
+      
+      {/* Patient pages - Doctor profile and Scheduling (public for demo) */}
+      <Route path="/paciente/medicos/:id" component={PatientDoctorProfile} />
+      <Route path="/paciente/agendar/:id" component={PatientDoctorScheduling} />
       
       {/* Patient Dashboard - EXCLUSIVE route for patients */}
       <Route path="/paciente/dashboard">
