@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, User, Video, ShoppingCart } from 'lucide-react';
 import { Link } from 'wouter';
+import { DEMO_AGENDA, isDemo } from '@/demo/demoData';
 
 interface AgendaConsultation {
   id: string;
@@ -19,9 +20,22 @@ interface AgendaConsultation {
 export default function Agenda() {
   const [filterPeriod, setFilterPeriod] = useState('7dias');
 
-  const { data: consultations, isLoading } = useQuery<AgendaConsultation[]>({
+  const { data: consultationsAPI, isLoading: isLoadingAPI } = useQuery<AgendaConsultation[]>({
     queryKey: ['/api/consultorio/minhas-consultas'],
+    enabled: !isDemo,
   });
+
+  const demoConsultations: AgendaConsultation[] = DEMO_AGENDA.map((a) => ({
+    id: a.id,
+    paciente: a.paciente,
+    especialidade: a.tipo,
+    dataHora: `${a.data}T${a.hora}:00`,
+    duracao: 30,
+    status: 'agendada',
+  }));
+
+  const consultations = isDemo ? demoConsultations : consultationsAPI;
+  const isLoading = isDemo ? false : isLoadingAPI;
 
   const now = new Date();
   const getFilterDate = () => {

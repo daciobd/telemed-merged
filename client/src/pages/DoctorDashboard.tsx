@@ -13,7 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Link } from 'wouter';
-import { DEMO_CONSULTAS, DEMO_MARKETPLACE, isDemo } from '@/demo/demoData';
+import { DEMO_CONSULTAS_RESUMO, DEMO_CONSULTAS_HOJE, DEMO_MARKETPLACE_PEDIDOS, isDemo } from '@/demo/demoData';
 
 interface DashboardStats {
   consultasHoje: number;
@@ -43,17 +43,17 @@ export default function DoctorDashboard() {
   });
 
   const demoStats: DashboardStats = {
-    consultasHoje: DEMO_CONSULTAS.hoje.length,
-    consultasSemana: DEMO_CONSULTAS.semana,
-    novasMarketplace: DEMO_MARKETPLACE.length,
-    ganhosEsteMes: 2847.50,
+    consultasHoje: DEMO_CONSULTAS_RESUMO.hoje,
+    consultasSemana: DEMO_CONSULTAS_RESUMO.semana,
+    novasMarketplace: DEMO_MARKETPLACE_PEDIDOS.length,
+    ganhosEsteMes: DEMO_CONSULTAS_RESUMO.ganhosMes,
   };
 
-  const demoProximasConsultas: Consultation[] = DEMO_CONSULTAS.hoje.map((c, idx) => ({
-    id: `demo-${idx}`,
-    paciente: c.patient,
-    dataHora: new Date().toISOString().split('T')[0] + 'T' + c.hora + ':00',
-    especialidade: 'Consulta Geral',
+  const demoProximasConsultas: Consultation[] = DEMO_CONSULTAS_HOJE.map((c) => ({
+    id: c.id,
+    paciente: c.paciente,
+    dataHora: new Date().toISOString().split('T')[0] + 'T' + c.horario + ':00',
+    especialidade: c.motivo,
   }));
 
   const stats = isDemo ? demoStats : statsAPI;

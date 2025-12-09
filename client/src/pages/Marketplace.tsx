@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingCart, Clock, MapPin, DollarSign, TrendingDown, Eye } from 'lucide-react';
 import { Link } from 'wouter';
-import { DEMO_MARKETPLACE, isDemo } from '@/demo/demoData';
+import { DEMO_MARKETPLACE_PEDIDOS, isDemo } from '@/demo/demoData';
 
 interface MarketplaceConsultation {
   id: string;
@@ -36,15 +36,15 @@ export default function Marketplace() {
     enabled: !isDemo,
   });
 
-  const demoConsultations: MarketplaceConsultation[] = DEMO_MARKETPLACE.map((m, idx) => ({
+  const demoConsultations: MarketplaceConsultation[] = DEMO_MARKETPLACE_PEDIDOS.map((m, idx) => ({
     id: m.id,
     especialidade: idx % 2 === 0 ? 'Clínica Geral' : 'Psiquiatria',
     inicio: new Date(Date.now() + (idx + 1) * 86400000).toISOString(),
     duracaoMinutos: 30,
-    valorBase: 150 + idx * 25,
-    cidade: idx % 3 === 0 ? 'São Paulo, SP' : idx % 3 === 1 ? 'Rio de Janeiro, RJ' : 'Belo Horizonte, MG',
+    valorBase: 150 + idx * 15,
+    cidade: idx % 4 === 0 ? 'São Paulo, SP' : idx % 4 === 1 ? 'Rio de Janeiro, RJ' : idx % 4 === 2 ? 'Belo Horizonte, MG' : 'Curitiba, PR',
     origem: 'Marketplace',
-    status: 'disponivel',
+    status: m.status === 'Novo' ? 'disponivel' : 'em_analise',
     chiefComplaint: m.motivo,
   }));
 
