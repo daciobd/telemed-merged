@@ -44,6 +44,9 @@ export default function App() {
         {user ? <Redirect to="/dashboard" /> : <RegisterDoctor />}
       </Route>
       
+      {/* Patient Dashboard DEMO - public route for presentations */}
+      <Route path="/paciente/dashboard-demo" component={PatientDashboard} />
+      
       {/* Patient Dashboard - EXCLUSIVE route for patients */}
       <Route path="/paciente/dashboard">
         <ProtectedRoute component={PatientDashboard} />

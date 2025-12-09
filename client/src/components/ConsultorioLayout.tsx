@@ -36,7 +36,7 @@ export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) 
 
   const externalLinks = [
     { href: '/dashboard/index.html', label: 'Painel Analítico', icon: BarChart3, external: true },
-    { href: '/paciente/dashboard', label: 'Dashboard Paciente', icon: UserCircle, external: true },
+    { href: '/consultorio/paciente/dashboard-demo', label: 'Dashboard Paciente', icon: UserCircle, external: true },
   ];
 
   const isActive = (href: string) => location === href;
