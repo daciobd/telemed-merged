@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiRequest } from '@/lib/api';
 import PatientOnboardingCard from '@/components/PatientOnboardingCard';
-import ConsultorioLayout from '@/components/ConsultorioLayout';
+import PacienteLayout from '@/components/PacienteLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -184,17 +184,17 @@ export default function PatientDashboard() {
 
   if (isLoading) {
     return (
-      <ConsultorioLayout>
+      <PacienteLayout>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-3 text-gray-600 dark:text-gray-400">Carregando...</span>
         </div>
-      </ConsultorioLayout>
+      </PacienteLayout>
     );
   }
 
   return (
-    <ConsultorioLayout>
+    <PacienteLayout>
       <div className="space-y-6">
         {/* Saudação */}
         <div>
@@ -579,6 +579,6 @@ export default function PatientDashboard() {
           </CardContent>
         </Card>
       </div>
-    </ConsultorioLayout>
+    </PacienteLayout>
   );
 }
