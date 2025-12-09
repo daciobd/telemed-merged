@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ShoppingCart, Clock, MapPin, DollarSign, TrendingDown, Eye } from 'lucide-react';
 import { Link } from 'wouter';
+import { DEMO_MARKETPLACE, isDemo } from '@/demo/demoData';
 
 interface MarketplaceConsultation {
   id: string;
@@ -30,9 +31,25 @@ export default function Marketplace() {
   const [bidModal, setBidModal] = useState<{ consultationId: string; valorBase: number } | null>(null);
   const [bidAmount, setBidAmount] = useState('');
 
-  const { data: consultations, isLoading } = useQuery<MarketplaceConsultation[]>({
+  const { data: consultationsAPI, isLoading: isLoadingAPI } = useQuery<MarketplaceConsultation[]>({
     queryKey: ['/api/consultorio/marketplace'],
+    enabled: !isDemo,
   });
+
+  const demoConsultations: MarketplaceConsultation[] = DEMO_MARKETPLACE.map((m, idx) => ({
+    id: m.id,
+    especialidade: idx % 2 === 0 ? 'Clínica Geral' : 'Psiquiatria',
+    inicio: new Date(Date.now() + (idx + 1) * 86400000).toISOString(),
+    duracaoMinutos: 30,
+    valorBase: 150 + idx * 25,
+    cidade: idx % 3 === 0 ? 'São Paulo, SP' : idx % 3 === 1 ? 'Rio de Janeiro, RJ' : 'Belo Horizonte, MG',
+    origem: 'Marketplace',
+    status: 'disponivel',
+    chiefComplaint: m.motivo,
+  }));
+
+  const consultations = isDemo ? demoConsultations : consultationsAPI;
+  const isLoading = isDemo ? false : isLoadingAPI;
 
   const createBidMutation = useMutation({
     mutationFn: async ({ consultationId, bidAmount }: { consultationId: string; bidAmount: number }) => {

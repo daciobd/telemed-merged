@@ -13,6 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { DEMO_CONSULTAS, DEMO_MARKETPLACE, isDemo } from '@/demo/demoData';
 
 interface DashboardStats {
   consultasHoje: number;
@@ -31,13 +32,34 @@ interface Consultation {
 export default function DoctorDashboard() {
   const { user } = useAuth();
 
-  const { data: stats, isLoading: isLoadingStats } = useQuery<DashboardStats>({
+  const { data: statsAPI, isLoading: isLoadingStatsAPI } = useQuery<DashboardStats>({
     queryKey: ['/api/consultorio/dashboard/stats'],
+    enabled: !isDemo,
   });
 
-  const { data: proximasConsultas, isLoading: isLoadingProximas } = useQuery<Consultation[]>({
+  const { data: proximasConsultasAPI, isLoading: isLoadingProximasAPI } = useQuery<Consultation[]>({
     queryKey: ['/api/consultorio/dashboard/proximas'],
+    enabled: !isDemo,
   });
+
+  const demoStats: DashboardStats = {
+    consultasHoje: DEMO_CONSULTAS.hoje.length,
+    consultasSemana: DEMO_CONSULTAS.semana,
+    novasMarketplace: DEMO_MARKETPLACE.length,
+    ganhosEsteMes: 2847.50,
+  };
+
+  const demoProximasConsultas: Consultation[] = DEMO_CONSULTAS.hoje.map((c, idx) => ({
+    id: `demo-${idx}`,
+    paciente: c.patient,
+    dataHora: new Date().toISOString().split('T')[0] + 'T' + c.hora + ':00',
+    especialidade: 'Consulta Geral',
+  }));
+
+  const stats = isDemo ? demoStats : statsAPI;
+  const proximasConsultas = isDemo ? demoProximasConsultas : proximasConsultasAPI;
+  const isLoadingStats = isDemo ? false : isLoadingStatsAPI;
+  const isLoadingProximas = isDemo ? false : isLoadingProximasAPI;
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);

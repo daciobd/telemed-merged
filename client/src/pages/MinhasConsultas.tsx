@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Clock, User, Video, Eye, Calendar } from 'lucide-react';
 import { Link } from 'wouter';
+import { DEMO_PATIENTS, isDemo } from '@/demo/demoData';
 
 interface Consultation {
   id: string;
@@ -17,11 +18,36 @@ interface Consultation {
 }
 
 export default function MinhasConsultas() {
-  const { data: consultations, isLoading } = useQuery<Consultation[]>({
+  const { data: consultationsAPI, isLoading: isLoadingAPI } = useQuery<Consultation[]>({
     queryKey: ['/api/consultorio/minhas-consultas'],
+    enabled: !isDemo,
   });
 
   const now = new Date();
+
+  const demoConsultations: Consultation[] = [
+    ...DEMO_PATIENTS.slice(0, 3).map((p, idx) => ({
+      id: `demo-next-${idx}`,
+      paciente: p.name,
+      especialidade: 'Clínica Geral',
+      dataHora: new Date(Date.now() + (idx + 1) * 86400000).toISOString(),
+      duracao: 30,
+      status: 'agendada' as const,
+      valorAcordado: 200,
+    })),
+    ...DEMO_PATIENTS.slice(3, 8).map((p, idx) => ({
+      id: `demo-past-${idx}`,
+      paciente: p.name,
+      especialidade: idx % 2 === 0 ? 'Clínica Geral' : 'Psiquiatria',
+      dataHora: new Date(Date.now() - (idx + 1) * 86400000 * 2).toISOString(),
+      duracao: 30,
+      status: 'concluida' as const,
+      valorAcordado: 180 + idx * 20,
+    })),
+  ];
+
+  const consultations = isDemo ? demoConsultations : consultationsAPI;
+  const isLoading = isDemo ? false : isLoadingAPI;
   const proximasConsultas = consultations?.filter(
     (c) => new Date(c.dataHora) >= now && c.status !== 'concluida' && c.status !== 'cancelada'
   ) || [];
