@@ -62,6 +62,29 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
+    const emailLower = email.trim().toLowerCase();
+
+    // 🔥 1) MODO DEMO PRIORITÁRIO NO RENDER - nem tenta chamar API
+    if (isDemoEnv && password === '123456') {
+      const demoUser = buildDemoUser(emailLower);
+      if (demoUser) {
+        console.warn('[Login] MODO DEMO → pulando API para', emailLower);
+        setUser(demoUser as any);
+        try {
+          localStorage.setItem('consultorio_token', 'demo-token-' + demoUser.role);
+          localStorage.setItem('telemed_demo_user', JSON.stringify(demoUser));
+        } catch {}
+        toast({
+          title: 'Login DEMO realizado!',
+          description: 'Modo demonstração ativo',
+        });
+        redirectByRole(demoUser);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // 2) FLUXO NORMAL (local / ambiente real)
     try {
       const loggedUser = await login(email, password);
       
@@ -74,48 +97,12 @@ export default function Login() {
         return;
       }
 
-      if (isDemoEnv && password === '123456') {
-        const demoUser = buildDemoUser(email);
-        if (demoUser) {
-          console.warn('[Login] Usando modo DEMO para', email);
-          setUser(demoUser as any);
-          try {
-            localStorage.setItem('consultorio_token', 'demo-token-' + demoUser.role);
-            localStorage.setItem('telemed_demo_user', JSON.stringify(demoUser));
-          } catch {}
-          toast({
-            title: 'Login DEMO realizado!',
-            description: 'Modo demonstração ativo',
-          });
-          redirectByRole(demoUser);
-          return;
-        }
-      }
-
       toast({
         variant: 'destructive',
         title: 'Erro no login',
         description: 'Email ou senha inválidos',
       });
     } catch (error) {
-      if (isDemoEnv && password === '123456') {
-        const demoUser = buildDemoUser(email);
-        if (demoUser) {
-          console.warn('[Login] Usando modo DEMO (erro na API) para', email);
-          setUser(demoUser as any);
-          try {
-            localStorage.setItem('consultorio_token', 'demo-token-' + demoUser.role);
-            localStorage.setItem('telemed_demo_user', JSON.stringify(demoUser));
-          } catch {}
-          toast({
-            title: 'Login DEMO realizado!',
-            description: 'Modo demonstração ativo',
-          });
-          redirectByRole(demoUser);
-          return;
-        }
-      }
-
       toast({
         variant: 'destructive',
         title: 'Erro no login',
