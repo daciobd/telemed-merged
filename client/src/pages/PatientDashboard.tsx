@@ -669,7 +669,17 @@ export default function PatientDashboard() {
                           <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                             R$ {oferta.valor}
                           </span>
-                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                          <Button 
+                            size="sm" 
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                            onClick={() => {
+                              toast({
+                                title: 'Oferta aceita!',
+                                description: `Modo demo: Consulta com ${oferta.medico} seria agendada aqui.`,
+                              });
+                            }}
+                            data-testid={`button-accept-${oferta.id}`}
+                          >
                             Aceitar
                           </Button>
                         </div>
@@ -700,18 +710,18 @@ export default function PatientDashboard() {
                 <Plus className="h-4 w-4 mr-2" />
                 Fazer novo pedido de consulta
               </Button>
-              <a href="/consultorio/medicos" className="inline-block" title="Veja os médicos com quem você já se consultou e seus links diretos">
-                <Button variant="outline" data-testid="shortcut-doctors">
+              <Link href="/paciente/medicos">
+                <Button variant="outline" data-testid="shortcut-doctors" title="Veja os médicos com quem você já se consultou e seus links diretos">
                   <Users className="h-4 w-4 mr-2" />
                   Ver meus médicos
                 </Button>
-              </a>
-              <a href="/consultorio/phr" className="inline-block" title="Se você desejar, pode responder a perguntas guiadas pelo Dr. AI. Isso não substitui o médico, mas ajuda a organizar seus sintomas e histórico.">
-                <Button variant="outline" data-testid="shortcut-phr">
+              </Link>
+              <Link href="/paciente/phr">
+                <Button variant="outline" data-testid="shortcut-phr" title="Se você desejar, pode responder a perguntas guiadas pelo Dr. AI. Isso não substitui o médico, mas ajuda a organizar seus sintomas e histórico.">
                   <Heart className="h-4 w-4 mr-2" />
                   Atualizar meu registro de saúde
                 </Button>
-              </a>
+              </Link>
             </div>
           </CardContent>
         </Card>
