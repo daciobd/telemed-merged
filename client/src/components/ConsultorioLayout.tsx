@@ -22,9 +22,19 @@ interface ConsultorioLayoutProps {
 }
 
 export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Logout 100% frontend - funciona em modo demo sem depender de API
+  const handleLogout = () => {
+    try {
+      localStorage.clear();
+    } catch (e) {
+      // ignora erro
+    }
+    window.location.href = "/";
+  };
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -119,7 +129,7 @@ export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) 
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={logout}
+                onClick={handleLogout}
                 className="hidden sm:flex"
                 data-testid="button-logout"
               >
@@ -182,7 +192,7 @@ export default function ConsultorioLayout({ children }: ConsultorioLayoutProps) 
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      logout();
+                      handleLogout();
                     }}
                     className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                   >

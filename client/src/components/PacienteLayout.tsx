@@ -18,9 +18,22 @@ interface PacienteLayoutProps {
 }
 
 export default function PacienteLayout({ children }: PacienteLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Logout 100% frontend - funciona em modo demo sem depender de API
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("demoPatient");
+      localStorage.removeItem("demoUser");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } catch (e) {
+      // ignore erros de localStorage
+    }
+    window.location.href = "/";
+  };
 
   const navItems = [
     { href: '/paciente/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -84,7 +97,7 @@ export default function PacienteLayout({ children }: PacienteLayoutProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={logout}
+                onClick={handleLogout}
                 className="hidden sm:flex"
                 data-testid="button-logout-paciente"
               >
@@ -128,7 +141,7 @@ export default function PacienteLayout({ children }: PacienteLayoutProps) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      logout();
+                      handleLogout();
                     }}
                     className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                   >
