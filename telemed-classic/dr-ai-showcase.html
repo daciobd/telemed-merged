@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dr. AI – Assistente Inteligente de Triagem | TeleMed</title>
+  <meta name="description" content="Descreva seus sintomas e veja possíveis causas, sinais de alerta e qual especialista é mais indicado com o Dr. AI.">
+  <style>
+    :root{
+      --brand:#0ea5e9; --teal:#2BB3A8; --ink:#0b1324; --ok:#059669; --bad:#dc2626;
+      --text:#0f172a; --muted:#64748b; --card:#fff; --border:#e2e8f0; --bg:#f8fafc;
+      --purple:#8b5cf6; --orange:#f97316; --pink:#ec4899;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
+    
+    .header{
+      background:linear-gradient(135deg, #1e3a5f 0%, #2BB3A8 100%);
+      color:white;
+      padding:24px 28px;
+    }
+    .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+    .header h1{margin:0;font-size:1.8rem;display:flex;align-items:center;gap:12px}
+    .header h1 span{font-size:2rem}
+    .header p{margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:1rem;max-width:600px}
+    .header-links{display:flex;gap:12px;flex-wrap:wrap}
+    .header-links a{
+      color:white;text-decoration:none;padding:8px 16px;
+      border:1px solid rgba(255,255,255,0.3);border-radius:8px;
+      font-size:0.9rem;transition:all 0.2s;
+    }
+    .header-links a:hover{background:rgba(255,255,255,0.15);border-color:white}
+    
+    .container{max-width:1200px;margin:0 auto;padding:32px 24px}
+    
+    .showcase-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:32px;
+      align-items:start;
+    }
+    @media(max-width:900px){.showcase-grid{grid-template-columns:1fr}}
+    
+    .input-section{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:28px;
+      box-shadow:0 4px 12px rgba(0,0,0,.05);
+    }
+    .input-section h2{margin:0 0 8px;font-size:1.4rem;color:var(--ink)}
+    .input-section p{margin:0 0 20px;color:var(--muted);font-size:0.95rem}
+    
+    .symptom-textarea{
+      width:100%;
+      min-height:140px;
+      padding:16px;
+      border:2px solid var(--border);
+      border-radius:12px;
+      font-size:1rem;
+      font-family:inherit;
+      resize:vertical;
+      transition:border-color 0.2s;
+    }
+    .symptom-textarea:focus{outline:none;border-color:var(--teal)}
+    
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      background:var(--teal);color:#fff;border:0;
+      padding:14px 24px;border-radius:10px;cursor:pointer;
+      text-decoration:none;font-weight:600;font-size:1rem;
+      transition:all 0.2s;
+      margin-top:16px;
+      width:100%;
+    }
+    .btn:hover{background:#239e94;transform:translateY(-1px)}
+    .btn.secondary{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}
+    .btn.secondary:hover{background:#e5e7eb}
+    
+    .chips{margin-top:20px}
+    .chips-label{font-size:0.85rem;color:var(--muted);margin-bottom:10px}
+    .chips-container{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      padding:10px 16px;
+      background:#f0fdfa;
+      border:1px solid #99f6e4;
+      border-radius:20px;
+      font-size:0.9rem;
+      color:#0d9488;
+      cursor:pointer;
+      transition:all 0.2s;
+    }
+    .chip:hover{background:#ccfbf1;border-color:var(--teal)}
+    
+    .result-section{
+      background:var(--card);
+      border:2px solid var(--teal);
+      border-radius:16px;
+      padding:28px;
+      box-shadow:0 8px 24px rgba(43,179,168,0.15);
+      opacity:0;
+      transform:translateY(20px);
+      transition:all 0.4s ease;
+    }
+    .result-section.visible{opacity:1;transform:translateY(0)}
+    
+    .result-header{
+      display:flex;align-items:center;gap:12px;
+      margin-bottom:24px;padding-bottom:16px;
+      border-bottom:1px solid var(--border);
+    }
+    .result-header-icon{
+      width:48px;height:48px;
+      background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;
+    }
+    .result-header h3{margin:0;font-size:1.3rem;color:var(--ink)}
+    .result-header p{margin:4px 0 0;font-size:0.85rem;color:var(--muted)}
+    
+    .result-block{margin-bottom:24px}
+    .result-block h4{
+      margin:0 0 12px;font-size:1rem;
+      display:flex;align-items:center;gap:8px;
+    }
+    .result-block h4 span{font-size:1.2rem}
+    .result-block ul{margin:0;padding-left:20px;color:var(--text)}
+    .result-block li{margin-bottom:8px;line-height:1.5}
+    
+    .result-block.alert h4{color:#b45309}
+    .result-block.alert ul{color:#92400e}
+    .result-block.alert{
+      background:#fef3c7;
+      border:1px solid #fcd34d;
+      border-radius:12px;
+      padding:16px;
+    }
+    
+    .specialist-box{
+      background:linear-gradient(135deg,#f0fdfa,#ccfbf1);
+      border:1px solid #5eead4;
+      border-radius:12px;
+      padding:20px;
+      text-align:center;
+    }
+    .specialist-box h4{margin:0 0 12px;font-size:1rem;color:var(--ink)}
+    .specialist-main{font-size:1.3rem;font-weight:700;color:var(--teal);margin-bottom:4px}
+    .specialist-alt{font-size:0.9rem;color:var(--muted)}
+    
+    .result-actions{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+    .result-actions .btn{margin:0}
+    
+    .example-section{
+      margin-top:60px;
+      padding-top:40px;
+      border-top:2px dashed var(--border);
+    }
+    .example-section h2{margin:0 0 8px;font-size:1.5rem;color:var(--ink);text-align:center}
+    .example-section>p{margin:0 0 32px;color:var(--muted);text-align:center}
+    
+    .example-card{
+      max-width:700px;
+      margin:0 auto;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:28px;
+      box-shadow:0 4px 12px rgba(0,0,0,.05);
+    }
+    .example-card-header{
+      display:flex;align-items:center;gap:12px;
+      margin-bottom:20px;padding-bottom:16px;
+      border-bottom:1px solid var(--border);
+    }
+    .example-card-header span{font-size:1.5rem}
+    .example-card-header h3{margin:0;font-size:1.2rem}
+    
+    .example-field{margin-bottom:16px}
+    .example-field label{font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);display:block;margin-bottom:6px}
+    .example-field p{margin:0;font-size:1rem;color:var(--text);line-height:1.5}
+    .example-field .badge{
+      display:inline-block;
+      padding:6px 12px;
+      background:#fef3c7;
+      color:#92400e;
+      border-radius:6px;
+      font-size:0.9rem;
+      font-weight:500;
+    }
+    
+    .example-visual-btn{
+      margin-top:20px;
+      padding:12px 20px;
+      background:#f3f4f6;
+      border:1px dashed var(--border);
+      border-radius:10px;
+      color:var(--muted);
+      font-size:0.9rem;
+      text-align:center;
+      cursor:not-allowed;
+    }
+    
+    footer{
+      margin-top:60px;padding:24px;
+      background:#1a1b23;color:#9ca3af;
+      text-align:center;font-size:0.9rem;
+    }
+    footer a{color:var(--teal);text-decoration:none}
+    footer a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div>
+        <h1><span>🤖</span> Dr. AI – Assistente Inteligente de Triagem</h1>
+        <p>Descreva seus sintomas e veja possíveis causas, sinais de alerta e qual especialista é mais indicado.</p>
+      </div>
+      <div class="header-links">
+        <a href="/hub.html">Hub TeleMed</a>
+        <a href="/">Home</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="showcase-grid">
+      <div class="input-section">
+        <h2>Conte ao Dr. AI o que você está sentindo</h2>
+        <p>Descreva seus sintomas em linguagem simples. Esta triagem não substitui uma consulta médica.</p>
+        
+        <textarea 
+          id="symptomInput" 
+          class="symptom-textarea" 
+          placeholder="Ex: Tenho dor de cabeça há 3 dias, piora à noite, dificuldade para dormir e muita preocupação com trabalho..."
+          data-testid="textarea-symptoms"
+        ></textarea>
+        
+        <button id="analyzeBtn" class="btn" data-testid="button-analyze">
+          🔍 Analisar sintomas
+        </button>
+        
+        <div class="chips">
+          <div class="chips-label">Sugestões rápidas:</div>
+          <div class="chips-container">
+            <div class="chip" data-case="headache" data-testid="chip-headache">Dor de cabeça e insônia</div>
+            <div class="chip" data-case="chest" data-testid="chip-chest">Dor no peito ao esforço</div>
+            <div class="chip" data-case="breath" data-testid="chip-breath">Falta de ar e cansaço</div>
+            <div class="chip" data-case="back" data-testid="chip-back">Dor lombar com formigamento</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="resultSection" class="result-section" data-testid="result-section">
+        <div class="result-header">
+          <div class="result-header-icon">🩺</div>
+          <div>
+            <h3>Resultado da Triagem</h3>
+            <p>Análise baseada nos sintomas informados</p>
+          </div>
+        </div>
+        
+        <div class="result-block">
+          <h4><span>🔍</span> Possíveis causas (não é diagnóstico)</h4>
+          <ul id="causesList">
+            <li>Enxaqueca com aura</li>
+            <li>Cefaleia tensional</li>
+            <li>Distúrbios do sono relacionados à ansiedade</li>
+          </ul>
+        </div>
+        
+        <div class="result-block alert">
+          <h4><span>⚠️</span> Sinais de alerta (quando procurar emergência)</h4>
+          <ul id="alertsList">
+            <li>Dor súbita e intensa, em "facada"</li>
+            <li>Perda de visão, fala embolada</li>
+            <li>Fraqueza em um dos lados do corpo</li>
+          </ul>
+        </div>
+        
+        <div class="result-block">
+          <h4><span>📋</span> Próximos passos sugeridos</h4>
+          <ul id="stepsList">
+            <li>Consultar Neurologista ou Psiquiatra em até 7 dias</li>
+            <li>Manter diário de sintomas (hora, intensidade, gatilhos)</li>
+            <li>Evitar automedicação sem orientação</li>
+          </ul>
+        </div>
+        
+        <div class="specialist-box">
+          <h4><span>👨‍⚕️</span> Especialista recomendado</h4>
+          <div id="specialistMain" class="specialist-main">Neurologista (prioritário)</div>
+          <div id="specialistAlt" class="specialist-alt">Psiquiatra (se ansiedade for predominante)</div>
+        </div>
+        
+        <div class="result-actions">
+          <a href="/consultorio/paciente/dashboard-demo" class="btn" data-testid="button-find-specialist">
+            🏥 Encontrar esse especialista no TeleMed
+          </a>
+          <a href="#exemplo-pedido" class="btn secondary" data-testid="button-see-example">
+            📄 Ver exemplo de pedido de consulta
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <section id="exemplo-pedido" class="example-section">
+      <h2>Exemplo de pedido de consulta gerado a partir da triagem</h2>
+      <p>Veja como seu pedido apareceria para os médicos no Marketplace TeleMed</p>
+      
+      <div class="example-card">
+        <div class="example-card-header">
+          <span>📝</span>
+          <h3>Pedido de Consulta #TM-2024-1847</h3>
+        </div>
+        
+        <div class="example-field">
+          <label>Motivo principal</label>
+          <p>"Dor de cabeça persistente há 3 dias, piora à noite, associada a insônia e preocupação excessiva."</p>
+        </div>
+        
+        <div class="example-field">
+          <label>Especialidade sugerida</label>
+          <p>Neurologia / Psiquiatria</p>
+        </div>
+        
+        <div class="example-field">
+          <label>Grau de urgência</label>
+          <p><span class="badge">⚡ Moderado – consultar em até 7 dias</span></p>
+        </div>
+        
+        <div class="example-visual-btn">
+          👁️ Ver como isso aparece para o médico (apenas ilustrativo)
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>TeleMed © 2024 – Telemedicina brasileira com compliance CFM</p>
+    <p><a href="/">Home</a> · <a href="/hub.html">Hub</a> · <a href="/paciente/como-funciona.html">Como funciona</a></p>
+  </footer>
+
+  <script>
+    const cases = {
+      headache: {
+        text: "Tenho dor de cabeça há 3 dias, piora à noite, dificuldade para dormir e muita preocupação com trabalho.",
+        causes: ["Enxaqueca com aura", "Cefaleia tensional", "Distúrbios do sono relacionados à ansiedade"],
+        alerts: ["Dor súbita e intensa, em 'facada'", "Perda de visão, fala embolada", "Fraqueza em um dos lados do corpo"],
+        steps: ["Consultar Neurologista ou Psiquiatra em até 7 dias", "Manter diário de sintomas (hora, intensidade, gatilhos)", "Evitar automedicação sem orientação"],
+        specialistMain: "Neurologista (prioritário)",
+        specialistAlt: "Psiquiatra (se ansiedade for predominante)"
+      },
+      chest: {
+        text: "Sinto dor no peito quando faço esforço físico, como subir escadas. A dor some quando descanso.",
+        causes: ["Angina de esforço", "Espasmo esofágico", "Dor muscular intercostal"],
+        alerts: ["Dor no peito em repouso por mais de 20 min", "Dor irradiando para braço esquerdo ou mandíbula", "Falta de ar intensa, sudorese fria"],
+        steps: ["Procurar Cardiologista com urgência (até 48h)", "Evitar esforços até avaliação médica", "Se dor persistir em repouso, ir à emergência"],
+        specialistMain: "Cardiologista (urgente)",
+        specialistAlt: "Clínico Geral para triagem inicial"
+      },
+      breath: {
+        text: "Estou com falta de ar há 2 semanas, cansaço ao menor esforço e às vezes acordo à noite sem ar.",
+        causes: ["Insuficiência cardíaca", "Anemia significativa", "Doença pulmonar obstrutiva"],
+        alerts: ["Lábios ou dedos azulados (cianose)", "Não consegue completar frases por falta de ar", "Dor no peito associada"],
+        steps: ["Procurar Cardiologista ou Pneumologista em até 3 dias", "Realizar exames: hemograma, raio-X de tórax", "Evitar esforços até diagnóstico"],
+        specialistMain: "Cardiologista (prioritário)",
+        specialistAlt: "Pneumologista (se sintomas respiratórios)"
+      },
+      back: {
+        text: "Tenho dor lombar há 1 semana com formigamento que desce pela perna esquerda até o pé.",
+        causes: ["Hérnia de disco lombar", "Ciática (compressão do nervo ciático)", "Estenose do canal vertebral"],
+        alerts: ["Perda de controle da bexiga ou intestino", "Fraqueza progressiva nas pernas", "Dormência na região genital"],
+        steps: ["Consultar Ortopedista ou Neurologista em até 5 dias", "Evitar carregar peso e movimentos bruscos", "Aplicar compressas mornas pode aliviar"],
+        specialistMain: "Ortopedista (coluna)",
+        specialistAlt: "Neurologista (se sintomas neurológicos)"
+      }
+    };
+
+    const symptomInput = document.getElementById('symptomInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resultSection = document.getElementById('resultSection');
+    const chips = document.querySelectorAll('.chip');
+
+    function showResult(caseData) {
+      document.getElementById('causesList').innerHTML = caseData.causes.map(c => `<li>${c}</li>`).join('');
+      document.getElementById('alertsList').innerHTML = caseData.alerts.map(a => `<li>${a}</li>`).join('');
+      document.getElementById('stepsList').innerHTML = caseData.steps.map(s => `<li>${s}</li>`).join('');
+      document.getElementById('specialistMain').textContent = caseData.specialistMain;
+      document.getElementById('specialistAlt').textContent = caseData.specialistAlt;
+      resultSection.classList.add('visible');
+      resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    analyzeBtn.addEventListener('click', function() {
+      const text = symptomInput.value.toLowerCase();
+      let matched = cases.headache;
+      if (text.includes('peito') || text.includes('chest')) matched = cases.chest;
+      else if (text.includes('ar') || text.includes('cansaço') || text.includes('breath')) matched = cases.breath;
+      else if (text.includes('lombar') || text.includes('formigamento') || text.includes('perna')) matched = cases.back;
+      showResult(matched);
+    });
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', function() {
+        const caseKey = this.dataset.case;
+        const caseData = cases[caseKey];
+        symptomInput.value = caseData.text;
+        showResult(caseData);
+      });
+    });
+  </script>
+</body>
+</html>
