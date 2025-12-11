@@ -1427,4 +1427,92 @@ router.post("/lances", authenticate, async (req, res) => {
   }
 });
 
+// ============================================
+// DR. AI - ASSISTENTE CLÍNICO COM OPENAI
+// ============================================
+
+// POST /api/consultorio/dr-ai/anamnese - Gerar pré-anamnese com IA
+router.post("/dr-ai/anamnese", async (req, res) => {
+  try {
+    const { queixaPrincipal, nome, idade, sexo } = req.body || {};
+
+    if (!queixaPrincipal) {
+      return res.status(400).json({ error: "queixaPrincipal é obrigatória" });
+    }
+
+    // Verificar se OpenAI está configurado
+    if (!process.env.OPENAI_API_KEY) {
+      console.log("[dr-ai] OpenAI não configurado, usando resposta mock");
+      
+      // Resposta mock para demo sem API key
+      return res.json({
+        resumo: `Pré-Anamnese Automatizada – Dr. AI\n\nPaciente: ${nome || "Paciente Demo"}, ${idade || "idade não informada"} anos, sexo ${sexo || "não informado"}.\n\nQueixa Principal: ${queixaPrincipal}\n\nSugestões de Investigação: avaliar histórico detalhado, fatores de risco, medicamentos em uso e exame físico direcionado.`,
+        hipoteses: [
+          "Hipótese primária baseada na queixa apresentada",
+          "Diagnóstico diferencial secundário",
+          "Causa menos provável mas a considerar"
+        ],
+        exames: [
+          "Hemograma completo",
+          "Glicemia de jejum",
+          "Exames específicos conforme evolução clínica"
+        ],
+        aviso: "Conteúdo gerado por IA (modo demo) — uso exclusivamente demonstrativo."
+      });
+    }
+
+    // Importar OpenAI dinamicamente
+    const OpenAI = (await import("openai")).default;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const systemPrompt = `
+Você é um assistente clínico que ajuda MÉDICOS a organizar o raciocínio.
+NUNCA fale diretamente com o paciente.
+NUNCA dê condutas definitivas; sempre trate como sugestões para o médico.
+Responda SEMPRE em JSON válido com as chaves:
+- resumo (string, parágrafo de pré-anamnese)
+- hipoteses (array de strings, diagnóstico diferencial curto)
+- exames (array de strings, exames iniciais sugeridos)
+- aviso (string curta de segurança, reforçando que é só apoio ao médico)
+    `.trim();
+
+    const userPrompt = `
+Paciente: ${nome || "Paciente Demo"}, ${idade || "idade não informada"} anos, sexo ${sexo || "não informado"}.
+Queixa principal: ${queixaPrincipal}
+
+Gere um RESUMO clínico breve, hipóteses diferenciais em linguagem simples
+e exames complementares iniciais apenas como sugestão.
+    `.trim();
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 800,
+      temperature: 0.7
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error("Resposta vazia da OpenAI");
+    }
+
+    const parsed = JSON.parse(content);
+    
+    return res.json({
+      resumo: parsed.resumo || "",
+      hipoteses: parsed.hipoteses || [],
+      exames: parsed.exames || [],
+      aviso: parsed.aviso || "Conteúdo gerado por IA — uso exclusivamente demonstrativo."
+    });
+
+  } catch (error) {
+    console.error("[dr-ai] Erro ao gerar anamnese:", error);
+    return res.status(500).json({ error: "Falha ao gerar anamnese com IA" });
+  }
+});
+
 export default router;
