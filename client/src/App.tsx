@@ -61,6 +61,9 @@ export default function App() {
       <Route path="/paciente/pedidos" component={PatientRequestsPage} />
       <Route path="/paciente/consultas" component={PatientConsultationsPage} />
       
+      {/* Doctor Consulta details - public for demo mode */}
+      <Route path="/consultas/:id" component={ConsultaDetails} />
+      
       {/* Patient Dashboard - EXCLUSIVE route for patients */}
       <Route path="/paciente/dashboard">
         <ProtectedRoute component={PatientDashboard} />
@@ -80,9 +83,6 @@ export default function App() {
       </Route>
       <Route path="/minhas-consultas">
         <ProtectedRoute component={MinhasConsultas} />
-      </Route>
-      <Route path="/consultas/:id">
-        <ProtectedRoute component={ConsultaDetails} />
       </Route>
       <Route path="/agenda">
         <ProtectedRoute component={Agenda} />

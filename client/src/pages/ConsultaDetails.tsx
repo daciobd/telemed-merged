@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { useRoute } from 'wouter';
+import { useRoute, useLocation } from 'wouter';
 import ConsultorioLayout from '@/components/ConsultorioLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Clock, User, Video, Calendar, ArrowLeft, Phone, Mail } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileText, User, Video, Calendar, ArrowLeft, Phone, Mail, AlertCircle } from 'lucide-react';
 import { Link } from 'wouter';
 
 interface ConsultationDetails {
@@ -24,14 +24,74 @@ interface ConsultationDetails {
   observacoes?: string;
 }
 
-export default function ConsultaDetails() {
-  const [match, params] = useRoute('/consultas/:id');
-  const consultationId = params?.id;
+const demoConsultations: Record<string, ConsultationDetails> = {
+  'mc1': {
+    id: 'mc1',
+    especialidade: 'Clínica Geral',
+    dataHora: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    duracao: 30,
+    status: 'confirmada',
+    valorAcordado: 150,
+    paciente: {
+      nome: 'Maria Silva Santos',
+      idade: 34,
+      sexo: 'feminino',
+      email: 'maria.santos@email.com',
+      telefone: '(11) 98765-4321'
+    },
+    queixaPrincipal: 'Dor de cabeça persistente há 3 dias, acompanhada de leve tontura',
+    observacoes: 'Paciente relata histórico de enxaqueca. Alérgica a dipirona.'
+  },
+  'mc2': {
+    id: 'mc2',
+    especialidade: 'Cardiologia',
+    dataHora: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    duracao: 45,
+    status: 'agendada',
+    valorAcordado: 280,
+    paciente: {
+      nome: 'João Pedro Oliveira',
+      idade: 52,
+      sexo: 'masculino',
+      email: 'joao.oliveira@email.com',
+      telefone: '(21) 99876-5432'
+    },
+    queixaPrincipal: 'Dor no peito ao esforço, falta de ar leve',
+    observacoes: 'Hipertenso em tratamento. Usa Losartana 50mg.'
+  },
+  'mc3': {
+    id: 'mc3',
+    especialidade: 'Dermatologia',
+    dataHora: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    duracao: 20,
+    status: 'concluida',
+    valorAcordado: 200,
+    paciente: {
+      nome: 'Ana Clara Ferreira',
+      idade: 28,
+      sexo: 'feminino',
+      email: 'ana.ferreira@email.com',
+      telefone: '(31) 97654-3210'
+    },
+    queixaPrincipal: 'Manchas vermelhas na pele que apareceram há 2 semanas',
+    observacoes: 'Prescrito corticoide tópico por 7 dias.'
+  }
+};
 
-  const { data: consultation, isLoading } = useQuery<ConsultationDetails>({
+export default function ConsultaDetails() {
+  const [, params] = useRoute('/consultas/:id');
+  const [location] = useLocation();
+  const consultationId = params?.id || location.split('/').pop();
+
+  const { data: apiConsultation, isLoading } = useQuery<ConsultationDetails>({
     queryKey: ['/api/consultorio/consultas', consultationId],
     enabled: !!consultationId,
+    retry: false,
   });
+
+  const demoData = consultationId ? demoConsultations[consultationId] : null;
+  const consultation = apiConsultation || demoData;
+  const isDemo = !apiConsultation && !!demoData;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -47,6 +107,17 @@ export default function ConsultaDetails() {
 
   const handleStartVideo = () => {
     window.open('https://meet.jit.si/telemed-demo-' + consultationId, '_blank');
+  };
+
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      confirmada: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      agendada: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      concluida: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+      pendente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      cancelada: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    };
+    return styles[status] || styles.pendente;
   };
 
   if (isLoading) {
@@ -72,11 +143,12 @@ export default function ConsultaDetails() {
       <ConsultorioLayout>
         <div className="text-center py-12">
           <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2" data-testid="text-not-found">
             Consulta não encontrada
           </h2>
+          <p className="text-gray-500 mb-4">ID: {consultationId}</p>
           <Link href="/minhas-consultas">
-            <Button variant="outline">
+            <Button variant="outline" data-testid="button-back-list">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar para Minhas Consultas
             </Button>
@@ -91,6 +163,15 @@ export default function ConsultaDetails() {
   return (
     <ConsultorioLayout>
       <div className="space-y-6">
+        {isDemo && (
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Modo Demo:</strong> Exibindo dados simulados para demonstração.
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center gap-4">
           <Link href="/minhas-consultas">
             <Button variant="ghost" size="sm" data-testid="button-back">
@@ -99,10 +180,14 @@ export default function ConsultaDetails() {
             </Button>
           </Link>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">
               Detalhes da Consulta
             </h1>
+            <p className="text-sm text-gray-500">ID: {consultation.id}</p>
           </div>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(consultation.status)}`} data-testid="badge-status">
+            {consultation.status.charAt(0).toUpperCase() + consultation.status.slice(1)}
+          </span>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -117,37 +202,33 @@ export default function ConsultaDetails() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Especialidade</p>
-                  <p className="font-medium">{consultation.especialidade}</p>
+                  <p className="font-medium" data-testid="text-specialty">{consultation.especialidade}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Duração</p>
-                  <p className="font-medium">{consultation.duracao} minutos</p>
+                  <p className="font-medium" data-testid="text-duration">{consultation.duracao} minutos</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Data e Hora</p>
-                  <p className="font-medium flex items-center gap-1">
+                  <p className="font-medium flex items-center gap-1" data-testid="text-datetime">
                     <Calendar className="h-4 w-4" />
                     {formatDate(consultation.dataHora)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Valor Acordado</p>
-                  <p className="font-medium text-green-600">R$ {consultation.valorAcordado.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                  <p className="font-medium capitalize">{consultation.status.replace('_', ' ')}</p>
+                  <p className="font-medium text-green-600" data-testid="text-value">R$ {consultation.valorAcordado.toFixed(2)}</p>
                 </div>
               </div>
 
               {consultation.queixaPrincipal && (
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Queixa Principal</p>
-                  <p className="font-medium">{consultation.queixaPrincipal}</p>
+                  <p className="font-medium" data-testid="text-complaint">{consultation.queixaPrincipal}</p>
                 </div>
               )}
 
-              {!isPast && (
+              {!isPast && consultation.status !== 'concluida' && consultation.status !== 'cancelada' && (
                 <Button 
                   onClick={handleStartVideo} 
                   className="w-full bg-teal-600 hover:bg-teal-700"
@@ -171,29 +252,29 @@ export default function ConsultaDetails() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Nome</p>
-                  <p className="font-medium text-lg">{consultation.paciente.nome}</p>
+                  <p className="font-medium text-lg" data-testid="text-patient-name">{consultation.paciente.nome}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Idade</p>
-                  <p className="font-medium">{consultation.paciente.idade} anos</p>
+                  <p className="font-medium" data-testid="text-patient-age">{consultation.paciente.idade} anos</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                  <p className="font-medium capitalize">{consultation.paciente.sexo}</p>
+                  <p className="font-medium capitalize" data-testid="text-patient-sex">{consultation.paciente.sexo}</p>
                 </div>
               </div>
 
               {consultation.paciente.email && (
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-gray-400" />
-                  <span>{consultation.paciente.email}</span>
+                  <span data-testid="text-patient-email">{consultation.paciente.email}</span>
                 </div>
               )}
 
               {consultation.paciente.telefone && (
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4 text-gray-400" />
-                  <span>{consultation.paciente.telefone}</span>
+                  <span data-testid="text-patient-phone">{consultation.paciente.telefone}</span>
                 </div>
               )}
             </CardContent>
@@ -206,7 +287,7 @@ export default function ConsultaDetails() {
               <CardTitle>Observações</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 dark:text-gray-400">{consultation.observacoes}</p>
+              <p className="text-gray-600 dark:text-gray-400" data-testid="text-observations">{consultation.observacoes}</p>
             </CardContent>
           </Card>
         )}
