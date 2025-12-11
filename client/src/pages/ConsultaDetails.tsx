@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
 import ConsultorioLayout from '@/components/ConsultorioLayout';
+import DrAiAssistenteClinico from '@/components/dr-ai/DrAiAssistenteClinico';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, User, Video, Calendar, ArrowLeft, Phone, Mail, AlertCircle } from 'lucide-react';
@@ -190,107 +191,119 @@ export default function ConsultaDetails() {
           </span>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-teal-600" />
-                Informações da Consulta
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Especialidade</p>
-                  <p className="font-medium" data-testid="text-specialty">{consultation.especialidade}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Duração</p>
-                  <p className="font-medium" data-testid="text-duration">{consultation.duracao} minutos</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Data e Hora</p>
-                  <p className="font-medium flex items-center gap-1" data-testid="text-datetime">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(consultation.dataHora)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Valor Acordado</p>
-                  <p className="font-medium text-green-600" data-testid="text-value">R$ {consultation.valorAcordado.toFixed(2)}</p>
-                </div>
-              </div>
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          <div className="flex-1 space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-teal-600" />
+                    Informações da Consulta
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Especialidade</p>
+                      <p className="font-medium" data-testid="text-specialty">{consultation.especialidade}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Duração</p>
+                      <p className="font-medium" data-testid="text-duration">{consultation.duracao} minutos</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Data e Hora</p>
+                      <p className="font-medium flex items-center gap-1" data-testid="text-datetime">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(consultation.dataHora)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Valor Acordado</p>
+                      <p className="font-medium text-green-600" data-testid="text-value">R$ {consultation.valorAcordado.toFixed(2)}</p>
+                    </div>
+                  </div>
 
-              {consultation.queixaPrincipal && (
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Queixa Principal</p>
-                  <p className="font-medium" data-testid="text-complaint">{consultation.queixaPrincipal}</p>
-                </div>
-              )}
+                  {consultation.queixaPrincipal && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Queixa Principal</p>
+                      <p className="font-medium" data-testid="text-complaint">{consultation.queixaPrincipal}</p>
+                    </div>
+                  )}
 
-              {!isPast && consultation.status !== 'concluida' && consultation.status !== 'cancelada' && (
-                <Button 
-                  onClick={handleStartVideo} 
-                  className="w-full bg-teal-600 hover:bg-teal-700"
-                  data-testid="button-start-video"
-                >
-                  <Video className="h-4 w-4 mr-2" />
-                  Iniciar Vídeo
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                  {!isPast && consultation.status !== 'concluida' && consultation.status !== 'cancelada' && (
+                    <Button 
+                      onClick={handleStartVideo} 
+                      className="w-full bg-teal-600 hover:bg-teal-700"
+                      data-testid="button-start-video"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Iniciar Vídeo
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-teal-600" />
-                Dados do Paciente
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Nome</p>
-                  <p className="font-medium text-lg" data-testid="text-patient-name">{consultation.paciente.nome}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Idade</p>
-                  <p className="font-medium" data-testid="text-patient-age">{consultation.paciente.idade} anos</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
-                  <p className="font-medium capitalize" data-testid="text-patient-sex">{consultation.paciente.sexo}</p>
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-teal-600" />
+                    Dados do Paciente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Nome</p>
+                      <p className="font-medium text-lg" data-testid="text-patient-name">{consultation.paciente.nome}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Idade</p>
+                      <p className="font-medium" data-testid="text-patient-age">{consultation.paciente.idade} anos</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Sexo</p>
+                      <p className="font-medium capitalize" data-testid="text-patient-sex">{consultation.paciente.sexo}</p>
+                    </div>
+                  </div>
 
-              {consultation.paciente.email && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span data-testid="text-patient-email">{consultation.paciente.email}</span>
-                </div>
-              )}
+                  {consultation.paciente.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span data-testid="text-patient-email">{consultation.paciente.email}</span>
+                    </div>
+                  )}
 
-              {consultation.paciente.telefone && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span data-testid="text-patient-phone">{consultation.paciente.telefone}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  {consultation.paciente.telefone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span data-testid="text-patient-phone">{consultation.paciente.telefone}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {consultation.observacoes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Observações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 dark:text-gray-400" data-testid="text-observations">{consultation.observacoes}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DrAiAssistenteClinico
+            queixaPrincipal={consultation.queixaPrincipal}
+            observacoes={consultation.observacoes}
+            pacienteNome={consultation.paciente.nome}
+            pacienteIdade={consultation.paciente.idade}
+            pacienteSexo={consultation.paciente.sexo}
+          />
         </div>
-
-        {consultation.observacoes && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Observações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 dark:text-gray-400" data-testid="text-observations">{consultation.observacoes}</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </ConsultorioLayout>
   );
