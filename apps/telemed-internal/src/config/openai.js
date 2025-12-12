@@ -1,15 +1,16 @@
 // Configuração centralizada da OpenAI
-// Prioriza OPENAI_API_KEY, usa OPEN_AI_KEY como fallback
+// Lê env em RUNTIME (não import-time) para evitar problemas no Render
 
-export const OPENAI_KEY = 
-  process.env.OPENAI_API_KEY || 
-  process.env.OPEN_AI_KEY;
+export const getOpenAIKey = () =>
+  process.env.OPENAI_API_KEY || process.env.OPEN_AI_KEY;
 
-export const isOpenAIConfigured = () => Boolean(OPENAI_KEY);
+export const isOpenAIConfigured = () => Boolean(getOpenAIKey());
 
-// Log de inicialização
-if (OPENAI_KEY) {
-  console.log("🤖 OpenAI client inicializado.");
-} else {
-  console.warn("⚠️ OPENAI_API_KEY não definida. Endpoints de IA ficarão desativados.");
-}
+export const logOpenAIStatus = () => {
+  const k = getOpenAIKey();
+  if (k) {
+    console.log("🤖 OpenAI client inicializado.");
+  } else {
+    console.warn("⚠️ OPENAI_API_KEY não definida. Endpoints de IA ficarão desativados.");
+  }
+};

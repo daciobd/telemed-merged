@@ -16,7 +16,7 @@ import {
   updateDoctorSchema,
   directBookingSchema,
 } from "./consultorio-validation.js";
-import { OPENAI_KEY, isOpenAIConfigured } from "./config/openai.js";
+import { getOpenAIKey, isOpenAIConfigured } from "./config/openai.js";
 
 // Compat CJS/ESM: Render aceita qualquer uma dessas formas
 const db = dbModule.db || dbModule.default || dbModule;
@@ -1449,9 +1449,9 @@ router.post("/dr-ai/anamnese", async (req, res) => {
       });
     }
 
-    // Importar OpenAI dinamicamente (usa OPENAI_KEY centralizada)
+    // Importar OpenAI dinamicamente (usa getOpenAIKey() em runtime)
     const OpenAI = (await import("openai")).default;
-    const openai = new OpenAI({ apiKey: OPENAI_KEY });
+    const openai = new OpenAI({ apiKey: getOpenAIKey() });
 
     const systemPrompt = `
 Você é um assistente clínico que auxilia MÉDICOS (não pacientes).

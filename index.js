@@ -936,8 +936,8 @@ app.post('/ai/echo', (req, res) => {
   res.json({ ok: true, echo: req.body || null, ts: Date.now(), requestId: req.id });
 });
 
-// 2) Inicializar OpenAI condicionalmente (não crasha se não tiver chave)
-const openaiApiKey = process.env.OPENAI_API_KEY || null;
+// 2) Inicializar OpenAI condicionalmente (fallback OPEN_AI_KEY para compatibilidade)
+const openaiApiKey = process.env.OPENAI_API_KEY || process.env.OPEN_AI_KEY || null;
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
 if (openai) {
