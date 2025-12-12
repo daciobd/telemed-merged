@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, AlertTriangle } from "lucide-react";
+import { Loader2, Sparkles, AlertTriangle, Plus, CheckCircle } from "lucide-react";
 
 type DrAiResponse = {
   resumo?: string;
@@ -39,6 +39,7 @@ export default function DrAiPanel({
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DrAiResponse | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
 
   const canRun = useMemo(() => Boolean(queixaPrincipal?.trim()), [queixaPrincipal]);
 
@@ -76,10 +77,7 @@ export default function DrAiPanel({
       }
 
       setData(json);
-
-      if (onApplyResumoToEvolucao && json?.resumo) {
-        onApplyResumoToEvolucao(json.resumo);
-      }
+      setApplied(false);
     } catch (e: any) {
       setErr(e?.message || "Falha ao chamar o Dr. AI.");
     } finally {
@@ -90,6 +88,23 @@ export default function DrAiPanel({
   function handleLimpar() {
     setData(null);
     setErr(null);
+    setApplied(false);
+  }
+
+  function handleApply() {
+    if (data?.resumo && onApplyResumoToEvolucao) {
+      const textoCompleto = [
+        data.resumo,
+        "",
+        "**Hipóteses diagnósticas:**",
+        ...(data.hipoteses?.map((h, i) => `${i + 1}. ${h}`) || []),
+        "",
+        "**Exames sugeridos:**",
+        ...(data.exames?.map(e => `• ${e}`) || []),
+      ].join("\n");
+      onApplyResumoToEvolucao(textoCompleto);
+      setApplied(true);
+    }
   }
 
   return (
@@ -100,7 +115,7 @@ export default function DrAiPanel({
           Anamnese Inicial
         </CardTitle>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Organiza a queixa em linguagem médica e sugere hipóteses e exames iniciais.
+          Apoio ao raciocínio clínico, com linguagem médica e foco em segurança.
         </p>
       </CardHeader>
 
@@ -218,6 +233,35 @@ export default function DrAiPanel({
                     <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Aviso de segurança</p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 whitespace-pre-wrap">{data.aviso}</p>
                   </div>
+                </div>
+              )}
+
+              {onApplyResumoToEvolucao && (
+                <div className="flex items-center gap-3 pt-2">
+                  <Button
+                    onClick={handleApply}
+                    disabled={applied}
+                    variant={applied ? "outline" : "default"}
+                    className={`rounded-xl ${applied ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300' : 'bg-teal-600 hover:bg-teal-700'}`}
+                    data-testid="button-aplicar-prontuario"
+                  >
+                    {applied ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Aplicado ao prontuário
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Aplicar ao prontuário
+                      </>
+                    )}
+                  </Button>
+                  {applied && (
+                    <span className="text-xs text-green-600 dark:text-green-400">
+                      ✓ Texto adicionado à evolução clínica
+                    </span>
+                  )}
                 </div>
               )}
 
