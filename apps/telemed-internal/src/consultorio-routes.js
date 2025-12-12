@@ -1436,28 +1436,15 @@ router.post("/dr-ai/anamnese", async (req, res) => {
   try {
     const { queixaPrincipal, nome, idade, sexo } = req.body || {};
 
-    if (!queixaPrincipal) {
+    if (!queixaPrincipal || !queixaPrincipal.trim()) {
       return res.status(400).json({ error: "queixaPrincipal é obrigatória" });
     }
 
     // Verificar se OpenAI está configurado
     if (!process.env.OPENAI_API_KEY) {
-      console.log("[dr-ai] OpenAI não configurado, usando resposta mock");
-      
-      // Resposta mock para demo sem API key
-      return res.json({
-        resumo: `Pré-Anamnese Automatizada – Dr. AI\n\nPaciente: ${nome || "Paciente Demo"}, ${idade || "idade não informada"} anos, sexo ${sexo || "não informado"}.\n\nQueixa Principal: ${queixaPrincipal}\n\nSugestões de Investigação: avaliar histórico detalhado, fatores de risco, medicamentos em uso e exame físico direcionado.`,
-        hipoteses: [
-          "Hipótese primária baseada na queixa apresentada",
-          "Diagnóstico diferencial secundário",
-          "Causa menos provável mas a considerar"
-        ],
-        exames: [
-          "Hemograma completo",
-          "Glicemia de jejum",
-          "Exames específicos conforme evolução clínica"
-        ],
-        aviso: "Conteúdo gerado por IA (modo demo) — uso exclusivamente demonstrativo."
+      console.log("[dr-ai] OpenAI não configurado - retornando erro 503");
+      return res.status(503).json({
+        error: "IA desativada: defina OPENAI_API_KEY no ambiente."
       });
     }
 
@@ -1466,22 +1453,67 @@ router.post("/dr-ai/anamnese", async (req, res) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const systemPrompt = `
-Você é um assistente clínico que ajuda MÉDICOS a organizar o raciocínio.
-NUNCA fale diretamente com o paciente.
-NUNCA dê condutas definitivas; sempre trate como sugestões para o médico.
-Responda SEMPRE em JSON válido com as chaves:
-- resumo (string, parágrafo de pré-anamnese)
-- hipoteses (array de strings, diagnóstico diferencial curto)
-- exames (array de strings, exames iniciais sugeridos)
-- aviso (string curta de segurança, reforçando que é só apoio ao médico)
+Você é um assistente clínico que auxilia MÉDICOS (não pacientes).
+Seu papel é organizar o raciocínio clínico, NUNCA prescrever condutas
+definitivas nem substituir o julgamento do médico.
+
+Regras IMPORTANTES:
+- NÃO copie a queixa do paciente literalmente; reescreva em linguagem clínica.
+- NÃO dê diagnóstico fechado; apenas diagnóstico diferencial.
+- NÃO dê condutas definitivas; apenas sugestões de investigação.
+- Nunca use linguagem de propaganda ou marketing.
+- Sempre responda em PORTUGUÊS DO BRASIL.
+- Responda SEMPRE em JSON no formato:
+  {
+    "resumo": string,
+    "hipoteses": string[],
+    "exames": string[],
+    "aviso": string
+  }
+
+Conteúdo esperado:
+
+1) "resumo"
+   - 2 a 4 frases no máximo.
+   - Reescreva a queixa em linguagem clínica organizada:
+     • tempo de evolução
+     • localização
+     • fatores de piora/melhora
+     • sintomas associados relevantes
+   - Se algo importante estiver ausente no enunciado, comente:
+     "Faltam dados sobre ..."
+
+2) "hipoteses"
+   - Lista de 3 a 6 hipóteses diferenciais compatíveis com a queixa.
+   - Da mais provável para a menos provável.
+   - Use descrições clínicas (não só nomes soltos), ex:
+     "Cefaleia tensional relacionada a estresse"
+     "Enxaqueca sem aura"
+   - Se a queixa for pouco específica, explique que as hipóteses são amplas.
+
+3) "exames"
+   - Lista de 3 a 8 exames INICIAIS SUGERIDOS, focados no quadro.
+   - NÃO use sempre os mesmos exames; adapte ao caso.
+   - Se exames laboratoriais básicos forem adequados, cite-os,
+     mas acrescente pelo menos 2 exames mais direcionados quando fizer sentido.
+
+4) "aviso"
+   - 1 ou 2 frases curtas lembrando que é apenas apoio à decisão
+     e que a avaliação presencial do médico é essencial.
+   - Se a queixa contiver sinais de alerta (p.ex. rebaixamento de consciência,
+     dor torácica intensa, dispneia importante, sinais neurológicos focais),
+     oriente explicitamente que se trata de POTENCIAL URGÊNCIA.
     `.trim();
 
     const userPrompt = `
 Paciente: ${nome || "Paciente Demo"}, ${idade || "idade não informada"} anos, sexo ${sexo || "não informado"}.
-Queixa principal: ${queixaPrincipal}
+Queixa principal (texto livre do médico ou do paciente):
+"${queixaPrincipal}"
 
-Gere um RESUMO clínico breve, hipóteses diferenciais em linguagem simples
-e exames complementares iniciais apenas como sugestão.
+Tarefa:
+- Monte um RESUMO CLÍNICO breve, sem copiar literalmente a frase acima.
+- Liste hipóteses diferenciais compatíveis com o quadro.
+- Sugira exames iniciais adequados ao cenário.
     `.trim();
 
     const response = await openai.chat.completions.create({
@@ -1491,7 +1523,7 @@ e exames complementares iniciais apenas como sugestão.
         { role: "user", content: userPrompt }
       ],
       response_format: { type: "json_object" },
-      max_tokens: 800,
+      max_tokens: 1000,
       temperature: 0.7
     });
 
@@ -1502,11 +1534,13 @@ e exames complementares iniciais apenas como sugestão.
 
     const parsed = JSON.parse(content);
     
+    console.log("[dr-ai] Anamnese gerada com sucesso para:", queixaPrincipal.substring(0, 50));
+    
     return res.json({
       resumo: parsed.resumo || "",
       hipoteses: parsed.hipoteses || [],
       exames: parsed.exames || [],
-      aviso: parsed.aviso || "Conteúdo gerado por IA — uso exclusivamente demonstrativo."
+      aviso: parsed.aviso || "Sugestões geradas por IA para apoio ao raciocínio clínico. A avaliação presencial do médico é essencial."
     });
 
   } catch (error) {
