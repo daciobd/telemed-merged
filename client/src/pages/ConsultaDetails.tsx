@@ -250,6 +250,14 @@ export default function ConsultaDetails() {
                 </CardContent>
               </Card>
 
+              <DrAiAssistenteClinico
+                queixaPrincipal={consultation.queixaPrincipal}
+                observacoes={consultation.observacoes}
+                pacienteNome={consultation.paciente.nome}
+                pacienteIdade={consultation.paciente.idade}
+                pacienteSexo={consultation.paciente.sexo}
+              />
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -300,14 +308,6 @@ export default function ConsultaDetails() {
               </CardContent>
             </Card>
           )}
-
-          <DrAiAssistenteClinico
-            queixaPrincipal={consultation.queixaPrincipal}
-            observacoes={consultation.observacoes}
-            pacienteNome={consultation.paciente.nome}
-            pacienteIdade={consultation.paciente.idade}
-            pacienteSexo={consultation.paciente.sexo}
-          />
         </div>
       </div>
     </ConsultorioLayout>
