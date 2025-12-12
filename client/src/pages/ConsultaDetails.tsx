@@ -191,9 +191,8 @@ export default function ConsultaDetails() {
           </span>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          <div className="flex-1 space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -225,9 +224,16 @@ export default function ConsultaDetails() {
                   </div>
 
                   {consultation.queixaPrincipal && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Queixa Principal</p>
-                      <p className="font-medium" data-testid="text-complaint">{consultation.queixaPrincipal}</p>
+                    <div className="col-span-2 border-t pt-4 mt-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          Queixa Principal
+                        </p>
+                      </div>
+                      <p className="font-medium bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border" data-testid="text-complaint">
+                        {consultation.queixaPrincipal}
+                      </p>
                     </div>
                   )}
 
@@ -284,17 +290,16 @@ export default function ConsultaDetails() {
               </Card>
             </div>
 
-            {consultation.observacoes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Observações</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 dark:text-gray-400" data-testid="text-observations">{consultation.observacoes}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {consultation.observacoes && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Observações</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 dark:text-gray-400" data-testid="text-observations">{consultation.observacoes}</p>
+              </CardContent>
+            </Card>
+          )}
 
           <DrAiAssistenteClinico
             queixaPrincipal={consultation.queixaPrincipal}
