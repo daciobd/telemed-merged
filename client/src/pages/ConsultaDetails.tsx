@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
 import ConsultorioLayout from '@/components/ConsultorioLayout';
 import DrAiPanel from '@/features/consultorio/components/DrAiPanel';
+import ScribeMedicalPanel from '@/features/consultorio/components/ScribeMedicalPanel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, User, Video, Calendar, ArrowLeft, Phone, Mail, AlertCircle } from 'lucide-react';
@@ -255,6 +256,10 @@ export default function ConsultaDetails() {
                 pacienteIdade={consultation.paciente.idade}
                 pacienteSexo={consultation.paciente.sexo}
                 initialQueixaPrincipal={consultation.queixaPrincipal}
+              />
+
+              <ScribeMedicalPanel
+                consultaId={consultation.id}
               />
 
               <Card>
