@@ -1,4 +1,5 @@
 import express from "express";
+import multer from "multer";
 import * as dbModule from "../../../db/index.js";
 import * as schema from "../../../db/schema.cjs";
 import { eq, and, desc, sql, ne } from "drizzle-orm";
@@ -36,6 +37,12 @@ const {
 } = schema;
 
 const router = express.Router();
+
+// Multer para upload de áudio do Scribe
+const scribeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+});
 
 // ============================================
 // RATE LIMITING
@@ -1547,6 +1554,94 @@ Tarefa:
   } catch (error) {
     console.error("[dr-ai] Erro ao gerar anamnese:", error);
     return res.status(500).json({ error: "Falha ao gerar anamnese com IA" });
+  }
+});
+
+// ============================================
+// SCRIBE MEDICAL - DOCUMENTAÇÃO AUTOMÁTICA
+// ============================================
+
+// POST /api/consultorio/scribe/processar - Receber áudio e gerar evolução
+router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) => {
+  try {
+    const { consultaId } = req.body || {};
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: "Arquivo de áudio é obrigatório (campo 'audio')." });
+    }
+
+    // Modo de operação: "stub" (demo) ou "ai" (real)
+    const mode = (process.env.SCRIBE_MODE || "stub").toLowerCase();
+
+    // ===== MODO STUB (demo pronta) =====
+    if (mode !== "ai") {
+      const textoStub =
+        `Evolução clínica (Scribe Medical)\n\n` +
+        `1) Queixa principal:\n` +
+        `Paciente comparece à consulta ${consultaId ? `(ID: ${consultaId})` : ""} relatando sintomas compatíveis com quadro clínico em investigação.\n\n` +
+        `2) HDA (história da doença atual):\n` +
+        `Refere início dos sintomas há alguns dias, com evolução progressiva. Descreve impacto funcional moderado nas atividades diárias.\n\n` +
+        `3) Antecedentes / Medicações / Alergias:\n` +
+        `Conforme relato verbal durante consulta. Revisar prontuário para histórico completo.\n\n` +
+        `4) Revisão de sistemas / Exame:\n` +
+        `Sem intercorrências significativas descritas no registro enviado.\n\n` +
+        `5) Avaliação (hipóteses / problemas):\n` +
+        `Quadro sugere necessidade de investigação adicional. Hipóteses a considerar conforme história clínica detalhada.\n\n` +
+        `6) Plano / Conduta:\n` +
+        `Orientar medidas iniciais, solicitar exames complementares se indicado, agendar retorno para reavaliação.\n\n` +
+        `7) Alertas e orientações de segurança:\n` +
+        `Paciente orientado sobre sinais de alerta. Retornar em caso de piora ou novos sintomas.\n\n` +
+        `8) Seguimento:\n` +
+        `Retorno agendado conforme necessidade clínica.\n\n` +
+        `---\n` +
+        `Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável.`;
+
+      return res.json({ texto: textoStub });
+    }
+
+    // ===== MODO IA REAL =====
+    if (!isOpenAIConfigured()) {
+      return res.status(503).json({
+        error: "Scribe IA desativado: defina OPENAI_API_KEY no ambiente ou use SCRIBE_MODE=stub."
+      });
+    }
+
+    const OpenAI = (await import("openai")).default;
+    const openai = new OpenAI({ apiKey: getOpenAIKey() });
+
+    // 1) Transcrever áudio
+    const transcription = await openai.audio.transcriptions.create({
+      model: "whisper-1",
+      file: new File([file.buffer], file.originalname || "audio.mp3", { type: file.mimetype }),
+    });
+
+    const transcriptText = transcription?.text || "";
+    if (!transcriptText.trim()) {
+      return res.status(422).json({ error: "Não foi possível transcrever o áudio." });
+    }
+
+    // 2) Estruturar evolução com prompt clínico
+    const { buildScribePrompt } = await import("./config/scribePrompt.js");
+    const messages = buildScribePrompt({ transcript: transcriptText, consultaId });
+
+    const completion = await openai.chat.completions.create({
+      model: process.env.SCRIBE_MODEL || "gpt-4o-mini",
+      temperature: 0.2,
+      messages,
+    });
+
+    const texto = completion.choices?.[0]?.message?.content?.trim();
+    if (!texto) {
+      return res.status(502).json({ error: "Falha ao gerar evolução com IA." });
+    }
+
+    console.log("[scribe] Evolução gerada com sucesso para consulta:", consultaId);
+    return res.json({ texto });
+
+  } catch (err) {
+    console.error("[scribe] Erro:", err);
+    return res.status(500).json({ error: "Erro interno ao processar áudio do Scribe." });
   }
 });
 
