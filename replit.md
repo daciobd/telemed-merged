@@ -102,3 +102,16 @@ Nova arquitetura modular com layout grid 2 colunas:
 **Componentes Existentes Mantidos:**
 - DrAiPanel.tsx (Anamnese Inicial com IA)
 - ScribeMedicalPanel.tsx (Documentação automática por áudio)
+
+### Upgrade Scribe Medical - JSON Estruturado (15 Dez 2025)
+O Scribe Medical foi atualizado para retornar JSON estruturado, permitindo aplicar cada seção do prontuário separadamente:
+
+**Backend:**
+- `apps/telemed-internal/src/config/scribePrompt.js` - Prompt atualizado para retornar JSON com campos estruturados
+- `apps/telemed-internal/src/consultorio-routes.js` - Endpoint `/scribe/processar` faz parse do JSON e retorna `{ texto, structured }`
+- Campos retornados: queixa_principal, hda, antecedentes_medicacoes_alergias, revisao_sistemas_exame, avaliacao_hipoteses[], exames_sugeridos[], plano_conduta, prescricao_mencionada, encaminhamentos, alertas_seguranca, seguimento, observacao
+
+**Frontend:**
+- ScribeMedicalPanel.tsx agora exibe botões por seção: Anamnese, Prescrição, Encaminhamento, Exames
+- ConsultaDetails.tsx conecta callbacks para preencher cada campo automaticamente
+- Fallback para texto legado se JSON não for parseado
