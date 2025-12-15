@@ -40,9 +40,10 @@ function normalize(s: string) {
 interface Props {
   selected: Hipotese[];
   onChange: (next: Hipotese[]) => void;
+  onChipClick?: (h: Hipotese) => void;
 }
 
-export default function DiagnosticoCID({ selected, onChange }: Props) {
+export default function DiagnosticoCID({ selected, onChange, onChipClick }: Props) {
   const [query, setQuery] = useState("");
 
   const suggestions = useMemo(() => {
@@ -124,11 +125,21 @@ export default function DiagnosticoCID({ selected, onChange }: Props) {
               className="flex items-center gap-1 bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 px-2 py-1 rounded text-sm"
               data-testid={`chip-hipotese-${idx}`}
             >
-              {s.label}
-              {s.cid ? <span className="opacity-80">({s.cid})</span> : null}
+              <button
+                type="button"
+                onClick={() => onChipClick?.(s)}
+                className="hover:underline cursor-pointer"
+                title="Inserir na anamnese"
+                data-testid={`button-chip-click-${idx}`}
+              >
+                {s.label}
+                {s.cid ? <span className="opacity-80"> ({s.cid})</span> : null}
+              </button>
               <button 
+                type="button"
                 onClick={() => removeItem(idx)} 
                 aria-label="Remover"
+                className="cursor-pointer"
                 data-testid={`button-remove-hipotese-${idx}`}
               >
                 <X className="h-3 w-3" />

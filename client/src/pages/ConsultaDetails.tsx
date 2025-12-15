@@ -270,7 +270,14 @@ export default function ConsultaDetails() {
             />
           </div>
 
-          <DiagnosticoCID selected={hipoteses} onChange={setHipoteses} />
+          <DiagnosticoCID
+            selected={hipoteses}
+            onChange={setHipoteses}
+            onChipClick={(h) => {
+              const linha = `Hipótese diagnóstica: ${h.label}${h.cid ? ` (${h.cid})` : ""}`;
+              setAnamnese((prev) => (prev ? `${prev}\n${linha}` : linha));
+            }}
+          />
 
           <ClinicalTabs
             exames={exames}
