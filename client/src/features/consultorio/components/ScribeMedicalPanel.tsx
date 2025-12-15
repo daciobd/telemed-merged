@@ -2,37 +2,63 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Mic, Upload, FileAudio, AlertTriangle, Plus, CheckCircle, Copy } from "lucide-react";
+import { Loader2, Mic, Upload, FileAudio, AlertTriangle, CheckCircle, Copy, FileText, Pill, UserPlus, TestTube } from "lucide-react";
+
+type StructuredScribe = {
+  queixa_principal?: string;
+  hda?: string;
+  antecedentes_medicacoes_alergias?: string;
+  revisao_sistemas_exame?: string;
+  avaliacao_hipoteses?: string[];
+  exames_sugeridos?: string[];
+  plano_conduta?: string;
+  prescricao_mencionada?: string;
+  encaminhamentos?: string;
+  alertas_seguranca?: string;
+  seguimento?: string;
+  observacao?: string;
+};
 
 type ScribeResponse = {
   texto?: string;
+  structured?: StructuredScribe | null;
   error?: string;
 };
 
 type Props = {
   consultaId?: string;
   onApplyToEvolucao?: (texto: string) => void;
+  onApplyToAnamnese?: (bloco: string) => void;
+  onApplyToPrescricao?: (bloco: string) => void;
+  onApplyToEncaminhamento?: (bloco: string) => void;
+  onApplyToExames?: (bloco: string) => void;
   initialTexto?: string;
 };
 
 export default function ScribeMedicalPanel({
   consultaId,
   onApplyToEvolucao,
+  onApplyToAnamnese,
+  onApplyToPrescricao,
+  onApplyToEncaminhamento,
+  onApplyToExames,
   initialTexto = "",
 }: Props) {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [texto, setTexto] = useState(initialTexto);
+  const [structured, setStructured] = useState<StructuredScribe | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [applied, setApplied] = useState(false);
+  const [appliedSections, setAppliedSections] = useState<Set<string>>(new Set());
 
   const canProcess = useMemo(() => Boolean(audioFile) && !loading, [audioFile, loading]);
+  const hasStructured = structured !== null;
 
   function resetMsgs() {
     setErr(null);
     setInfo(null);
-    setApplied(false);
+    setAppliedSections(new Set());
   }
 
   async function handleProcessar() {
@@ -40,6 +66,7 @@ export default function ScribeMedicalPanel({
 
     setLoading(true);
     resetMsgs();
+    setStructured(null);
 
     try {
       const form = new FormData();
@@ -76,7 +103,12 @@ export default function ScribeMedicalPanel({
       }
 
       setTexto(json.texto);
-      setInfo("Evolução gerada com sucesso. Revise e valide antes de salvar.");
+      if (json.structured) {
+        setStructured(json.structured);
+        setInfo("Evolução gerada com sucesso! Use os botões abaixo para aplicar cada seção ao prontuário.");
+      } else {
+        setInfo("Evolução gerada com sucesso. Revise e valide antes de salvar.");
+      }
     } catch (e: any) {
       setErr(e?.message || "Falha ao processar o áudio.");
     } finally {
@@ -84,12 +116,100 @@ export default function ScribeMedicalPanel({
     }
   }
 
-  function handleApply() {
+  function buildAnamneseBlock(): string {
+    if (!structured) return "";
+    const parts: string[] = [];
+    if (structured.queixa_principal && structured.queixa_principal !== "Não informado") {
+      parts.push(`**Queixa Principal:** ${structured.queixa_principal}`);
+    }
+    if (structured.hda && structured.hda !== "Não informado") {
+      parts.push(`**HDA:** ${structured.hda}`);
+    }
+    if (structured.antecedentes_medicacoes_alergias && structured.antecedentes_medicacoes_alergias !== "Não informado") {
+      parts.push(`**Antecedentes/Medicações/Alergias:** ${structured.antecedentes_medicacoes_alergias}`);
+    }
+    if (structured.revisao_sistemas_exame && structured.revisao_sistemas_exame !== "Não informado") {
+      parts.push(`**Revisão de Sistemas/Exame:** ${structured.revisao_sistemas_exame}`);
+    }
+    if (structured.avaliacao_hipoteses && structured.avaliacao_hipoteses.length > 0) {
+      parts.push(`**Hipóteses:** ${structured.avaliacao_hipoteses.join("; ")}`);
+    }
+    if (structured.plano_conduta && structured.plano_conduta !== "Não informado") {
+      parts.push(`**Plano/Conduta:** ${structured.plano_conduta}`);
+    }
+    if (structured.alertas_seguranca && structured.alertas_seguranca !== "Não informado") {
+      parts.push(`**Alertas:** ${structured.alertas_seguranca}`);
+    }
+    if (structured.seguimento && structured.seguimento !== "Não informado") {
+      parts.push(`**Seguimento:** ${structured.seguimento}`);
+    }
+    return parts.join("\n\n");
+  }
+
+  function buildPrescricaoBlock(): string {
+    if (!structured) return "";
+    return structured.prescricao_mencionada && structured.prescricao_mencionada !== "Não informado"
+      ? structured.prescricao_mencionada
+      : "";
+  }
+
+  function buildEncaminhamentoBlock(): string {
+    if (!structured) return "";
+    return structured.encaminhamentos && structured.encaminhamentos !== "Não informado"
+      ? structured.encaminhamentos
+      : "";
+  }
+
+  function buildExamesBlock(): string {
+    if (!structured) return "";
+    if (structured.exames_sugeridos && structured.exames_sugeridos.length > 0) {
+      return structured.exames_sugeridos.join("\n");
+    }
+    return "";
+  }
+
+  function handleApplyAnamnese() {
+    const bloco = buildAnamneseBlock();
+    if (bloco && onApplyToAnamnese) {
+      onApplyToAnamnese(bloco);
+      setAppliedSections(prev => new Set(prev).add("anamnese"));
+      setInfo("Anamnese aplicada ao prontuário.");
+    }
+  }
+
+  function handleApplyPrescricao() {
+    const bloco = buildPrescricaoBlock();
+    if (bloco && onApplyToPrescricao) {
+      onApplyToPrescricao(bloco);
+      setAppliedSections(prev => new Set(prev).add("prescricao"));
+      setInfo("Prescrição aplicada.");
+    }
+  }
+
+  function handleApplyEncaminhamento() {
+    const bloco = buildEncaminhamentoBlock();
+    if (bloco && onApplyToEncaminhamento) {
+      onApplyToEncaminhamento(bloco);
+      setAppliedSections(prev => new Set(prev).add("encaminhamento"));
+      setInfo("Encaminhamento aplicado.");
+    }
+  }
+
+  function handleApplyExames() {
+    const bloco = buildExamesBlock();
+    if (bloco && onApplyToExames) {
+      onApplyToExames(bloco);
+      setAppliedSections(prev => new Set(prev).add("exames"));
+      setInfo("Exames aplicados.");
+    }
+  }
+
+  function handleApplyAll() {
     if (!texto?.trim()) return;
     if (onApplyToEvolucao) {
       onApplyToEvolucao(texto.trim());
-      setApplied(true);
-      setInfo("Aplicado ao prontuário. Você pode ajustar o texto na evolução final.");
+      setAppliedSections(prev => new Set(prev).add("all"));
+      setInfo("Texto completo aplicado ao prontuário.");
     }
   }
 
@@ -97,6 +217,11 @@ export default function ScribeMedicalPanel({
     navigator.clipboard?.writeText(texto || "");
     setInfo("Copiado para a área de transferência.");
   }
+
+  const anamneseBloco = buildAnamneseBlock();
+  const prescricaoBloco = buildPrescricaoBlock();
+  const encaminhamentoBloco = buildEncaminhamentoBlock();
+  const examesBloco = buildExamesBlock();
 
   return (
     <Card className="rounded-2xl border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/30 dark:to-gray-900" data-testid="panel-scribe">
@@ -126,6 +251,7 @@ export default function ScribeMedicalPanel({
                   resetMsgs();
                   const f = e.target.files?.[0] || null;
                   setAudioFile(f);
+                  setStructured(null);
                 }}
                 data-testid="input-audio-file"
               />
@@ -161,6 +287,7 @@ export default function ScribeMedicalPanel({
               onClick={() => {
                 setAudioFile(null);
                 setTexto("");
+                setStructured(null);
                 resetMsgs();
               }}
               data-testid="button-limpar-scribe"
@@ -204,7 +331,7 @@ export default function ScribeMedicalPanel({
             value={texto}
             onChange={(e) => {
               setTexto(e.target.value);
-              setApplied(false);
+              setAppliedSections(new Set());
             }}
             placeholder="O texto gerado pelo Scribe aparecerá aqui. Você poderá revisar e editar antes de aplicar ao prontuário."
             className="min-h-[150px] resize-none"
@@ -216,24 +343,89 @@ export default function ScribeMedicalPanel({
             Revisar, editar e validar antes de salvar.
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          {hasStructured && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                Aplicar por seção:
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {onApplyToAnamnese && anamneseBloco && (
+                  <Button
+                    size="sm"
+                    variant={appliedSections.has("anamnese") ? "outline" : "secondary"}
+                    className={`rounded-xl ${appliedSections.has("anamnese") ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300" : ""}`}
+                    onClick={handleApplyAnamnese}
+                    disabled={appliedSections.has("anamnese")}
+                    data-testid="button-apply-anamnese"
+                  >
+                    {appliedSections.has("anamnese") ? <CheckCircle className="mr-1 h-3 w-3" /> : <FileText className="mr-1 h-3 w-3" />}
+                    Anamnese
+                  </Button>
+                )}
+
+                {onApplyToPrescricao && prescricaoBloco && (
+                  <Button
+                    size="sm"
+                    variant={appliedSections.has("prescricao") ? "outline" : "secondary"}
+                    className={`rounded-xl ${appliedSections.has("prescricao") ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300" : ""}`}
+                    onClick={handleApplyPrescricao}
+                    disabled={appliedSections.has("prescricao")}
+                    data-testid="button-apply-prescricao"
+                  >
+                    {appliedSections.has("prescricao") ? <CheckCircle className="mr-1 h-3 w-3" /> : <Pill className="mr-1 h-3 w-3" />}
+                    Prescrição
+                  </Button>
+                )}
+
+                {onApplyToEncaminhamento && encaminhamentoBloco && (
+                  <Button
+                    size="sm"
+                    variant={appliedSections.has("encaminhamento") ? "outline" : "secondary"}
+                    className={`rounded-xl ${appliedSections.has("encaminhamento") ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300" : ""}`}
+                    onClick={handleApplyEncaminhamento}
+                    disabled={appliedSections.has("encaminhamento")}
+                    data-testid="button-apply-encaminhamento"
+                  >
+                    {appliedSections.has("encaminhamento") ? <CheckCircle className="mr-1 h-3 w-3" /> : <UserPlus className="mr-1 h-3 w-3" />}
+                    Encaminhamento
+                  </Button>
+                )}
+
+                {onApplyToExames && examesBloco && (
+                  <Button
+                    size="sm"
+                    variant={appliedSections.has("exames") ? "outline" : "secondary"}
+                    className={`rounded-xl ${appliedSections.has("exames") ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300" : ""}`}
+                    onClick={handleApplyExames}
+                    disabled={appliedSections.has("exames")}
+                    data-testid="button-apply-exames"
+                  >
+                    {appliedSections.has("exames") ? <CheckCircle className="mr-1 h-3 w-3" /> : <TestTube className="mr-1 h-3 w-3" />}
+                    Exames
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             {onApplyToEvolucao && (
               <Button
-                onClick={handleApply}
-                disabled={!texto?.trim() || applied}
-                variant={applied ? "outline" : "default"}
-                className={`rounded-xl ${applied ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300' : 'bg-purple-600 hover:bg-purple-700'}`}
+                onClick={handleApplyAll}
+                disabled={!texto?.trim() || appliedSections.has("all")}
+                variant={appliedSections.has("all") ? "outline" : "default"}
+                className={`rounded-xl ${appliedSections.has("all") ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300' : 'bg-purple-600 hover:bg-purple-700'}`}
                 data-testid="button-aplicar-scribe"
               >
-                {applied ? (
+                {appliedSections.has("all") ? (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Aplicado ao prontuário
                   </>
                 ) : (
                   <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Aplicar ao prontuário
+                    <FileText className="mr-2 h-4 w-4" />
+                    Aplicar texto completo
                   </>
                 )}
               </Button>

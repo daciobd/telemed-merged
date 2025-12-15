@@ -255,6 +255,18 @@ export default function ConsultaDetails() {
               onApplyToEvolucao={(texto) => {
                 setAnamnese(prev => (prev ? `${prev}\n\n${texto}` : texto));
               }}
+              onApplyToAnamnese={(bloco) => {
+                setAnamnese(prev => (prev ? `${prev}\n\n${bloco}` : bloco));
+              }}
+              onApplyToPrescricao={(bloco) => {
+                setPrescricao(prev => (prev ? `${prev}\n\n${bloco}` : bloco));
+              }}
+              onApplyToEncaminhamento={(bloco) => {
+                setEncaminhamento(prev => (prev ? `${prev}\n\n${bloco}` : bloco));
+              }}
+              onApplyToExames={(bloco) => {
+                setExames(prev => (prev ? `${prev}\n\n${bloco}` : bloco));
+              }}
             />
           </div>
 
