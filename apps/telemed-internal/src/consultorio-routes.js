@@ -1611,7 +1611,7 @@ router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) 
         plano_conduta: "Orientar medidas iniciais, solicitar exames complementares se indicado, agendar retorno para reavaliação.",
         prescricao_mencionada: "Não informado",
         encaminhamentos: "Não informado",
-        alertas_seguranca: "Paciente orientado sobre sinais de alerta. Retornar em caso de piora ou novos sintomas.",
+        alertas_seguranca: "Não informado",
         seguimento: "Retorno agendado conforme necessidade clínica.",
         observacao: "Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável."
       };

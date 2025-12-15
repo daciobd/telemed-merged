@@ -9,10 +9,11 @@ export function buildScribePrompt({ transcript, consultaId }) {
         `REGRAS CRÍTICAS:\n` +
         `- NÃO invente informações. Se algo não estiver na transcrição, use "Não informado".\n` +
         `- NÃO faça diagnóstico definitivo. Use linguagem de hipótese ("sugere", "compatível com", "a considerar").\n` +
-        `- NÃO prescreva medicamentos com dose/posologia se não estiver explicitamente na transcrição.\n` +
+        `- NÃO prescreva medicamentos com dose ou posologia se não estiver explicitamente na transcrição.\n` +
+        `- Em "prescricao_mencionada", registre SOMENTE o que foi explicitamente dito, sem inferências.\n` +
+        `- Alertas de segurança devem ser incluídos APENAS se estiverem explicitamente mencionados na transcrição; caso contrário, use "Não informado".\n` +
         `- NÃO inclua dados pessoais sensíveis além do necessário.\n` +
-        `- Sempre incluir orientação de sinais de alerta quando aplicável.\n` +
-        `- Seja objetivo e conciso.\n\n` +
+        `- Seja objetivo, clínico e conservador.\n\n` +
 
         `FORMATO DE SAÍDA (OBRIGATÓRIO):\n` +
         `Retorne APENAS um JSON válido (sem markdown, sem crases) no seguinte formato:\n` +
@@ -34,7 +35,7 @@ export function buildScribePrompt({ transcript, consultaId }) {
         `REGRAS DO JSON:\n` +
         `- Se um campo não estiver na transcrição, use "Não informado".\n` +
         `- Em "avaliacao_hipoteses" e "exames_sugeridos", retorne lista vazia [] se não houver.\n` +
-        `- NÃO inclua nada fora do JSON (sem texto antes ou depois).\n` +
+        `- NÃO inclua nada fora do JSON.\n` +
         `- NÃO use crases ou markdown.`,
     },
     {
