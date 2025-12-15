@@ -78,3 +78,27 @@ A plataforma é composta por um monorepo com seis microserviços Dockerizados, o
 -   **http-proxy-middleware**: Para proxy reverso no backend.
 -   **express-rate-limit**: Para controle de taxa de requisições.
 -   **MedicalDesk**: Plataforma externa de gestão clínica, integrada via proxy e sessão JWT.
+
+## Recent Changes (15 Dez 2025)
+
+### Refatoração da Tela de Consulta (ConsultaDetails.tsx)
+Nova arquitetura modular com layout grid 2 colunas:
+
+**Novos Componentes em `client/src/features/consultorio/components/`:**
+1. **AtendimentoForm.tsx** - Queixa principal + Anamnese grande (campos controlados via props)
+2. **DiagnosticoCID.tsx** - Autocomplete CID offline com chips removíveis (25+ CIDs mais comuns)
+3. **ClinicalTabs.tsx** - 5 abas clínicas: Exames, Prescrição, Encaminhamento, Arquivos, Notas privadas
+
+**Layout Grid:**
+- Linha 1: VideoPanel | AtendimentoForm
+- Linha 2: DrAiPanel + ScribeMedicalPanel | DiagnosticoCID
+- Linha 3: ClinicalTabs | Paciente & Consulta
+
+**Integração IA → Campos:**
+- Dr. AI "Aplicar ao prontuário" → preenche campo Anamnese
+- Scribe Medical "Aplicar" → preenche campo Anamnese
+- Estados controlados no ConsultaDetails para sincronização
+
+**Componentes Existentes Mantidos:**
+- DrAiPanel.tsx (Anamnese Inicial com IA)
+- ScribeMedicalPanel.tsx (Documentação automática por áudio)
