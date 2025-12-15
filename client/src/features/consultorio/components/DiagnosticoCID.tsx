@@ -126,7 +126,11 @@ export default function DiagnosticoCID({ selected, onChange }: Props) {
             >
               {s.label}
               {s.cid ? <span className="opacity-80">({s.cid})</span> : null}
-              <button onClick={() => removeItem(idx)} aria-label="Remover">
+              <button 
+                onClick={() => removeItem(idx)} 
+                aria-label="Remover"
+                data-testid={`button-remove-hipotese-${idx}`}
+              >
                 <X className="h-3 w-3" />
               </button>
             </span>
