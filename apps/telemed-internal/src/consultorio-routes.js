@@ -1561,6 +1561,31 @@ Tarefa:
 // SCRIBE MEDICAL - DOCUMENTAÇÃO AUTOMÁTICA
 // ============================================
 
+function formatStructuredToText(s) {
+  const hipotesesStr = Array.isArray(s.avaliacao_hipoteses) && s.avaliacao_hipoteses.length > 0
+    ? s.avaliacao_hipoteses.join("; ")
+    : "Não informado";
+  const examesStr = Array.isArray(s.exames_sugeridos) && s.exames_sugeridos.length > 0
+    ? s.exames_sugeridos.join(", ")
+    : "Não informado";
+
+  return (
+    `Evolução clínica (Scribe Medical)\n\n` +
+    `1) Queixa principal:\n${s.queixa_principal || "Não informado"}\n\n` +
+    `2) HDA (história da doença atual):\n${s.hda || "Não informado"}\n\n` +
+    `3) Antecedentes / Medicações / Alergias:\n${s.antecedentes_medicacoes_alergias || "Não informado"}\n\n` +
+    `4) Revisão de sistemas / Exame:\n${s.revisao_sistemas_exame || "Não informado"}\n\n` +
+    `5) Avaliação (hipóteses / problemas):\n${hipotesesStr}\n\n` +
+    `6) Exames sugeridos:\n${examesStr}\n\n` +
+    `7) Plano / Conduta:\n${s.plano_conduta || "Não informado"}\n\n` +
+    `8) Prescrição mencionada:\n${s.prescricao_mencionada || "Não informado"}\n\n` +
+    `9) Encaminhamentos:\n${s.encaminhamentos || "Não informado"}\n\n` +
+    `10) Alertas e orientações de segurança:\n${s.alertas_seguranca || "Não informado"}\n\n` +
+    `11) Seguimento:\n${s.seguimento || "Não informado"}\n\n` +
+    `---\n${s.observacao || "Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável."}`
+  );
+}
+
 // POST /api/consultorio/scribe/processar - Receber áudio e gerar evolução
 router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) => {
   try {
@@ -1576,28 +1601,23 @@ router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) 
 
     // ===== MODO STUB (demo pronta) =====
     if (mode !== "ai") {
-      const textoStub =
-        `Evolução clínica (Scribe Medical)\n\n` +
-        `1) Queixa principal:\n` +
-        `Paciente comparece à consulta ${consultaId ? `(ID: ${consultaId})` : ""} relatando sintomas compatíveis com quadro clínico em investigação.\n\n` +
-        `2) HDA (história da doença atual):\n` +
-        `Refere início dos sintomas há alguns dias, com evolução progressiva. Descreve impacto funcional moderado nas atividades diárias.\n\n` +
-        `3) Antecedentes / Medicações / Alergias:\n` +
-        `Conforme relato verbal durante consulta. Revisar prontuário para histórico completo.\n\n` +
-        `4) Revisão de sistemas / Exame:\n` +
-        `Sem intercorrências significativas descritas no registro enviado.\n\n` +
-        `5) Avaliação (hipóteses / problemas):\n` +
-        `Quadro sugere necessidade de investigação adicional. Hipóteses a considerar conforme história clínica detalhada.\n\n` +
-        `6) Plano / Conduta:\n` +
-        `Orientar medidas iniciais, solicitar exames complementares se indicado, agendar retorno para reavaliação.\n\n` +
-        `7) Alertas e orientações de segurança:\n` +
-        `Paciente orientado sobre sinais de alerta. Retornar em caso de piora ou novos sintomas.\n\n` +
-        `8) Seguimento:\n` +
-        `Retorno agendado conforme necessidade clínica.\n\n` +
-        `---\n` +
-        `Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável.`;
+      const structuredStub = {
+        queixa_principal: `Paciente comparece à consulta ${consultaId ? `(ID: ${consultaId})` : ""} relatando sintomas compatíveis com quadro clínico em investigação.`,
+        hda: "Refere início dos sintomas há alguns dias, com evolução progressiva. Descreve impacto funcional moderado nas atividades diárias.",
+        antecedentes_medicacoes_alergias: "Conforme relato verbal durante consulta. Revisar prontuário para histórico completo.",
+        revisao_sistemas_exame: "Sem intercorrências significativas descritas no registro enviado.",
+        avaliacao_hipoteses: ["Quadro sugere necessidade de investigação adicional", "Hipóteses a considerar conforme história clínica detalhada"],
+        exames_sugeridos: ["Hemograma completo", "Glicemia de jejum"],
+        plano_conduta: "Orientar medidas iniciais, solicitar exames complementares se indicado, agendar retorno para reavaliação.",
+        prescricao_mencionada: "Não informado",
+        encaminhamentos: "Não informado",
+        alertas_seguranca: "Paciente orientado sobre sinais de alerta. Retornar em caso de piora ou novos sintomas.",
+        seguimento: "Retorno agendado conforme necessidade clínica.",
+        observacao: "Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável."
+      };
 
-      return res.json({ texto: textoStub });
+      const textoStub = formatStructuredToText(structuredStub);
+      return res.json({ texto: textoStub, structured: structuredStub });
     }
 
     // ===== MODO IA REAL =====
@@ -1631,13 +1651,28 @@ router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) 
       messages,
     });
 
-    const texto = completion.choices?.[0]?.message?.content?.trim();
-    if (!texto) {
+    const rawContent = completion.choices?.[0]?.message?.content?.trim();
+    if (!rawContent) {
       return res.status(502).json({ error: "Falha ao gerar evolução com IA." });
     }
 
+    // Tentar parsear JSON da resposta
+    let structured;
+    try {
+      // Remover possíveis crases/markdown que a IA pode adicionar
+      const cleanJson = rawContent.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+      structured = JSON.parse(cleanJson);
+    } catch (parseErr) {
+      console.warn("[scribe] Resposta não é JSON válido, retornando como texto legado:", parseErr.message);
+      // Fallback: retornar como texto legado se não for JSON válido
+      return res.json({ texto: rawContent, structured: null });
+    }
+
+    // Gerar texto formatado a partir do JSON estruturado
+    const texto = formatStructuredToText(structured);
+
     console.log("[scribe] Evolução gerada com sucesso para consulta:", consultaId);
-    return res.json({ texto });
+    return res.json({ texto, structured });
 
   } catch (err) {
     console.error("[scribe] Erro:", err);
