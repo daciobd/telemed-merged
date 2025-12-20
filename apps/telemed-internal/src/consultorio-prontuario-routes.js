@@ -200,4 +200,88 @@ router.post("/prontuario/:consultaId/finalizar", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/consultorio/prontuario/_migrate (PROTEGIDO)
+ * Requer header: x-internal-token: <INTERNAL_TOKEN>
+ */
+router.post("/prontuario/_migrate", async (req, res) => {
+  try {
+    const token = req.headers["x-internal-token"];
+    if (!process.env.INTERNAL_TOKEN || token !== process.env.INTERNAL_TOKEN) {
+      return res.status(401).json({ error: "Não autorizado." });
+    }
+
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS prontuarios_consulta (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        consulta_id TEXT NOT NULL UNIQUE,
+        medico_id TEXT,
+        paciente_id TEXT,
+        status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'final')),
+        queixa_principal TEXT,
+        anamnese TEXT,
+        hipoteses_texto TEXT,
+        hipoteses_cid JSONB NOT NULL DEFAULT '[]'::jsonb,
+        exames TEXT,
+        prescricao TEXT,
+        encaminhamentos TEXT,
+        alertas TEXT,
+        seguimento TEXT,
+        ia_metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        finalized_at TIMESTAMPTZ
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_prontuario_consulta_id
+      ON prontuarios_consulta (consulta_id);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_prontuario_status_updated
+      ON prontuarios_consulta (status, updated_at DESC);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_prontuario_hipoteses_cid_gin
+      ON prontuarios_consulta USING GIN (hipoteses_cid);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_prontuario_ia_metadata_gin
+      ON prontuarios_consulta USING GIN (ia_metadata);
+    `);
+
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION set_updated_at()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        NEW.updated_at = now();
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    await pool.query(`
+      DROP TRIGGER IF EXISTS trg_prontuario_updated_at ON prontuarios_consulta;
+    `);
+
+    await pool.query(`
+      CREATE TRIGGER trg_prontuario_updated_at
+      BEFORE UPDATE ON prontuarios_consulta
+      FOR EACH ROW
+      EXECUTE FUNCTION set_updated_at();
+    `);
+
+    return res.json({ ok: true, message: "Migração do prontuário aplicada com sucesso." });
+  } catch (err) {
+    console.error("[prontuario][MIGRATE] erro:", err);
+    return res.status(500).json({ error: "Falha ao aplicar migração.", detail: String(err?.message || err) });
+  }
+});
+
 export default router;
