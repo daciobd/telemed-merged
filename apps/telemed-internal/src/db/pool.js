@@ -1,10 +1,18 @@
 import pg from "pg";
-
 const { Pool } = pg;
 
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) {
+  console.warn("⚠️ DATABASE_URL não definida. Prontuário da consulta ficará indisponível.");
+}
+
+const needsSsl =
+  process.env.DATABASE_SSL === "true" ||
+  (dbUrl && dbUrl.includes("sslmode=require"));
+
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
+  connectionString: dbUrl,
+  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
 });
 
 pool.on("connect", () => {
