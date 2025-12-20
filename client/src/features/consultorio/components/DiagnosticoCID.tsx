@@ -41,9 +41,10 @@ interface Props {
   selected: Hipotese[];
   onChange: (next: Hipotese[]) => void;
   onChipClick?: (h: Hipotese) => void;
+  disabled?: boolean;
 }
 
-export default function DiagnosticoCID({ selected, onChange, onChipClick }: Props) {
+export default function DiagnosticoCID({ selected, onChange, onChipClick, disabled = false }: Props) {
   const [query, setQuery] = useState("");
 
   const suggestions = useMemo(() => {
@@ -87,6 +88,7 @@ export default function DiagnosticoCID({ selected, onChange, onChipClick }: Prop
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Digite CID ou diagnóstico (ex: F41 ou depre...)"
             data-testid="input-cid-search"
+            disabled={disabled}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();

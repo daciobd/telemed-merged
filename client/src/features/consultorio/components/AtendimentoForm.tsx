@@ -7,6 +7,7 @@ interface Props {
   setQueixa: (v: string) => void;
   anamnese: string;
   setAnamnese: (v: string) => void;
+  disabled?: boolean;
 }
 
 export default function AtendimentoForm({
@@ -14,6 +15,7 @@ export default function AtendimentoForm({
   setQueixa,
   anamnese,
   setAnamnese,
+  disabled = false,
 }: Props) {
   return (
     <Card>
@@ -35,6 +37,7 @@ export default function AtendimentoForm({
             rows={2}
             placeholder="Ex: ansiedade persistente há cerca de 3 meses"
             data-testid="input-queixa-form"
+            disabled={disabled}
           />
         </div>
 
@@ -48,6 +51,7 @@ export default function AtendimentoForm({
             rows={12}
             placeholder="História da doença atual, evolução, impacto funcional, antecedentes relevantes..."
             data-testid="input-anamnese-form"
+            disabled={disabled}
           />
         </div>
       </CardContent>

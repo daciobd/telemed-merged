@@ -11,6 +11,7 @@ interface Props {
   setEncaminhamento: (v: string) => void;
   notasPrivadas: string;
   setNotasPrivadas: (v: string) => void;
+  disabled?: boolean;
 }
 
 export default function ClinicalTabs({
@@ -22,6 +23,7 @@ export default function ClinicalTabs({
   setEncaminhamento,
   notasPrivadas,
   setNotasPrivadas,
+  disabled = false,
 }: Props) {
   return (
     <Card>
@@ -42,6 +44,7 @@ export default function ClinicalTabs({
               rows={6}
               placeholder="Solicitações ou resultados de exames..."
               data-testid="textarea-exames"
+              disabled={disabled}
             />
           </TabsContent>
 
@@ -52,6 +55,7 @@ export default function ClinicalTabs({
               rows={6}
               placeholder="Prescrição registrada na consulta..."
               data-testid="textarea-prescricao"
+              disabled={disabled}
             />
           </TabsContent>
 
@@ -62,6 +66,7 @@ export default function ClinicalTabs({
               rows={6}
               placeholder="Encaminhamentos (psicoterapia, especialista, etc.)"
               data-testid="textarea-encaminhamento"
+              disabled={disabled}
             />
           </TabsContent>
 
@@ -80,6 +85,7 @@ export default function ClinicalTabs({
               rows={6}
               placeholder="Notas privadas (visíveis apenas ao médico)"
               data-testid="textarea-notas"
+              disabled={disabled}
             />
           </TabsContent>
         </Tabs>
