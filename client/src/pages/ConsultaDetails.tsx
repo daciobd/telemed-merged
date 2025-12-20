@@ -140,10 +140,19 @@ export default function ConsultaDetails() {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadDone = useRef(false);
 
-  const { data: prontuario, isLoading: prontuarioLoading } = useQuery<Prontuario>({
+  const { data: prontuario, isLoading: prontuarioLoading } = useQuery<Prontuario | null>({
     queryKey: ['/api/consultorio/prontuario', consultationId],
     enabled: !!consultationId,
     retry: false,
+    queryFn: async () => {
+      const res = await fetch(`/api/consultorio/prontuario/${consultationId}`);
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erro ao buscar prontuário");
+      }
+      return res.json();
+    }
   });
 
   useEffect(() => {
@@ -155,6 +164,7 @@ export default function ConsultaDetails() {
       setExames(prontuario.exames || "");
       setPrescricao(prontuario.prescricao || "");
       setEncaminhamento(prontuario.encaminhamentos || "");
+      setNotasPrivadas((prontuario.ia_metadata?.notas_privadas as string) || "");
       setIsFinalized(prontuario.status === 'final');
       setFinalizedAt(prontuario.finalized_at);
       if (prontuario.updated_at) {
@@ -183,9 +193,10 @@ export default function ConsultaDetails() {
     onMutate: () => {
       setSaveStatus('saving');
     },
-    onSuccess: () => {
+    onSuccess: (data: Prontuario) => {
       setSaveStatus('saved');
-      setLastSavedAt(new Date());
+      if (data?.updated_at) setLastSavedAt(new Date(data.updated_at));
+      else setLastSavedAt(new Date());
     },
     onError: (error: Error) => {
       setSaveStatus('error');
@@ -238,6 +249,17 @@ export default function ConsultaDetails() {
   const triggerAutosave = useCallback(() => {
     if (isFinalized || !consultationId) return;
 
+    const hasContent =
+      (queixa || "").trim().length > 0 ||
+      (anamnese || "").trim().length > 0 ||
+      hipoteses.length > 0 ||
+      (exames || "").trim().length > 0 ||
+      (prescricao || "").trim().length > 0 ||
+      (encaminhamento || "").trim().length > 0 ||
+      (notasPrivadas || "").trim().length > 0;
+
+    if (!hasContent) return;
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
@@ -251,9 +273,10 @@ export default function ConsultaDetails() {
         exames,
         prescricao,
         encaminhamentos: encaminhamento,
+        ia_metadata: { notas_privadas: notasPrivadas }
       });
     }, 2500);
-  }, [isFinalized, consultationId, queixa, anamnese, hipoteses, exames, prescricao, encaminhamento, saveMutation]);
+  }, [isFinalized, consultationId, queixa, anamnese, hipoteses, exames, prescricao, encaminhamento, notasPrivadas, saveMutation]);
 
   useEffect(() => {
     if (initialLoadDone.current && !isFinalized) {
@@ -264,7 +287,7 @@ export default function ConsultaDetails() {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [queixa, anamnese, hipoteses, exames, prescricao, encaminhamento, triggerAutosave, isFinalized]);
+  }, [queixa, anamnese, hipoteses, exames, prescricao, encaminhamento, notasPrivadas, triggerAutosave, isFinalized]);
 
   const handleFinalize = () => {
     if (debounceRef.current) {
