@@ -18,6 +18,7 @@ import {
   directBookingSchema,
 } from "./consultorio-validation.js";
 import { getOpenAIKey, isOpenAIConfigured } from "./config/openai.js";
+import prontuarioRoutes from "./consultorio-prontuario-routes.js";
 
 // Compat CJS/ESM: Render aceita qualquer uma dessas formas
 const db = dbModule.db || dbModule.default || dbModule;
@@ -1679,5 +1680,10 @@ router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) 
     return res.status(500).json({ error: "Erro interno ao processar áudio do Scribe." });
   }
 });
+
+// ============================================
+// PRONTUÁRIO DA CONSULTA (autosave, finalização)
+// ============================================
+router.use(prontuarioRoutes);
 
 export default router;
