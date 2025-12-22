@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
 import ConsultorioLayout from '@/components/ConsultorioLayout';
 import DrAiPanel from '@/features/consultorio/components/DrAiPanel';
@@ -9,9 +9,112 @@ import DiagnosticoCID, { type Hipotese } from '@/features/consultorio/components
 import ClinicalTabs from '@/features/consultorio/components/ClinicalTabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, User, Video, ArrowLeft, Phone, Mail, AlertCircle, Save, CheckCircle, Loader2, Lock, Download } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FileText, User, Video, ArrowLeft, Phone, Mail, AlertCircle, Save, CheckCircle, Loader2, Lock, Download, PenTool } from 'lucide-react';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+
+function AssinaturaModal({ open, onOpenChange, onSave, isSaving }: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  onSave: (dataUrl: string) => void;
+  isSaving: boolean;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [drawing, setDrawing] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const c = canvasRef.current;
+    if (!c) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#000000";
+  }, [open]);
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const c = canvasRef.current!;
+    const r = c.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - r.left, y: clientY - r.top };
+  };
+
+  const start = (e: React.MouseEvent | React.TouchEvent) => {
+    const c = canvasRef.current!;
+    const ctx = c.getContext("2d")!;
+    const { x, y } = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setDrawing(true);
+  };
+
+  const move = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!drawing) return;
+    const c = canvasRef.current!;
+    const ctx = c.getContext("2d")!;
+    const { x, y } = getPos(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const end = () => setDrawing(false);
+
+  const clear = () => {
+    const c = canvasRef.current!;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, c.width, c.height);
+  };
+
+  const save = () => {
+    const c = canvasRef.current!;
+    const dataUrl = c.toDataURL("image/png");
+    onSave(dataUrl);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Assinar Prontuário</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Desenhe sua assinatura no campo abaixo. Esta assinatura será incluída no PDF do prontuário.
+        </p>
+        <div className="border rounded-md p-2 bg-white">
+          <canvas
+            ref={canvasRef}
+            width={460}
+            height={160}
+            style={{ width: "100%", height: 160, touchAction: "none", cursor: "crosshair" }}
+            onMouseDown={start}
+            onMouseMove={move}
+            onMouseUp={end}
+            onMouseLeave={end}
+            onTouchStart={start}
+            onTouchMove={move}
+            onTouchEnd={end}
+            data-testid="canvas-signature"
+          />
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button variant="outline" onClick={clear} disabled={isSaving} data-testid="button-clear-signature">
+            Limpar
+          </Button>
+          <Button onClick={save} disabled={isSaving} data-testid="button-save-signature">
+            {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PenTool className="h-4 w-4 mr-2" />}
+            Salvar Assinatura
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface ConsultationDetails {
   id: string;
@@ -113,6 +216,8 @@ export default function ConsultaDetails() {
   const [location] = useLocation();
   const consultationId = params?.id || location.split('/').pop() || '';
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [openAssinatura, setOpenAssinatura] = useState(false);
 
   const { data: apiConsultation, isLoading } = useQuery<ConsultationDetails>({
     queryKey: ['/api/consultorio/consultas', consultationId],
@@ -240,6 +345,39 @@ export default function ConsultaDetails() {
     onError: (error: Error) => {
       toast({
         title: "Erro ao finalizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assinaturaMutation = useMutation({
+    mutationFn: async (dataUrl: string) => {
+      const res = await fetch(`/api/consultorio/prontuario/${consultationId}/assinar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assinatura_data_url: dataUrl,
+          assinado_por: "Médico Responsável",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erro ao assinar');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setOpenAssinatura(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/consultorio/prontuario', consultationId] });
+      toast({
+        title: "Assinatura salva",
+        description: "O prontuário foi assinado com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao assinar",
         description: error.message,
         variant: "destructive",
       });
@@ -474,6 +612,17 @@ export default function ConsultaDetails() {
               Exportar PDF
             </Button>
 
+            {isFinalized && (
+              <Button
+                onClick={() => setOpenAssinatura(true)}
+                variant="outline"
+                data-testid="button-sign"
+              >
+                <PenTool className="h-4 w-4 mr-2" />
+                Assinar
+              </Button>
+            )}
+
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(consultation.status)}`} data-testid="badge-status">
               {consultation.status.charAt(0).toUpperCase() + consultation.status.slice(1)}
             </span>
@@ -642,6 +791,13 @@ export default function ConsultaDetails() {
           </Card>
         </div>
       </div>
+
+      <AssinaturaModal
+        open={openAssinatura}
+        onOpenChange={setOpenAssinatura}
+        onSave={(dataUrl) => assinaturaMutation.mutate(dataUrl)}
+        isSaving={assinaturaMutation.isPending}
+      />
     </ConsultorioLayout>
   );
 }
