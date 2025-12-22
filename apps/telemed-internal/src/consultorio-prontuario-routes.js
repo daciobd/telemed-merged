@@ -1,4 +1,5 @@
 import express from "express";
+import PDFDocument from "pdfkit";
 import { pool } from "./db/pool.js";
 
 const router = express.Router();
@@ -283,5 +284,217 @@ router.post("/prontuario/_migrate", async (req, res) => {
     return res.status(500).json({ error: "Falha ao aplicar migração.", detail: String(err?.message || err) });
   }
 });
+
+/**
+ * GET /api/consultorio/prontuario/:consultaId/pdf
+ * Gera PDF do prontuário usando PDFKit.
+ * - Não inclui ia_metadata.notas_privadas
+ * - Se status != 'final', adiciona watermark "RASCUNHO"
+ */
+router.get("/prontuario/:consultaId/pdf", async (req, res) => {
+  try {
+    const { consultaId } = req.params;
+
+    if (!consultaId) {
+      return res.status(400).json({ error: "consultaId é obrigatório." });
+    }
+
+    const prontuario = await getProntuarioByConsultaId(consultaId);
+    if (!prontuario) {
+      return res.status(404).json({ error: "Prontuário não encontrado." });
+    }
+
+    const {
+      status,
+      updated_at,
+      created_at,
+      queixa_principal,
+      anamnese,
+      hipoteses_cid,
+      hipoteses_texto,
+      exames,
+      prescricao,
+      encaminhamentos,
+      alertas,
+      seguimento,
+      ia_metadata,
+    } = prontuario;
+
+    const assinatura = ia_metadata?.assinatura || null;
+    const assinado_em = ia_metadata?.assinado_em || null;
+    const assinado_por = ia_metadata?.assinado_por || null;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="prontuario-${consultaId}.pdf"`);
+
+    const doc = new PDFDocument({ size: "A4", margin: 48 });
+    doc.pipe(res);
+
+    if (status !== "final") {
+      addWatermark(doc, "RASCUNHO");
+    }
+
+    doc.fontSize(16).text("PRONTUÁRIO MÉDICO", { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`ID: ${consultaId}`, { align: "center" });
+    doc.moveDown(1);
+
+    doc.fontSize(12).text("Informações", { underline: true });
+    doc.moveDown(0.4);
+    doc.fontSize(10);
+
+    const datasLine = [
+      created_at ? `Criado em: ${fmtDate(created_at)}` : null,
+      updated_at ? `Atualizado em: ${fmtDate(updated_at)}` : null,
+      status ? `Status: ${status}` : null,
+    ].filter(Boolean).join("  |  ");
+
+    if (datasLine) doc.text(datasLine);
+    doc.moveDown(1);
+
+    pdfSection(doc, "Queixa Principal", queixa_principal);
+    pdfSection(doc, "Anamnese", anamnese);
+    pdfSection(doc, "Hipótese Diagnóstica", formatHipoteses(hipoteses_cid, hipoteses_texto));
+    pdfSection(doc, "Exames", exames);
+    pdfSection(doc, "Prescrição", prescricao);
+    pdfSection(doc, "Encaminhamentos", encaminhamentos);
+    pdfSection(doc, "Alertas", alertas);
+    pdfSection(doc, "Seguimento", seguimento);
+
+    doc.moveDown(1);
+    doc.fontSize(12).text("Assinatura", { underline: true });
+    doc.moveDown(0.4);
+    doc.fontSize(10);
+
+    if (status === "final") {
+      if (assinado_por || assinado_em) {
+        doc.text(
+          [
+            assinado_por ? `Assinado por: ${assinado_por}` : null,
+            assinado_em ? `Assinado em: ${fmtDate(assinado_em)}` : null,
+          ].filter(Boolean).join("  |  ")
+        );
+        doc.moveDown(0.6);
+      }
+
+      if (assinatura && assinatura.startsWith("data:image/")) {
+        try {
+          const imgBuffer = dataUrlToBuffer(assinatura);
+          const x = doc.page.margins.left;
+          const y = doc.y;
+          doc.image(imgBuffer, x, y, { width: 220 });
+          doc.moveDown(4);
+        } catch {
+          doc.text("(Falha ao renderizar imagem da assinatura)");
+        }
+      } else {
+        doc.text("(Sem assinatura gráfica)");
+      }
+    } else {
+      doc.text("Documento em rascunho. Assinatura disponível apenas após finalização.");
+    }
+
+    doc.moveDown(1.5);
+    doc.fontSize(8).text(
+      `Documento gerado em ${fmtDate(new Date())} • TeleMed`,
+      { align: "center" }
+    );
+
+    doc.end();
+  } catch (err) {
+    console.error("[prontuario][PDF] erro:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Erro ao gerar PDF" });
+    }
+  }
+});
+
+/**
+ * POST /api/consultorio/prontuario/:consultaId/assinar
+ * Salva assinatura (dataURL) no ia_metadata
+ */
+router.post("/prontuario/:consultaId/assinar", async (req, res) => {
+  try {
+    const { consultaId } = req.params;
+    const { assinatura_data_url, assinado_por } = req.body || {};
+
+    if (!assinatura_data_url || !String(assinatura_data_url).startsWith("data:image/")) {
+      return res.status(400).json({ error: "assinatura_data_url inválida (data:image/...)" });
+    }
+
+    const prontuario = await getProntuarioByConsultaId(consultaId);
+    if (!prontuario) {
+      return res.status(404).json({ error: "Prontuário não encontrado" });
+    }
+
+    if (prontuario.status !== "final") {
+      return res.status(409).json({ error: "Só é possível assinar após finalizar o atendimento" });
+    }
+
+    const ia_metadata = prontuario.ia_metadata || {};
+    ia_metadata.assinatura = assinatura_data_url;
+    ia_metadata.assinado_em = new Date().toISOString();
+    ia_metadata.assinado_por = assinado_por || "Médico responsável";
+
+    const { rows } = await pool.query(
+      `UPDATE prontuarios_consulta
+       SET ia_metadata = $1::jsonb
+       WHERE consulta_id = $2
+       RETURNING *`,
+      [JSON.stringify(ia_metadata), consultaId]
+    );
+
+    res.json({ ok: true, ia_metadata: rows[0]?.ia_metadata });
+  } catch (err) {
+    console.error("[prontuario][ASSINAR] erro:", err);
+    res.status(500).json({ error: "Erro ao assinar" });
+  }
+});
+
+/* ---------- PDF helpers ---------- */
+
+function pdfSection(doc, title, text) {
+  doc.fontSize(12).text(title, { underline: true });
+  doc.moveDown(0.4);
+  doc.fontSize(10);
+  const content = (text ?? "").toString().trim();
+  doc.text(content.length ? content : "-", { align: "left" });
+  doc.moveDown(1);
+}
+
+function formatHipoteses(hipotesesCid, hipotesesTexto) {
+  const parts = [];
+  if (Array.isArray(hipotesesCid) && hipotesesCid.length > 0) {
+    parts.push(hipotesesCid.map((h) => `${h.codigo} - ${h.descricao}`).join("\n"));
+  }
+  if (hipotesesTexto) {
+    parts.push(hipotesesTexto);
+  }
+  return parts.join("\n\n") || "";
+}
+
+function fmtDate(d) {
+  try {
+    const date = typeof d === "string" ? new Date(d) : d;
+    return date.toLocaleString("pt-BR");
+  } catch {
+    return String(d);
+  }
+}
+
+function addWatermark(doc, label) {
+  doc.save();
+  doc.rotate(-35, { origin: [doc.page.width / 2, doc.page.height / 2] });
+  doc.fontSize(72).opacity(0.15).text(label, 80, doc.page.height / 2 - 60, {
+    align: "center",
+    width: doc.page.width - 160,
+  });
+  doc.opacity(1).restore();
+}
+
+function dataUrlToBuffer(dataUrl) {
+  const base64 = dataUrl.split(",")[1] || "";
+  return Buffer.from(base64, "base64");
+}
 
 export default router;

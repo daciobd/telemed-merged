@@ -9,7 +9,7 @@ import DiagnosticoCID, { type Hipotese } from '@/features/consultorio/components
 import ClinicalTabs from '@/features/consultorio/components/ClinicalTabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, User, Video, ArrowLeft, Phone, Mail, AlertCircle, Save, CheckCircle, Loader2, Lock } from 'lucide-react';
+import { FileText, User, Video, ArrowLeft, Phone, Mail, AlertCircle, Save, CheckCircle, Loader2, Lock, Download } from 'lucide-react';
 import { Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 
@@ -463,6 +463,16 @@ export default function ConsultaDetails() {
                 Finalizar Atendimento
               </Button>
             )}
+
+            <Button
+              onClick={() => window.open(`/api/consultorio/prontuario/${consultationId}/pdf`, "_blank", "noopener,noreferrer")}
+              variant="secondary"
+              disabled={saveStatus === 'saving'}
+              data-testid="button-export-pdf"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
 
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(consultation.status)}`} data-testid="badge-status">
               {consultation.status.charAt(0).toUpperCase() + consultation.status.slice(1)}
