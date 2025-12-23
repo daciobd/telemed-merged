@@ -8,6 +8,7 @@ A Plataforma TeleMed é uma solução unificada de telemedicina que consolida tr
 - **Comunicação**: Linguagem simples e cotidiana
 - **Contexto**: Telemedicina brasileira com compliance CFM
 - **Preferência Tech**: React + Wouter + React Query + TypeScript + Zod + Drizzle ORM
+- **Deploy**: SEMPRE fornecer comandos git ao final de cada tarefa para deploy no Render
 
 ## System Architecture
 A plataforma é composta por um monorepo com seis microserviços Dockerizados, orquestrados para deploy no Render.
