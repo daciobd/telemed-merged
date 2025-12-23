@@ -5,11 +5,24 @@ import { pool } from "../db/pool.js";
 const router = express.Router();
 
 // ============================================
-// MIDDLEWARE: requireManager
-// Permite acesso apenas para admin/manager
-// Fallback: MANAGER_EMAILS env var (lista separada por ;)
+// HELPERS: parseAllowlist
 // ============================================
-const requireManager = (req, res, next) => {
+function parseAllowlist(raw) {
+  return (raw || "")
+    .split(/[;,]/g)
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+// ============================================
+// MIDDLEWARE: requireManager
+// Permite acesso apenas para quem está na allowlist
+// MANAGER_EMAILS ou MANAGER_CRMS (env vars)
+// ============================================
+function requireManager(req, res, next) {
+  const allowEmails = parseAllowlist(process.env.MANAGER_EMAILS);
+  const allowCrms = parseAllowlist(process.env.MANAGER_CRMS);
+
   // Tentar extrair user do token JWT
   let user = null;
   const token = req.headers.authorization?.split(" ")[1];
@@ -18,27 +31,45 @@ const requireManager = (req, res, next) => {
     try {
       user = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
-      // Token inválido, continua para verificar MANAGER_EMAILS
+      // Token inválido
     }
   }
 
-  // Verificar role do usuário autenticado
+  // Fallback para req.user ou req.session?.user
+  if (!user) {
+    user = req.user || req.session?.user || null;
+  }
+
+  // Extrair email (vários formatos possíveis)
+  const email = (user?.email || user?.user_email || user?.login || "")
+    .toString()
+    .trim()
+    .toLowerCase();
+
+  // Extrair CRM (fallback)
+  const crm = (user?.crm || user?.crm_numero || "")
+    .toString()
+    .trim()
+    .toLowerCase();
+
+  // Verificar allowlist
+  if ((email && allowEmails.includes(email)) || (crm && allowCrms.includes(crm))) {
+    return next();
+  }
+
+  // Fallback: verificar role admin/manager/gerente
   const role = user?.role || user?.perfil || user?.type;
   if (role === "admin" || role === "manager" || role === "gerente") {
     return next();
   }
 
-  // Fallback: verificar por email na lista MANAGER_EMAILS
-  const managerEmails = (process.env.MANAGER_EMAILS || "").split(";").map(e => e.trim().toLowerCase()).filter(Boolean);
-  if (user?.email && managerEmails.includes(user.email.toLowerCase())) {
-    return next();
-  }
+  return res.status(403).json({ ok: false, error: "Acesso restrito" });
+}
 
-  // Nenhum acesso permitido
-  return res.status(403).json({ ok: false, error: "Acesso restrito a gerentes" });
-};
-
-router.get("/stats", requireManager, async (req, res) => {
+// ============================================
+// ENDPOINT: GET /manager/stats
+// ============================================
+router.get("/manager/stats", requireManager, async (req, res) => {
   try {
     // Totais gerais
     const qTotal = await pool.query(
@@ -73,7 +104,7 @@ router.get("/stats", requireManager, async (req, res) => {
     };
 
     // Métricas de HOJE
-    let today = { total: 0, final: 0, draft: 0, assinados: 0 };
+    let today = { total: 0, final: 0, draft: 0 };
     try {
       const qToday = await pool.query(`
         SELECT

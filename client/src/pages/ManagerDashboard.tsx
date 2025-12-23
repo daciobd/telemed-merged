@@ -41,7 +41,7 @@ export default function ManagerDashboard() {
     setAccessDenied(false);
     try {
       const token = localStorage.getItem("consultorio_token");
-      const r = await fetch("/api/consultorio/stats", { 
+      const r = await fetch("/api/manager/stats", { 
         credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });

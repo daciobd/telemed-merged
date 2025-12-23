@@ -264,7 +264,7 @@ app.use(express.json());
 app.use('/api/consultorio', consultorioRoutes);
 
 // Rotas de Stats (Manager Dashboard)
-app.use('/api/consultorio', statsRoutes);
+app.use('/api', statsRoutes);
 
 // Importar rotas de Virtual Office (agendamento direto, página pública, etc)
 const { default: virtualOfficeRoutes } = await import('./apps/telemed-internal/src/virtual-office.routes.js');
