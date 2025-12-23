@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle, Edit3, PenTool, RefreshCw } from "lucide-react";
+import { 
+  FileText, CheckCircle, Edit3, PenTool, RefreshCw, 
+  CalendarDays, Clock, TrendingUp, Shield 
+} from "lucide-react";
 
 type Stats = {
   ok: boolean;
@@ -13,6 +16,16 @@ type Stats = {
     prontuarios_draft: number;
     prontuarios_assinados: number;
   };
+  today?: {
+    total: number;
+    final: number;
+    draft: number;
+  };
+  avg_time_to_finalize_minutes?: number | null;
+  conversion?: {
+    finalized_rate: number;
+    signed_rate_of_final: number;
+  };
   last7days?: Array<{ date: string; total: number; final: number; draft: number }>;
   note?: string;
   error?: string;
@@ -21,11 +34,24 @@ type Stats = {
 export default function ManagerDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const fetchStats = async () => {
     setLoading(true);
+    setAccessDenied(false);
     try {
-      const r = await fetch("/api/consultorio/stats", { credentials: "include" });
+      const token = localStorage.getItem("consultorio_token");
+      const r = await fetch("/api/consultorio/stats", { 
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      
+      if (r.status === 403) {
+        setAccessDenied(true);
+        setStats(null);
+        return;
+      }
+      
       const j = (await r.json()) as Stats;
       setStats(j);
     } catch (e: any) {
@@ -46,6 +72,10 @@ export default function ManagerDashboard() {
     prontuarios_assinados: 0,
   };
 
+  const today = stats?.today || { total: 0, final: 0, draft: 0 };
+  const conversion = stats?.conversion || { finalized_rate: 0, signed_rate_of_final: 0 };
+  const avgTime = stats?.avg_time_to_finalize_minutes;
+
   const kpis = useMemo(
     () => [
       { label: "Prontuários", value: totals.prontuarios_total, icon: FileText, color: "text-blue-600" },
@@ -55,6 +85,37 @@ export default function ManagerDashboard() {
     ],
     [totals]
   );
+
+  const extraKpis = useMemo(
+    () => [
+      { label: "Hoje", value: today.total, sub: `${today.final} finalizados`, icon: CalendarDays, color: "text-teal-600" },
+      { label: "% Finalizados", value: `${conversion.finalized_rate}%`, icon: TrendingUp, color: "text-indigo-600" },
+      { label: "% Assinados", value: `${conversion.signed_rate_of_final}%`, sub: "dos finalizados", icon: Shield, color: "text-emerald-600" },
+      { label: "Tempo Médio", value: avgTime != null ? `${avgTime} min` : "—", sub: "até finalizar", icon: Clock, color: "text-orange-600" },
+    ],
+    [today, conversion, avgTime]
+  );
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-red-200 bg-red-50 dark:bg-red-900/20">
+          <CardHeader>
+            <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Acesso Restrito
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-red-600 dark:text-red-300 space-y-3">
+            <p>Esta página é restrita a gerentes e administradores.</p>
+            <p className="text-xs text-red-500">
+              Se você deveria ter acesso, entre em contato com o administrador do sistema.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 space-y-6">
@@ -107,6 +168,7 @@ export default function ManagerDashboard() {
         </Card>
       ) : (
         <>
+          {/* KPIs principais */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {kpis.map((k) => (
               <Card key={k.label} className="hover:shadow-md transition-shadow" data-testid={`card-kpi-${k.label.toLowerCase()}`}>
@@ -123,6 +185,27 @@ export default function ManagerDashboard() {
             ))}
           </div>
 
+          {/* KPIs extras */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {extraKpis.map((k) => (
+              <Card key={k.label} className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900" data-testid={`card-extra-${k.label.toLowerCase().replace(/\s|%/g, '-')}`}>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {k.label}
+                  </CardTitle>
+                  <k.icon className={`w-5 h-5 ${k.color}`} />
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{k.value}</div>
+                  {"sub" in k && k.sub && (
+                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{k.sub}</div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Últimos 7 dias */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Últimos 7 dias</CardTitle>

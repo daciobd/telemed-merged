@@ -16,6 +16,7 @@ import {
   createBidSchema,
   updateDoctorSchema,
   directBookingSchema,
+  createConsultationByDoctorSchema,
 } from "./consultorio-validation.js";
 import { getOpenAIKey, isOpenAIConfigured } from "./config/openai.js";
 import prontuarioRoutes from "./consultorio-prontuario-routes.js";
@@ -546,6 +547,113 @@ router.post(
     } catch (error) {
       console.error("Erro ao criar consulta:", error);
       res.status(500).json({ error: "Erro ao criar consulta" });
+    }
+  },
+);
+
+// POST /api/consultorio/consultations/doctor-create - Médico cria consulta
+router.post(
+  "/consultations/doctor-create",
+  authenticate,
+  validate(createConsultationByDoctorSchema),
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const role = req.user.role;
+
+      // Verificar se é médico
+      if (role !== "doctor") {
+        return res.status(403).json({ error: "Apenas médicos podem criar consultas por esta rota" });
+      }
+
+      const [doctor] = await db
+        .select()
+        .from(doctors)
+        .where(eq(doctors.userId, userId))
+        .limit(1);
+
+      if (!doctor) {
+        return res.status(404).json({ error: "Médico não encontrado" });
+      }
+
+      const { paciente_nome, paciente_cpf, paciente_telefone, datahora, tipo } = req.validatedBody;
+
+      // Buscar ou criar paciente (se CPF fornecido)
+      let patientId = null;
+      
+      if (paciente_cpf) {
+        // Buscar paciente existente pelo CPF
+        const [existingUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.cpf, paciente_cpf))
+          .limit(1);
+
+        if (existingUser) {
+          const [existingPatient] = await db
+            .select()
+            .from(patients)
+            .where(eq(patients.userId, existingUser.id))
+            .limit(1);
+          
+          if (existingPatient) {
+            patientId = existingPatient.id;
+          }
+        }
+      }
+
+      // Se não encontrou paciente, criar um "placeholder"
+      if (!patientId) {
+        // Criar usuário placeholder com senha hasheada (conta de sistema, não pode logar)
+        const placeholderEmail = `paciente_${Date.now()}@placeholder.telemed`;
+        const randomPassword = `system_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+        
+        const [newUser] = await db
+          .insert(users)
+          .values({
+            email: placeholderEmail,
+            passwordHash: hashedPassword,
+            role: "patient",
+            fullName: paciente_nome,
+            phone: paciente_telefone || null,
+            cpf: paciente_cpf || null,
+          })
+          .returning();
+
+        // Criar paciente vinculado
+        const [newPatient] = await db
+          .insert(patients)
+          .values({
+            userId: newUser.id,
+          })
+          .returning();
+
+        patientId = newPatient.id;
+      }
+
+      // Criar consulta
+      const [consultation] = await db
+        .insert(consultations)
+        .values({
+          patientId,
+          doctorId: doctor.id,
+          consultationType: tipo,
+          isMarketplace: false,
+          scheduledFor: datahora ? new Date(datahora) : new Date(),
+          status: "scheduled",
+        })
+        .returning();
+
+      res.status(201).json({ 
+        ok: true, 
+        consulta_id: consultation.id,
+        paciente_nome,
+        message: "Consulta criada com sucesso"
+      });
+    } catch (error) {
+      console.error("Erro ao criar consulta (doctor-create):", error);
+      res.status(500).json({ error: "Erro ao criar consulta", details: error?.message });
     }
   },
 );

@@ -1,11 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ConsultorioLayout from '@/components/ConsultorioLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Clock, User, Video, Eye, Calendar } from 'lucide-react';
-import { Link } from 'wouter';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileText, Clock, User, Video, Eye, Calendar, Plus, Loader2 } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
 import { DEMO_PATIENTS, isDemo } from '@/demo/demoData';
+import { useToast } from '@/hooks/use-toast';
 
 interface Consultation {
   id: string;
@@ -18,10 +24,62 @@ interface Consultation {
 }
 
 export default function MinhasConsultas() {
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    paciente_nome: '',
+    paciente_cpf: '',
+    paciente_telefone: '',
+    datahora: '',
+    tipo: 'primeira_consulta' as string,
+  });
+
   const { data: consultationsAPI, isLoading: isLoadingAPI } = useQuery<Consultation[]>({
     queryKey: ['/api/consultorio/minhas-consultas'],
     enabled: !isDemo,
   });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const token = localStorage.getItem('consultorio_token');
+      const r = await fetch('/api/consultorio/consultations/doctor-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || 'Erro ao criar consulta');
+      }
+      return r.json();
+    },
+    onSuccess: (data) => {
+      toast({ title: 'Consulta criada!', description: `Consulta com ${data.paciente_nome} criada.` });
+      setDialogOpen(false);
+      setFormData({ paciente_nome: '', paciente_cpf: '', paciente_telefone: '', datahora: '', tipo: 'primeira_consulta' });
+      queryClient.invalidateQueries({ queryKey: ['/api/consultorio/minhas-consultas'] });
+      if (data.consulta_id) {
+        navigate(`/consultas/${data.consulta_id}`);
+      }
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.paciente_nome.trim()) {
+      toast({ title: 'Atenção', description: 'Nome do paciente é obrigatório', variant: 'destructive' });
+      return;
+    }
+    createMutation.mutate(formData);
+  };
 
   const now = new Date();
 
@@ -147,16 +205,116 @@ export default function MinhasConsultas() {
   return (
     <ConsultorioLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <FileText className="h-8 w-8 text-teal-600" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Minhas Consultas
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Gerencie suas consultas agendadas e passadas
-            </p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <FileText className="h-8 w-8 text-teal-600" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Minhas Consultas
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Gerencie suas consultas agendadas e passadas
+              </p>
+            </div>
           </div>
+
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-teal-600 hover:bg-teal-700" data-testid="button-nova-consulta">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Consulta
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Nova Consulta</DialogTitle>
+                <DialogDescription>
+                  Preencha os dados do paciente para criar uma nova consulta.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="paciente_nome">Nome do Paciente *</Label>
+                  <Input
+                    id="paciente_nome"
+                    placeholder="Nome completo"
+                    value={formData.paciente_nome}
+                    onChange={(e) => setFormData({ ...formData, paciente_nome: e.target.value })}
+                    data-testid="input-paciente-nome"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="paciente_cpf">CPF (opcional)</Label>
+                    <Input
+                      id="paciente_cpf"
+                      placeholder="00000000000"
+                      maxLength={11}
+                      value={formData.paciente_cpf}
+                      onChange={(e) => setFormData({ ...formData, paciente_cpf: e.target.value.replace(/\D/g, '') })}
+                      data-testid="input-paciente-cpf"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="paciente_telefone">Telefone (opcional)</Label>
+                    <Input
+                      id="paciente_telefone"
+                      placeholder="(11) 99999-9999"
+                      value={formData.paciente_telefone}
+                      onChange={(e) => setFormData({ ...formData, paciente_telefone: e.target.value })}
+                      data-testid="input-paciente-telefone"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tipo">Tipo de Consulta</Label>
+                  <Select value={formData.tipo} onValueChange={(v) => setFormData({ ...formData, tipo: v })}>
+                    <SelectTrigger data-testid="select-tipo">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="primeira_consulta">Primeira Consulta</SelectItem>
+                      <SelectItem value="retorno">Retorno</SelectItem>
+                      <SelectItem value="urgente">Urgente</SelectItem>
+                      <SelectItem value="check_up">Check-up</SelectItem>
+                      <SelectItem value="video">Vídeo</SelectItem>
+                      <SelectItem value="presencial">Presencial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="datahora">Data/Hora (opcional)</Label>
+                  <Input
+                    id="datahora"
+                    type="datetime-local"
+                    value={formData.datahora}
+                    onChange={(e) => setFormData({ ...formData, datahora: e.target.value })}
+                    data-testid="input-datahora"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} data-testid="button-cancelar">
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-teal-600 hover:bg-teal-700"
+                    disabled={createMutation.isPending}
+                    data-testid="button-criar-consulta"
+                  >
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Criando...
+                      </>
+                    ) : (
+                      'Criar Consulta'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Tabs defaultValue="proximas" className="space-y-6">

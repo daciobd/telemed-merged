@@ -63,3 +63,38 @@ export function DialogTitle({ children, className = "" }: DialogTitleProps) {
     </h2>
   );
 }
+
+interface DialogDescriptionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogDescription({ children, className = "" }: DialogDescriptionProps) {
+  return (
+    <p className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
+      {children}
+    </p>
+  );
+}
+
+interface DialogFooterProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogFooter({ children, className = "" }: DialogFooterProps) {
+  return (
+    <div className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+interface DialogTriggerProps {
+  children: React.ReactNode;
+  asChild?: boolean;
+}
+
+export function DialogTrigger({ children }: DialogTriggerProps) {
+  return <>{children}</>;
+}

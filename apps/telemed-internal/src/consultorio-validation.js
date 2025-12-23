@@ -94,6 +94,15 @@ export const directBookingSchema = z.object({
   chiefComplaint: z.string().optional()
 });
 
+// Nova Consulta - Médico cria consulta com dados do paciente
+export const createConsultationByDoctorSchema = z.object({
+  paciente_nome: z.string().min(2, 'Nome do paciente é obrigatório'),
+  paciente_cpf: z.string().optional(),
+  paciente_telefone: z.string().optional(),
+  datahora: z.string().optional(),
+  tipo: z.enum(['primeira_consulta', 'retorno', 'urgente', 'check_up', 'video', 'presencial']).default('primeira_consulta')
+});
+
 // ============================================
 // VALIDATION MIDDLEWARE
 // ============================================
