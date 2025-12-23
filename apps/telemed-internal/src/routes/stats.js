@@ -67,6 +67,25 @@ function requireManager(req, res, next) {
 }
 
 // ============================================
+// ENDPOINT: GET /manager/_debug-token (TEMPORÁRIO)
+// ============================================
+router.get("/manager/_debug-token", (req, res) => {
+  const expectedToken = process.env.MANAGER_TOKEN || "";
+  const expectedEmails = process.env.MANAGER_EMAILS || "";
+  const expectedCrms = process.env.MANAGER_CRMS || "";
+  
+  res.json({
+    hasToken: Boolean(expectedToken),
+    tokenLen: expectedToken.length,
+    tokenStartsWith: expectedToken.slice(0, 6),
+    headerSeen: String(req.headers["x-manager-token"] || "").slice(0, 6),
+    hasManagerEmails: Boolean(expectedEmails),
+    managerEmailsLen: expectedEmails.length,
+    hasManagerCrms: Boolean(expectedCrms),
+  });
+});
+
+// ============================================
 // ENDPOINT: GET /manager/stats
 // ============================================
 router.get("/manager/stats", requireManager, async (req, res) => {
