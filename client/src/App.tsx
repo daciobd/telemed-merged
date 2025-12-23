@@ -16,6 +16,7 @@ import MinhasConsultas from './pages/MinhasConsultas';
 import ConsultaDetails from './pages/ConsultaDetails';
 import Agenda from './pages/Agenda';
 import Settings from './pages/Settings';
+import ManagerDashboard from './pages/ManagerDashboard';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -90,6 +91,9 @@ export default function App() {
       <Route path="/settings">
         <ProtectedRoute component={Settings} />
       </Route>
+      
+      {/* Manager Dashboard - public for demo */}
+      <Route path="/manager" component={ManagerDashboard} />
       
       {/* Default redirect */}
       <Route path="/">

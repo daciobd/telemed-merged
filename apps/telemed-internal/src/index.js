@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import consultorioRoutes from './consultorio-routes.js';
 import seedRoutes from './routes/seed.routes.js';
+import statsRoutes from './routes/stats.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -280,11 +281,15 @@ app.use(express.json());
 // Rotas do Consultório Virtual (autenticação, médicos, consultas)
 app.use('/api/consultorio', consultorioRoutes);
 
+// Rotas de Stats (Manager Dashboard)
+app.use('/api/consultorio', statsRoutes);
+
 // Importar rotas de Virtual Office (agendamento direto, página pública, etc)
 const { default: virtualOfficeRoutes } = await import('./virtual-office.routes.js');
 app.use('/api/virtual-office', virtualOfficeRoutes);
 
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
+console.log('✅ Rotas de Stats carregadas em /api/consultorio/stats');
 console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
 
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
