@@ -423,11 +423,14 @@ router.post("/prontuario/:consultaId/assinar", async (req, res) => {
     }
 
     const prontuario = await getProntuarioByConsultaId(consultaId);
+    console.log("[ASSINAR DEBUG] consultaId:", consultaId, "prontuario.status:", prontuario?.status, "prontuario found:", !!prontuario);
+    
     if (!prontuario) {
       return res.status(404).json({ error: "Prontuário não encontrado" });
     }
 
     if (prontuario.status !== "final") {
+      console.log("[ASSINAR DEBUG] Rejeitando - status não é final:", prontuario.status);
       return res.status(409).json({ error: "Só é possível assinar após finalizar o atendimento" });
     }
 
