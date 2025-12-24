@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import consultorioRoutes from './apps/telemed-internal/src/consultorio-routes.js';
 import seedRoutes from './apps/telemed-internal/src/routes/seed.routes.js';
 import statsRoutes from './apps/telemed-internal/src/routes/stats.js';
+import internalRoutes from './apps/telemed-internal/src/routes/internal.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -265,6 +266,9 @@ app.use('/api/consultorio', consultorioRoutes);
 
 // Rotas de Stats (Manager Dashboard)
 app.use('/api', statsRoutes);
+
+// Rotas internas (promoção de usuários, etc) - protegidas por INTERNAL_TOKEN
+app.use('/api/internal', internalRoutes);
 
 // Importar rotas de Virtual Office (agendamento direto, página pública, etc)
 const { default: virtualOfficeRoutes } = await import('./apps/telemed-internal/src/virtual-office.routes.js');

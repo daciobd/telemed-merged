@@ -6,7 +6,7 @@ const router = express.Router();
 
 // ============================================
 // MIDDLEWARE: requireManager
-// Permite acesso apenas se email está em MANAGER_EMAILS
+// Permite acesso por role (admin/manager) OU MANAGER_EMAILS (fallback)
 // ============================================
 function requireManager(req, res, next) {
   try {
@@ -27,22 +27,24 @@ function requireManager(req, res, next) {
       user = req.user || req.session?.user;
     }
 
-    // DEBUG TEMPORÁRIO
-    console.log("AUTH DEBUG:", {
-      user: req.user,
-      sessionUser: req.session?.user,
-    });
-
-    if (!user?.email) {
+    if (!user) {
       return res.status(401).json({ ok: false, error: "Não autenticado" });
     }
 
+    // 1) Regra por role (preferencial)
+    const role = (user.role || "").toLowerCase();
+    if (role === "admin" || role === "manager") {
+      return next();
+    }
+
+    // 2) Fallback por ENV (emergência / transição)
     const emails = (process.env.MANAGER_EMAILS || "")
       .split(",")
       .map(e => e.trim().toLowerCase())
       .filter(Boolean);
 
-    if (emails.includes(user.email.toLowerCase())) {
+    const email = (user.email || "").toLowerCase();
+    if (email && emails.includes(email)) {
       return next();
     }
 
