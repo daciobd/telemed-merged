@@ -1345,4 +1345,159 @@ router.get("/metrics/v2/quality/missing-fields", requireManager, async (req, res
   }
 });
 
+// ============================================
+// C2: GET /manager-revenue - Financeiro: GMV, receita plataforma, repasse médico
+// Query params: ?days=90&marketplaceOnly=1&verifiedOnly=1
+// ============================================
+router.get("/manager-revenue", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    const marketplaceOnly = req.query.marketplaceOnly === "1" || req.query.marketplaceOnly === "true";
+    const verifiedOnly = req.query.verifiedOnly === "1" || req.query.verifiedOnly === "true";
+
+    const cacheKey = `revenue:${days}:m${marketplaceOnly ? 1 : 0}:v${verifiedOnly ? 1 : 0}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.at < TTL) {
+      return res.json(cached.data);
+    }
+
+    const to = new Date();
+    const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Construir WHERE dinâmico
+    let whereClause = `c.created_at >= $1 AND c.created_at < $2`;
+    const params = [from, to];
+
+    if (marketplaceOnly) {
+      whereClause += ` AND c.is_marketplace = true`;
+    }
+    if (verifiedOnly) {
+      whereClause += ` AND EXISTS (SELECT 1 FROM doctors d WHERE d.id = c.doctor_id AND d.is_verified = true)`;
+    }
+
+    // 1) Totais financeiros
+    const totalsQuery = `
+      SELECT
+        COALESCE(SUM(COALESCE(c.agreed_price::numeric, c.patient_offer::numeric)), 0)::numeric AS gmv,
+        COALESCE(SUM(c.platform_fee::numeric), 0)::numeric AS platform_revenue,
+        COALESCE(SUM(c.doctor_earnings::numeric), 0)::numeric AS doctor_payout,
+        COUNT(*)::int AS consultations,
+        COUNT(*) FILTER (WHERE COALESCE(c.agreed_price, c.patient_offer) IS NOT NULL)::int AS priced_count,
+        COUNT(*) FILTER (WHERE c.status = 'pending')::int AS pending,
+        COUNT(*) FILTER (WHERE c.status = 'doctor_matched')::int AS doctor_matched,
+        COUNT(*) FILTER (WHERE c.status = 'scheduled')::int AS scheduled,
+        COUNT(*) FILTER (WHERE c.status = 'in_progress')::int AS in_progress,
+        COUNT(*) FILTER (WHERE c.status = 'completed')::int AS completed,
+        COUNT(*) FILTER (WHERE c.status = 'cancelled')::int AS cancelled
+      FROM consultations c
+      WHERE ${whereClause}
+    `;
+    const totalsResult = await pool.query(totalsQuery, params);
+    const totals = totalsResult.rows[0] || {};
+
+    // 2) Por canal (marketplace vs direto)
+    const byChannelQuery = `
+      SELECT
+        CASE WHEN c.is_marketplace THEN 'marketplace' ELSE 'direct' END AS channel,
+        COALESCE(SUM(COALESCE(c.agreed_price::numeric, c.patient_offer::numeric)), 0)::numeric AS gmv,
+        COALESCE(SUM(c.platform_fee::numeric), 0)::numeric AS platform_revenue,
+        COALESCE(SUM(c.doctor_earnings::numeric), 0)::numeric AS doctor_payout,
+        COUNT(*)::int AS consultations
+      FROM consultations c
+      WHERE ${whereClause}
+      GROUP BY 1
+      ORDER BY 1
+    `;
+    const byChannelResult = await pool.query(byChannelQuery, params);
+
+    // 3) Por tipo de consulta
+    const byTypeQuery = `
+      SELECT
+        c.consultation_type::text AS consultation_type,
+        COALESCE(SUM(COALESCE(c.agreed_price::numeric, c.patient_offer::numeric)), 0)::numeric AS gmv,
+        COALESCE(SUM(c.platform_fee::numeric), 0)::numeric AS platform_revenue,
+        COALESCE(SUM(c.doctor_earnings::numeric), 0)::numeric AS doctor_payout,
+        COUNT(*)::int AS consultations
+      FROM consultations c
+      WHERE ${whereClause}
+      GROUP BY 1
+      ORDER BY gmv DESC
+    `;
+    const byTypeResult = await pool.query(byTypeQuery, params);
+
+    // 4) Top médicos por receita
+    const topDoctorsQuery = `
+      SELECT
+        c.doctor_id,
+        u.full_name AS doctor_name,
+        COALESCE(SUM(COALESCE(c.agreed_price::numeric, c.patient_offer::numeric)), 0)::numeric AS gmv,
+        COALESCE(SUM(c.platform_fee::numeric), 0)::numeric AS platform_revenue,
+        COALESCE(SUM(c.doctor_earnings::numeric), 0)::numeric AS doctor_payout,
+        COUNT(*)::int AS consultations
+      FROM consultations c
+      JOIN doctors d ON d.id = c.doctor_id
+      JOIN users u ON u.id = d.user_id
+      WHERE ${whereClause}
+        AND c.doctor_id IS NOT NULL
+      GROUP BY c.doctor_id, u.full_name
+      ORDER BY gmv DESC
+      LIMIT 20
+    `;
+    const topDoctorsResult = await pool.query(topDoctorsQuery, params);
+
+    const gmv = Number(totals.gmv ?? 0);
+    const pricedCount = Number(totals.priced_count ?? 0);
+
+    const result = {
+      ok: true,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      filters: { marketplaceOnly, verifiedOnly },
+      totals: {
+        gmv,
+        platformRevenue: Number(totals.platform_revenue ?? 0),
+        doctorPayout: Number(totals.doctor_payout ?? 0),
+        consultations: Number(totals.consultations ?? 0),
+        pricedCount,
+        avgTicket: pricedCount ? gmv / pricedCount : 0,
+        statusCounts: {
+          pending: Number(totals.pending ?? 0),
+          doctorMatched: Number(totals.doctor_matched ?? 0),
+          scheduled: Number(totals.scheduled ?? 0),
+          inProgress: Number(totals.in_progress ?? 0),
+          completed: Number(totals.completed ?? 0),
+          cancelled: Number(totals.cancelled ?? 0),
+        },
+      },
+      byChannel: byChannelResult.rows.map(r => ({
+        channel: r.channel,
+        gmv: Number(r.gmv),
+        platformRevenue: Number(r.platform_revenue),
+        doctorPayout: Number(r.doctor_payout),
+        consultations: Number(r.consultations),
+      })),
+      byType: byTypeResult.rows.map(r => ({
+        consultationType: r.consultation_type,
+        gmv: Number(r.gmv),
+        platformRevenue: Number(r.platform_revenue),
+        doctorPayout: Number(r.doctor_payout),
+        consultations: Number(r.consultations),
+      })),
+      topDoctors: topDoctorsResult.rows.map(r => ({
+        doctorId: r.doctor_id,
+        doctorName: r.doctor_name,
+        gmv: Number(r.gmv),
+        platformRevenue: Number(r.platform_revenue),
+        doctorPayout: Number(r.doctor_payout),
+        consultations: Number(r.consultations),
+      })),
+    };
+
+    cache.set(cacheKey, { at: Date.now(), data: result });
+    return res.json(result);
+  } catch (err) {
+    console.error("[manager-revenue] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao calcular receita" });
+  }
+});
+
 export default router;
