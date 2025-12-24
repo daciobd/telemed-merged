@@ -202,4 +202,110 @@ router.get("/metrics/v2/doctors", requireManager, async (req, res) => {
   }
 });
 
+// ============================================
+// GET /metrics/v2/pending/unsigned - Listagem finalizados sem assinatura
+// Query params: ?days=30&limit=200&offset=0&medico_id=...
+// ============================================
+router.get("/metrics/v2/pending/unsigned", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    const limit = Math.max(1, Math.min(500, Number(req.query.limit ?? 200)));
+    const offset = Math.max(0, Number(req.query.offset ?? 0));
+    const medicoId = req.query.medico_id ? String(req.query.medico_id) : null;
+
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Query com JOIN para trazer nome do médico
+    let query = `
+      SELECT
+        p.id,
+        p.consulta_id,
+        p.medico_id,
+        u.full_name AS medico_nome,
+        u.email AS medico_email,
+        p.created_at,
+        p.finalized_at,
+        p.signed_at,
+        
+        -- proxy da assinatura no JSON
+        CASE 
+          WHEN (p.ia_metadata->>'assinatura') IS NOT NULL 
+           AND (p.ia_metadata->>'assinatura') <> ''
+          THEN true ELSE false 
+        END AS has_assinatura_proxy,
+        
+        -- tempo parado (desde finalized_at até agora) em minutos
+        ROUND(EXTRACT(EPOCH FROM (NOW() - p.finalized_at)) / 60)::int AS tempo_parado_min,
+        
+        -- tempo até finalizar (created → finalized) em minutos
+        CASE
+          WHEN p.finalized_at IS NOT NULL
+          THEN ROUND(EXTRACT(EPOCH FROM (p.finalized_at - p.created_at)) / 60)::int
+          ELSE NULL
+        END AS tempo_ate_finalizar_min
+        
+      FROM prontuarios_consulta p
+      LEFT JOIN users u ON u.id::text = p.medico_id
+      WHERE p.created_at >= $1
+        AND p.finalized_at IS NOT NULL
+        AND p.signed_at IS NULL
+        AND (p.ia_metadata->>'assinatura' IS NULL OR p.ia_metadata->>'assinatura' = '')
+    `;
+
+    const params = [since];
+
+    if (medicoId) {
+      query += ` AND p.medico_id = $${params.length + 1}`;
+      params.push(medicoId);
+    }
+
+    query += ` ORDER BY p.finalized_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    // Total para paginação
+    let countQuery = `
+      SELECT COUNT(*)::int AS total
+      FROM prontuarios_consulta p
+      WHERE p.created_at >= $1
+        AND p.finalized_at IS NOT NULL
+        AND p.signed_at IS NULL
+        AND (p.ia_metadata->>'assinatura' IS NULL OR p.ia_metadata->>'assinatura' = '')
+    `;
+    const countParams = [since];
+
+    if (medicoId) {
+      countQuery += ` AND p.medico_id = $2`;
+      countParams.push(medicoId);
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
+
+    const items = result.rows.map(row => ({
+      id: row.id,
+      consultaId: row.consulta_id,
+      medicoId: row.medico_id,
+      medicoNome: row.medico_nome || "Médico não identificado",
+      medicoEmail: row.medico_email,
+      createdAt: row.created_at,
+      finalizedAt: row.finalized_at,
+      signedAt: row.signed_at,
+      hasAssinaturaProxy: row.has_assinatura_proxy,
+      tempoParadoMin: row.tempo_parado_min,
+      tempoAteFinalizarMin: row.tempo_ate_finalizar_min,
+    }));
+
+    return res.json({
+      ok: true,
+      range: { days, since: since.toISOString() },
+      paging: { limit, offset, total: countResult.rows[0]?.total ?? 0 },
+      items,
+    });
+  } catch (err) {
+    console.error("[manager/metrics/v2/pending/unsigned] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao listar pendências" });
+  }
+});
+
 export default router;
