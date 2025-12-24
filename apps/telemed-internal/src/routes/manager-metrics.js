@@ -5,6 +5,24 @@ import { pool } from "../db/pool.js";
 const router = express.Router();
 
 // ============================================
+// CACHE EM MEMÓRIA (30s TTL)
+// ============================================
+const cache = new Map();
+const CACHE_TTL = 30_000; // 30 segundos
+
+function getCached(key) {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL) {
+    return hit.data;
+  }
+  return null;
+}
+
+function setCache(key, data) {
+  cache.set(key, { at: Date.now(), data });
+}
+
+// ============================================
 // MIDDLEWARE: requireManager (cópia local)
 // ============================================
 function requireManager(req, res, next) {
@@ -56,6 +74,12 @@ function requireManager(req, res, next) {
 router.get("/metrics/v2", requireManager, async (req, res) => {
   try {
     const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    
+    // Cache check
+    const cacheKey = `metrics-v2:${days}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     // Query principal do funil
@@ -110,7 +134,7 @@ router.get("/metrics/v2", requireManager, async (req, res) => {
     const taxaFinalizacao = criados > 0 ? Math.round((finalizados / criados) * 100) : 0;
     const taxaAssinatura = finalizados > 0 ? Math.round((assinados / finalizados) * 100) : 0;
 
-    return res.json({
+    const result = {
       ok: true,
       range: { days, since: since.toISOString() },
       funnel: {
@@ -134,7 +158,10 @@ router.get("/metrics/v2", requireManager, async (req, res) => {
       notas: {
         assinadosUsaProxy: true,
       },
-    });
+    };
+    
+    setCache(cacheKey, result);
+    return res.json(result);
   } catch (err) {
     console.error("[manager/metrics/v2] erro:", err);
     return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar métricas" });
@@ -148,6 +175,12 @@ router.get("/metrics/v2", requireManager, async (req, res) => {
 router.get("/metrics/v2/doctors", requireManager, async (req, res) => {
   try {
     const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    
+    // Cache check
+    const cacheKey = `metrics-v2-doctors:${days}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const doctorsQuery = await pool.query(`
@@ -195,15 +228,73 @@ router.get("/metrics/v2/doctors", requireManager, async (req, res) => {
       taxaFinalizacao: row.total > 0 ? Math.round((row.finalizados / row.total) * 100) : 0,
     }));
 
-    return res.json({
+    const result = {
       ok: true,
       range: { days, since: since.toISOString() },
       doctors,
       total: doctors.length,
-    });
+    };
+    
+    setCache(cacheKey, result);
+    return res.json(result);
   } catch (err) {
     console.error("[manager/metrics/v2/doctors] erro:", err);
     return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar métricas por médico" });
+  }
+});
+
+// ============================================
+// GET /metrics/v2/daily - Série diária com timezone America/Sao_Paulo
+// Query params: ?days=30 (default 30)
+// ============================================
+router.get("/metrics/v2/daily", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    
+    // Cache check
+    const cacheKey = `metrics-v2-daily:${days}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Série diária com timezone correto (America/Sao_Paulo)
+    const dailyQuery = await pool.query(`
+      SELECT
+        to_char(
+          date_trunc('day', created_at AT TIME ZONE 'America/Sao_Paulo'),
+          'YYYY-MM-DD'
+        ) AS dia,
+        count(*)::int AS criados,
+        count(finalized_at)::int AS finalizados,
+        sum(case 
+          when signed_at IS NOT NULL 
+            OR (ia_metadata->>'assinatura' IS NOT NULL AND ia_metadata->>'assinatura' <> '')
+          then 1 else 0 
+        end)::int AS assinados
+      FROM prontuarios_consulta
+      WHERE created_at >= $1
+      GROUP BY 1
+      ORDER BY 1
+    `, [since]);
+
+    const result = {
+      ok: true,
+      range: { days, since: since.toISOString() },
+      timezone: "America/Sao_Paulo",
+      series: dailyQuery.rows.map(r => ({
+        dia: r.dia,
+        criados: r.criados,
+        finalizados: r.finalizados,
+        assinados: r.assinados,
+      })),
+    };
+    
+    setCache(cacheKey, result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[manager/metrics/v2/daily] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar série diária" });
   }
 });
 
