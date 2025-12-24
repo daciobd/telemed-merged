@@ -292,7 +292,7 @@ export const notifications = pgTable('notifications', {
 export const managerNotifications = pgTable('manager_notifications', {
   id: serial('id').primaryKey(),
   managerUserId: integer('manager_user_id').references(() => users.id),
-  medicoId: text('medico_id').notNull(), // pode ser uuid ou string
+  medicoId: text('medico_id'), // nullable para heartbeat/logs globais
   prontuarioId: text('prontuario_id'),
   kind: text('kind').notNull(), // 'unsigned_prontuario', etc
   payload: json('payload').default({}),

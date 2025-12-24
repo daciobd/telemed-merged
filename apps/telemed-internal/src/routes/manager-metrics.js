@@ -1158,6 +1158,20 @@ router.post("/metrics/v2/cron/unsigned-alerts", requireInternalToken, async (req
 
     console.log(`[cron/unsigned-alerts] encontrados=${medicosCriticos.length}, criados=${created}`);
 
+    // Heartbeat: registra execução do cron (mesmo sem alertas)
+    await pool.query(`
+      INSERT INTO manager_notifications (manager_user_id, medico_id, prontuario_id, kind, payload)
+      VALUES (NULL, NULL, NULL, 'cron_unsigned_alerts_run', $1)
+    `, [
+      JSON.stringify({
+        days,
+        ok: true,
+        encontrados: medicosCriticos.length,
+        notificacoesCriadas: created,
+        ranAt: new Date().toISOString(),
+      }),
+    ]);
+
     return res.json({
       ok: true,
       days,
@@ -1227,6 +1241,107 @@ router.get("/metrics/v2/notifications", requireManager, async (req, res) => {
   } catch (err) {
     console.error("[notifications] erro:", err);
     return res.status(500).json({ ok: false, error: err?.message || "Erro ao listar notificações" });
+  }
+});
+
+// ============================================
+// GET /quality/missing-fields - Prontuários finalizados com campos críticos faltantes
+// Query params: ?days=30&limit=100&offset=0&medico_id=...
+// ============================================
+router.get("/metrics/v2/quality/missing-fields", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    const limit = Math.max(1, Math.min(500, Number(req.query.limit ?? 100)));
+    const offset = Math.max(0, Number(req.query.offset ?? 0));
+    const medicoId = req.query.medico_id || null;
+
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Campos críticos no prontuário: queixa_principal, anamnese, hipoteses_cid (array de CIDs)
+    let baseQuery = `
+      WITH problematicos AS (
+        SELECT
+          pc.id AS prontuario_id,
+          pc.medico_id,
+          pc.consulta_id,
+          pc.finalized_at,
+          pc.created_at,
+          array_remove(ARRAY[
+            CASE WHEN pc.queixa_principal IS NULL OR pc.queixa_principal = '' THEN 'queixa_principal' ELSE NULL END,
+            CASE WHEN pc.anamnese IS NULL OR pc.anamnese = '' THEN 'anamnese' ELSE NULL END,
+            CASE WHEN pc.hipoteses_cid = '[]'::jsonb THEN 'hipoteses_cid' ELSE NULL END
+          ], NULL) AS faltando,
+          u.full_name AS medico_nome,
+          u.email AS medico_email
+        FROM prontuarios_consulta pc
+        LEFT JOIN users u ON u.id::text = pc.medico_id
+        WHERE pc.created_at >= $1
+          AND pc.finalized_at IS NOT NULL
+          AND (
+            pc.queixa_principal IS NULL OR pc.queixa_principal = '' OR
+            pc.anamnese IS NULL OR pc.anamnese = '' OR
+            pc.hipoteses_cid = '[]'::jsonb
+          )
+    `;
+
+    const params = [since];
+    
+    if (medicoId) {
+      params.push(medicoId);
+      baseQuery += ` AND pc.medico_id = $${params.length}`;
+    }
+
+    baseQuery += `)
+      SELECT * FROM problematicos
+      ORDER BY finalized_at DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
+    params.push(limit, offset);
+
+    const result = await pool.query(baseQuery, params);
+
+    // Contagem total
+    let countQuery = `
+      SELECT COUNT(*)::int AS total
+      FROM prontuarios_consulta pc
+      WHERE pc.created_at >= $1
+        AND pc.finalized_at IS NOT NULL
+        AND (
+          pc.queixa_principal IS NULL OR pc.queixa_principal = '' OR
+          pc.anamnese IS NULL OR pc.anamnese = '' OR
+          pc.hipoteses_cid = '[]'::jsonb
+        )
+    `;
+    const countParams = [since];
+    
+    if (medicoId) {
+      countParams.push(medicoId);
+      countQuery += ` AND pc.medico_id = $${countParams.length}`;
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
+    const total = countResult.rows[0]?.total ?? 0;
+
+    return res.json({
+      ok: true,
+      range: { days, since: since.toISOString() },
+      filters: { medico_id: medicoId },
+      paging: { limit, offset, total },
+      items: result.rows.map(r => ({
+        prontuarioId: r.prontuario_id,
+        medicoId: r.medico_id,
+        medicoNome: r.medico_nome || "—",
+        medicoEmail: r.medico_email,
+        consultaId: r.consulta_id,
+        finalizedAt: r.finalized_at,
+        createdAt: r.created_at,
+        faltando: r.faltando,
+        prontuarioLink: `/consultorio/prontuario/${r.prontuario_id}`,
+      })),
+    });
+  } catch (err) {
+    console.error("[quality/missing-fields] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao listar qualidade" });
   }
 });
 

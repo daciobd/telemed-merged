@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   FileText, CheckCircle, PenTool, RefreshCw, 
   Clock, TrendingUp, Shield, AlertTriangle, Users,
-  ArrowUpDown, ArrowUp, ArrowDown, ExternalLink
+  ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -59,6 +59,12 @@ type DoctorsData = {
 
 type SortKey = "total" | "finalizados" | "rascunhos" | "assinados" | "taxaFinalizacao" | "pendencias";
 
+type NotifResponse = {
+  ok: boolean;
+  total: number;
+  notifications: { id: number; createdAt: string; kind: string }[];
+};
+
 function getTaxaColor(taxa: number): string {
   if (taxa >= 85) return "text-green-600";
   if (taxa >= 70) return "text-yellow-600";
@@ -90,6 +96,7 @@ export default function ManagerDashboard() {
   const [, setLocation] = useLocation();
   const [metrics, setMetrics] = useState<MetricsV2 | null>(null);
   const [doctors, setDoctors] = useState<DoctorsData | null>(null);
+  const [autoNotif, setAutoNotif] = useState<NotifResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [days, setDays] = useState(7);
@@ -106,9 +113,10 @@ export default function ManagerDashboard() {
       const token = localStorage.getItem("consultorio_token");
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const [metricsRes, doctorsRes] = await Promise.all([
+      const [metricsRes, doctorsRes, notifRes] = await Promise.all([
         fetch(`/api/manager/metrics/v2?days=${selectedDays}`, { credentials: "include", headers }),
         fetch(`/api/manager/metrics/v2/doctors?days=${selectedDays}`, { credentials: "include", headers }),
+        fetch(`/api/manager/metrics/v2/notifications?kind=cron_unsigned_alerts_run&days=${selectedDays}&limit=1`, { credentials: "include", headers }),
       ]);
 
       if (metricsRes.status === 403 || metricsRes.status === 401) {
@@ -118,9 +126,11 @@ export default function ManagerDashboard() {
 
       const metricsData = await metricsRes.json();
       const doctorsData = await doctorsRes.json();
+      const notifData = notifRes.ok ? await notifRes.json() : null;
 
       setMetrics(metricsData);
       setDoctors(doctorsData);
+      setAutoNotif(notifData);
     } catch (e: any) {
       setMetrics({ ok: false, error: e?.message } as any);
     } finally {
@@ -279,7 +289,7 @@ export default function ManagerDashboard() {
       ) : (
         <>
           {/* Bloco A - Funil Clínico */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Criados */}
             <Card className="hover:shadow-md transition-shadow" data-testid="card-criados">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -410,6 +420,51 @@ export default function ManagerDashboard() {
                         ✓ Sem pendências no período.
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
+            {/* Card Cron/Automação */}
+            {(() => {
+              const lastRunAt = autoNotif?.notifications?.[0]?.createdAt ?? null;
+              const isCronLate = (() => {
+                if (!lastRunAt) return true;
+                const ms = Date.now() - new Date(lastRunAt).getTime();
+                return ms > 26 * 60 * 60 * 1000;
+              })();
+              const cronTone = isCronLate 
+                ? "border-red-300 bg-red-50 dark:bg-red-900/20" 
+                : "border-green-200 bg-green-50 dark:bg-green-900/20";
+
+              return (
+                <Card className={`hover:shadow-md transition-shadow border ${cronTone}`} data-testid="card-cron">
+                  <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-medium text-gray-500">Automação</CardTitle>
+                    <Clock className={`w-5 h-5 ${isCronLate ? "text-red-600" : "text-green-600"}`} />
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {loading ? "…" : isCronLate ? "⚠️ Atrasado" : "✓ OK"}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      {lastRunAt 
+                        ? `Última: ${new Date(lastRunAt).toLocaleString("pt-BR")}`
+                        : "Última: nunca executou"}
+                    </div>
+                    {!loading && isCronLate && (
+                      <div className="text-xs text-red-800 mt-2">
+                        Cron não executa há mais de 26h. Verifique logs.
+                      </div>
+                    )}
+                    <button
+                      className="mt-3 w-full px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
+                      onClick={() => setLocation(`/manager/notificacoes?days=${days}&kind=cron_unsigned_alerts_run`)}
+                      disabled={loading}
+                      data-testid="link-ver-cron-logs"
+                    >
+                      Ver logs
+                    </button>
                   </CardContent>
                 </Card>
               );
