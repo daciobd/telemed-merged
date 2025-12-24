@@ -5,10 +5,10 @@ import { pool } from "../db/pool.js";
 const router = express.Router();
 
 // ============================================
-// HELPERS: parseAllowlist
+// HELPERS: parseList
 // ============================================
-function parseAllowlist(raw) {
-  return (raw || "")
+function parseList(raw = "") {
+  return raw
     .split(/[;,]/g)
     .map(s => s.trim().toLowerCase())
     .filter(Boolean);
@@ -16,12 +16,11 @@ function parseAllowlist(raw) {
 
 // ============================================
 // MIDDLEWARE: requireManager
-// Permite acesso apenas para quem está na allowlist
-// MANAGER_EMAILS ou MANAGER_CRMS (env vars)
+// Permite acesso por MANAGER_EMAILS ou MANAGER_USERS
 // ============================================
 function requireManager(req, res, next) {
-  const allowEmails = parseAllowlist(process.env.MANAGER_EMAILS);
-  const allowCrms = parseAllowlist(process.env.MANAGER_CRMS);
+  const allowEmails = parseList(process.env.MANAGER_EMAILS);
+  const allowUsers = parseList(process.env.MANAGER_USERS);
 
   // Tentar extrair user do token JWT
   let user = null;
@@ -41,25 +40,19 @@ function requireManager(req, res, next) {
   }
 
   // Extrair email (vários formatos possíveis)
-  const email = (user?.email || user?.user_email || user?.login || "")
+  const email = (user?.email || user?.user_email || user?.login_email || "")
     .toString()
     .trim()
     .toLowerCase();
 
-  // Extrair CRM (fallback)
-  const crm = (user?.crm || user?.crm_numero || "")
+  // Extrair username (fallback)
+  const username = (user?.username || user?.login || user?.nome_usuario || "")
     .toString()
     .trim()
     .toLowerCase();
 
-  // Verificar allowlist
-  if ((email && allowEmails.includes(email)) || (crm && allowCrms.includes(crm))) {
-    return next();
-  }
-
-  // Fallback: verificar role admin/manager/gerente
-  const role = user?.role || user?.perfil || user?.type;
-  if (role === "admin" || role === "manager" || role === "gerente") {
+  // Verificar allowlist por email ou username
+  if ((email && allowEmails.includes(email)) || (username && allowUsers.includes(username))) {
     return next();
   }
 
@@ -70,18 +63,15 @@ function requireManager(req, res, next) {
 // ENDPOINT: GET /manager/_debug-token (TEMPORÁRIO)
 // ============================================
 router.get("/manager/_debug-token", (req, res) => {
-  const expectedToken = process.env.MANAGER_TOKEN || "";
   const expectedEmails = process.env.MANAGER_EMAILS || "";
-  const expectedCrms = process.env.MANAGER_CRMS || "";
+  const expectedUsers = process.env.MANAGER_USERS || "";
   
   res.json({
-    hasToken: Boolean(expectedToken),
-    tokenLen: expectedToken.length,
-    tokenStartsWith: expectedToken.slice(0, 6),
-    headerSeen: String(req.headers["x-manager-token"] || "").slice(0, 6),
     hasManagerEmails: Boolean(expectedEmails),
     managerEmailsLen: expectedEmails.length,
-    hasManagerCrms: Boolean(expectedCrms),
+    managerEmailsPreview: expectedEmails.slice(0, 20) + (expectedEmails.length > 20 ? "..." : ""),
+    hasManagerUsers: Boolean(expectedUsers),
+    managerUsersLen: expectedUsers.length,
   });
 });
 
