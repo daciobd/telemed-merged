@@ -37,6 +37,8 @@ type MetricsV2 = {
 
 type DoctorMetrics = {
   medicoId: string;
+  medicoNome: string;
+  medicoEmail: string;
   total: number;
   finalizados: number;
   rascunhos: number;
@@ -435,8 +437,13 @@ export default function ManagerDashboard() {
                           }`}
                           data-testid={`row-doctor-${doc.medicoId}`}
                         >
-                          <td className="py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                            {doc.medicoId?.substring(0, 10) || "—"}
+                          <td className="py-3 px-2">
+                            <div className="font-medium text-gray-700 dark:text-gray-300">
+                              {doc.medicoNome || "—"}
+                            </div>
+                            {doc.medicoEmail && (
+                              <div className="text-xs text-gray-400">{doc.medicoEmail}</div>
+                            )}
                           </td>
                           <td className="text-center py-3 px-2 font-medium">{doc.total}</td>
                           <td className="text-center py-3 px-2 text-green-600">{doc.finalizados}</td>

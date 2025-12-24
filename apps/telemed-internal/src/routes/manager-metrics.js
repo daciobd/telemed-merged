@@ -142,7 +142,7 @@ router.get("/metrics/v2", requireManager, async (req, res) => {
 });
 
 // ============================================
-// GET /metrics/v2/doctors - Produção por médico
+// GET /metrics/v2/doctors - Produção por médico (com nome via JOIN)
 // Query params: ?days=30 (default 30)
 // ============================================
 router.get("/metrics/v2/doctors", requireManager, async (req, res) => {
@@ -152,36 +152,41 @@ router.get("/metrics/v2/doctors", requireManager, async (req, res) => {
 
     const doctorsQuery = await pool.query(`
       SELECT
-        medico_id,
+        p.medico_id,
+        u.full_name AS medico_nome,
+        u.email AS medico_email,
         count(*)::int AS total,
-        count(finalized_at)::int AS finalizados,
-        sum(case when finalized_at IS NULL then 1 else 0 end)::int AS rascunhos,
+        count(p.finalized_at)::int AS finalizados,
+        sum(case when p.finalized_at IS NULL then 1 else 0 end)::int AS rascunhos,
         
         -- assinados (signed_at OU proxy)
         sum(case 
-          when signed_at IS NOT NULL 
-            OR (ia_metadata->>'assinatura' IS NOT NULL AND ia_metadata->>'assinatura' <> '')
+          when p.signed_at IS NOT NULL 
+            OR (p.ia_metadata->>'assinatura' IS NOT NULL AND p.ia_metadata->>'assinatura' <> '')
           then 1 else 0 
         end)::int AS assinados,
         
-        -- finalizados sem assinatura
+        -- finalizados sem assinatura (pendências)
         sum(case 
-          when finalized_at IS NOT NULL 
-            AND signed_at IS NULL
-            AND (ia_metadata->>'assinatura' IS NULL OR ia_metadata->>'assinatura' = '')
+          when p.finalized_at IS NOT NULL 
+            AND p.signed_at IS NULL
+            AND (p.ia_metadata->>'assinatura' IS NULL OR p.ia_metadata->>'assinatura' = '')
           then 1 else 0 
         end)::int AS finalizados_sem_assinatura
         
-      FROM prontuarios_consulta
-      WHERE created_at >= $1
-        AND medico_id IS NOT NULL
-      GROUP BY medico_id
+      FROM prontuarios_consulta p
+      LEFT JOIN users u ON u.id::text = p.medico_id
+      WHERE p.created_at >= $1
+        AND p.medico_id IS NOT NULL
+      GROUP BY p.medico_id, u.full_name, u.email
       ORDER BY total DESC
       LIMIT 100
     `, [since]);
 
     const doctors = doctorsQuery.rows.map(row => ({
       medicoId: row.medico_id,
+      medicoNome: row.medico_nome || "Médico não identificado",
+      medicoEmail: row.medico_email,
       total: row.total,
       finalizados: row.finalizados,
       rascunhos: row.rascunhos,
