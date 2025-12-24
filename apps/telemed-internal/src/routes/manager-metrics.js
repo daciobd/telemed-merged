@@ -119,7 +119,25 @@ router.get("/metrics/v2", requireManager, async (req, res) => {
             AND signed_at IS NULL
             AND (ia_metadata->>'assinatura' IS NULL OR ia_metadata->>'assinatura' = '')
           then 1 else 0 
-        end)::int AS finalizados_sem_assinatura
+        end)::int AS finalizados_sem_assinatura,
+        
+        -- SLA: pendências em atenção (>= 60 min paradas)
+        sum(case 
+          when finalized_at IS NOT NULL 
+            AND signed_at IS NULL
+            AND (ia_metadata->>'assinatura' IS NULL OR ia_metadata->>'assinatura' = '')
+            AND extract(epoch from (now() - finalized_at)) / 60 >= 60
+          then 1 else 0 
+        end)::int AS pendencias_atencao,
+        
+        -- SLA: pendências críticas (>= 240 min / 4h paradas)
+        sum(case 
+          when finalized_at IS NOT NULL 
+            AND signed_at IS NULL
+            AND (ia_metadata->>'assinatura' IS NULL OR ia_metadata->>'assinatura' = '')
+            AND extract(epoch from (now() - finalized_at)) / 60 >= 240
+          then 1 else 0 
+        end)::int AS pendencias_critico
         
       FROM prontuarios_consulta
       WHERE created_at >= $1
@@ -154,6 +172,12 @@ router.get("/metrics/v2", requireManager, async (req, res) => {
       },
       pendencias: {
         finalizadosSemAssinatura: row.finalizados_sem_assinatura ?? 0,
+        atencao: row.pendencias_atencao ?? 0, // >= 1h parado
+        critico: row.pendencias_critico ?? 0, // >= 4h parado
+      },
+      sla: {
+        thresholds: { atencaoMin: 60, criticoMin: 240 },
+        description: "OK: <1h | Atenção: 1-4h | Crítico: >4h"
       },
       notas: {
         assinadosUsaProxy: true,
@@ -401,6 +425,228 @@ router.get("/metrics/v2/pending/unsigned", requireManager, async (req, res) => {
   } catch (err) {
     console.error("[manager/metrics/v2/pending/unsigned] erro:", err);
     return res.status(500).json({ ok: false, error: err?.message || "Erro ao listar pendências" });
+  }
+});
+
+// ============================================
+// POST /metrics/v2/notify/unsigned - Registrar notificação para médico
+// Body: { medicoId, prontuarioId?, days? }
+// ============================================
+router.post("/metrics/v2/notify/unsigned", requireManager, async (req, res) => {
+  try {
+    const { medicoId, prontuarioId, days } = req.body ?? {};
+    
+    if (!medicoId) {
+      return res.status(400).json({ ok: false, error: "medicoId obrigatório" });
+    }
+
+    // Extrair user do token JWT se disponível
+    let managerUserId = null;
+    const token = req.headers.authorization?.split(" ")[1];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        managerUserId = decoded.id || decoded.userId || null;
+      } catch { /* ignore */ }
+    }
+
+    const payload = {
+      days: Number(days ?? 7),
+      prontuarioId: prontuarioId ?? null,
+      reason: "Pendência: prontuário finalizado sem assinatura",
+      notifiedAt: new Date().toISOString(),
+    };
+
+    // Inserir na tabela manager_notifications
+    const insertResult = await pool.query(`
+      INSERT INTO manager_notifications 
+        (manager_user_id, medico_id, prontuario_id, kind, payload)
+      VALUES 
+        ($1, $2, $3, $4, $5)
+      RETURNING id, created_at
+    `, [
+      managerUserId,
+      String(medicoId),
+      prontuarioId ? String(prontuarioId) : null,
+      "unsigned_prontuario",
+      payload,
+    ]);
+
+    const row = insertResult.rows[0];
+
+    return res.json({
+      ok: true,
+      notificationId: row.id,
+      createdAt: row.created_at,
+      message: "Notificação registrada com sucesso",
+    });
+  } catch (err) {
+    console.error("[manager/metrics/v2/notify/unsigned] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao registrar notificação" });
+  }
+});
+
+// ============================================
+// GET /manager-marketplace - Métricas do marketplace (leilão)
+// Query params: ?days=7 (default 7, max 90)
+// ============================================
+router.get("/manager-marketplace", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(90, Number(req.query.days ?? 7)));
+    
+    // Cache check
+    const cacheKey = `marketplace:${days}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+
+    // 1) Consultas marketplace criadas no período
+    const baseResult = await pool.query(`
+      SELECT COUNT(*)::int AS marketplace_created
+      FROM consultations
+      WHERE is_marketplace = true
+        AND created_at >= $1 AND created_at < $2
+    `, [from, to]);
+
+    // 2) Consultas que receberam bids
+    const withBidsResult = await pool.query(`
+      SELECT COUNT(DISTINCT c.id)::int AS with_bids
+      FROM consultations c
+      JOIN bids b ON b.consultation_id = c.id
+      WHERE c.is_marketplace = true
+        AND c.created_at >= $1 AND c.created_at < $2
+    `, [from, to]);
+
+    // 3) Total de bids e aceitos
+    const bidsAggResult = await pool.query(`
+      SELECT
+        COUNT(*)::int AS total_bids,
+        COUNT(*) FILTER (WHERE is_accepted = true)::int AS accepted_bids
+      FROM bids b
+      JOIN consultations c ON c.id = b.consultation_id
+      WHERE c.is_marketplace = true
+        AND c.created_at >= $1 AND c.created_at < $2
+    `, [from, to]);
+
+    // 4) Tempo até o 1º bid
+    const timeToFirstBidResult = await pool.query(`
+      WITH first_bid AS (
+        SELECT
+          c.id AS consultation_id,
+          EXTRACT(EPOCH FROM (MIN(b.created_at) - c.created_at)) / 60.0 AS minutes_to_first_bid
+        FROM consultations c
+        JOIN bids b ON b.consultation_id = c.id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+        GROUP BY c.id
+      )
+      SELECT
+        AVG(minutes_to_first_bid) AS avg_minutes,
+        percentile_cont(0.5) WITHIN GROUP (ORDER BY minutes_to_first_bid) AS p50_minutes
+      FROM first_bid
+    `, [from, to]);
+
+    // 5) Tempo até aceitar
+    const timeToAcceptResult = await pool.query(`
+      WITH first_accept AS (
+        SELECT
+          c.id AS consultation_id,
+          EXTRACT(EPOCH FROM (MIN(b.created_at) - c.created_at)) / 60.0 AS minutes_to_accept
+        FROM consultations c
+        JOIN bids b ON b.consultation_id = c.id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          AND b.is_accepted = true
+        GROUP BY c.id
+      )
+      SELECT AVG(minutes_to_accept) AS avg_minutes_to_accept
+      FROM first_accept
+    `, [from, to]);
+
+    // 6) Distribuição dos valores de bids
+    const bidAmountDistResult = await pool.query(`
+      SELECT
+        MIN(bid_amount)::numeric AS min,
+        AVG(bid_amount)::numeric AS avg,
+        percentile_cont(0.5) WITHIN GROUP (ORDER BY bid_amount) AS p50,
+        percentile_cont(0.9) WITHIN GROUP (ORDER BY bid_amount) AS p90,
+        MAX(bid_amount)::numeric AS max
+      FROM bids b
+      JOIN consultations c ON c.id = b.consultation_id
+      WHERE c.is_marketplace = true
+        AND c.created_at >= $1 AND c.created_at < $2
+    `, [from, to]);
+
+    // 7) Top médicos por bids
+    const topDoctorsResult = await pool.query(`
+      SELECT
+        d.id AS doctor_id,
+        u.full_name AS doctor_name,
+        COUNT(b.id)::int AS bids,
+        COUNT(b.id) FILTER (WHERE b.is_accepted = true)::int AS accepted
+      FROM bids b
+      JOIN doctors d ON d.id = b.doctor_id
+      JOIN users u ON u.id = d.user_id
+      JOIN consultations c ON c.id = b.consultation_id
+      WHERE c.is_marketplace = true
+        AND c.created_at >= $1 AND c.created_at < $2
+      GROUP BY d.id, u.full_name
+      ORDER BY bids DESC
+      LIMIT 20
+    `, [from, to]);
+
+    const marketplaceCreated = Number(baseResult.rows[0]?.marketplace_created ?? 0);
+    const withBids = Number(withBidsResult.rows[0]?.with_bids ?? 0);
+    const totalBids = Number(bidsAggResult.rows[0]?.total_bids ?? 0);
+    const acceptedBids = Number(bidsAggResult.rows[0]?.accepted_bids ?? 0);
+
+    const avgMinutesToFirstBid = Number(timeToFirstBidResult.rows[0]?.avg_minutes ?? 0);
+    const p50MinutesToFirstBid = Number(timeToFirstBidResult.rows[0]?.p50_minutes ?? 0);
+    const avgMinutesToAccept = Number(timeToAcceptResult.rows[0]?.avg_minutes_to_accept ?? 0);
+
+    const dist = bidAmountDistResult.rows[0] ?? {};
+    
+    const topDoctors = topDoctorsResult.rows.map(r => ({
+      doctorId: r.doctor_id,
+      doctorName: r.doctor_name || "Médico",
+      bids: r.bids,
+      accepted: r.accepted,
+    }));
+
+    const result = {
+      ok: true,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      cards: {
+        marketplaceCreated,
+        withBids,
+        totalBids,
+        acceptedBids,
+        coverageRate: marketplaceCreated > 0 ? Math.round((withBids / marketplaceCreated) * 100) : 0,
+        acceptRate: totalBids > 0 ? Math.round((acceptedBids / totalBids) * 100) : 0,
+      },
+      timing: {
+        avgMinutesToFirstBid: Math.round(avgMinutesToFirstBid * 10) / 10,
+        p50MinutesToFirstBid: Math.round(p50MinutesToFirstBid * 10) / 10,
+        avgMinutesToAccept: Math.round(avgMinutesToAccept * 10) / 10,
+      },
+      bidAmount: {
+        min: dist.min ? Number(dist.min) : null,
+        avg: dist.avg ? Math.round(Number(dist.avg) * 100) / 100 : null,
+        p50: dist.p50 ? Number(dist.p50) : null,
+        p90: dist.p90 ? Number(dist.p90) : null,
+        max: dist.max ? Number(dist.max) : null,
+      },
+      topDoctors,
+    };
+
+    setCache(cacheKey, result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[manager-marketplace] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar métricas marketplace" });
   }
 });
 

@@ -287,6 +287,19 @@ export const notifications = pgTable('notifications', {
 });
 
 // ============================================
+// TABELA: manager_notifications (logs de notificações do manager)
+// ============================================
+export const managerNotifications = pgTable('manager_notifications', {
+  id: serial('id').primaryKey(),
+  managerUserId: integer('manager_user_id').references(() => users.id),
+  medicoId: text('medico_id').notNull(), // pode ser uuid ou string
+  prontuarioId: text('prontuario_id'),
+  kind: text('kind').notNull(), // 'unsigned_prontuario', etc
+  payload: json('payload').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// ============================================
 // EXPORTS
 // ============================================
 export type User = typeof users.$inferSelect;

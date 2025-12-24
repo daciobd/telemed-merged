@@ -23,6 +23,8 @@ type TemposData = {
 
 type PendenciasData = {
   finalizadosSemAssinatura: number;
+  atencao?: number; // >= 1h parado
+  critico?: number; // >= 4h parado
 };
 
 type MetricsV2 = {
@@ -214,6 +216,15 @@ export default function ManagerDashboard() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/manager/marketplace")}
+            data-testid="button-marketplace"
+          >
+            <TrendingUp className="w-4 h-4 mr-1" />
+            Marketplace
+          </Button>
           <div className="inline-flex rounded-lg border overflow-hidden">
             <button
               className={`px-4 py-2 text-sm font-medium transition-colors ${
@@ -338,6 +349,30 @@ export default function ManagerDashboard() {
                 }`}>
                   sem assinatura
                 </span>
+                
+                {/* Painel de Risco - SLA */}
+                {(pendencias.atencao ?? 0) > 0 || (pendencias.critico ?? 0) > 0 ? (
+                  <div className="mt-3 space-y-1" data-testid="painel-risco-sla">
+                    {(pendencias.critico ?? 0) > 0 && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-200">
+                          <span className="w-2 h-2 bg-red-500 rounded-full mr-1.5 animate-pulse" />
+                          Crítico: {pendencias.critico}
+                        </span>
+                        <span className="text-gray-400">{">"}4h</span>
+                      </div>
+                    )}
+                    {(pendencias.atencao ?? 0) > 0 && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-200">
+                          Atenção: {pendencias.atencao}
+                        </span>
+                        <span className="text-gray-400">1-4h</span>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+                
                 {pendencias.finalizadosSemAssinatura > 0 && (
                   <button
                     onClick={() => setLocation(`/manager/pendencias?days=${days}`)}

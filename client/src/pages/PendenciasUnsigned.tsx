@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, Clock, AlertTriangle, RefreshCw, 
-  ExternalLink, User, FileText, ChevronLeft, ChevronRight, X
+  ExternalLink, User, FileText, ChevronLeft, ChevronRight, X, Bell
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 
 function getQueryParams() {
@@ -54,6 +55,7 @@ function getUrgencyColor(min: number): string {
 
 export default function PendenciasUnsigned() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   // Ler query params da URL
   const queryParams = useMemo(() => getQueryParams(), []);
@@ -62,10 +64,50 @@ export default function PendenciasUnsigned() {
   
   const [data, setData] = useState<PendingResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [notifying, setNotifying] = useState(false);
   const [days, setDays] = useState(initialDays);
   const [medicoId, setMedicoId] = useState<string | null>(initialMedicoId);
   const [page, setPage] = useState(0);
   const limit = 20;
+
+  // Função para notificar médico
+  const notifyDoctor = async () => {
+    if (!medicoId) return;
+    setNotifying(true);
+    try {
+      const token = localStorage.getItem("consultorio_token");
+      const res = await fetch("/api/manager/metrics/v2/notify/unsigned", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ medicoId, days }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast({
+          title: "Notificação registrada",
+          description: "O médico será notificado sobre as pendências.",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: json.error || "Erro ao registrar notificação",
+          variant: "destructive",
+        });
+      }
+    } catch (e: any) {
+      toast({
+        title: "Erro",
+        description: e?.message || "Erro de conexão",
+        variant: "destructive",
+      });
+    } finally {
+      setNotifying(false);
+    }
+  };
 
   // Manter URL sincronizada com filtros
   useEffect(() => {
@@ -136,16 +178,29 @@ export default function PendenciasUnsigned() {
 
         <div className="flex items-center gap-2">
           {medicoId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setMedicoId(null); setPage(0); }}
-              className="text-orange-600 border-orange-200 hover:bg-orange-50"
-              data-testid="button-clear-filter"
-            >
-              <X className="w-3 h-3 mr-1" />
-              Limpar filtro
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={notifyDoctor}
+                disabled={notifying}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                data-testid="button-notify-doctor"
+              >
+                <Bell className={`w-3 h-3 mr-1 ${notifying ? "animate-pulse" : ""}`} />
+                {notifying ? "Notificando..." : "Notificar médico"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setMedicoId(null); setPage(0); }}
+                className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                data-testid="button-clear-filter"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Limpar filtro
+              </Button>
+            </>
           )}
           <div className="inline-flex rounded-lg border overflow-hidden">
             <button
