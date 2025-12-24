@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   FileText, CheckCircle, PenTool, RefreshCw, 
-  Clock, TrendingUp, Shield, AlertTriangle, Users
+  Clock, TrendingUp, Shield, AlertTriangle, Users,
+  ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
 type FunnelData = {
@@ -29,6 +30,7 @@ type MetricsV2 = {
   funnel: FunnelData;
   tempos: TemposData;
   pendencias: PendenciasData;
+  notas?: { assinadosUsaProxy?: boolean };
   error?: string;
 };
 
@@ -50,6 +52,8 @@ type DoctorsData = {
   error?: string;
 };
 
+type SortKey = "total" | "finalizados" | "rascunhos" | "assinados" | "taxaFinalizacao" | "pendencias";
+
 function getTaxaColor(taxa: number): string {
   if (taxa >= 85) return "text-green-600";
   if (taxa >= 70) return "text-yellow-600";
@@ -57,9 +61,24 @@ function getTaxaColor(taxa: number): string {
 }
 
 function getTaxaBg(taxa: number): string {
-  if (taxa >= 85) return "bg-green-50 dark:bg-green-900/20";
-  if (taxa >= 70) return "bg-yellow-50 dark:bg-yellow-900/20";
-  return "bg-red-50 dark:bg-red-900/20";
+  if (taxa >= 85) return "bg-green-50 dark:bg-green-900/20 border-green-200";
+  if (taxa >= 70) return "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200";
+  return "bg-red-50 dark:bg-red-900/20 border-red-200";
+}
+
+function getBadgeClass(taxa: number): string {
+  if (taxa >= 85) return "bg-green-100 text-green-800 border-green-200";
+  if (taxa >= 70) return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  return "bg-red-100 text-red-800 border-red-200";
+}
+
+function formatMinutes(v: number | null): string {
+  if (v == null || Number.isNaN(v)) return "—";
+  const rounded = Math.round(v);
+  if (rounded < 60) return `${rounded} min`;
+  const h = Math.floor(rounded / 60);
+  const m = rounded % 60;
+  return `${h}h ${m}m`;
 }
 
 export default function ManagerDashboard() {
@@ -67,7 +86,12 @@ export default function ManagerDashboard() {
   const [doctors, setDoctors] = useState<DoctorsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(7);
+  
+  // Ordenação e filtros
+  const [sortKey, setSortKey] = useState<SortKey>("total");
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
+  const [onlyWithPendencies, setOnlyWithPendencies] = useState(false);
 
   const fetchData = async (selectedDays: number) => {
     setLoading(true);
@@ -81,12 +105,7 @@ export default function ManagerDashboard() {
         fetch(`/api/manager/metrics/v2/doctors?days=${selectedDays}`, { credentials: "include", headers }),
       ]);
 
-      if (metricsRes.status === 403 || doctorsRes.status === 403) {
-        setAccessDenied(true);
-        return;
-      }
-
-      if (metricsRes.status === 401 || doctorsRes.status === 401) {
+      if (metricsRes.status === 403 || metricsRes.status === 401) {
         setAccessDenied(true);
         return;
       }
@@ -107,6 +126,48 @@ export default function ManagerDashboard() {
     fetchData(days);
   }, [days]);
 
+  // Ordenação da tabela de médicos
+  const sortedDoctors = useMemo(() => {
+    const list = doctors?.doctors ? [...doctors.doctors] : [];
+    
+    const filtered = onlyWithPendencies
+      ? list.filter((r) => r.finalizadosSemAssinatura > 0)
+      : list;
+
+    filtered.sort((a, b) => {
+      let av: number, bv: number;
+      
+      if (sortKey === "pendencias") {
+        av = a.finalizadosSemAssinatura;
+        bv = b.finalizadosSemAssinatura;
+      } else {
+        av = (a as any)[sortKey] ?? 0;
+        bv = (b as any)[sortKey] ?? 0;
+      }
+
+      const diff = bv - av;
+      return sortDir === "desc" ? diff : -diff;
+    });
+
+    return filtered;
+  }, [doctors, sortKey, sortDir, onlyWithPendencies]);
+
+  const onSort = (k: SortKey) => {
+    if (sortKey === k) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(k);
+      setSortDir("desc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-30" />;
+    return sortDir === "desc" 
+      ? <ArrowDown className="w-3 h-3 ml-1" /> 
+      : <ArrowUp className="w-3 h-3 ml-1" />;
+  };
+
   if (accessDenied) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
@@ -120,7 +181,7 @@ export default function ManagerDashboard() {
           <CardContent className="text-sm text-red-600 dark:text-red-300 space-y-3">
             <p>Esta página é restrita a gerentes e administradores.</p>
             <p className="text-xs text-red-500">
-              Se você deveria ter acesso, entre em contato com o administrador do sistema.
+              Se você deveria ter acesso, entre em contato com o administrador.
             </p>
           </CardContent>
         </Card>
@@ -142,26 +203,39 @@ export default function ManagerDashboard() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Painel de comando operacional • Últimos {days} dias
+            {metrics?.range?.since && (
+              <span> • Desde {new Date(metrics.range.since).toLocaleDateString("pt-BR")}</span>
+            )}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant={days === 7 ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDays(7)}
-            data-testid="button-7days"
-          >
-            7 dias
-          </Button>
-          <Button
-            variant={days === 30 ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDays(30)}
-            data-testid="button-30days"
-          >
-            30 dias
-          </Button>
+          <div className="inline-flex rounded-lg border overflow-hidden">
+            <button
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                days === 7 
+                  ? "bg-teal-600 text-white" 
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setDays(7)}
+              disabled={loading}
+              data-testid="button-7days"
+            >
+              7 dias
+            </button>
+            <button
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                days === 30 
+                  ? "bg-teal-600 text-white" 
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setDays(30)}
+              disabled={loading}
+              data-testid="button-30days"
+            >
+              30 dias
+            </button>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -190,7 +264,7 @@ export default function ManagerDashboard() {
       ) : (
         <>
           {/* Bloco A - Funil Clínico */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Criados */}
             <Card className="hover:shadow-md transition-shadow" data-testid="card-criados">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -203,97 +277,100 @@ export default function ManagerDashboard() {
             </Card>
 
             {/* Finalizados */}
-            <Card className={`hover:shadow-md transition-shadow ${getTaxaBg(funnel.taxaFinalizacao)}`} data-testid="card-finalizados">
+            <Card className={`hover:shadow-md transition-shadow border ${getTaxaBg(funnel.taxaFinalizacao)}`} data-testid="card-finalizados">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium text-gray-500">Finalizados</CardTitle>
                 <CheckCircle className={`w-5 h-5 ${getTaxaColor(funnel.taxaFinalizacao)}`} />
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-3xl font-bold text-gray-900 dark:text-white">{funnel.finalizados}</div>
-                <div className={`text-sm font-medium ${getTaxaColor(funnel.taxaFinalizacao)}`}>
-                  {funnel.taxaFinalizacao}%
+                <span className={`inline-flex mt-1 px-2 py-0.5 text-xs border rounded-full ${getBadgeClass(funnel.taxaFinalizacao)}`}>
+                  {funnel.taxaFinalizacao}% finalização
+                </span>
+                <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {formatMinutes(tempos.tempoMedioAteFinalizarMin)} até finalizar
                 </div>
               </CardContent>
             </Card>
 
             {/* Assinados */}
-            <Card className={`hover:shadow-md transition-shadow ${getTaxaBg(funnel.taxaAssinatura)}`} data-testid="card-assinados">
+            <Card className={`hover:shadow-md transition-shadow border ${getTaxaBg(funnel.taxaAssinatura)}`} data-testid="card-assinados">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium text-gray-500">Assinados</CardTitle>
                 <PenTool className={`w-5 h-5 ${getTaxaColor(funnel.taxaAssinatura)}`} />
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-3xl font-bold text-gray-900 dark:text-white">{funnel.assinados}</div>
-                <div className={`text-sm font-medium ${getTaxaColor(funnel.taxaAssinatura)}`}>
-                  {funnel.taxaAssinatura}%
+                <span className={`inline-flex mt-1 px-2 py-0.5 text-xs border rounded-full ${getBadgeClass(funnel.taxaAssinatura)}`}>
+                  {funnel.taxaAssinatura}% assinatura
+                </span>
+                <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  {formatMinutes(tempos.tempoMedioAteAssinarMin)} até assinar
                 </div>
               </CardContent>
             </Card>
 
-            {/* Tempo até finalizar */}
-            <Card className="hover:shadow-md transition-shadow" data-testid="card-tempo-finalizar">
+            {/* Pendências */}
+            <Card 
+              className={`hover:shadow-md transition-shadow border ${
+                pendencias.finalizadosSemAssinatura > 0 
+                  ? "border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20" 
+                  : "border-green-200 bg-green-50 dark:bg-green-900/20"
+              }`} 
+              data-testid="card-pendencias"
+            >
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-500">Até finalizar</CardTitle>
-                <Clock className="w-5 h-5 text-orange-600" />
+                <CardTitle className="text-sm font-medium text-gray-500">Pendências</CardTitle>
+                <AlertTriangle className={`w-5 h-5 ${pendencias.finalizadosSemAssinatura > 0 ? "text-yellow-600" : "text-green-600"}`} />
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {tempos.tempoMedioAteFinalizarMin != null ? `${tempos.tempoMedioAteFinalizarMin} min` : "—"}
-                </div>
-                <div className="text-xs text-gray-400">média</div>
-              </CardContent>
-            </Card>
-
-            {/* Tempo até assinar */}
-            <Card className="hover:shadow-md transition-shadow" data-testid="card-tempo-assinar">
-              <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-500">Até assinar</CardTitle>
-                <TrendingUp className="w-5 h-5 text-purple-600" />
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {tempos.tempoMedioAteAssinarMin != null ? `${tempos.tempoMedioAteAssinarMin} min` : "—"}
-                </div>
-                <div className="text-xs text-gray-400">média</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{pendencias.finalizadosSemAssinatura}</div>
+                <span className={`inline-flex mt-1 px-2 py-0.5 text-xs border rounded-full ${
+                  pendencias.finalizadosSemAssinatura > 0 
+                    ? "bg-yellow-100 text-yellow-800 border-yellow-200" 
+                    : "bg-green-100 text-green-800 border-green-200"
+                }`}>
+                  sem assinatura
+                </span>
+                {metrics?.notas?.assinadosUsaProxy && (
+                  <div className="text-xs text-gray-400 mt-2">
+                    * inclui proxy ia_metadata
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Bloco B - Alertas */}
-          {pendencias.finalizadosSemAssinatura > 0 && (
-            <Card className="border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20" data-testid="card-alerta-pendencias">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                  <div>
-                    <div className="font-medium text-yellow-800 dark:text-yellow-200">
-                      {pendencias.finalizadosSemAssinatura} prontuários finalizados sem assinatura
-                    </div>
-                    <div className="text-sm text-yellow-600 dark:text-yellow-300">
-                      Requerem atenção do médico
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="text-yellow-700 border-yellow-400">
-                  Ver lista
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Bloco C - Produção por Médico */}
           <Card data-testid="card-doctors">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Produção por Médico
-              </CardTitle>
-              <span className="text-sm text-gray-500">{doctors?.total || 0} médicos</span>
+            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Produção por Médico
+                </CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  Identifica gargalos (rascunhos) e performance (taxa de finalização)
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={onlyWithPendencies}
+                  onChange={(e) => setOnlyWithPendencies(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                Somente com pendências
+              </label>
             </CardHeader>
             <CardContent>
-              {!doctors?.doctors?.length ? (
+              {!sortedDoctors.length ? (
                 <div className="text-center text-gray-400 py-8">
-                  Nenhum dado de médicos no período.
+                  {onlyWithPendencies 
+                    ? "Nenhum médico com pendências no período." 
+                    : "Nenhum dado de médicos no período."}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -301,33 +378,71 @@ export default function ManagerDashboard() {
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
                         <th className="text-left py-3 px-2 font-medium text-gray-500">Médico</th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-500">Total</th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-500">Finalizados</th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-500">Assinados</th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-500">Rascunhos</th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-500">Taxa</th>
+                        <th 
+                          className="text-center py-3 px-2 font-medium text-gray-500 cursor-pointer hover:text-gray-700"
+                          onClick={() => onSort("total")}
+                        >
+                          <span className="inline-flex items-center">Total <SortIcon col="total" /></span>
+                        </th>
+                        <th 
+                          className="text-center py-3 px-2 font-medium text-gray-500 cursor-pointer hover:text-gray-700"
+                          onClick={() => onSort("finalizados")}
+                        >
+                          <span className="inline-flex items-center">Finalizados <SortIcon col="finalizados" /></span>
+                        </th>
+                        <th 
+                          className="text-center py-3 px-2 font-medium text-gray-500 cursor-pointer hover:text-gray-700"
+                          onClick={() => onSort("assinados")}
+                        >
+                          <span className="inline-flex items-center">Assinados <SortIcon col="assinados" /></span>
+                        </th>
+                        <th 
+                          className="text-center py-3 px-2 font-medium text-gray-500 cursor-pointer hover:text-gray-700"
+                          onClick={() => onSort("rascunhos")}
+                        >
+                          <span className="inline-flex items-center">Rascunhos <SortIcon col="rascunhos" /></span>
+                        </th>
+                        <th 
+                          className="text-center py-3 px-2 font-medium text-gray-500 cursor-pointer hover:text-gray-700"
+                          onClick={() => onSort("pendencias")}
+                        >
+                          <span className="inline-flex items-center">Pendências <SortIcon col="pendencias" /></span>
+                        </th>
+                        <th 
+                          className="text-center py-3 px-2 font-medium text-gray-500 cursor-pointer hover:text-gray-700"
+                          onClick={() => onSort("taxaFinalizacao")}
+                        >
+                          <span className="inline-flex items-center">Taxa <SortIcon col="taxaFinalizacao" /></span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {doctors.doctors.map((doc, i) => (
+                      {sortedDoctors.map((doc, i) => (
                         <tr 
                           key={doc.medicoId} 
-                          className={`border-b border-gray-100 dark:border-gray-800 ${i % 2 === 0 ? "bg-gray-50/50 dark:bg-gray-800/30" : ""}`}
+                          className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
+                            i % 2 === 0 ? "bg-gray-50/50 dark:bg-gray-800/30" : ""
+                          }`}
                           data-testid={`row-doctor-${doc.medicoId}`}
                         >
                           <td className="py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
-                            {doc.medicoId?.substring(0, 8) || "—"}
+                            {doc.medicoId?.substring(0, 10) || "—"}
                           </td>
-                          <td className="text-center py-3 px-2">{doc.total}</td>
+                          <td className="text-center py-3 px-2 font-medium">{doc.total}</td>
                           <td className="text-center py-3 px-2 text-green-600">{doc.finalizados}</td>
                           <td className="text-center py-3 px-2 text-purple-600">{doc.assinados}</td>
                           <td className="text-center py-3 px-2">
-                            <span className={doc.rascunhos > 3 ? "text-red-600 font-medium" : "text-yellow-600"}>
+                            <span className={doc.rascunhos > 3 ? "text-red-600 font-semibold" : "text-yellow-600"}>
                               {doc.rascunhos}
                             </span>
                           </td>
                           <td className="text-center py-3 px-2">
-                            <span className={`font-medium ${getTaxaColor(doc.taxaFinalizacao)}`}>
+                            <span className={doc.finalizadosSemAssinatura > 0 ? "text-orange-600 font-semibold" : "text-gray-400"}>
+                              {doc.finalizadosSemAssinatura}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-2">
+                            <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getBadgeClass(doc.taxaFinalizacao)}`}>
                               {doc.taxaFinalizacao}%
                             </span>
                           </td>
