@@ -5,58 +5,45 @@ import { pool } from "../db/pool.js";
 const router = express.Router();
 
 // ============================================
-// HELPERS: parseList
-// ============================================
-function parseList(raw = "") {
-  return raw
-    .split(/[;,]/g)
-    .map(s => s.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-// ============================================
 // MIDDLEWARE: requireManager
-// Permite acesso por MANAGER_EMAILS ou MANAGER_USERS
+// Permite acesso apenas se email está em MANAGER_EMAILS
 // ============================================
 function requireManager(req, res, next) {
-  const allowEmails = parseList(process.env.MANAGER_EMAILS);
-  const allowUsers = parseList(process.env.MANAGER_USERS);
-
-  // Tentar extrair user do token JWT
-  let user = null;
-  const token = req.headers.authorization?.split(" ")[1];
-  
-  if (token) {
-    try {
-      user = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      // Token inválido
+  try {
+    // Tentar extrair user do token JWT
+    let user = null;
+    const token = req.headers.authorization?.split(" ")[1];
+    
+    if (token) {
+      try {
+        user = jwt.verify(token, process.env.JWT_SECRET);
+      } catch {
+        // Token inválido
+      }
     }
+
+    // Fallback para req.user ou req.session?.user
+    if (!user) {
+      user = req.user || req.session?.user;
+    }
+
+    if (!user?.email) {
+      return res.status(401).json({ ok: false, error: "Não autenticado" });
+    }
+
+    const emails = (process.env.MANAGER_EMAILS || "")
+      .split(",")
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (emails.includes(user.email.toLowerCase())) {
+      return next();
+    }
+
+    return res.status(403).json({ ok: false, error: "Acesso restrito" });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: "Erro de autorização" });
   }
-
-  // Fallback para req.user ou req.session?.user
-  if (!user) {
-    user = req.user || req.session?.user || null;
-  }
-
-  // Extrair email (vários formatos possíveis)
-  const email = (user?.email || user?.user_email || user?.login_email || "")
-    .toString()
-    .trim()
-    .toLowerCase();
-
-  // Extrair username (fallback)
-  const username = (user?.username || user?.login || user?.nome_usuario || "")
-    .toString()
-    .trim()
-    .toLowerCase();
-
-  // Verificar allowlist por email ou username
-  if ((email && allowEmails.includes(email)) || (username && allowUsers.includes(username))) {
-    return next();
-  }
-
-  return res.status(403).json({ ok: false, error: "Acesso restrito" });
 }
 
 // ============================================
