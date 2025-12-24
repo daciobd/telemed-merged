@@ -27,6 +27,12 @@ function requireManager(req, res, next) {
       user = req.user || req.session?.user;
     }
 
+    // DEBUG TEMPORÁRIO
+    console.log("AUTH DEBUG:", {
+      user: req.user,
+      sessionUser: req.session?.user,
+    });
+
     if (!user?.email) {
       return res.status(401).json({ ok: false, error: "Não autenticado" });
     }
