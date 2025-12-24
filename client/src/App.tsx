@@ -19,6 +19,7 @@ import Settings from './pages/Settings';
 import ManagerDashboard from './pages/ManagerDashboard';
 import PendenciasUnsigned from './pages/PendenciasUnsigned';
 import ManagerMarketplace from './pages/ManagerMarketplace';
+import ManagerNotificacoes from './pages/ManagerNotificacoes';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -98,6 +99,7 @@ export default function App() {
       <Route path="/manager" component={ManagerDashboard} />
       <Route path="/manager/pendencias" component={PendenciasUnsigned} />
       <Route path="/manager/marketplace" component={ManagerMarketplace} />
+      <Route path="/manager/notificacoes" component={ManagerNotificacoes} />
       
       {/* Default redirect */}
       <Route path="/">
