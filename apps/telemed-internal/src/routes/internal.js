@@ -7,8 +7,14 @@ const router = express.Router();
 // ============================================
 // MIDDLEWARE: requireInternal
 // Protege rotas internas com INTERNAL_TOKEN
+// Kill switch: INTERNAL_ROUTES_ENABLED=false desliga
 // ============================================
 function requireInternal(req, res, next) {
+  // Kill switch por ENV
+  if (process.env.INTERNAL_ROUTES_ENABLED === "false") {
+    return res.status(503).json({ ok: false, error: "Rotas internas desabilitadas" });
+  }
+
   const token = req.header("x-internal-token");
   if (!token || token !== process.env.INTERNAL_TOKEN) {
     return res.status(403).json({ ok: false, error: "Forbidden" });
@@ -29,8 +35,10 @@ router.post("/users/promote", requireInternal, async (req, res) => {
     }
 
     const roleNorm = String(role).toLowerCase();
-    if (!["patient", "doctor", "admin"].includes(roleNorm)) {
-      return res.status(400).json({ ok: false, error: "role inválida (use: patient, doctor, admin)" });
+    
+    // HARDENING: Só permite promoção para admin ou doctor (não patient)
+    if (!["doctor", "admin"].includes(roleNorm)) {
+      return res.status(400).json({ ok: false, error: "role inválida (use: doctor, admin)" });
     }
 
     // Atualizar role do usuário
@@ -43,6 +51,14 @@ router.post("/users/promote", requireInternal, async (req, res) => {
     if (!updated) {
       return res.status(404).json({ ok: false, error: "Usuário não encontrado" });
     }
+
+    // AUDITORIA: Log sem dados clínicos
+    console.log("[INTERNAL PROMOTE]", {
+      targetEmail: email.toLowerCase(),
+      role: roleNorm,
+      ip: req.ip || req.headers["x-forwarded-for"] || "unknown",
+      at: new Date().toISOString(),
+    });
 
     return res.json({ 
       ok: true, 
