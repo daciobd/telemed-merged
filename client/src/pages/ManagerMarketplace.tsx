@@ -219,8 +219,8 @@ export default function ManagerMarketplace() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-2xl font-bold">{cards.withBids}</div>
-                <span className={`inline-flex text-xs px-1.5 py-0.5 rounded ${cards.coverageRate >= 70 ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                  {cards.coverageRate}% cobertura
+                <span className={`inline-flex text-xs px-1.5 py-0.5 rounded ${cards.coverageRate >= 0.7 ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                  {(cards.coverageRate * 100).toFixed(1)}% cobertura
                 </span>
               </CardContent>
             </Card>
@@ -240,8 +240,8 @@ export default function ManagerMarketplace() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-2xl font-bold">{cards.acceptedBids}</div>
-                <span className={`inline-flex text-xs px-1.5 py-0.5 rounded ${cards.acceptRate >= 50 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
-                  {cards.acceptRate}% aceite
+                <span className={`inline-flex text-xs px-1.5 py-0.5 rounded ${cards.acceptRate >= 0.5 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
+                  {(cards.acceptRate * 100).toFixed(1)}% aceite
                 </span>
               </CardContent>
             </Card>
@@ -348,7 +348,7 @@ export default function ManagerMarketplace() {
                                 ? "bg-green-100 text-green-800"
                                 : "bg-gray-100 text-gray-600"
                             }`}>
-                              {doc.bids > 0 ? Math.round((doc.accepted / doc.bids) * 100) : 0}%
+                              {doc.bids > 0 ? ((doc.accepted / doc.bids) * 100).toFixed(0) : 0}%
                             </span>
                           </td>
                         </tr>

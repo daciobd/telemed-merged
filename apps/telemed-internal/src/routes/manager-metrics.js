@@ -624,8 +624,8 @@ router.get("/manager-marketplace", requireManager, async (req, res) => {
         withBids,
         totalBids,
         acceptedBids,
-        coverageRate: marketplaceCreated > 0 ? Math.round((withBids / marketplaceCreated) * 100) : 0,
-        acceptRate: totalBids > 0 ? Math.round((acceptedBids / totalBids) * 100) : 0,
+        coverageRate: marketplaceCreated > 0 ? Math.round((withBids / marketplaceCreated) * 10000) / 10000 : 0,
+        acceptRate: totalBids > 0 ? Math.round((acceptedBids / totalBids) * 10000) / 10000 : 0,
       },
       timing: {
         avgMinutesToFirstBid: Math.round(avgMinutesToFirstBid * 10) / 10,
