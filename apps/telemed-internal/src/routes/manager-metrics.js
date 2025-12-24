@@ -862,6 +862,233 @@ router.get("/manager-marketplace-sla", requireManager, async (req, res) => {
 });
 
 // ============================================
+// GET /manager-marketplace-funnel - Funil por status + conversão
+// Query params: ?days=90&verifiedOnly=0
+// ============================================
+router.get("/manager-marketplace-funnel", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 90)));
+    const verifiedOnly = req.query.verifiedOnly === "1" || req.query.verifiedOnly === "true";
+    
+    const cacheKey = `marketplace-funnel:${days}:${verifiedOnly}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+
+    // Filtro para consultas com bids de médicos verificados
+    const verifiedFilter = verifiedOnly 
+      ? `AND EXISTS (
+           SELECT 1 FROM bids b
+           JOIN doctors d ON d.id = b.doctor_id
+           WHERE b.consultation_id = c.id
+             AND d.is_verified = true
+         )` 
+      : "";
+
+    // Contagem por status
+    const statusResult = await pool.query(`
+      SELECT
+        status::text AS status,
+        COUNT(*)::int AS count
+      FROM consultations c
+      WHERE c.is_marketplace = true
+        AND c.created_at >= $1 AND c.created_at < $2
+        ${verifiedFilter}
+      GROUP BY status
+      ORDER BY count DESC
+    `, [from, to]);
+
+    // Total criadas
+    const totalResult = await pool.query(`
+      SELECT COUNT(*)::int AS created
+      FROM consultations c
+      WHERE c.is_marketplace = true
+        AND c.created_at >= $1 AND c.created_at < $2
+        ${verifiedFilter}
+    `, [from, to]);
+
+    const created = Number(totalResult.rows[0]?.created ?? 0);
+
+    // Normalizar status
+    const bucket = {
+      pending: 0,
+      doctor_matched: 0,
+      scheduled: 0,
+      in_progress: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+
+    for (const r of statusResult.rows) {
+      if (r.status in bucket) bucket[r.status] = r.count;
+    }
+
+    const rates = {
+      matchRate: created > 0 ? Math.round((bucket.doctor_matched / created) * 10000) / 10000 : 0,
+      scheduleRate: created > 0 ? Math.round((bucket.scheduled / created) * 10000) / 10000 : 0,
+      inProgressRate: created > 0 ? Math.round((bucket.in_progress / created) * 10000) / 10000 : 0,
+      completionRate: created > 0 ? Math.round((bucket.completed / created) * 10000) / 10000 : 0,
+      cancelRate: created > 0 ? Math.round((bucket.cancelled / created) * 10000) / 10000 : 0,
+    };
+
+    const result = {
+      ok: true,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      filters: { verifiedOnly },
+      created,
+      status: bucket,
+      rates,
+    };
+
+    setCache(cacheKey, result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[manager-marketplace-funnel] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar funil" });
+  }
+});
+
+// ============================================
+// GET /manager-marketplace-health - Saúde do leilão (competitividade)
+// Query params: ?days=90&verifiedOnly=0
+// ============================================
+router.get("/manager-marketplace-health", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 90)));
+    const verifiedOnly = req.query.verifiedOnly === "1" || req.query.verifiedOnly === "true";
+    
+    const cacheKey = `marketplace-health:${days}:${verifiedOnly}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+
+    const verifiedFilter = verifiedOnly 
+      ? "AND d.is_verified = true AND d.is_active = true" 
+      : "";
+
+    // 1) Bids por consulta (média, p50, p90)
+    const bidsPerConsultResult = await pool.query(`
+      WITH bid_counts AS (
+        SELECT
+          c.id AS consultation_id,
+          COUNT(b.id)::int AS bid_count
+        FROM consultations c
+        LEFT JOIN bids b ON b.consultation_id = c.id
+        ${verifiedOnly ? "LEFT JOIN doctors d ON d.id = b.doctor_id" : ""}
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          ${verifiedFilter}
+        GROUP BY c.id
+      )
+      SELECT
+        COALESCE(AVG(bid_count), 0)::float AS avg,
+        COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY bid_count), 0)::float AS p50,
+        COALESCE(percentile_cont(0.9) WITHIN GROUP (ORDER BY bid_count), 0)::float AS p90,
+        COUNT(*) FILTER (WHERE bid_count = 0)::int AS sem_bids,
+        COUNT(*)::int AS total_consultas
+      FROM bid_counts
+    `, [from, to]);
+
+    // 2) Concentração por médico (top 1/3/5 respondem quantos % dos bids)
+    const concentrationResult = await pool.query(`
+      WITH doc_bids AS (
+        SELECT
+          b.doctor_id,
+          COUNT(*)::int AS bids
+        FROM bids b
+        JOIN consultations c ON c.id = b.consultation_id
+        ${verifiedOnly ? "JOIN doctors d ON d.id = b.doctor_id" : ""}
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          ${verifiedFilter}
+        GROUP BY b.doctor_id
+        ORDER BY bids DESC
+      ),
+      total AS (
+        SELECT SUM(bids)::float AS total_bids FROM doc_bids
+      ),
+      ranked AS (
+        SELECT bids, ROW_NUMBER() OVER (ORDER BY bids DESC) AS rank
+        FROM doc_bids
+      )
+      SELECT
+        t.total_bids,
+        COALESCE(SUM(r.bids) FILTER (WHERE r.rank <= 1), 0)::int AS top1_bids,
+        COALESCE(SUM(r.bids) FILTER (WHERE r.rank <= 3), 0)::int AS top3_bids,
+        COALESCE(SUM(r.bids) FILTER (WHERE r.rank <= 5), 0)::int AS top5_bids,
+        CASE WHEN t.total_bids > 0 THEN ROUND((SUM(r.bids) FILTER (WHERE r.rank <= 1) / t.total_bids)::numeric, 4) ELSE 0 END AS top1_pct,
+        CASE WHEN t.total_bids > 0 THEN ROUND((SUM(r.bids) FILTER (WHERE r.rank <= 3) / t.total_bids)::numeric, 4) ELSE 0 END AS top3_pct,
+        CASE WHEN t.total_bids > 0 THEN ROUND((SUM(r.bids) FILTER (WHERE r.rank <= 5) / t.total_bids)::numeric, 4) ELSE 0 END AS top5_pct
+      FROM ranked r, total t
+      GROUP BY t.total_bids
+    `, [from, to]);
+
+    // 3) Tempo de cauda: consultas sem bids após 15/60 min
+    const tailResult = await pool.query(`
+      WITH consult_status AS (
+        SELECT
+          c.id,
+          c.created_at,
+          MIN(b.created_at) AS first_bid_at,
+          EXTRACT(EPOCH FROM (NOW() - c.created_at)) / 60.0 AS age_min
+        FROM consultations c
+        LEFT JOIN bids b ON b.consultation_id = c.id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+        GROUP BY c.id
+      )
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE first_bid_at IS NULL AND age_min >= 15)::int AS sem_bid_15min,
+        COUNT(*) FILTER (WHERE first_bid_at IS NULL AND age_min >= 60)::int AS sem_bid_60min,
+        COUNT(*) FILTER (WHERE first_bid_at IS NULL AND age_min >= 1440)::int AS sem_bid_24h
+      FROM consult_status
+    `, [from, to]);
+
+    const bc = bidsPerConsultResult.rows[0] ?? {};
+    const cc = concentrationResult.rows[0] ?? {};
+    const tc = tailResult.rows[0] ?? {};
+
+    const result = {
+      ok: true,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      filters: { verifiedOnly },
+      bidsPerConsultation: {
+        avg: Math.round((bc.avg ?? 0) * 100) / 100,
+        p50: Math.round((bc.p50 ?? 0) * 10) / 10,
+        p90: Math.round((bc.p90 ?? 0) * 10) / 10,
+        semBids: bc.sem_bids ?? 0,
+        totalConsultas: bc.total_consultas ?? 0,
+      },
+      concentration: {
+        totalBids: Number(cc.total_bids ?? 0),
+        top1: { bids: cc.top1_bids ?? 0, pct: Number(cc.top1_pct ?? 0) },
+        top3: { bids: cc.top3_bids ?? 0, pct: Number(cc.top3_pct ?? 0) },
+        top5: { bids: cc.top5_bids ?? 0, pct: Number(cc.top5_pct ?? 0) },
+      },
+      tail: {
+        total: tc.total ?? 0,
+        semBidApos15min: tc.sem_bid_15min ?? 0,
+        semBidApos60min: tc.sem_bid_60min ?? 0,
+        semBidApos24h: tc.sem_bid_24h ?? 0,
+      },
+    };
+
+    setCache(cacheKey, result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[manager-marketplace-health] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar saúde" });
+  }
+});
+
+// ============================================
 // POST /cron/unsigned-alerts - Automação de alertas para pendências críticas
 // Body: { days?: 30 }
 // ============================================
