@@ -1015,6 +1015,25 @@ router.put("/bids/:id/accept", authenticate, async (req, res) => {
         .json({ error: "Sem permissão para aceitar lances desta consulta" });
     }
 
+    // C1: Proteção contra aceite duplicado - já existe bid aceito para esta consulta?
+    const alreadyAccepted = await db
+      .select({ id: bids.id })
+      .from(bids)
+      .where(
+        and(
+          eq(bids.consultationId, bid.consultationId),
+          eq(bids.isAccepted, true)
+        )
+      )
+      .limit(1);
+
+    if (alreadyAccepted.length > 0) {
+      return res.status(409).json({
+        ok: false,
+        error: "Consulta já possui bid aceito",
+      });
+    }
+
     // Calcular fees (20% plataforma, 80% médico)
     const platformFee = parseFloat(bid.bidAmount) * 0.2; // 20% comissão
     const doctorEarnings = parseFloat(bid.bidAmount) - platformFee;
