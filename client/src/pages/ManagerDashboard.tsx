@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { 
   FileText, CheckCircle, PenTool, RefreshCw, 
   Clock, TrendingUp, Shield, AlertTriangle, Users,
-  ArrowUpDown, ArrowUp, ArrowDown
+  ArrowUpDown, ArrowUp, ArrowDown, ExternalLink
 } from "lucide-react";
+import { Link } from "wouter";
 
 type FunnelData = {
   criados: number;
@@ -334,6 +335,15 @@ export default function ManagerDashboard() {
                 }`}>
                   sem assinatura
                 </span>
+                {pendencias.finalizadosSemAssinatura > 0 && (
+                  <Link
+                    href="/manager/pendencias"
+                    className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-xs font-medium mt-2"
+                    data-testid="link-ver-pendencias"
+                  >
+                    Ver lista <ExternalLink className="w-3 h-3" />
+                  </Link>
+                )}
                 {metrics?.notas?.assinadosUsaProxy && (
                   <div className="text-xs text-gray-400 mt-2">
                     * inclui proxy ia_metadata
