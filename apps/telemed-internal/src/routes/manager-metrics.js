@@ -657,4 +657,350 @@ router.get("/manager-marketplace", requireManager, async (req, res) => {
   }
 });
 
+// ============================================
+// MIDDLEWARE: requireInternalToken (para cron jobs)
+// ============================================
+function requireInternalToken(req, res, next) {
+  const token = req.header("x-internal-token") || req.headers.authorization?.split(" ")[1];
+  const expectedToken = process.env.INTERNAL_TOKEN || process.env.INTERNAL_CRON_TOKEN;
+  
+  if (!token || !expectedToken || token !== expectedToken) {
+    return res.status(401).json({ ok: false, error: "Não autorizado (token inválido)" });
+  }
+  return next();
+}
+
+// ============================================
+// GET /manager-marketplace-sla - SLA detalhado com percentis e buckets
+// Query params: ?days=90&verifiedOnly=0
+// ============================================
+router.get("/manager-marketplace-sla", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 90)));
+    const verifiedOnly = req.query.verifiedOnly === "1" || req.query.verifiedOnly === "true";
+    
+    const cacheKey = `marketplace-sla:${days}:${verifiedOnly}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - days);
+
+    // Filtro de médicos verificados (opcional)
+    const verifiedFilter = verifiedOnly 
+      ? "AND d.is_verified = true AND d.is_active = true" 
+      : "";
+
+    // 1) Tempo até 1º bid - percentis p50/p90/p95
+    const timingBidResult = await pool.query(`
+      WITH first_bid AS (
+        SELECT
+          c.id AS consultation_id,
+          EXTRACT(EPOCH FROM (MIN(b.created_at) - c.created_at)) / 60.0 AS minutes
+        FROM consultations c
+        JOIN bids b ON b.consultation_id = c.id
+        JOIN doctors d ON d.id = b.doctor_id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          ${verifiedFilter}
+        GROUP BY c.id
+      )
+      SELECT
+        COALESCE(AVG(minutes), 0)::float AS avg,
+        COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY minutes), 0)::float AS p50,
+        COALESCE(percentile_cont(0.9) WITHIN GROUP (ORDER BY minutes), 0)::float AS p90,
+        COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY minutes), 0)::float AS p95
+      FROM first_bid
+    `, [from, to]);
+
+    // 2) Tempo até aceitar - percentis p50/p90/p95
+    const timingAcceptResult = await pool.query(`
+      WITH first_accept AS (
+        SELECT
+          c.id AS consultation_id,
+          EXTRACT(EPOCH FROM (MIN(b.created_at) - c.created_at)) / 60.0 AS minutes
+        FROM consultations c
+        JOIN bids b ON b.consultation_id = c.id
+        JOIN doctors d ON d.id = b.doctor_id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          AND b.is_accepted = true
+          ${verifiedFilter}
+        GROUP BY c.id
+      )
+      SELECT
+        COALESCE(AVG(minutes), 0)::float AS avg,
+        COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY minutes), 0)::float AS p50,
+        COALESCE(percentile_cont(0.9) WITHIN GROUP (ORDER BY minutes), 0)::float AS p90,
+        COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY minutes), 0)::float AS p95
+      FROM first_accept
+    `, [from, to]);
+
+    // 3) Buckets: % consultas com bid em até X minutos
+    const bucketsBidResult = await pool.query(`
+      WITH first_bid AS (
+        SELECT
+          c.id AS consultation_id,
+          EXTRACT(EPOCH FROM (MIN(b.created_at) - c.created_at)) / 60.0 AS minutes
+        FROM consultations c
+        JOIN bids b ON b.consultation_id = c.id
+        JOIN doctors d ON d.id = b.doctor_id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          ${verifiedFilter}
+        GROUP BY c.id
+      ),
+      total AS (
+        SELECT COUNT(*)::float AS total FROM consultations c
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+      )
+      SELECT
+        t.total AS total_consultas,
+        COUNT(*) FILTER (WHERE fb.minutes <= 5)::int AS dentro_5min,
+        COUNT(*) FILTER (WHERE fb.minutes <= 15)::int AS dentro_15min,
+        COUNT(*) FILTER (WHERE fb.minutes <= 60)::int AS dentro_60min,
+        CASE WHEN t.total > 0 THEN ROUND((COUNT(*) FILTER (WHERE fb.minutes <= 5) / t.total)::numeric, 4) ELSE 0 END AS pct_5min,
+        CASE WHEN t.total > 0 THEN ROUND((COUNT(*) FILTER (WHERE fb.minutes <= 15) / t.total)::numeric, 4) ELSE 0 END AS pct_15min,
+        CASE WHEN t.total > 0 THEN ROUND((COUNT(*) FILTER (WHERE fb.minutes <= 60) / t.total)::numeric, 4) ELSE 0 END AS pct_60min
+      FROM first_bid fb, total t
+      GROUP BY t.total
+    `, [from, to]);
+
+    // 4) Buckets: % consultas aceitas em até X minutos
+    const bucketsAcceptResult = await pool.query(`
+      WITH first_accept AS (
+        SELECT
+          c.id AS consultation_id,
+          EXTRACT(EPOCH FROM (MIN(b.created_at) - c.created_at)) / 60.0 AS minutes
+        FROM consultations c
+        JOIN bids b ON b.consultation_id = c.id
+        JOIN doctors d ON d.id = b.doctor_id
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+          AND b.is_accepted = true
+          ${verifiedFilter}
+        GROUP BY c.id
+      ),
+      total AS (
+        SELECT COUNT(*)::float AS total FROM consultations c
+        WHERE c.is_marketplace = true
+          AND c.created_at >= $1 AND c.created_at < $2
+      )
+      SELECT
+        t.total AS total_consultas,
+        COUNT(*) FILTER (WHERE fa.minutes <= 15)::int AS aceito_15min,
+        COUNT(*) FILTER (WHERE fa.minutes <= 60)::int AS aceito_60min,
+        COUNT(*) FILTER (WHERE fa.minutes <= 1440)::int AS aceito_24h,
+        CASE WHEN t.total > 0 THEN ROUND((COUNT(*) FILTER (WHERE fa.minutes <= 15) / t.total)::numeric, 4) ELSE 0 END AS pct_15min,
+        CASE WHEN t.total > 0 THEN ROUND((COUNT(*) FILTER (WHERE fa.minutes <= 60) / t.total)::numeric, 4) ELSE 0 END AS pct_60min,
+        CASE WHEN t.total > 0 THEN ROUND((COUNT(*) FILTER (WHERE fa.minutes <= 1440) / t.total)::numeric, 4) ELSE 0 END AS pct_24h
+      FROM first_accept fa, total t
+      GROUP BY t.total
+    `, [from, to]);
+
+    // 5) Conversão por status
+    const conversionResult = await pool.query(`
+      SELECT
+        status,
+        COUNT(*)::int AS total
+      FROM consultations
+      WHERE is_marketplace = true
+        AND created_at >= $1 AND created_at < $2
+      GROUP BY status
+      ORDER BY total DESC
+    `, [from, to]);
+
+    const tb = timingBidResult.rows[0] ?? {};
+    const ta = timingAcceptResult.rows[0] ?? {};
+    const bb = bucketsBidResult.rows[0] ?? {};
+    const ba = bucketsAcceptResult.rows[0] ?? {};
+
+    const result = {
+      ok: true,
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      verifiedOnly,
+      timing: {
+        toFirstBid: {
+          avg: Math.round((tb.avg ?? 0) * 10) / 10,
+          p50: Math.round((tb.p50 ?? 0) * 10) / 10,
+          p90: Math.round((tb.p90 ?? 0) * 10) / 10,
+          p95: Math.round((tb.p95 ?? 0) * 10) / 10,
+        },
+        toAccept: {
+          avg: Math.round((ta.avg ?? 0) * 10) / 10,
+          p50: Math.round((ta.p50 ?? 0) * 10) / 10,
+          p90: Math.round((ta.p90 ?? 0) * 10) / 10,
+          p95: Math.round((ta.p95 ?? 0) * 10) / 10,
+        },
+      },
+      buckets: {
+        bidWithin: {
+          "5min": { count: bb.dentro_5min ?? 0, pct: Number(bb.pct_5min ?? 0) },
+          "15min": { count: bb.dentro_15min ?? 0, pct: Number(bb.pct_15min ?? 0) },
+          "60min": { count: bb.dentro_60min ?? 0, pct: Number(bb.pct_60min ?? 0) },
+        },
+        acceptedWithin: {
+          "15min": { count: ba.aceito_15min ?? 0, pct: Number(ba.pct_15min ?? 0) },
+          "60min": { count: ba.aceito_60min ?? 0, pct: Number(ba.pct_60min ?? 0) },
+          "24h": { count: ba.aceito_24h ?? 0, pct: Number(ba.pct_24h ?? 0) },
+        },
+      },
+      conversion: conversionResult.rows.reduce((acc, r) => {
+        acc[r.status || "unknown"] = r.total;
+        return acc;
+      }, {}),
+    };
+
+    setCache(cacheKey, result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[manager-marketplace-sla] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar SLA" });
+  }
+});
+
+// ============================================
+// POST /cron/unsigned-alerts - Automação de alertas para pendências críticas
+// Body: { days?: 30 }
+// ============================================
+router.post("/metrics/v2/cron/unsigned-alerts", requireInternalToken, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.body?.days ?? 30)));
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Buscar médicos com pendências críticas (>= 240 min)
+    const criticalResult = await pool.query(`
+      SELECT
+        pc.medico_id,
+        u.full_name AS medico_nome,
+        u.email AS medico_email,
+        COUNT(*) FILTER (
+          WHERE pc.finalized_at IS NOT NULL
+            AND pc.signed_at IS NULL
+            AND (pc.ia_metadata->>'assinatura' IS NULL OR pc.ia_metadata->>'assinatura' = '')
+            AND EXTRACT(EPOCH FROM (NOW() - pc.finalized_at)) / 60 >= 240
+        )::int AS criticos
+      FROM prontuarios_consulta pc
+      LEFT JOIN users u ON u.id::text = pc.medico_id
+      WHERE pc.created_at >= $1
+      GROUP BY pc.medico_id, u.full_name, u.email
+      HAVING COUNT(*) FILTER (
+        WHERE pc.finalized_at IS NOT NULL
+          AND pc.signed_at IS NULL
+          AND (pc.ia_metadata->>'assinatura' IS NULL OR pc.ia_metadata->>'assinatura' = '')
+          AND EXTRACT(EPOCH FROM (NOW() - pc.finalized_at)) / 60 >= 240
+      ) > 0
+    `, [since]);
+
+    const medicosCriticos = criticalResult.rows;
+    let created = 0;
+
+    for (const m of medicosCriticos) {
+      // Verificar se já foi notificado nas últimas 24h
+      const recentCheck = await pool.query(`
+        SELECT id FROM manager_notifications
+        WHERE medico_id = $1
+          AND kind = 'unsigned_prontuario_auto'
+          AND created_at >= $2
+        LIMIT 1
+      `, [m.medico_id, last24h]);
+
+      if (recentCheck.rows.length > 0) continue;
+
+      // Criar notificação automática
+      await pool.query(`
+        INSERT INTO manager_notifications (manager_user_id, medico_id, prontuario_id, kind, payload)
+        VALUES (NULL, $1, NULL, 'unsigned_prontuario_auto', $2)
+      `, [
+        m.medico_id,
+        JSON.stringify({
+          days,
+          criticos: m.criticos,
+          medicoNome: m.medico_nome,
+          medicoEmail: m.medico_email,
+          reason: "Pendências críticas (>= 4h) detectadas automaticamente",
+          generatedAt: new Date().toISOString(),
+        }),
+      ]);
+
+      created++;
+    }
+
+    console.log(`[cron/unsigned-alerts] encontrados=${medicosCriticos.length}, criados=${created}`);
+
+    return res.json({
+      ok: true,
+      days,
+      encontrados: medicosCriticos.length,
+      notificacoesCriadas: created,
+    });
+  } catch (err) {
+    console.error("[cron/unsigned-alerts] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao processar alertas" });
+  }
+});
+
+// ============================================
+// GET /notifications - Listar notificações recentes
+// Query params: ?kind=unsigned_prontuario_auto&days=7&limit=50
+// ============================================
+router.get("/metrics/v2/notifications", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 7)));
+    const limit = Math.max(1, Math.min(200, Number(req.query.limit ?? 50)));
+    const kind = req.query.kind || null;
+    
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    let query = `
+      SELECT
+        mn.id,
+        mn.created_at,
+        mn.manager_user_id,
+        mn.medico_id,
+        mn.prontuario_id,
+        mn.kind,
+        mn.payload,
+        u.full_name AS medico_nome
+      FROM manager_notifications mn
+      LEFT JOIN users u ON u.id::text = mn.medico_id
+      WHERE mn.created_at >= $1
+    `;
+    const params = [since];
+
+    if (kind) {
+      query += ` AND mn.kind = $${params.length + 1}`;
+      params.push(kind);
+    }
+
+    query += ` ORDER BY mn.created_at DESC LIMIT $${params.length + 1}`;
+    params.push(limit);
+
+    const result = await pool.query(query, params);
+
+    return res.json({
+      ok: true,
+      days,
+      kind: kind || "all",
+      total: result.rows.length,
+      notifications: result.rows.map(r => ({
+        id: r.id,
+        createdAt: r.created_at,
+        managerUserId: r.manager_user_id,
+        medicoId: r.medico_id,
+        medicoNome: r.medico_nome || "Desconhecido",
+        prontuarioId: r.prontuario_id,
+        kind: r.kind,
+        payload: r.payload,
+      })),
+    });
+  } catch (err) {
+    console.error("[notifications] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao listar notificações" });
+  }
+});
+
 export default router;
