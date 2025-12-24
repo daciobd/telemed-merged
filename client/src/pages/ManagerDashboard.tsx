@@ -1,100 +1,111 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  FileText, CheckCircle, Edit3, PenTool, RefreshCw, 
-  CalendarDays, Clock, TrendingUp, Shield 
+  FileText, CheckCircle, PenTool, RefreshCw, 
+  Clock, TrendingUp, Shield, AlertTriangle, Users
 } from "lucide-react";
 
-type Stats = {
+type FunnelData = {
+  criados: number;
+  finalizados: number;
+  assinados: number;
+  taxaFinalizacao: number;
+  taxaAssinatura: number;
+};
+
+type TemposData = {
+  tempoMedioAteFinalizarMin: number | null;
+  tempoMedioAteAssinarMin: number | null;
+};
+
+type PendenciasData = {
+  finalizadosSemAssinatura: number;
+};
+
+type MetricsV2 = {
   ok: boolean;
-  available?: boolean;
-  updated_at?: string;
-  totals?: {
-    prontuarios_total: number;
-    prontuarios_final: number;
-    prontuarios_draft: number;
-    prontuarios_assinados: number;
-  };
-  today?: {
-    total: number;
-    final: number;
-    draft: number;
-  };
-  avg_time_to_finalize_minutes?: number | null;
-  conversion?: {
-    finalized_rate: number;
-    signed_rate_of_final: number;
-  };
-  last7days?: Array<{ date: string; total: number; final: number; draft: number }>;
-  note?: string;
+  range: { days: number; since: string };
+  funnel: FunnelData;
+  tempos: TemposData;
+  pendencias: PendenciasData;
   error?: string;
 };
 
+type DoctorMetrics = {
+  medicoId: string;
+  total: number;
+  finalizados: number;
+  rascunhos: number;
+  assinados: number;
+  finalizadosSemAssinatura: number;
+  taxaFinalizacao: number;
+};
+
+type DoctorsData = {
+  ok: boolean;
+  range: { days: number; since: string };
+  doctors: DoctorMetrics[];
+  total: number;
+  error?: string;
+};
+
+function getTaxaColor(taxa: number): string {
+  if (taxa >= 85) return "text-green-600";
+  if (taxa >= 70) return "text-yellow-600";
+  return "text-red-600";
+}
+
+function getTaxaBg(taxa: number): string {
+  if (taxa >= 85) return "bg-green-50 dark:bg-green-900/20";
+  if (taxa >= 70) return "bg-yellow-50 dark:bg-yellow-900/20";
+  return "bg-red-50 dark:bg-red-900/20";
+}
+
 export default function ManagerDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [metrics, setMetrics] = useState<MetricsV2 | null>(null);
+  const [doctors, setDoctors] = useState<DoctorsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [days, setDays] = useState(30);
 
-  const fetchStats = async () => {
+  const fetchData = async (selectedDays: number) => {
     setLoading(true);
     setAccessDenied(false);
     try {
       const token = localStorage.getItem("consultorio_token");
-      const r = await fetch("/api/manager/stats", { 
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      
-      if (r.status === 403) {
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [metricsRes, doctorsRes] = await Promise.all([
+        fetch(`/api/manager/metrics/v2?days=${selectedDays}`, { credentials: "include", headers }),
+        fetch(`/api/manager/metrics/v2/doctors?days=${selectedDays}`, { credentials: "include", headers }),
+      ]);
+
+      if (metricsRes.status === 403 || doctorsRes.status === 403) {
         setAccessDenied(true);
-        setStats(null);
         return;
       }
-      
-      const j = (await r.json()) as Stats;
-      setStats(j);
+
+      if (metricsRes.status === 401 || doctorsRes.status === 401) {
+        setAccessDenied(true);
+        return;
+      }
+
+      const metricsData = await metricsRes.json();
+      const doctorsData = await doctorsRes.json();
+
+      setMetrics(metricsData);
+      setDoctors(doctorsData);
     } catch (e: any) {
-      setStats({ ok: false, error: e?.message || "Falha ao carregar stats" });
+      setMetrics({ ok: false, error: e?.message } as any);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const totals = stats?.totals || {
-    prontuarios_total: 0,
-    prontuarios_final: 0,
-    prontuarios_draft: 0,
-    prontuarios_assinados: 0,
-  };
-
-  const today = stats?.today || { total: 0, final: 0, draft: 0 };
-  const conversion = stats?.conversion || { finalized_rate: 0, signed_rate_of_final: 0 };
-  const avgTime = stats?.avg_time_to_finalize_minutes;
-
-  const kpis = useMemo(
-    () => [
-      { label: "Prontuários", value: totals.prontuarios_total, icon: FileText, color: "text-blue-600" },
-      { label: "Finalizados", value: totals.prontuarios_final, icon: CheckCircle, color: "text-green-600" },
-      { label: "Rascunhos", value: totals.prontuarios_draft, icon: Edit3, color: "text-yellow-600" },
-      { label: "Assinados", value: totals.prontuarios_assinados, icon: PenTool, color: "text-purple-600" },
-    ],
-    [totals]
-  );
-
-  const extraKpis = useMemo(
-    () => [
-      { label: "Hoje", value: today.total, sub: `${today.final} finalizados`, icon: CalendarDays, color: "text-teal-600" },
-      { label: "% Finalizados", value: `${conversion.finalized_rate}%`, icon: TrendingUp, color: "text-indigo-600" },
-      { label: "% Assinados", value: `${conversion.signed_rate_of_final}%`, sub: "dos finalizados", icon: Shield, color: "text-emerald-600" },
-      { label: "Tempo Médio", value: avgTime != null ? `${avgTime} min` : "—", sub: "até finalizar", icon: Clock, color: "text-orange-600" },
-    ],
-    [today, conversion, avgTime]
-  );
+    fetchData(days);
+  }, [days]);
 
   if (accessDenied) {
     return (
@@ -117,126 +128,213 @@ export default function ManagerDashboard() {
     );
   }
 
+  const funnel = metrics?.funnel || { criados: 0, finalizados: 0, assinados: 0, taxaFinalizacao: 0, taxaAssinatura: 0 };
+  const tempos = metrics?.tempos || { tempoMedioAteFinalizarMin: null, tempoMedioAteAssinarMin: null };
+  const pendencias = metrics?.pendencias || { finalizadosSemAssinatura: 0 };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6 space-y-6">
-      <div className="flex items-start justify-between gap-3">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white" data-testid="title-manager-dashboard">
             Manager Dashboard
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Indicadores operacionais do TeleMed.
-            {stats?.updated_at
-              ? ` Atualizado em ${new Date(stats.updated_at).toLocaleString("pt-BR")}.`
-              : ""}
+            Painel de comando operacional • Últimos {days} dias
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          onClick={fetchStats}
-          disabled={loading}
-          data-testid="button-refresh-stats"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Atualizando..." : "Atualizar"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={days === 7 ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDays(7)}
+            data-testid="button-7days"
+          >
+            7 dias
+          </Button>
+          <Button
+            variant={days === 30 ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDays(30)}
+            data-testid="button-30days"
+          >
+            30 dias
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchData(days)}
+            disabled={loading}
+            data-testid="button-refresh"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
       </div>
 
-      {!stats ? (
+      {!metrics ? (
         <Card>
           <CardContent className="p-6 text-sm text-gray-500">Carregando...</CardContent>
         </Card>
-      ) : !stats.ok ? (
+      ) : !metrics.ok ? (
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
           <CardHeader>
             <CardTitle className="text-red-700 dark:text-red-400">Erro</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-red-600 dark:text-red-300">
-            {stats.error || "Falha ao carregar"}
-          </CardContent>
-        </Card>
-      ) : stats.available === false ? (
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20">
-          <CardHeader>
-            <CardTitle className="text-yellow-700 dark:text-yellow-400">Stats indisponível</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm space-y-2 text-yellow-600 dark:text-yellow-300">
-            <div>O endpoint respondeu, mas não conseguiu acessar o DB.</div>
-            {stats.note ? <div className="text-muted-foreground">{stats.note}</div> : null}
+            {metrics.error || "Falha ao carregar métricas"}
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* KPIs principais */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {kpis.map((k) => (
-              <Card key={k.label} className="hover:shadow-md transition-shadow" data-testid={`card-kpi-${k.label.toLowerCase()}`}>
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    {k.label}
-                  </CardTitle>
-                  <k.icon className={`w-5 h-5 ${k.color}`} />
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{k.value}</div>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Bloco A - Funil Clínico */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* Criados */}
+            <Card className="hover:shadow-md transition-shadow" data-testid="card-criados">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Criados</CardTitle>
+                <FileText className="w-5 h-5 text-blue-600" />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{funnel.criados}</div>
+              </CardContent>
+            </Card>
+
+            {/* Finalizados */}
+            <Card className={`hover:shadow-md transition-shadow ${getTaxaBg(funnel.taxaFinalizacao)}`} data-testid="card-finalizados">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Finalizados</CardTitle>
+                <CheckCircle className={`w-5 h-5 ${getTaxaColor(funnel.taxaFinalizacao)}`} />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{funnel.finalizados}</div>
+                <div className={`text-sm font-medium ${getTaxaColor(funnel.taxaFinalizacao)}`}>
+                  {funnel.taxaFinalizacao}%
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Assinados */}
+            <Card className={`hover:shadow-md transition-shadow ${getTaxaBg(funnel.taxaAssinatura)}`} data-testid="card-assinados">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Assinados</CardTitle>
+                <PenTool className={`w-5 h-5 ${getTaxaColor(funnel.taxaAssinatura)}`} />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">{funnel.assinados}</div>
+                <div className={`text-sm font-medium ${getTaxaColor(funnel.taxaAssinatura)}`}>
+                  {funnel.taxaAssinatura}%
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tempo até finalizar */}
+            <Card className="hover:shadow-md transition-shadow" data-testid="card-tempo-finalizar">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Até finalizar</CardTitle>
+                <Clock className="w-5 h-5 text-orange-600" />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {tempos.tempoMedioAteFinalizarMin != null ? `${tempos.tempoMedioAteFinalizarMin} min` : "—"}
+                </div>
+                <div className="text-xs text-gray-400">média</div>
+              </CardContent>
+            </Card>
+
+            {/* Tempo até assinar */}
+            <Card className="hover:shadow-md transition-shadow" data-testid="card-tempo-assinar">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Até assinar</CardTitle>
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {tempos.tempoMedioAteAssinarMin != null ? `${tempos.tempoMedioAteAssinarMin} min` : "—"}
+                </div>
+                <div className="text-xs text-gray-400">média</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* KPIs extras */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {extraKpis.map((k) => (
-              <Card key={k.label} className="hover:shadow-md transition-shadow bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900" data-testid={`card-extra-${k.label.toLowerCase().replace(/\s|%/g, '-')}`}>
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    {k.label}
-                  </CardTitle>
-                  <k.icon className={`w-5 h-5 ${k.color}`} />
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{k.value}</div>
-                  {"sub" in k && k.sub && (
-                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{k.sub}</div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Últimos 7 dias */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Últimos 7 dias</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm">
-              {stats.last7days?.length ? (
-                <div className="space-y-3">
-                  {stats.last7days.map((d) => (
-                    <div
-                      key={d.date}
-                      className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2"
-                      data-testid={`row-day-${d.date}`}
-                    >
-                      <div className="font-medium text-gray-700 dark:text-gray-300">{d.date}</div>
-                      <div className="flex gap-4 text-gray-500 dark:text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <FileText className="w-3.5 h-3.5" /> {d.total}
-                        </span>
-                        <span className="flex items-center gap-1 text-green-600">
-                          <CheckCircle className="w-3.5 h-3.5" /> {d.final}
-                        </span>
-                        <span className="flex items-center gap-1 text-yellow-600">
-                          <Edit3 className="w-3.5 h-3.5" /> {d.draft}
-                        </span>
-                      </div>
+          {/* Bloco B - Alertas */}
+          {pendencias.finalizadosSemAssinatura > 0 && (
+            <Card className="border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20" data-testid="card-alerta-pendencias">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                  <div>
+                    <div className="font-medium text-yellow-800 dark:text-yellow-200">
+                      {pendencias.finalizadosSemAssinatura} prontuários finalizados sem assinatura
                     </div>
-                  ))}
+                    <div className="text-sm text-yellow-600 dark:text-yellow-300">
+                      Requerem atenção do médico
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" className="text-yellow-700 border-yellow-400">
+                  Ver lista
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Bloco C - Produção por Médico */}
+          <Card data-testid="card-doctors">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Produção por Médico
+              </CardTitle>
+              <span className="text-sm text-gray-500">{doctors?.total || 0} médicos</span>
+            </CardHeader>
+            <CardContent>
+              {!doctors?.doctors?.length ? (
+                <div className="text-center text-gray-400 py-8">
+                  Nenhum dado de médicos no período.
                 </div>
               ) : (
-                <div className="text-gray-400 dark:text-gray-500 py-4 text-center">
-                  Sem dados nos últimos 7 dias.
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-3 px-2 font-medium text-gray-500">Médico</th>
+                        <th className="text-center py-3 px-2 font-medium text-gray-500">Total</th>
+                        <th className="text-center py-3 px-2 font-medium text-gray-500">Finalizados</th>
+                        <th className="text-center py-3 px-2 font-medium text-gray-500">Assinados</th>
+                        <th className="text-center py-3 px-2 font-medium text-gray-500">Rascunhos</th>
+                        <th className="text-center py-3 px-2 font-medium text-gray-500">Taxa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {doctors.doctors.map((doc, i) => (
+                        <tr 
+                          key={doc.medicoId} 
+                          className={`border-b border-gray-100 dark:border-gray-800 ${i % 2 === 0 ? "bg-gray-50/50 dark:bg-gray-800/30" : ""}`}
+                          data-testid={`row-doctor-${doc.medicoId}`}
+                        >
+                          <td className="py-3 px-2 font-medium text-gray-700 dark:text-gray-300">
+                            {doc.medicoId?.substring(0, 8) || "—"}
+                          </td>
+                          <td className="text-center py-3 px-2">{doc.total}</td>
+                          <td className="text-center py-3 px-2 text-green-600">{doc.finalizados}</td>
+                          <td className="text-center py-3 px-2 text-purple-600">{doc.assinados}</td>
+                          <td className="text-center py-3 px-2">
+                            <span className={doc.rascunhos > 3 ? "text-red-600 font-medium" : "text-yellow-600"}>
+                              {doc.rascunhos}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-2">
+                            <span className={`font-medium ${getTaxaColor(doc.taxaFinalizacao)}`}>
+                              {doc.taxaFinalizacao}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
