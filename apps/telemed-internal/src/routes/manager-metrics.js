@@ -27,8 +27,15 @@ function setCache(key, data) {
 // ============================================
 function requireManager(req, res, next) {
   try {
-    let user = null;
+    // Fallback: aceitar INTERNAL_TOKEN para acesso administrativo
     const token = req.headers.authorization?.split(" ")[1];
+    const internalToken = process.env.INTERNAL_TOKEN;
+    
+    if (token && internalToken && token === internalToken) {
+      return next();
+    }
+    
+    let user = null;
     
     if (token) {
       try {

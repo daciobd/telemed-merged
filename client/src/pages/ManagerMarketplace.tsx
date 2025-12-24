@@ -73,7 +73,7 @@ export default function ManagerMarketplace() {
       const token = localStorage.getItem("consultorio_token");
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const res = await fetch(`/api/manager/metrics/v2/manager-marketplace?days=${selectedDays}`, {
+      const res = await fetch(`/api/manager/manager-marketplace?days=${selectedDays}`, {
         credentials: "include",
         headers,
       });

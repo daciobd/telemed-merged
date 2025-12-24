@@ -546,6 +546,12 @@ const requireToken = (req, res, next) => {
     return next();
   }
   
+  // Manager Dashboard endpoints: autenticação própria (JWT ou INTERNAL_TOKEN via Authorization)
+  if (req.path.startsWith('/api/manager/')) {
+    console.log(`[AUTH BYPASS] ${req.method} ${req.path} → Manager Dashboard (JWT/INTERNAL_TOKEN auth)`);
+    return next();
+  }
+  
   const tok = req.header('X-Internal-Token');
   const expectedToken = process.env.INTERNAL_TOKEN || '';
   
