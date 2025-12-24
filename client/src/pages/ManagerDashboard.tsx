@@ -6,7 +6,7 @@ import {
   Clock, TrendingUp, Shield, AlertTriangle, Users,
   ArrowUpDown, ArrowUp, ArrowDown, ExternalLink
 } from "lucide-react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 
 type FunnelData = {
   criados: number;
@@ -85,6 +85,7 @@ function formatMinutes(v: number | null): string {
 }
 
 export default function ManagerDashboard() {
+  const [, setLocation] = useLocation();
   const [metrics, setMetrics] = useState<MetricsV2 | null>(null);
   const [doctors, setDoctors] = useState<DoctorsData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -338,13 +339,13 @@ export default function ManagerDashboard() {
                   sem assinatura
                 </span>
                 {pendencias.finalizadosSemAssinatura > 0 && (
-                  <Link
-                    href="/manager/pendencias"
+                  <button
+                    onClick={() => setLocation(`/manager/pendencias?days=${days}`)}
                     className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-xs font-medium mt-2"
                     data-testid="link-ver-pendencias"
                   >
                     Ver lista <ExternalLink className="w-3 h-3" />
-                  </Link>
+                  </button>
                 )}
                 {metrics?.notas?.assinadosUsaProxy && (
                   <div className="text-xs text-gray-400 mt-2">
@@ -454,9 +455,17 @@ export default function ManagerDashboard() {
                             </span>
                           </td>
                           <td className="text-center py-3 px-2">
-                            <span className={doc.finalizadosSemAssinatura > 0 ? "text-orange-600 font-semibold" : "text-gray-400"}>
-                              {doc.finalizadosSemAssinatura}
-                            </span>
+                            {doc.finalizadosSemAssinatura > 0 ? (
+                              <button
+                                onClick={() => setLocation(`/manager/pendencias?days=${days}&medico_id=${doc.medicoId}`)}
+                                className="inline-flex px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-800 border border-orange-200 hover:bg-orange-200 cursor-pointer transition-colors"
+                                title="Ver pendências deste médico"
+                              >
+                                {doc.finalizadosSemAssinatura}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400">{doc.finalizadosSemAssinatura}</span>
+                            )}
                           </td>
                           <td className="text-center py-3 px-2">
                             <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getBadgeClass(doc.taxaFinalizacao)}`}>

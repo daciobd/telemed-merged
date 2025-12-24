@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, Clock, AlertTriangle, RefreshCw, 
-  ExternalLink, User, FileText, ChevronLeft, ChevronRight
+  ExternalLink, User, FileText, ChevronLeft, ChevronRight, X
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+
+function getQueryParams() {
+  return new URLSearchParams(window.location.search);
+}
 
 type PendingItem = {
   id: string;
@@ -50,11 +54,27 @@ function getUrgencyColor(min: number): string {
 
 export default function PendenciasUnsigned() {
   const [, setLocation] = useLocation();
+  
+  // Ler query params da URL
+  const queryParams = useMemo(() => getQueryParams(), []);
+  const initialDays = queryParams.get("days") === "7" ? 7 : 30;
+  const initialMedicoId = queryParams.get("medico_id");
+  
   const [data, setData] = useState<PendingResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(initialDays);
+  const [medicoId, setMedicoId] = useState<string | null>(initialMedicoId);
   const [page, setPage] = useState(0);
   const limit = 20;
+
+  // Manter URL sincronizada com filtros
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("days", String(days));
+    if (medicoId) params.set("medico_id", medicoId);
+    const newUrl = `/manager/pendencias?${params.toString()}`;
+    window.history.replaceState(null, "", `/consultorio${newUrl}`);
+  }, [days, medicoId]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -63,10 +83,10 @@ export default function PendenciasUnsigned() {
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const offset = page * limit;
       
-      const res = await fetch(
-        `/api/manager/metrics/v2/pending/unsigned?days=${days}&limit=${limit}&offset=${offset}`,
-        { credentials: "include", headers }
-      );
+      let url = `/api/manager/metrics/v2/pending/unsigned?days=${days}&limit=${limit}&offset=${offset}`;
+      if (medicoId) url += `&medico_id=${medicoId}`;
+      
+      const res = await fetch(url, { credentials: "include", headers });
 
       if (res.status === 403 || res.status === 401) {
         setData({ ok: false, error: "Acesso negado" } as any);
@@ -84,7 +104,7 @@ export default function PendenciasUnsigned() {
 
   useEffect(() => {
     fetchData();
-  }, [days, page]);
+  }, [days, page, medicoId]);
 
   const totalPages = data?.paging ? Math.ceil(data.paging.total / limit) : 0;
 
@@ -109,11 +129,24 @@ export default function PendenciasUnsigned() {
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {data?.paging?.total ?? 0} prontuários aguardando assinatura
+              {medicoId && " • Filtrado por médico"}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {medicoId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setMedicoId(null); setPage(0); }}
+              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+              data-testid="button-clear-filter"
+            >
+              <X className="w-3 h-3 mr-1" />
+              Limpar filtro
+            </Button>
+          )}
           <div className="inline-flex rounded-lg border overflow-hidden">
             <button
               className={`px-3 py-1.5 text-sm font-medium transition-colors ${
