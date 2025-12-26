@@ -1501,6 +1501,116 @@ router.get("/manager-revenue", requireManager, async (req, res) => {
 });
 
 // ============================================
+// C1 - RECEITA × OPERAÇÃO: agregado por faixa de preço
+// ============================================
+router.get("/revenue/operation", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const finalizeSlaMin = 30;
+    const signSlaMin = 60;
+
+    const { rows } = await pool.query(`
+      WITH priced AS (
+        SELECT 
+          p.id,
+          p.finalized_at,
+          p.signed_at,
+          p.created_at,
+          p.queixa_principal,
+          p.anamnese,
+          p.hipoteses_cid,
+          COALESCE(c.agreed_price::numeric, c.patient_offer::numeric, 0) AS price
+        FROM prontuarios_consulta p
+        LEFT JOIN consultations c ON 
+          c.id = CASE 
+            WHEN p.consulta_id ~ '^[0-9]+$' THEN p.consulta_id::int 
+            ELSE NULL 
+          END
+        WHERE p.created_at >= $1
+      )
+      SELECT 
+        CASE
+          WHEN price < 100 THEN '<100'
+          WHEN price < 150 THEN '100-149'
+          WHEN price < 200 THEN '150-199'
+          ELSE '200+'
+        END AS bucket,
+        COUNT(*)::int AS consultas,
+        SUM(price)::float AS gmv,
+        AVG(price)::float AS ticket_medio,
+        
+        AVG(
+          CASE WHEN finalized_at IS NOT NULL
+          THEN EXTRACT(EPOCH FROM (finalized_at - created_at)) / 60
+          ELSE NULL END
+        ) AS tempo_medio_finalizar_min,
+        
+        AVG(
+          CASE WHEN signed_at IS NOT NULL AND finalized_at IS NOT NULL
+          THEN EXTRACT(EPOCH FROM (signed_at - finalized_at)) / 60
+          ELSE NULL END
+        ) AS tempo_medio_assinar_min,
+        
+        COUNT(finalized_at)::int AS finalizados,
+        SUM(
+          CASE
+            WHEN finalized_at IS NOT NULL
+             AND EXTRACT(EPOCH FROM (finalized_at - created_at)) / 60 <= $2
+            THEN 1 ELSE 0 END
+        )::int AS finalizados_dentro_sla,
+        
+        COUNT(signed_at)::int AS assinados,
+        SUM(
+          CASE
+            WHEN signed_at IS NOT NULL AND finalized_at IS NOT NULL
+             AND EXTRACT(EPOCH FROM (signed_at - finalized_at)) / 60 <= $3
+            THEN 1 ELSE 0 END
+        )::int AS assinados_dentro_sla,
+        
+        SUM(
+          CASE
+            WHEN finalized_at IS NOT NULL
+             AND (
+               queixa_principal IS NULL OR queixa_principal = ''
+               OR anamnese IS NULL OR anamnese = ''
+               OR hipoteses_cid IS NULL OR hipoteses_cid = '[]'::jsonb
+             )
+            THEN 1 ELSE 0 END
+        )::int AS campos_criticos_faltantes
+        
+      FROM priced
+      WHERE price > 0
+      GROUP BY bucket
+      ORDER BY bucket
+    `, [since.toISOString(), finalizeSlaMin, signSlaMin]);
+
+    const buckets = rows.map((r) => ({
+      bucket: r.bucket,
+      consultas: r.consultas,
+      gmv: Number(r.gmv) || 0,
+      ticketMedio: Number(r.ticket_medio) || 0,
+      tempoMedioFinalizarMin: r.tempo_medio_finalizar_min ? Number(r.tempo_medio_finalizar_min) : null,
+      tempoMedioAssinarMin: r.tempo_medio_assinar_min ? Number(r.tempo_medio_assinar_min) : null,
+      pctFinalizadosDentroSla: r.finalizados > 0 ? r.finalizados_dentro_sla / r.finalizados : 0,
+      pctAssinadosDentroSla: r.assinados > 0 ? r.assinados_dentro_sla / r.assinados : 0,
+      pctCamposCriticosFaltantes: r.finalizados > 0 ? r.campos_criticos_faltantes / r.finalizados : 0,
+    }));
+
+    return res.json({
+      ok: true,
+      range: { days, since: since.toISOString() },
+      sla: { finalizeSlaMin, signSlaMin },
+      buckets,
+    });
+  } catch (err) {
+    console.error("[revenue/operation] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar dados" });
+  }
+});
+
+// ============================================
 // C2.2 - BACKFILL: consultas direct antigas sem fees
 // ============================================
 function calcFees(agreed) {
