@@ -12,26 +12,25 @@ function Skeleton({ className }: { className?: string }) {
 }
 
 interface CacRow {
-  provider: string;
-  campaign: string;
+  channel: string | null;
+  campaignName: string | null;
   spend: number;
-  consultasAssinadas: number;
-  receitaPlataforma: number;
+  signed: number;
+  platformFee: number;
   cac: number | null;
-  cacPercentual: number | null;
+  cacPercent: number | null;
 }
 
 interface CacData {
-  range: { from: string | null; to: string | null };
-  groupBy: string;
-  summary: {
-    totalSpend: number;
-    totalConsultas: number;
-    totalReceita: number;
-    avgCac: number | null;
-    avgCacPercent: number | null;
-  };
+  range: { from: string; to: string; groupBy: string };
   rows: CacRow[];
+  totals: {
+    spend: number;
+    signed: number;
+    platformFee: number;
+    cac: number | null;
+    cacPercent: number | null;
+  };
 }
 
 function formatCurrency(value: number) {
@@ -49,19 +48,19 @@ function CacTable({ rows }: { rows: CacRow[] }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Campanha</th>
             <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Canal</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Campanha</th>
             <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Gasto</th>
-            <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Consultas</th>
-            <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Receita</th>
+            <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Assinadas</th>
+            <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Platform Fee</th>
             <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">CAC</th>
             <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">CAC %</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, idx) => {
-            const isHighCac = row.cacPercentual !== null && row.cacPercentual > 0.6;
-            const isNoConversion = row.spend > 0 && row.consultasAssinadas === 0;
+            const isHighCac = row.cacPercent !== null && row.cacPercent > 0.6;
+            const isNoConversion = row.spend > 0 && row.signed === 0;
 
             return (
               <tr 
@@ -69,18 +68,18 @@ function CacTable({ rows }: { rows: CacRow[] }) {
                 className={`border-b border-gray-100 dark:border-gray-800 ${isHighCac || isNoConversion ? "bg-red-50 dark:bg-red-900/20" : ""}`}
                 data-testid={`cac-row-${idx}`}
               >
+                <td className="py-3 px-4 text-gray-600 dark:text-gray-300 capitalize">{row.channel || "-"}</td>
                 <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
-                  {row.campaign}
+                  {row.campaignName || "(sem nome)"}
                   {isNoConversion && (
                     <span className="ml-2 text-xs text-red-600 dark:text-red-400" data-testid="alert-no-conversion">
                       <AlertTriangle className="h-3 w-3 inline" /> Sem conversão
                     </span>
                   )}
                 </td>
-                <td className="py-3 px-4 text-gray-600 dark:text-gray-300 capitalize">{row.provider}</td>
                 <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{formatCurrency(row.spend)}</td>
-                <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{row.consultasAssinadas}</td>
-                <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{formatCurrency(row.receitaPlataforma)}</td>
+                <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{row.signed}</td>
+                <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{formatCurrency(row.platformFee)}</td>
                 <td className="py-3 px-4 text-right font-medium">
                   <span className={row.cac !== null && row.cac > 100 ? "text-amber-600" : "text-gray-900 dark:text-white"}>
                     {row.cac !== null ? formatCurrency(row.cac) : "-"}
@@ -88,7 +87,7 @@ function CacTable({ rows }: { rows: CacRow[] }) {
                 </td>
                 <td className="py-3 px-4 text-right font-medium">
                   <span className={isHighCac ? "text-red-600" : "text-green-600"}>
-                    {formatPercent(row.cacPercentual)}
+                    {formatPercent(row.cacPercent)}
                   </span>
                 </td>
               </tr>
@@ -187,7 +186,9 @@ function ImportSpendForm() {
 export default function ManagerCac() {
   const [period, setPeriod] = useState<string>("30d");
   const [showImport, setShowImport] = useState(false);
+  const [groupBy, setGroupBy] = useState<string>("channel_campaign");
 
+  const today = new Date().toISOString().split("T")[0];
   const fromDate = period === "7d" 
     ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
     : period === "90d"
@@ -195,15 +196,15 @@ export default function ManagerCac() {
     : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const { data, isLoading, refetch } = useQuery<CacData>({
-    queryKey: ["/metrics/v2/marketing/cac-real", period],
+    queryKey: ["/metrics/v2/marketing/cac-real", period, groupBy],
     queryFn: async () => {
-      const res = await fetch(`/metrics/v2/marketing/cac-real?from=${fromDate}`);
+      const res = await fetch(`/metrics/v2/marketing/cac-real?from=${fromDate}&to=${today}&groupBy=${groupBy}`);
       if (!res.ok) throw new Error("Erro ao carregar CAC");
       return res.json();
     },
   });
 
-  const summary = data?.summary;
+  const totals = data?.totals;
   const rows = data?.rows || [];
 
   return (
@@ -228,6 +229,17 @@ export default function ManagerCac() {
                 <SelectItem value="7d">7 dias</SelectItem>
                 <SelectItem value="30d">30 dias</SelectItem>
                 <SelectItem value="90d">90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={groupBy} onValueChange={setGroupBy}>
+              <SelectTrigger className="w-[160px]" data-testid="select-groupby">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="channel_campaign">Canal + Campanha</SelectItem>
+                <SelectItem value="channel">Por Canal</SelectItem>
+                <SelectItem value="campaign">Por Campanha</SelectItem>
               </SelectContent>
             </Select>
 
@@ -268,7 +280,7 @@ export default function ManagerCac() {
                     <DollarSign className="h-4 w-4" />
                     <span className="text-xs opacity-80">Gasto Total</span>
                   </div>
-                  <p className="text-xl font-bold">{formatCurrency(summary?.totalSpend || 0)}</p>
+                  <p className="text-xl font-bold">{formatCurrency(totals?.spend || 0)}</p>
                 </CardContent>
               </Card>
 
@@ -278,7 +290,7 @@ export default function ManagerCac() {
                     <Target className="h-4 w-4" />
                     <span className="text-xs opacity-80">Consultas Assinadas</span>
                   </div>
-                  <p className="text-xl font-bold">{summary?.totalConsultas || 0}</p>
+                  <p className="text-xl font-bold">{totals?.signed || 0}</p>
                 </CardContent>
               </Card>
 
@@ -286,35 +298,35 @@ export default function ManagerCac() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <DollarSign className="h-4 w-4" />
-                    <span className="text-xs opacity-80">Receita Plataforma</span>
+                    <span className="text-xs opacity-80">Platform Fee</span>
                   </div>
-                  <p className="text-xl font-bold">{formatCurrency(summary?.totalReceita || 0)}</p>
+                  <p className="text-xl font-bold">{formatCurrency(totals?.platformFee || 0)}</p>
                 </CardContent>
               </Card>
 
-              <Card className={`text-white ${summary?.avgCac && summary.avgCac > 100 ? "bg-gradient-to-br from-amber-500 to-amber-600" : "bg-gradient-to-br from-teal-500 to-teal-600"}`} data-testid="card-cac">
+              <Card className={`text-white ${totals?.cac && totals.cac > 100 ? "bg-gradient-to-br from-amber-500 to-amber-600" : "bg-gradient-to-br from-teal-500 to-teal-600"}`} data-testid="card-cac">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="h-4 w-4" />
                     <span className="text-xs opacity-80">CAC Médio</span>
                   </div>
                   <p className="text-xl font-bold">
-                    {summary?.avgCac !== null ? formatCurrency(summary?.avgCac || 0) : "-"}
+                    {totals?.cac !== null ? formatCurrency(totals?.cac || 0) : "-"}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className={`text-white ${summary?.avgCacPercent && summary.avgCacPercent > 0.6 ? "bg-gradient-to-br from-red-500 to-red-600" : "bg-gradient-to-br from-blue-500 to-blue-600"}`} data-testid="card-cac-percent">
+              <Card className={`text-white ${totals?.cacPercent && totals.cacPercent > 0.6 ? "bg-gradient-to-br from-red-500 to-red-600" : "bg-gradient-to-br from-blue-500 to-blue-600"}`} data-testid="card-cac-percent">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    {summary?.avgCacPercent && summary.avgCacPercent > 0.6 ? (
+                    {totals?.cacPercent && totals.cacPercent > 0.6 ? (
                       <TrendingDown className="h-4 w-4" />
                     ) : (
                       <TrendingUp className="h-4 w-4" />
                     )}
                     <span className="text-xs opacity-80">CAC % Receita</span>
                   </div>
-                  <p className="text-xl font-bold">{formatPercent(summary?.avgCacPercent || null)}</p>
+                  <p className="text-xl font-bold">{formatPercent(totals?.cacPercent || null)}</p>
                 </CardContent>
               </Card>
             </div>
@@ -340,7 +352,7 @@ export default function ManagerCac() {
               </CardContent>
             </Card>
 
-            {(summary?.avgCacPercent && summary.avgCacPercent > 0.6) || rows.some(r => r.spend > 100 && r.consultasAssinadas === 0) ? (
+            {(totals?.cacPercent && totals.cacPercent > 0.6) || rows.some(r => r.spend > 100 && r.signed === 0) ? (
               <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
                 <CardHeader>
                   <CardTitle className="text-lg text-red-700 dark:text-red-300 flex items-center gap-2">
@@ -349,16 +361,16 @@ export default function ManagerCac() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {summary?.avgCacPercent && summary.avgCacPercent > 0.6 && (
+                  {totals?.cacPercent && totals.cacPercent > 0.6 && (
                     <div className="flex items-start gap-2 text-red-700 dark:text-red-300" data-testid="alert-high-cac">
                       <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <span>CAC está acima de 60% da receita. Considere pausar campanhas menos eficientes.</span>
                     </div>
                   )}
-                  {rows.filter(r => r.spend > 100 && r.consultasAssinadas === 0).map((r, i) => (
+                  {rows.filter(r => r.spend > 100 && r.signed === 0).map((r, i) => (
                     <div key={i} className="flex items-start gap-2 text-amber-700 dark:text-amber-300" data-testid={`alert-campaign-${i}`}>
                       <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span>Campanha "{r.campaign}" gastou {formatCurrency(r.spend)} sem conversões.</span>
+                      <span>Campanha "{r.campaignName || r.channel}" gastou {formatCurrency(r.spend)} sem conversões.</span>
                     </div>
                   ))}
                 </CardContent>
