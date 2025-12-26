@@ -278,9 +278,19 @@ app.use('/api/manager', managerMetricsRoutes);
 const { default: virtualOfficeRoutes } = await import('./apps/telemed-internal/src/virtual-office.routes.js');
 app.use('/api/virtual-office', virtualOfficeRoutes);
 
+// Rotas de Telemetria (eventos de conversão, UTM tracking)
+const telemetryRoutes = require('./apps/telemed-internal/src/routes/telemetry.routes.js');
+app.use('/api/telemetry', telemetryRoutes);
+
+// Rotas de Funil (métricas de conversão e receita)
+const funnelRoutes = require('./apps/telemed-internal/src/routes/funnel.routes.js');
+app.use('/metrics/v2', funnelRoutes);
+
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
 console.log('✅ Rotas de Stats carregadas em /api/consultorio/stats');
 console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
+console.log('📊 Rotas de Telemetria carregadas em /api/telemetry/*');
+console.log('📈 Rotas de Funil carregadas em /metrics/v2/*');
 
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect
