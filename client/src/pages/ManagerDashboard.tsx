@@ -90,13 +90,22 @@ function CacRealCard({ days, onNavigate }: { days: number; onNavigate: (path: st
                 ⚠️ CAC acima de 60%. Revise campanhas.
               </div>
             )}
-            <button
-              className="mt-3 w-full px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
-              onClick={() => onNavigate("/manager/cac")}
-              data-testid="link-cac"
-            >
-              Ver detalhes
-            </button>
+            <div className="mt-3 flex gap-2">
+              <button
+                className="flex-1 px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
+                onClick={() => onNavigate("/manager/cac")}
+                data-testid="link-cac"
+              >
+                Ver detalhes
+              </button>
+              <button
+                className="flex-1 px-3 py-2 text-sm rounded-xl border bg-teal-50 hover:bg-teal-100 text-teal-700"
+                onClick={() => onNavigate("/manager/cac")}
+                data-testid="link-gastos"
+              >
+                + Gastos
+              </button>
+            </div>
           </>
         )}
       </CardContent>

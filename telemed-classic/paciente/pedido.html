@@ -183,5 +183,143 @@
       }
     });
   </script>
+
+  <!-- A/B Experiment Loader: offer_ui_v1 -->
+  <script>
+  (function () {
+    const EXP_ENDPOINT = "/api/experiments/active";
+    const EXP_ID = "offer_ui_v1";
+    const STORE_KEY = "exp:" + EXP_ID;
+
+    const FALLBACK_EXP = {
+      id: EXP_ID,
+      isActive: true,
+      trafficPercent: 100,
+      variants: [{ name: "A", weight: 50 }, { name: "B", weight: 50 }],
+    };
+
+    function hashToInt(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return (h >>> 0);
+    }
+
+    function getSessionIdSafe() {
+      if (window.TelemedTelemetry?.sessionId) return window.TelemedTelemetry.sessionId();
+      const k = "telemed_session_id";
+      let sid = localStorage.getItem(k);
+      if (!sid) {
+        sid = "sess-" + (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+        localStorage.setItem(k, sid);
+      }
+      return sid;
+    }
+
+    function pickVariant(sessionId, exp) {
+      if (!exp?.isActive) return "A";
+      const bucket100 = hashToInt(sessionId + "|" + exp.id + "|traffic") % 100;
+      const traffic = Math.max(0, Math.min(100, parseInt(exp.trafficPercent ?? 100, 10) || 100));
+      if (bucket100 >= traffic) return "A";
+
+      const variants = Array.isArray(exp.variants) && exp.variants.length ? exp.variants : FALLBACK_EXP.variants;
+      const total = variants.reduce((s, v) => s + (parseInt(v.weight, 10) || 0), 0) || 1;
+      const bucket = hashToInt(sessionId + "|" + exp.id) % 10000;
+      let acc = 0;
+      for (const v of variants) {
+        acc += Math.round(((parseInt(v.weight, 10) || 0) / total) * 10000);
+        if (bucket < acc) return v.name;
+      }
+      return variants[0].name;
+    }
+
+    async function loadExp() {
+      try {
+        const res = await fetch(EXP_ENDPOINT, { credentials: "include" });
+        const json = await res.json();
+        return (json?.experiments || []).find(e => e.id === EXP_ID) || FALLBACK_EXP;
+      } catch {
+        return FALLBACK_EXP;
+      }
+    }
+
+    async function getOfferVariant() {
+      const stored = localStorage.getItem(STORE_KEY);
+      if (stored) return stored;
+
+      const exp = await loadExp();
+      const variant = pickVariant(getSessionIdSafe(), exp);
+      localStorage.setItem(STORE_KEY, variant);
+      return variant;
+    }
+
+    window.TelemedExperiments = window.TelemedExperiments || {};
+    window.TelemedExperiments.getOfferVariant = getOfferVariant;
+
+    // Apply variant on load
+    (async function () {
+      const variant = await getOfferVariant();
+      const amountInput = document.getElementById("amount");
+      const infoBox = document.getElementById("bid-info");
+      const submitBtn = document.querySelector('button[type="submit"]');
+
+      const experimentsPayload = { offer_ui_v1: variant };
+
+      function trackView() {
+        window.TelemedTelemetry?.track?.("offer_view", { experiments: experimentsPayload });
+      }
+
+      function trackOfferCreated(price) {
+        window.TelemedTelemetry?.track?.("offer_created", {
+          offeredPrice: price,
+          experiments: experimentsPayload,
+        });
+      }
+
+      // Variant A: Campo livre + exemplo (control)
+      if (variant === "A") {
+        if (infoBox) {
+          infoBox.innerHTML = "<strong>Dica:</strong> Valores entre R$ 100 e R$ 200 costumam ser aceitos mais rápido. Você pode sugerir um valor.";
+        }
+      }
+
+      // Variant B: Default sugerido + botões rápidos
+      if (variant === "B") {
+        if (amountInput && !amountInput.dataset.touched) amountInput.value = "180";
+        if (infoBox) {
+          infoBox.innerHTML = "<strong>Sugestão rápida:</strong> Escolha um valor ou ajuste conforme preferir.";
+          
+          // Create quick buttons
+          const btnContainer = document.createElement("div");
+          btnContainer.style.cssText = "display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;";
+          const values = [120, 150, 180, 220];
+          values.forEach(v => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = `R$ ${v}`;
+            btn.style.cssText = "padding:8px 12px;border:1px solid #1a3e33;border-radius:10px;background:#0b1530;color:#79f2a6;cursor:pointer;font-weight:600;";
+            btn.addEventListener("click", () => {
+              if (amountInput) amountInput.value = String(v);
+            });
+            btnContainer.appendChild(btn);
+          });
+          infoBox.appendChild(btnContainer);
+        }
+      }
+
+      // Track de envio
+      if (submitBtn) {
+        submitBtn.addEventListener("click", () => {
+          const price = amountInput ? Number(String(amountInput.value).replace(",", ".")) : null;
+          trackOfferCreated(price);
+        });
+      }
+
+      trackView();
+    })();
+  })();
+  </script>
 </body>
 </html>
