@@ -1500,4 +1500,117 @@ router.get("/manager-revenue", requireManager, async (req, res) => {
   }
 });
 
+// ============================================
+// C2.2 - BACKFILL: consultas direct antigas sem fees
+// ============================================
+function calcFees(agreed) {
+  const feeRate = 0.2;
+  const platformFee = Math.round(agreed * feeRate * 100) / 100;
+  const doctorEarnings = Math.round((agreed - platformFee) * 100) / 100;
+  return { platformFee, doctorEarnings };
+}
+
+router.post("/backfill/direct-fees", requireManager, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query(`
+      SELECT id, agreed_price
+      FROM consultations
+      WHERE is_marketplace = false
+        AND agreed_price IS NOT NULL
+        AND platform_fee IS NULL
+      FOR UPDATE
+    `);
+
+    let updated = 0;
+
+    for (const c of rows) {
+      const agreed = Number(c.agreed_price);
+      if (!agreed || agreed <= 0) continue;
+
+      const { platformFee, doctorEarnings } = calcFees(agreed);
+
+      await client.query(
+        `
+        UPDATE consultations
+        SET platform_fee = $1,
+            doctor_earnings = $2,
+            updated_at = NOW()
+        WHERE id = $3
+        `,
+        [platformFee, doctorEarnings, c.id]
+      );
+
+      updated++;
+    }
+
+    await client.query("COMMIT");
+
+    return res.json({
+      ok: true,
+      updated,
+      message: `${updated} consultas direct atualizadas com fees`
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("backfill direct-fees error", err);
+    return res.status(500).json({ ok: false, error: "Erro interno" });
+  } finally {
+    client.release();
+  }
+});
+
+// ============================================
+// B2.1 - HEATMAP: created/finalized/signed por dia x hora
+// ============================================
+router.get("/heatmap", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const { rows } = await pool.query(`
+      SELECT 
+        EXTRACT(DOW FROM created_at) AS dow,
+        EXTRACT(HOUR FROM created_at) AS hour,
+        COUNT(*) AS created,
+        COUNT(*) FILTER (WHERE finalized_at IS NOT NULL) AS finalized,
+        COUNT(*) FILTER (WHERE signed_at IS NOT NULL) AS signed
+      FROM prontuarios_consulta
+      WHERE created_at >= $1
+      GROUP BY dow, hour
+      ORDER BY dow, hour
+    `, [since.toISOString()]);
+
+    const matrix = Array.from({ length: 7 }, () =>
+      Array.from({ length: 24 }, () => ({ created: 0, finalized: 0, signed: 0, backlog: 0 }))
+    );
+
+    for (const r of rows) {
+      const dow = Number(r.dow);
+      const hour = Number(r.hour);
+      const created = Number(r.created || 0);
+      const finalized = Number(r.finalized || 0);
+      const signed = Number(r.signed || 0);
+      matrix[dow][hour] = {
+        created,
+        finalized,
+        signed,
+        backlog: created - signed,
+      };
+    }
+
+    return res.json({
+      ok: true,
+      range: { days, since: since.toISOString() },
+      matrix,
+      dayLabels: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+    });
+  } catch (err) {
+    console.error("[heatmap] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao gerar heatmap" });
+  }
+});
+
 export default router;
