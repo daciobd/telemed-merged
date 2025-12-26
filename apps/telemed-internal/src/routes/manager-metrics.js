@@ -1782,7 +1782,7 @@ router.get("/search", requireManager, async (req, res) => {
     
     // Busca textual (nome, email, telefone)
     {
-      // Buscar pacientes por nome, email, telefone
+      // Buscar pacientes por nome, email, telefone (usa phone_normalized para performance)
       const patQ = await pool.query(`
         SELECT 
           u.id, u.full_name AS nome, u.email, u.phone AS telefone
@@ -1791,7 +1791,7 @@ router.get("/search", requireManager, async (req, res) => {
         WHERE 
           u.full_name ILIKE $1
           OR u.email ILIKE $1
-          OR REPLACE(REPLACE(REPLACE(REPLACE(u.phone, ' ', ''), '-', ''), '(', ''), ')', '') LIKE $2
+          OR u.phone_normalized LIKE $2
         ORDER BY u.full_name
         LIMIT $3
       `, [`%${search}%`, `%${normalizedPhone}%`, limitNum]);
