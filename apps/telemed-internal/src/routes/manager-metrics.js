@@ -2110,4 +2110,114 @@ router.get("/prontuarios/:id/audit", requireManager, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// GET /quality-metrics - Métricas de qualidade do checklist
+// Query: ?days=30
+// ═══════════════════════════════════════════════════════════════════════════
+router.get("/quality-metrics", requireManager, async (req, res) => {
+  const start = Date.now();
+  
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    
+    const cacheKey = `quality-metrics:${days}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+    
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const totalsQuery = await pool.query(`
+      SELECT
+        count(*) FILTER (WHERE event = 'validate_attempt')::int AS total_validates,
+        count(*) FILTER (WHERE event = 'finalize_blocked')::int AS blocked,
+        count(*) FILTER (WHERE event = 'finalize_warned')::int AS warned,
+        count(*) FILTER (WHERE event = 'finalized_ok')::int AS finalized_ok
+      FROM prontuario_quality_events
+      WHERE created_at >= $1
+    `, [since]);
+    
+    const totals = totalsQuery.rows[0] || {};
+    const blockRate = totals.finalized_ok + totals.blocked > 0
+      ? (totals.blocked / (totals.finalized_ok + totals.blocked) * 100).toFixed(1)
+      : "0.0";
+
+    const topIssuesQuery = await pool.query(`
+      SELECT 
+        issue->>'code' AS code,
+        issue->>'label' AS label,
+        issue->>'mode' AS mode,
+        count(*)::int AS count
+      FROM prontuario_quality_events,
+           jsonb_array_elements(issues_json) AS issue
+      WHERE created_at >= $1
+        AND event IN ('finalize_blocked', 'finalize_warned')
+      GROUP BY issue->>'code', issue->>'label', issue->>'mode'
+      ORDER BY count DESC
+      LIMIT 10
+    `, [since]);
+
+    const byDoctorQuery = await pool.query(`
+      SELECT
+        medico_id,
+        count(*) FILTER (WHERE event = 'finalize_blocked')::int AS blocked,
+        count(*) FILTER (WHERE event = 'finalized_ok')::int AS ok
+      FROM prontuario_quality_events
+      WHERE created_at >= $1
+        AND medico_id IS NOT NULL
+      GROUP BY medico_id
+      ORDER BY blocked DESC
+      LIMIT 15
+    `, [since]);
+
+    const trendQuery = await pool.query(`
+      SELECT
+        date_trunc('day', created_at)::date AS day,
+        count(*) FILTER (WHERE event = 'finalize_blocked')::int AS blocked,
+        count(*) FILTER (WHERE event = 'finalized_ok')::int AS ok
+      FROM prontuario_quality_events
+      WHERE created_at >= $1
+      GROUP BY date_trunc('day', created_at)
+      ORDER BY day
+    `, [since]);
+
+    const result = {
+      ok: true,
+      tookMs: Date.now() - start,
+      days,
+      totals: {
+        validates: totals.total_validates || 0,
+        blocked: totals.blocked || 0,
+        warned: totals.warned || 0,
+        finalizedOk: totals.finalized_ok || 0,
+        blockRate: parseFloat(blockRate),
+      },
+      topIssues: topIssuesQuery.rows.map(r => ({
+        code: r.code,
+        label: r.label,
+        mode: r.mode,
+        count: r.count,
+      })),
+      byDoctor: byDoctorQuery.rows.map(r => ({
+        medicoId: r.medico_id,
+        blocked: r.blocked,
+        ok: r.ok,
+        blockRate: r.ok + r.blocked > 0
+          ? parseFloat((r.blocked / (r.ok + r.blocked) * 100).toFixed(1))
+          : 0,
+      })),
+      trend: trendQuery.rows.map(r => ({
+        day: r.day,
+        blocked: r.blocked,
+        ok: r.ok,
+      })),
+    };
+
+    setCache(cacheKey, result);
+    return res.json(result);
+  } catch (err) {
+    console.error("[quality-metrics] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao buscar métricas de qualidade" });
+  }
+});
+
 export default router;
