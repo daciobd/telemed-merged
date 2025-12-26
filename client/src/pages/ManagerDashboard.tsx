@@ -4,9 +4,105 @@ import { Button } from "@/components/ui/button";
 import { 
   FileText, CheckCircle, PenTool, RefreshCw, 
   Clock, TrendingUp, Shield, AlertTriangle, Users,
-  ArrowUpDown, ArrowUp, ArrowDown
+  ArrowUpDown, ArrowUp, ArrowDown, DollarSign, FlaskConical, BarChart3
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+type CacTotals = {
+  spend: number;
+  signed: number;
+  platformFee: number;
+  cac: number | null;
+  cacPercent: number | null;
+};
+
+type CacResponse = {
+  range: { from: string; to: string; groupBy: string };
+  rows: unknown[];
+  totals: CacTotals;
+};
+
+function CacRealCard({ days, onNavigate }: { days: number; onNavigate: (path: string) => void }) {
+  const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
+  
+  const { data, isLoading } = useQuery<CacResponse>({
+    queryKey: ["/metrics/v2/marketing/cac-real", days],
+    queryFn: async () => {
+      const token = localStorage.getItem("consultorio_token");
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`/metrics/v2/marketing/cac-real?from=${fromDate}&to=${today}`, { 
+        credentials: "include", 
+        headers 
+      });
+      if (!res.ok) throw new Error("Falha ao carregar CAC");
+      return res.json();
+    },
+    staleTime: 60000,
+  });
+
+  const totals = data?.totals;
+  const cacIsHigh = totals?.cacPercent !== null && (totals?.cacPercent ?? 0) > 0.6;
+  const cardTone = cacIsHigh 
+    ? "border-red-300 bg-red-50 dark:bg-red-900/20"
+    : totals?.spend && totals.spend > 0
+    ? "border-green-200 bg-green-50 dark:bg-green-900/20"
+    : "border-gray-200";
+
+  const formatCurrency = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+  return (
+    <Card className={`hover:shadow-md transition-shadow border ${cardTone}`} data-testid="card-cac-real">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle className="text-sm font-medium text-gray-500">CAC Real (Ads)</CardTitle>
+        <DollarSign className={`w-5 h-5 ${cacIsHigh ? "text-red-600" : "text-teal-600"}`} />
+      </CardHeader>
+      <CardContent className="pt-0">
+        {isLoading ? (
+          <div className="text-gray-400 py-2">Carregando...</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-gray-500">Gasto:</span>
+                <span className="ml-1 font-medium">{formatCurrency(totals?.spend || 0)}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">Assinadas:</span>
+                <span className="ml-1 font-medium">{totals?.signed || 0}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">CAC:</span>
+                <span className={`ml-1 font-medium ${cacIsHigh ? "text-red-600" : ""}`}>
+                  {totals?.cac !== null ? formatCurrency(totals?.cac || 0) : "-"}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">CAC %:</span>
+                <span className={`ml-1 font-medium ${cacIsHigh ? "text-red-600" : "text-green-600"}`}>
+                  {totals?.cacPercent !== null ? `${((totals?.cacPercent || 0) * 100).toFixed(1)}%` : "-"}
+                </span>
+              </div>
+            </div>
+            {cacIsHigh && (
+              <div className="text-xs text-red-700 mt-2">
+                ⚠️ CAC acima de 60%. Revise campanhas.
+              </div>
+            )}
+            <button
+              className="mt-3 w-full px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
+              onClick={() => onNavigate("/manager/cac")}
+              data-testid="link-cac"
+            >
+              Ver detalhes
+            </button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 type FunnelData = {
   criados: number;
@@ -225,7 +321,7 @@ export default function ManagerDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -234,6 +330,33 @@ export default function ManagerDashboard() {
           >
             <TrendingUp className="w-4 h-4 mr-1" />
             Marketplace
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/manager/marketing")}
+            data-testid="button-marketing"
+          >
+            <BarChart3 className="w-4 h-4 mr-1" />
+            Marketing
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/manager/cac")}
+            data-testid="button-cac"
+          >
+            <DollarSign className="w-4 h-4 mr-1" />
+            CAC
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLocation("/manager/experiments")}
+            data-testid="button-experiments"
+          >
+            <FlaskConical className="w-4 h-4 mr-1" />
+            A/B Tests
           </Button>
           <div className="inline-flex rounded-lg border overflow-hidden">
             <button
@@ -469,6 +592,52 @@ export default function ManagerDashboard() {
                 </Card>
               );
             })()}
+          </div>
+
+          {/* Bloco B - Cards Marketing Compactos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* CacRealCard */}
+            <CacRealCard days={days} onNavigate={setLocation} />
+            
+            {/* Placeholder para futuras métricas de marketing */}
+            <Card className="hover:shadow-md transition-shadow border border-gray-200" data-testid="card-marketing-link">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Marketing & Funil</CardTitle>
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Análise de campanhas UTM, conversões e receita por fonte
+                </p>
+                <button
+                  className="mt-3 w-full px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
+                  onClick={() => setLocation("/manager/marketing")}
+                  data-testid="link-marketing"
+                >
+                  Ver detalhes
+                </button>
+              </CardContent>
+            </Card>
+
+            {/* Experiments Card */}
+            <Card className="hover:shadow-md transition-shadow border border-gray-200" data-testid="card-experiments-link">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-500">Experimentos A/B</CardTitle>
+                <FlaskConical className="w-5 h-5 text-indigo-600" />
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Compare variantes de landing, ofertas e preços
+                </p>
+                <button
+                  className="mt-3 w-full px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
+                  onClick={() => setLocation("/manager/experiments")}
+                  data-testid="link-experiments"
+                >
+                  Ver experimentos
+                </button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Bloco C - Produção por Médico */}
