@@ -7,6 +7,13 @@ import jwt from "jsonwebtoken";
 const router = express.Router();
 const { virtualOfficeSettings, consultations, users } = schema;
 
+function calcFees(agreedPrice) {
+  const feeRate = 0.2;
+  const platformFee = Math.round(agreedPrice * feeRate * 100) / 100;
+  const doctorEarnings = Math.round((agreedPrice - platformFee) * 100) / 100;
+  return { platformFee, doctorEarnings };
+}
+
 // Middleware de autenticação
 const authenticate = async (req, res, next) => {
   try {
@@ -171,29 +178,36 @@ router.post("/:customUrl/book", async (req, res) => {
     const { patientId, consultationType, scheduledFor, chiefComplaint } =
       req.body;
 
-    const settings = await db
+    const { doctors } = schema;
+    const doctorRows = await db
       .select()
-      .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.custom_url, customUrl))
+      .from(doctors)
+      .where(eq(doctors.customUrl, customUrl))
       .limit(1);
 
-    if (!settings || settings.length === 0) {
+    if (!doctorRows || doctorRows.length === 0) {
       return res.status(404).json({ error: "Consultório não encontrado" });
     }
 
-    const [setting] = settings;
-    const doctorId = setting.doctor_id;
+    const [doctor] = doctorRows;
+    const doctorId = doctor.id;
+    const pricing = doctor.consultationPricing || {};
+    const price = Number(pricing[consultationType] || pricing["primeira_consulta"] || 0);
+    const { platformFee, doctorEarnings } = calcFees(price);
 
     const created = await db
       .insert(consultations)
       .values({
-        patient_id: patientId || 1,
-        doctor_id: doctorId,
-        consultation_type: consultationType || "primeira_consulta",
-        scheduled_for: new Date(scheduledFor),
-        chief_complaint: chiefComplaint || "",
-        status: "agendada",
-        price: setting.consultation_pricing?.[consultationType] || 0,
+        patientId: patientId || 1,
+        doctorId: doctorId,
+        consultationType: consultationType || "primeira_consulta",
+        scheduledFor: new Date(scheduledFor),
+        chiefComplaint: chiefComplaint || "",
+        status: "scheduled",
+        agreedPrice: String(price),
+        platformFee: String(platformFee),
+        doctorEarnings: String(doctorEarnings),
+        isMarketplace: false,
       })
       .returning();
 
