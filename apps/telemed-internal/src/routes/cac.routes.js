@@ -231,110 +231,140 @@ router.get("/cac-real", async (req, res) => {
 // CAC Real Detalhado - endpoint para tela /manager/cac com filtros + tabela + CSV
 // NOTA: consultations NÃO tem campos UTM. CAC é calculado como:
 //   - Gastos: ads_spend_daily.provider (canal) + campaign_name
-//   - Conversões: prontuarios_consulta.signed_at
+//   - Conversões: prontuarios_consulta.signed_at (global por período)
 //   - Receita: consultations.platform_fee (via JOIN consulta_id)
+// ALOCAÇÃO PROPORCIONAL: signups e revenue são distribuídos por share de gasto dentro do período
 router.get("/cac-real/details", async (req, res) => {
-  const from = req.query.from;
-  const to = req.query.to;
-  const channel = req.query.channel || "all";
-  const campaign = req.query.campaign || "";
-  const onlySigned = req.query.onlySigned === "1";
-  const groupBy = req.query.groupBy || "day"; // "day" | "week"
-
-  if (!from || !to) {
-    return res.status(400).json({ error: "Parâmetros obrigatórios: from, to (YYYY-MM-DD)" });
-  }
-
   try {
+    const from = (req.query.from || "").trim();
+    const to = (req.query.to || "").trim();
+    const provider = (req.query.provider || "").trim();
+    const campaign = (req.query.campaign || "").trim();
+    const onlySigned = req.query.onlySigned === "1" || String(req.query.onlySigned || "").toLowerCase() === "true";
+    const groupBy = (req.query.groupBy || "day").trim();
     const truncUnit = groupBy === "week" ? "week" : "day";
 
-    // Filtros dinâmicos
-    const spendFilters = [];
-    const spendParams = [from, to];
-    let paramIdx = 2;
+    if (!from || !to) {
+      return res.status(400).json({ error: "Missing required query params: from, to (YYYY-MM-DD)" });
+    }
 
-    if (channel && channel !== "all") {
-      paramIdx++;
-      spendFilters.push(`provider = $${paramIdx}`);
-      spendParams.push(channel);
+    // Param builder
+    const params = [];
+    let p = 0;
+    params.push(from); p++;
+    const pFrom = `$${p}`;
+    params.push(to); p++;
+    const pTo = `$${p}`;
+
+    const spendWhere = [];
+    if (provider) {
+      params.push(provider); p++;
+      spendWhere.push(`asd.provider = $${p}`);
     }
     if (campaign) {
-      paramIdx++;
-      spendFilters.push(`campaign_name ILIKE $${paramIdx}`);
-      spendParams.push(`%${campaign}%`);
+      params.push(campaign); p++;
+      spendWhere.push(`asd.campaign_name ILIKE $${p}`);
     }
 
-    const spendFilterSQL = spendFilters.length ? `AND ${spendFilters.join(" AND ")}` : "";
+    const spendFilterSQL = spendWhere.length ? `AND ${spendWhere.join(" AND ")}` : "";
 
-    // CTE: gastos agrupados por período + canal + campanha
-    // CTE: conversões + receita (sem UTM, é global por período)
-    // FULL OUTER JOIN para ter linhas mesmo sem gasto ou sem conversão
+    // ads_spend_daily.spend está em REAIS (numeric), convertemos para cents
     const sql = `
       WITH spend AS (
         SELECT
-          date_trunc('${truncUnit}', date::timestamp)::date AS period,
-          COALESCE(provider, 'unknown') AS channel,
-          COALESCE(campaign_name, '') AS campaign,
-          SUM(COALESCE(spend, 0))::numeric AS spend_reais
-        FROM ads_spend_daily
-        WHERE date::date >= $1::date
-          AND date::date <= $2::date
+          date_trunc('${truncUnit}', asd.date::timestamp)::date AS period,
+          COALESCE(asd.provider, 'unknown') AS provider,
+          COALESCE(asd.campaign_name, 'unknown') AS campaign_name,
+          SUM(ROUND(COALESCE(asd.spend, 0) * 100))::bigint AS spend_cents
+        FROM ads_spend_daily asd
+        WHERE asd.date::date >= ${pFrom}::date
+          AND asd.date::date <= ${pTo}::date
           ${spendFilterSQL}
-        GROUP BY 1, 2, 3
+        GROUP BY 1,2,3
+      ),
+      spend_period AS (
+        SELECT
+          period,
+          SUM(spend_cents)::bigint AS spend_total_cents
+        FROM spend
+        GROUP BY 1
       ),
       conv AS (
         SELECT
           date_trunc('${truncUnit}', pc.signed_at)::date AS period,
-          COUNT(*)::int AS signups,
-          SUM(COALESCE(c.platform_fee, 0))::numeric AS revenue_reais
+          COUNT(*)::int AS signups_total,
+          SUM(ROUND(COALESCE(cons.platform_fee, 0) * 100))::bigint AS revenue_total_cents
         FROM prontuarios_consulta pc
-        LEFT JOIN consultations c ON c.id::text = pc.consulta_id
+        LEFT JOIN consultations cons ON cons.id::text = pc.consulta_id
         WHERE pc.signed_at IS NOT NULL
-          AND pc.signed_at::date >= $1::date
-          AND pc.signed_at::date <= $2::date
+          AND pc.signed_at::date >= ${pFrom}::date
+          AND pc.signed_at::date <= ${pTo}::date
         GROUP BY 1
       ),
       joined AS (
         SELECT
-          COALESCE(s.period, cv.period) AS period,
-          COALESCE(s.channel, 'unknown') AS channel,
-          COALESCE(s.campaign, '') AS campaign,
-          COALESCE(s.spend_reais, 0)::numeric AS spend_reais,
-          COALESCE(cv.signups, 0)::int AS signups,
-          COALESCE(cv.revenue_reais, 0)::numeric AS revenue_reais
+          s.period,
+          s.provider,
+          s.campaign_name,
+          s.spend_cents,
+          sp.spend_total_cents,
+          COALESCE(c.signups_total, 0)::int AS signups_total,
+          COALESCE(c.revenue_total_cents, 0)::bigint AS revenue_total_cents,
+          CASE
+            WHEN sp.spend_total_cents > 0 THEN (s.spend_cents::numeric / sp.spend_total_cents::numeric)
+            ELSE 0::numeric
+          END AS spend_share
         FROM spend s
-        FULL OUTER JOIN conv cv ON cv.period = s.period
+        JOIN spend_period sp ON sp.period = s.period
+        LEFT JOIN conv c ON c.period = s.period
       )
       SELECT
         period,
-        channel,
-        campaign,
-        ROUND(spend_reais * 100)::bigint AS spend_cents,
-        signups,
-        ROUND(revenue_reais * 100)::bigint AS revenue_cents,
-        CASE WHEN signups > 0 THEN ROUND((spend_reais / signups) * 100)::bigint ELSE NULL END AS cac_cents
+        provider,
+        campaign_name,
+        spend_cents,
+        spend_total_cents,
+        signups_total,
+        revenue_total_cents,
+        spend_share,
+        ROUND(signups_total * spend_share)::int AS signups_alloc,
+        ROUND(revenue_total_cents::numeric * spend_share)::bigint AS revenue_alloc_cents,
+        CASE
+          WHEN ROUND(signups_total * spend_share)::int > 0
+            THEN (spend_cents / ROUND(signups_total * spend_share)::int)::bigint
+          ELSE NULL
+        END AS cac_cents_alloc
       FROM joined
-      ${onlySigned ? "WHERE signups > 0" : ""}
-      ORDER BY period DESC, channel ASC, campaign ASC;
+      ${onlySigned ? "WHERE ROUND(signups_total * spend_share)::int > 0" : ""}
+      ORDER BY period DESC, provider ASC, campaign_name ASC;
     `;
 
-    const { rows } = await pool.query(sql, spendParams);
+    const { rows } = await pool.query(sql, params);
 
-    // Totais
+    // Totais de gasto
     let spendTotal = 0;
-    let signupsTotal = 0;
-    let revenueTotal = 0;
-
     for (const r of rows) {
       spendTotal += parseInt(r.spend_cents || 0);
-      signupsTotal += parseInt(r.signups || 0);
-      revenueTotal += parseInt(r.revenue_cents || 0);
     }
 
-    const cacTotal = signupsTotal > 0 ? Math.round(spendTotal / signupsTotal) : null;
+    // Totais globais (via query separada para evitar erros de arredondamento)
+    const totalsSql = `
+      SELECT
+        COUNT(*)::int AS signups_total,
+        SUM(ROUND(COALESCE(cons.platform_fee, 0) * 100))::bigint AS revenue_total_cents
+      FROM prontuarios_consulta pc
+      LEFT JOIN consultations cons ON cons.id::text = pc.consulta_id
+      WHERE pc.signed_at IS NOT NULL
+        AND pc.signed_at::date >= $1::date
+        AND pc.signed_at::date <= $2::date;
+    `;
+    const totalsRes = await pool.query(totalsSql, [from, to]);
+    const signupsTotal = parseInt(totalsRes.rows?.[0]?.signups_total || 0);
+    const revenueTotal = parseInt(totalsRes.rows?.[0]?.revenue_total_cents || 0);
+    const cacTotal = signupsTotal > 0 ? Math.floor(spendTotal / signupsTotal) : null;
 
     res.json({
-      range: { from, to, groupBy: truncUnit, channel: channel || null, campaign: campaign || null, onlySigned },
+      range: { from, to, groupBy: truncUnit, provider: provider || null, campaign: campaign || null, onlySigned },
       unit: "cents",
       currency: "BRL",
       totals: {
@@ -345,17 +375,110 @@ router.get("/cac-real/details", async (req, res) => {
       },
       rows: rows.map((r) => ({
         period: r.period instanceof Date ? r.period.toISOString().slice(0, 10) : String(r.period).slice(0, 10),
-        channel: r.channel,
-        campaign: r.campaign,
+        provider: r.provider,
+        campaign_name: r.campaign_name,
         spend_cents: parseInt(r.spend_cents || 0),
-        signups: parseInt(r.signups || 0),
-        revenue_cents: parseInt(r.revenue_cents || 0),
-        cac_cents: r.cac_cents === null ? null : parseInt(r.cac_cents),
+        spend_total_cents_period: parseInt(r.spend_total_cents || 0),
+        signups_total_period: parseInt(r.signups_total || 0),
+        revenue_total_cents_period: parseInt(r.revenue_total_cents || 0),
+        spend_share: parseFloat(r.spend_share || 0),
+        signups_alloc: parseInt(r.signups_alloc || 0),
+        revenue_alloc_cents: parseInt(r.revenue_alloc_cents || 0),
+        cac_cents_alloc: r.cac_cents_alloc === null ? null : parseInt(r.cac_cents_alloc),
       })),
     });
   } catch (err) {
     console.error("[cac-real/details] error:", err);
     res.status(500).json({ error: "Erro ao calcular CAC detalhado" });
+  }
+});
+
+// CAC Real Alerts - endpoint para alertas automáticos de CAC
+router.get("/cac-real/alerts", async (req, res) => {
+  try {
+    const days = Math.max(1, Number(req.query.days || 7));
+    const cacMax = Number(req.query.cacMax || 20000); // R$200,00 em cents
+    const minSignups = Number(req.query.minSignups || 1);
+    const minSpend = Number(req.query.minSpend || 5000); // R$50,00 em cents
+
+    // range: últimos N dias (inclui hoje)
+    const rangeSql = `
+      SELECT
+        (CURRENT_DATE - ($1::int - 1))::date AS from_date,
+        CURRENT_DATE::date AS to_date
+    `;
+    const rangeRes = await pool.query(rangeSql, [days]);
+    const from = rangeRes.rows[0].from_date;
+    const to = rangeRes.rows[0].to_date;
+
+    // spend (convertendo de reais para cents)
+    const spendSql = `
+      SELECT COALESCE(SUM(ROUND(COALESCE(spend,0)*100)),0)::bigint AS spend_cents
+      FROM ads_spend_daily
+      WHERE date::date >= $1::date AND date::date <= $2::date
+    `;
+    const spendRes = await pool.query(spendSql, [from, to]);
+    const spendCents = parseInt(spendRes.rows[0].spend_cents || 0);
+
+    // signups + revenue
+    const convSql = `
+      SELECT
+        COUNT(*)::int AS signups,
+        COALESCE(SUM(ROUND(COALESCE(cons.platform_fee,0)*100)),0)::bigint AS revenue_cents
+      FROM prontuarios_consulta pc
+      LEFT JOIN consultations cons ON cons.id::text = pc.consulta_id
+      WHERE pc.signed_at IS NOT NULL
+        AND pc.signed_at::date >= $1::date
+        AND pc.signed_at::date <= $2::date
+    `;
+    const convRes = await pool.query(convSql, [from, to]);
+    const signups = parseInt(convRes.rows[0].signups || 0);
+    const revenueCents = parseInt(convRes.rows[0].revenue_cents || 0);
+
+    const cacCents = signups > 0 ? Math.floor(spendCents / signups) : null;
+
+    const alerts = [];
+
+    // 1) gastando sem assinatura
+    if (spendCents >= minSpend && signups < minSignups) {
+      alerts.push({
+        code: "SPEND_WITHOUT_SIGNUPS",
+        severity: "high",
+        message: `Gasto relevante sem assinaturas no período (${days}d).`,
+        metrics: { from, to, spendCents, signups, revenueCents, cacCents },
+      });
+    }
+
+    // 2) CAC explodindo
+    if (cacCents != null && cacCents >= cacMax && signups >= minSignups) {
+      alerts.push({
+        code: "CAC_TOO_HIGH",
+        severity: "high",
+        message: `CAC acima do limite no período (${days}d).`,
+        metrics: { from, to, spendCents, signups, revenueCents, cacCents, cacMax },
+      });
+    }
+
+    // 3) queda de assinaturas com gasto (alerta "médio")
+    if (spendCents >= minSpend && signups > 0 && signups < Math.max(2, minSignups)) {
+      alerts.push({
+        code: "LOW_SIGNUPS_WITH_SPEND",
+        severity: "medium",
+        message: `Poucas assinaturas para o nível de gasto no período (${days}d).`,
+        metrics: { from, to, spendCents, signups, revenueCents, cacCents },
+      });
+    }
+
+    res.json({
+      ok: alerts.length === 0,
+      range: { from, to, days },
+      thresholds: { cacMax, minSignups, minSpend },
+      metrics: { spendCents, signups, revenueCents, cacCents },
+      alerts,
+    });
+  } catch (err) {
+    console.error("[cac-real/alerts] error:", err);
+    res.status(500).json({ error: "Failed to compute CAC alerts" });
   }
 });
 

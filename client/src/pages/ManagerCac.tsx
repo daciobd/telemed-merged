@@ -5,37 +5,64 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign, Users, Target, Download, RefreshCw, Filter, TrendingUp } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Target, Download, RefreshCw, Filter, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
-type Channel = "all" | "google" | "meta" | "tiktok" | "outros" | "google_ads" | "meta_ads";
-
-type CacRow = {
+type CacDetailsRow = {
   period: string;
-  channel: string;
-  campaign: string;
+  provider: string;
+  campaign_name: string;
   spend_cents: number;
-  signups: number;
-  revenue_cents: number;
-  cac_cents: number | null;
+  spend_total_cents_period: number;
+  signups_total_period: number;
+  revenue_total_cents_period: number;
+  spend_share: number;
+  signups_alloc: number;
+  revenue_alloc_cents: number;
+  cac_cents_alloc: number | null;
 };
 
-type CacTotals = {
-  spend_cents: number;
-  signups: number;
-  revenue_cents: number;
-  cac_cents: number | null;
+type CacDetailsResponse = {
+  range: {
+    from: string;
+    to: string;
+    groupBy: "day" | "week";
+    provider: string | null;
+    campaign: string | null;
+    onlySigned: boolean;
+  };
+  unit: "cents";
+  currency: "BRL";
+  totals: {
+    spend_cents: number;
+    signups: number;
+    revenue_cents: number;
+    cac_cents: number | null;
+  };
+  rows: CacDetailsRow[];
 };
 
-type CacResponse = {
-  range: { from: string; to: string; groupBy: string; channel: string | null; campaign: string | null; onlySigned: boolean };
-  totals: CacTotals;
-  rows: CacRow[];
-  currency?: "BRL";
-  unit?: "cents";
+type CacAlert = {
+  code: string;
+  severity: "high" | "medium" | "low";
+  message: string;
+  metrics: Record<string, unknown>;
+};
+
+type CacAlertsResponse = {
+  ok: boolean;
+  range: { from: string; to: string; days: number };
+  thresholds: { cacMax: number; minSignups: number; minSpend: number };
+  metrics: { spendCents: number; signups: number; revenueCents: number; cacCents: number | null };
+  alerts: CacAlert[];
 };
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
+}
+
+function formatBRLFromCents(cents: number | null) {
+  if (cents === null) return "—";
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function downloadCSV(filename: string, csv: string) {
@@ -48,28 +75,30 @@ function downloadCSV(filename: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-function rowsToCSV(rows: CacRow[]) {
-  const header = ["periodo", "canal", "campanha", "gasto_brl", "assinaturas", "receita_brl", "cac_brl"];
-  const lines = rows.map((r) => {
-    return [
-      r.period,
-      r.channel,
-      (r.campaign || "").replace(/"/g, '""'),
-      (r.spend_cents / 100).toFixed(2),
-      String(r.signups),
-      (r.revenue_cents / 100).toFixed(2),
-      r.cac_cents === null ? "" : (r.cac_cents / 100).toFixed(2),
-    ]
-      .map((v) => `"${v}"`)
-      .join(",");
-  });
-  return [header.join(","), ...lines].join("\n");
-}
+function toCSV(rows: CacDetailsRow[]) {
+  const header = [
+    "periodo", "provider", "campanha", "gasto_brl", "assinaturas_aloc", "cac_brl_aloc",
+    "receita_brl_aloc", "share_pct", "signups_total_periodo", "gasto_total_brl_periodo", "receita_total_brl_periodo"
+  ];
 
-function formatMoney(cents: number | null) {
-  if (cents === null) return "—";
-  const reais = cents / 100;
-  return reais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const lines = rows.map((r) => {
+    const vals = [
+      r.period,
+      r.provider,
+      r.campaign_name,
+      (r.spend_cents / 100).toFixed(2),
+      String(r.signups_alloc),
+      r.cac_cents_alloc == null ? "" : (r.cac_cents_alloc / 100).toFixed(2),
+      (r.revenue_alloc_cents / 100).toFixed(2),
+      (r.spend_share * 100).toFixed(1),
+      String(r.signups_total_period),
+      (r.spend_total_cents_period / 100).toFixed(2),
+      (r.revenue_total_cents_period / 100).toFixed(2),
+    ];
+    return vals.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+  });
+
+  return [header.join(","), ...lines].join("\n");
 }
 
 function Skeleton({ className }: { className?: string }) {
@@ -83,7 +112,7 @@ export default function ManagerCac() {
   const defaultTo = useMemo(() => toISODate(today), [today]);
   const defaultFrom = useMemo(() => {
     const d = new Date(today);
-    d.setDate(d.getDate() - 29);
+    d.setDate(d.getDate() - 13);
     return toISODate(d);
   }, [today]);
 
@@ -91,20 +120,23 @@ export default function ManagerCac() {
 
   const [from, setFrom] = useState(params.get("from") || defaultFrom);
   const [to, setTo] = useState(params.get("to") || defaultTo);
-  const [channel, setChannel] = useState<Channel>((params.get("channel") as Channel) || "all");
+  const [provider, setProvider] = useState(params.get("provider") || "");
   const [campaign, setCampaign] = useState(params.get("campaign") || "");
   const [onlySigned, setOnlySigned] = useState(params.get("onlySigned") === "1");
   const [groupBy, setGroupBy] = useState<"day" | "week">((params.get("groupBy") as "day" | "week") || "day");
 
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<CacResponse | null>(null);
+  const [data, setData] = useState<CacDetailsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function applyFiltersToURL() {
+  const [alerts, setAlerts] = useState<CacAlertsResponse | null>(null);
+  const [alertsLoading, setAlertsLoading] = useState(false);
+
+  function syncURL() {
     const q = new URLSearchParams();
     q.set("from", from);
     q.set("to", to);
-    if (channel !== "all") q.set("channel", channel);
+    if (provider) q.set("provider", provider);
     if (campaign) q.set("campaign", campaign);
     if (onlySigned) q.set("onlySigned", "1");
     if (groupBy !== "day") q.set("groupBy", groupBy);
@@ -119,7 +151,7 @@ export default function ManagerCac() {
       const q = new URLSearchParams();
       q.set("from", from);
       q.set("to", to);
-      if (channel !== "all") q.set("channel", channel);
+      if (provider) q.set("provider", provider);
       if (campaign) q.set("campaign", campaign);
       if (onlySigned) q.set("onlySigned", "1");
       if (groupBy) q.set("groupBy", groupBy);
@@ -133,7 +165,7 @@ export default function ManagerCac() {
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as CacResponse;
+      const json = (await res.json()) as CacDetailsResponse;
       setData(json);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Falha ao carregar CAC.";
@@ -144,11 +176,34 @@ export default function ManagerCac() {
     }
   }
 
+  async function loadAlerts() {
+    setAlertsLoading(true);
+    try {
+      const token = localStorage.getItem("consultorio_token");
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const res = await fetch(`/metrics/v2/marketing/cac-real/alerts?days=7`, {
+        credentials: "include",
+        headers,
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as CacAlertsResponse;
+        setAlerts(json);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setAlertsLoading(false);
+    }
+  }
+
   useEffect(() => {
     load();
-  }, [from, to, channel, campaign, onlySigned, groupBy]);
+    loadAlerts();
+  }, [from, to, provider, campaign, onlySigned, groupBy]);
 
-  const cacAlertThreshold = 10800; // R$108 = 60% de R$180 (ticket médio) em centavos
+  const cacAlertThreshold = 10800; // R$108 = 60% de R$180 (ticket médio)
   const isHighCacTotal = data?.totals?.cac_cents && data.totals.cac_cents > cacAlertThreshold;
 
   return (
@@ -183,7 +238,7 @@ export default function ManagerCac() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => load()}
+            onClick={() => { load(); loadAlerts(); }}
             disabled={loading}
             data-testid="btn-refresh"
           >
@@ -191,6 +246,32 @@ export default function ManagerCac() {
           </Button>
         </div>
       </div>
+
+      {/* Alerts Badge */}
+      {alerts && (
+        <Card className={`mb-4 ${alerts.ok ? "border-green-400 bg-green-50 dark:bg-green-900/20" : "border-red-400 bg-red-50 dark:bg-red-900/20"}`}>
+          <CardContent className="py-3">
+            <div className="flex items-center gap-3">
+              {alerts.ok ? (
+                <>
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <span className="text-green-700 dark:text-green-300 font-medium">CAC OK nos últimos 7 dias</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <span className="text-red-700 dark:text-red-300 font-medium">
+                    {alerts.alerts.length} alerta{alerts.alerts.length > 1 ? "s" : ""} de CAC
+                  </span>
+                  <span className="text-sm text-red-600 dark:text-red-400">
+                    {alerts.alerts.map(a => a.message).join(" | ")}
+                  </span>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filtros */}
       <Card className="mb-6">
@@ -204,42 +285,24 @@ export default function ManagerCac() {
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-gray-500">De</Label>
-              <Input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="w-36"
-                data-testid="input-from"
-              />
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-36" data-testid="input-from" />
             </div>
 
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-gray-500">Até</Label>
-              <Input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="w-36"
-                data-testid="input-to"
-              />
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-36" data-testid="input-to" />
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-gray-500">Canal</Label>
-              <Select value={channel} onValueChange={(v) => setChannel(v as Channel)}>
-                <SelectTrigger className="w-32" data-testid="select-channel">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="google_ads">Google Ads</SelectItem>
-                  <SelectItem value="meta_ads">Meta Ads</SelectItem>
-                  <SelectItem value="google">Google</SelectItem>
-                  <SelectItem value="meta">Meta</SelectItem>
-                  <SelectItem value="tiktok">TikTok</SelectItem>
-                  <SelectItem value="outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-xs text-gray-500">Provider</Label>
+              <Input
+                type="text"
+                value={provider}
+                onChange={(e) => setProvider(e.target.value)}
+                placeholder="google, meta..."
+                className="w-32"
+                data-testid="input-provider"
+              />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -249,7 +312,7 @@ export default function ManagerCac() {
                 value={campaign}
                 onChange={(e) => setCampaign(e.target.value)}
                 placeholder="Buscar..."
-                className="w-32"
+                className="w-40"
                 data-testid="input-campaign"
               />
             </div>
@@ -278,12 +341,7 @@ export default function ManagerCac() {
               Somente com assinatura
             </label>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={applyFiltersToURL}
-              data-testid="btn-apply-filters"
-            >
+            <Button variant="outline" size="sm" onClick={syncURL} data-testid="btn-apply-filters">
               Fixar na URL
             </Button>
 
@@ -293,8 +351,8 @@ export default function ManagerCac() {
               disabled={!data?.rows?.length}
               onClick={() => {
                 if (!data) return;
-                const csv = rowsToCSV(data.rows);
-                downloadCSV(`cac-real_${from}_a_${to}.csv`, csv);
+                const csv = toCSV(data.rows);
+                downloadCSV(`cac-real-details_${from}_a_${to}.csv`, csv);
               }}
               data-testid="btn-export-csv"
             >
@@ -315,11 +373,9 @@ export default function ManagerCac() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Gasto Total</p>
-                {loading ? (
-                  <Skeleton className="h-6 w-24 mt-1" />
-                ) : (
+                {loading ? <Skeleton className="h-6 w-24 mt-1" /> : (
                   <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid="kpi-spend">
-                    {data ? formatMoney(data.totals.spend_cents) : "—"}
+                    {data ? formatBRLFromCents(data.totals.spend_cents) : "—"}
                   </p>
                 )}
               </div>
@@ -335,9 +391,7 @@ export default function ManagerCac() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Assinaturas</p>
-                {loading ? (
-                  <Skeleton className="h-6 w-16 mt-1" />
-                ) : (
+                {loading ? <Skeleton className="h-6 w-16 mt-1" /> : (
                   <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid="kpi-signups">
                     {data ? data.totals.signups : "—"}
                   </p>
@@ -355,11 +409,9 @@ export default function ManagerCac() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Receita (Platform Fee)</p>
-                {loading ? (
-                  <Skeleton className="h-6 w-24 mt-1" />
-                ) : (
+                {loading ? <Skeleton className="h-6 w-24 mt-1" /> : (
                   <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid="kpi-revenue">
-                    {data ? formatMoney(data.totals.revenue_cents) : "—"}
+                    {data ? formatBRLFromCents(data.totals.revenue_cents) : "—"}
                   </p>
                 )}
               </div>
@@ -375,11 +427,9 @@ export default function ManagerCac() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">CAC</p>
-                {loading ? (
-                  <Skeleton className="h-6 w-24 mt-1" />
-                ) : (
+                {loading ? <Skeleton className="h-6 w-24 mt-1" /> : (
                   <p className={`text-xl font-bold ${isHighCacTotal ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`} data-testid="kpi-cac">
-                    {data ? formatMoney(data.totals.cac_cents) : "—"}
+                    {data ? formatBRLFromCents(data.totals.cac_cents) : "—"}
                   </p>
                 )}
               </div>
@@ -391,7 +441,7 @@ export default function ManagerCac() {
       {/* Tabela */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Detalhamento por {groupBy === "week" ? "Semana" : "Dia"}</CardTitle>
+          <CardTitle className="text-base">Detalhamento por {groupBy === "week" ? "Semana" : "Dia"} (Alocação Proporcional)</CardTitle>
         </CardHeader>
         <CardContent>
           {loading && (
@@ -413,42 +463,44 @@ export default function ManagerCac() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Período</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Canal</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Campanha</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">Gasto</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">Assinaturas</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">Receita</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">CAC</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300">Período</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300">Provider</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300">Campanha</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300 text-right">Gasto</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300 text-right">Assin. (aloc)</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300 text-right">CAC (aloc)</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300 text-right">Receita (aloc)</th>
+                    <th className="py-3 px-3 font-medium text-gray-600 dark:text-gray-300 text-right">Share</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(data?.rows || []).map((r, idx) => {
-                    const isHighCac = r.cac_cents !== null && r.cac_cents > cacAlertThreshold;
-                    const isNoConversion = r.spend_cents > 0 && r.signups === 0;
+                    const isHighCac = r.cac_cents_alloc !== null && r.cac_cents_alloc > cacAlertThreshold;
+                    const isNoConversion = r.spend_cents > 0 && r.signups_alloc === 0;
 
                     return (
                       <tr
-                        key={`${r.period}-${r.channel}-${r.campaign}-${idx}`}
+                        key={`${r.period}-${r.provider}-${r.campaign_name}-${idx}`}
                         className={`border-b border-gray-100 dark:border-gray-800 ${isHighCac || isNoConversion ? "bg-red-50 dark:bg-red-900/20" : ""}`}
                         data-testid={`cac-row-${idx}`}
                       >
-                        <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{r.period}</td>
-                        <td className="py-3 px-4 capitalize text-gray-600 dark:text-gray-300">{r.channel}</td>
-                        <td className="py-3 px-4 text-gray-900 dark:text-white">{r.campaign || "—"}</td>
-                        <td className="py-3 px-4 text-right font-medium">{formatMoney(r.spend_cents)}</td>
-                        <td className="py-3 px-4 text-right">{r.signups}</td>
-                        <td className="py-3 px-4 text-right">{formatMoney(r.revenue_cents)}</td>
-                        <td className={`py-3 px-4 text-right font-medium ${isHighCac ? "text-red-600 dark:text-red-400" : ""}`}>
-                          {formatMoney(r.cac_cents)}
+                        <td className="py-3 px-3 text-gray-600 dark:text-gray-300">{r.period}</td>
+                        <td className="py-3 px-3 capitalize text-gray-600 dark:text-gray-300">{r.provider}</td>
+                        <td className="py-3 px-3 text-gray-900 dark:text-white">{r.campaign_name || "—"}</td>
+                        <td className="py-3 px-3 text-right font-medium">{formatBRLFromCents(r.spend_cents)}</td>
+                        <td className="py-3 px-3 text-right">{r.signups_alloc}</td>
+                        <td className={`py-3 px-3 text-right font-medium ${isHighCac ? "text-red-600 dark:text-red-400" : ""}`}>
+                          {formatBRLFromCents(r.cac_cents_alloc)}
                         </td>
+                        <td className="py-3 px-3 text-right">{formatBRLFromCents(r.revenue_alloc_cents)}</td>
+                        <td className="py-3 px-3 text-right text-gray-500">{(r.spend_share * 100).toFixed(1)}%</td>
                       </tr>
                     );
                   })}
 
                   {!data?.rows?.length && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={8} className="py-8 text-center text-gray-500 dark:text-gray-400">
                         Sem dados no período selecionado.
                       </td>
                     </tr>
