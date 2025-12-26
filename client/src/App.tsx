@@ -24,6 +24,7 @@ import ManagerReceitaOperacao from './pages/ManagerReceitaOperacao';
 import ManagerSearch from './pages/ManagerSearch';
 import ManagerDoctorAlerts from './pages/ManagerDoctorAlerts';
 import ManagerProntuarioAudit from './pages/ManagerProntuarioAudit';
+import ManagerMarketing from './pages/ManagerMarketing';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -108,6 +109,7 @@ export default function App() {
       <Route path="/manager/search" component={ManagerSearch} />
       <Route path="/manager/doctors/alerts" component={ManagerDoctorAlerts} />
       <Route path="/manager/prontuarios/:id/historico" component={ManagerProntuarioAudit} />
+      <Route path="/manager/marketing" component={ManagerMarketing} />
       
       {/* Default redirect */}
       <Route path="/">

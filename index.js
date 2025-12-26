@@ -286,11 +286,16 @@ app.use('/api/telemetry', telemetryRoutes);
 const { default: funnelRoutes } = await import('./apps/telemed-internal/src/routes/funnel.routes.js');
 app.use('/metrics/v2', funnelRoutes);
 
+// Rotas de Retargeting (fila de retarget, processamento)
+const { default: retargetRoutes } = await import('./apps/telemed-internal/src/routes/retarget.routes.js');
+app.use('/api/internal/retarget', retargetRoutes);
+
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
 console.log('✅ Rotas de Stats carregadas em /api/consultorio/stats');
 console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
 console.log('📊 Rotas de Telemetria carregadas em /api/telemetry/*');
 console.log('📈 Rotas de Funil carregadas em /metrics/v2/*');
+console.log('🔄 Rotas de Retargeting carregadas em /api/internal/retarget/*');
 
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect
