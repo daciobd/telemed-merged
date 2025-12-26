@@ -2,6 +2,7 @@ import express from "express";
 import PDFDocument from "pdfkit";
 import { pool } from "./db/pool.js";
 import { diffProntuario, insertAudit } from "./services/prontuarioAudit.service.js";
+import { validateChecklist, logQualityEvent } from "./services/prontuarioChecklist.service.js";
 
 const router = express.Router();
 
@@ -39,6 +40,44 @@ router.get("/prontuario/:consultaId", async (req, res) => {
   } catch (err) {
     console.error("[prontuario][GET] erro:", err);
     return res.status(500).json({ error: "Erro interno ao buscar prontuário." });
+  }
+});
+
+/**
+ * POST /api/consultorio/prontuario/:consultaId/validate
+ * Valida checklist de qualidade antes de finalizar
+ */
+router.post("/prontuario/:consultaId/validate", async (req, res) => {
+  try {
+    const { consultaId } = req.params;
+
+    if (!consultaId) {
+      return res.status(400).json({ error: "consultaId é obrigatório." });
+    }
+
+    const prontuario = await getProntuarioByConsultaId(consultaId);
+    if (!prontuario) {
+      return res.status(404).json({ error: "Prontuário não encontrado." });
+    }
+
+    const result = validateChecklist(prontuario);
+
+    await logQualityEvent(pool, {
+      prontuarioId: prontuario.id,
+      medicoId: prontuario.medico_id,
+      event: "validate_attempt",
+      issues: [...result.issues, ...result.warnings],
+    });
+
+    return res.json({
+      ok: result.ok,
+      mode: result.mode,
+      issues: result.issues,
+      warnings: result.warnings,
+    });
+  } catch (err) {
+    console.error("[prontuario][VALIDATE] erro:", err);
+    return res.status(500).json({ error: "Erro interno ao validar prontuário." });
   }
 });
 
@@ -218,6 +257,35 @@ router.post("/prontuario/:consultaId/finalizar", async (req, res) => {
       });
     }
 
+    const checkResult = validateChecklist(before);
+    if (!checkResult.ok) {
+      await logQualityEvent(pool, {
+        prontuarioId: before.id,
+        medicoId: before.medico_id,
+        event: "finalize_blocked",
+        issues: checkResult.issues,
+      });
+
+      await client.query("ROLLBACK");
+      client.release();
+      return res.status(400).json({
+        ok: false,
+        mode: "block",
+        error: "Prontuário não pode ser finalizado. Campos obrigatórios faltando.",
+        issues: checkResult.issues,
+        warnings: checkResult.warnings,
+      });
+    }
+
+    if (checkResult.warnings.length > 0) {
+      await logQualityEvent(pool, {
+        prontuarioId: before.id,
+        medicoId: before.medico_id,
+        event: "finalize_warned",
+        issues: checkResult.warnings,
+      });
+    }
+
     const { rows } = await client.query(
       `UPDATE prontuarios_consulta
          SET status = 'final',
@@ -247,7 +315,21 @@ router.post("/prontuario/:consultaId/finalizar", async (req, res) => {
 
     await client.query("COMMIT");
     client.release();
-    return res.json({ ok: true, consulta_id: after.consulta_id, status: after.status, finalized_at: after.finalized_at });
+
+    await logQualityEvent(pool, {
+      prontuarioId: after.id,
+      medicoId: after.medico_id,
+      event: "finalized_ok",
+      issues: checkResult.warnings,
+    });
+
+    return res.json({
+      ok: true,
+      consulta_id: after.consulta_id,
+      status: after.status,
+      finalized_at: after.finalized_at,
+      warnings: checkResult.warnings,
+    });
   } catch (err) {
     await client.query("ROLLBACK");
     client.release();
