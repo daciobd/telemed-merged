@@ -2041,4 +2041,73 @@ router.get("/doctors/alerts", requireManager, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// GET /prontuarios/:id/audit - Histórico de auditoria de um prontuário
+// ═══════════════════════════════════════════════════════════════════════════
+router.get("/prontuarios/:id/audit", requireManager, async (req, res) => {
+  const start = Date.now();
+  
+  try {
+    const prontuarioId = req.params.id;
+    const limit = Math.min(100, parseInt(req.query.limit || "50", 10));
+    const offset = Math.max(0, parseInt(req.query.offset || "0", 10));
+    
+    if (!prontuarioId) {
+      return res.status(400).json({ ok: false, error: "ID do prontuário é obrigatório" });
+    }
+    
+    const sql = `
+      SELECT
+        a.id,
+        a.prontuario_id,
+        a.actor_user_id,
+        a.actor_email,
+        a.actor_role,
+        a.action,
+        a.created_at,
+        a.changed_fields,
+        a.before,
+        a.after,
+        a.ip,
+        a.user_agent
+      FROM prontuario_audit a
+      WHERE a.prontuario_id = $1
+      ORDER BY a.created_at DESC
+      LIMIT $2 OFFSET $3
+    `;
+    
+    const { rows } = await pool.query(sql, [prontuarioId, limit, offset]);
+    
+    const countRes = await pool.query(
+      `SELECT COUNT(*) FROM prontuario_audit WHERE prontuario_id = $1`,
+      [prontuarioId]
+    );
+    const total = parseInt(countRes.rows[0]?.count || "0", 10);
+    
+    const events = rows.map(r => ({
+      id: r.id,
+      createdAt: r.created_at,
+      actorEmail: r.actor_email,
+      actorRole: r.actor_role,
+      action: r.action,
+      changedFields: r.changed_fields || [],
+      before: r.before,
+      after: r.after,
+      ip: r.ip,
+      userAgent: r.user_agent,
+    }));
+    
+    return res.json({
+      ok: true,
+      tookMs: Date.now() - start,
+      prontuarioId,
+      paging: { limit, offset, total },
+      events,
+    });
+  } catch (err) {
+    console.error("[prontuarios/:id/audit] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao buscar auditoria" });
+  }
+});
+
 export default router;

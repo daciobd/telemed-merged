@@ -23,6 +23,7 @@ import ManagerNotificacoes from './pages/ManagerNotificacoes';
 import ManagerReceitaOperacao from './pages/ManagerReceitaOperacao';
 import ManagerSearch from './pages/ManagerSearch';
 import ManagerDoctorAlerts from './pages/ManagerDoctorAlerts';
+import ManagerProntuarioAudit from './pages/ManagerProntuarioAudit';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -106,6 +107,7 @@ export default function App() {
       <Route path="/manager/receita/operacao" component={ManagerReceitaOperacao} />
       <Route path="/manager/search" component={ManagerSearch} />
       <Route path="/manager/doctors/alerts" component={ManagerDoctorAlerts} />
+      <Route path="/manager/prontuarios/:id/historico" component={ManagerProntuarioAudit} />
       
       {/* Default redirect */}
       <Route path="/">

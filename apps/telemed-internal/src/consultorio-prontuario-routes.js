@@ -1,6 +1,7 @@
 import express from "express";
 import PDFDocument from "pdfkit";
 import { pool } from "./db/pool.js";
+import { diffProntuario, insertAudit } from "./services/prontuarioAudit.service.js";
 
 const router = express.Router();
 
@@ -43,12 +44,14 @@ router.get("/prontuario/:consultaId", async (req, res) => {
 
 /**
  * PUT /api/consultorio/prontuario/:consultaId
- * Autosave / upsert
+ * Autosave / upsert com auditoria transacional
  */
 router.put("/prontuario/:consultaId", async (req, res) => {
+  const client = await pool.connect();
   try {
     const { consultaId } = req.params;
     if (!consultaId) {
+      client.release();
       return res.status(400).json({ error: "consultaId é obrigatório." });
     }
 
@@ -56,39 +59,46 @@ router.put("/prontuario/:consultaId", async (req, res) => {
       medico_id,
       paciente_id,
       status = "draft",
-
       queixa_principal,
       anamnese,
-
       hipoteses_texto,
       hipoteses_cid,
-
       exames,
       prescricao,
       encaminhamentos,
       alertas,
       seguimento,
-
       ia_metadata,
     } = req.body || {};
 
     if (!["draft", "final"].includes(status)) {
+      client.release();
       return res.status(400).json({ error: "status inválido (use 'draft' ou 'final')." });
     }
 
-    const existing = await getProntuarioByConsultaId(consultaId);
-    if (existing?.status === "final") {
+    await client.query("BEGIN");
+
+    const beforeRes = await client.query(
+      `SELECT * FROM prontuarios_consulta WHERE consulta_id = $1 LIMIT 1`,
+      [consultaId]
+    );
+    const before = beforeRes.rows[0] || null;
+    const isCreate = !before;
+
+    if (before?.status === "final") {
+      await client.query("ROLLBACK");
+      client.release();
       return res.status(409).json({
         error: "Prontuário finalizado não pode ser alterado.",
         status: "final",
-        finalized_at: existing.finalized_at,
+        finalized_at: before.finalized_at,
       });
     }
 
     const hipotesesCidJson = Array.isArray(hipoteses_cid) ? hipoteses_cid : [];
     const iaMetadataJson = ia_metadata && typeof ia_metadata === "object" ? ia_metadata : {};
 
-    const { rows } = await pool.query(
+    const { rows } = await client.query(
       `
       INSERT INTO prontuarios_consulta (
         consulta_id, medico_id, paciente_id, status,
@@ -108,24 +118,19 @@ router.put("/prontuario/:consultaId", async (req, res) => {
         medico_id = COALESCE(EXCLUDED.medico_id, prontuarios_consulta.medico_id),
         paciente_id = COALESCE(EXCLUDED.paciente_id, prontuarios_consulta.paciente_id),
         status = EXCLUDED.status,
-
         queixa_principal = COALESCE(EXCLUDED.queixa_principal, prontuarios_consulta.queixa_principal),
         anamnese = COALESCE(EXCLUDED.anamnese, prontuarios_consulta.anamnese),
-
         hipoteses_texto = COALESCE(EXCLUDED.hipoteses_texto, prontuarios_consulta.hipoteses_texto),
         hipoteses_cid = CASE
           WHEN EXCLUDED.hipoteses_cid IS NULL THEN prontuarios_consulta.hipoteses_cid
           ELSE EXCLUDED.hipoteses_cid
         END,
-
         exames = COALESCE(EXCLUDED.exames, prontuarios_consulta.exames),
         prescricao = COALESCE(EXCLUDED.prescricao, prontuarios_consulta.prescricao),
         encaminhamentos = COALESCE(EXCLUDED.encaminhamentos, prontuarios_consulta.encaminhamentos),
         alertas = COALESCE(EXCLUDED.alertas, prontuarios_consulta.alertas),
         seguimento = COALESCE(EXCLUDED.seguimento, prontuarios_consulta.seguimento),
-
         ia_metadata = prontuarios_consulta.ia_metadata || EXCLUDED.ia_metadata,
-
         updated_at = now()
       RETURNING *;
       `,
@@ -134,25 +139,42 @@ router.put("/prontuario/:consultaId", async (req, res) => {
         medico_id || null,
         paciente_id || null,
         status,
-
         queixa_principal ?? null,
         anamnese ?? null,
-
         hipoteses_texto ?? null,
         JSON.stringify(hipotesesCidJson),
-
         exames ?? null,
         prescricao ?? null,
         encaminhamentos ?? null,
         alertas ?? null,
         seguimento ?? null,
-
         JSON.stringify(iaMetadataJson),
       ]
     );
+    const after = rows[0];
 
-    return res.json(rows[0]);
+    const actor = {
+      id: req.user?.id || medico_id || null,
+      email: req.user?.email || null,
+      role: req.user?.role || "doctor",
+    };
+    const diff = diffProntuario(before || {}, after);
+
+    await insertAudit({
+      client,
+      prontuarioId: after.id,
+      actor,
+      action: isCreate ? "create" : "update",
+      diff,
+      req,
+    });
+
+    await client.query("COMMIT");
+    client.release();
+    return res.json(after);
   } catch (err) {
+    await client.query("ROLLBACK");
+    client.release();
     console.error("[prontuario][PUT] erro:", err);
     return res.status(500).json({ error: "Erro interno ao salvar prontuário." });
   }
@@ -160,42 +182,75 @@ router.put("/prontuario/:consultaId", async (req, res) => {
 
 /**
  * POST /api/consultorio/prontuario/:consultaId/finalizar
+ * Com auditoria transacional
  */
 router.post("/prontuario/:consultaId/finalizar", async (req, res) => {
+  const client = await pool.connect();
   try {
     const { consultaId } = req.params;
     if (!consultaId) {
+      client.release();
       return res.status(400).json({ error: "consultaId é obrigatório." });
     }
 
-    const existing = await getProntuarioByConsultaId(consultaId);
-    if (!existing) {
+    await client.query("BEGIN");
+
+    const beforeRes = await client.query(
+      `SELECT * FROM prontuarios_consulta WHERE consulta_id = $1 LIMIT 1`,
+      [consultaId]
+    );
+    const before = beforeRes.rows[0];
+
+    if (!before) {
+      await client.query("ROLLBACK");
+      client.release();
       return res.status(404).json({ error: "Prontuário não encontrado para finalizar." });
     }
 
-    if (existing.status === "final") {
+    if (before.status === "final") {
+      await client.query("ROLLBACK");
+      client.release();
       return res.json({
         ok: true,
         status: "final",
-        finalized_at: existing.finalized_at,
+        finalized_at: before.finalized_at,
         message: "Prontuário já estava finalizado.",
       });
     }
 
-    const { rows } = await pool.query(
-      `
-      UPDATE prontuarios_consulta
+    const { rows } = await client.query(
+      `UPDATE prontuarios_consulta
          SET status = 'final',
              finalized_at = now(),
              updated_at = now()
        WHERE consulta_id = $1
-       RETURNING consulta_id, status, finalized_at, updated_at;
-      `,
+       RETURNING *`,
       [consultaId]
     );
+    const after = rows[0];
 
-    return res.json({ ok: true, ...rows[0] });
+    const actor = {
+      id: req.user?.id || before.medico_id || null,
+      email: req.user?.email || null,
+      role: req.user?.role || "doctor",
+    };
+    const diff = diffProntuario(before, after);
+
+    await insertAudit({
+      client,
+      prontuarioId: after.id,
+      actor,
+      action: "finalize",
+      diff,
+      req,
+    });
+
+    await client.query("COMMIT");
+    client.release();
+    return res.json({ ok: true, consulta_id: after.consulta_id, status: after.status, finalized_at: after.finalized_at });
   } catch (err) {
+    await client.query("ROLLBACK");
+    client.release();
     console.error("[prontuario][FINALIZAR] erro:", err);
     return res.status(500).json({ error: "Erro interno ao finalizar prontuário." });
   }
@@ -411,41 +466,76 @@ router.get("/prontuario/:consultaId/pdf", async (req, res) => {
 
 /**
  * POST /api/consultorio/prontuario/:consultaId/assinar
- * Salva assinatura (dataURL) no ia_metadata
+ * Salva assinatura (dataURL) no ia_metadata com auditoria
  */
 router.post("/prontuario/:consultaId/assinar", async (req, res) => {
+  const client = await pool.connect();
   try {
     const { consultaId } = req.params;
     const { assinatura_data_url, assinado_por } = req.body || {};
 
     if (!assinatura_data_url || !String(assinatura_data_url).startsWith("data:image/")) {
+      client.release();
       return res.status(400).json({ error: "assinatura_data_url inválida (data:image/...)" });
     }
 
-    const prontuario = await getProntuarioByConsultaId(consultaId);
-    if (!prontuario) {
+    await client.query("BEGIN");
+
+    const beforeRes = await client.query(
+      `SELECT * FROM prontuarios_consulta WHERE consulta_id = $1 LIMIT 1`,
+      [consultaId]
+    );
+    const before = beforeRes.rows[0];
+
+    if (!before) {
+      await client.query("ROLLBACK");
+      client.release();
       return res.status(404).json({ error: "Prontuário não encontrado" });
     }
 
-    if (prontuario.status !== "final") {
+    if (before.status !== "final") {
+      await client.query("ROLLBACK");
+      client.release();
       return res.status(409).json({ error: "Só é possível assinar após finalizar o atendimento" });
     }
 
-    const ia_metadata = prontuario.ia_metadata || {};
+    const ia_metadata = before.ia_metadata || {};
     ia_metadata.assinatura = assinatura_data_url;
     ia_metadata.assinado_em = new Date().toISOString();
     ia_metadata.assinado_por = assinado_por || "Médico responsável";
 
-    const { rows } = await pool.query(
+    const { rows } = await client.query(
       `UPDATE prontuarios_consulta
-       SET ia_metadata = $1::jsonb
+       SET ia_metadata = $1::jsonb,
+           signed_at = now()
        WHERE consulta_id = $2
        RETURNING *`,
       [JSON.stringify(ia_metadata), consultaId]
     );
+    const after = rows[0];
 
-    res.json({ ok: true, ia_metadata: rows[0]?.ia_metadata });
+    const actor = {
+      id: req.user?.id || before.medico_id || null,
+      email: req.user?.email || null,
+      role: req.user?.role || "doctor",
+    };
+    const diff = diffProntuario(before, after);
+
+    await insertAudit({
+      client,
+      prontuarioId: after.id,
+      actor,
+      action: "sign",
+      diff,
+      req,
+    });
+
+    await client.query("COMMIT");
+    client.release();
+    res.json({ ok: true, ia_metadata: after.ia_metadata, signed_at: after.signed_at });
   } catch (err) {
+    await client.query("ROLLBACK");
+    client.release();
     console.error("[prontuario][ASSINAR] erro:", err);
     res.status(500).json({ error: "Erro ao assinar" });
   }
