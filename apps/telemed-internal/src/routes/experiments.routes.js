@@ -23,7 +23,7 @@ ensureExperimentsTable().catch(err => console.error("[experiments] Failed to cre
 router.get("/active", async (_req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, traffic_percent, variants
+      SELECT id, is_active, traffic_percent, variants
       FROM experiments
       WHERE is_active = true
     `);
@@ -31,6 +31,7 @@ router.get("/active", async (_req, res) => {
     res.json({
       experiments: result.rows.map(r => ({
         id: r.id,
+        isActive: r.is_active,
         trafficPercent: r.traffic_percent,
         variants: r.variants
       }))

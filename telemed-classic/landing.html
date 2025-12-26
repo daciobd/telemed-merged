@@ -232,5 +232,140 @@
     console.log('🔗 Links: Dr. AI, Centro de Testes, Recursos disponíveis');
     console.log('🌐 APP_URL configured:', window.APP_URL || 'localhost');
   </script>
+
+  <!-- A/B Testing: Hero Experiment (lp_hero_v1) -->
+  <script>
+  (function () {
+    const EXP_ENDPOINT = "/api/experiments/active";
+    const EXP_ID = "lp_hero_v1";
+    const STORE_KEY = "exp:" + EXP_ID;
+
+    const FALLBACK_EXP = {
+      id: EXP_ID,
+      isActive: true,
+      trafficPercent: 100,
+      variants: [
+        { name: "A", weight: 50 },
+        { name: "B", weight: 50 },
+      ],
+    };
+
+    function hashToInt(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return (h >>> 0);
+    }
+
+    function getSessionIdSafe() {
+      if (window.TelemedTelemetry?.sessionId) return window.TelemedTelemetry.sessionId();
+      const k = "telemed_session_id";
+      let sid = localStorage.getItem(k);
+      if (!sid) {
+        sid = "sess-" + (window.crypto?.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+        localStorage.setItem(k, sid);
+      }
+      return sid;
+    }
+
+    function pickVariantDeterministic(sessionId, exp) {
+      if (!exp?.isActive) return "A";
+      const bucket100 = hashToInt(sessionId + "|" + exp.id + "|traffic") % 100;
+      const traffic = Math.max(0, Math.min(100, parseInt(exp.trafficPercent ?? 100, 10) || 100));
+      if (bucket100 >= traffic) return "A";
+
+      const variants = Array.isArray(exp.variants) && exp.variants.length ? exp.variants : FALLBACK_EXP.variants;
+      const total = variants.reduce((s, v) => s + (parseInt(v.weight, 10) || 0), 0) || 1;
+      const bucket = hashToInt(sessionId + "|" + exp.id) % 10000;
+      let acc = 0;
+      for (const v of variants) {
+        acc += Math.round(((parseInt(v.weight, 10) || 0) / total) * 10000);
+        if (bucket < acc) return v.name;
+      }
+      return variants[0].name;
+    }
+
+    async function loadExperiment(expId) {
+      try {
+        const res = await fetch(EXP_ENDPOINT, { credentials: "include" });
+        const json = await res.json();
+        const exp = (json?.experiments || []).find(e => e.id === expId);
+        return exp || FALLBACK_EXP;
+      } catch (_) {
+        return FALLBACK_EXP;
+      }
+    }
+
+    function applyHeroVariant(variant) {
+      const titleEl = document.getElementById("hero-title") || document.querySelector(".hero .hero-content h1");
+      const subEl = document.getElementById("hero-subtitle") || document.querySelector(".hero .hero-subtitle");
+      const ctaPaciente = document.getElementById("cta-paciente") || document.querySelector(".hero .hero-buttons a.btn.btn-outline");
+      const ctaMedico = document.getElementById("cta-medico") || document.querySelector(".hero .hero-buttons a.btn.btn-primary");
+
+      if (variant === "A") return;
+
+      if (titleEl) titleEl.textContent = "Psiquiatria online hoje (7h–22h)";
+      if (subEl) {
+        subEl.textContent = "Psiquiatras experientes (20+ anos), CRM e especialidade. Faça sua oferta e encontre atendimento rápido ou agende em minutos.";
+      }
+
+      if (ctaPaciente) {
+        ctaPaciente.textContent = "Quero atendimento agora";
+        const path = ctaPaciente.getAttribute("data-path") || ctaPaciente.getAttribute("href") || "/paciente/como-funciona.html";
+        const sep = path.includes("?") ? "&" : "?";
+        ctaPaciente.setAttribute("data-path", path + sep + "ab=lp_hero_v1_B");
+      }
+
+      if (ctaMedico) {
+        ctaMedico.textContent = "Sou médico (acessar)";
+        const path = ctaMedico.getAttribute("data-path") || ctaMedico.getAttribute("href") || "/cadastro-medico.html";
+        const sep = path.includes("?") ? "&" : "?";
+        ctaMedico.setAttribute("data-path", path + sep + "ab=lp_hero_v1_B");
+      }
+    }
+
+    function attachCtaTracking(experimentsPayload) {
+      const ctaPaciente = document.getElementById("cta-paciente") || document.querySelector(".hero .hero-buttons a.btn.btn-outline");
+      if (ctaPaciente) {
+        ctaPaciente.addEventListener("click", () => {
+          window.TelemedTelemetry?.track?.("booking_started", {
+            source: "lp",
+            cta: "paciente",
+            experiments: experimentsPayload,
+          });
+        });
+      }
+    }
+
+    async function boot() {
+      const sessionId = getSessionIdSafe();
+      const stored = localStorage.getItem(STORE_KEY);
+      if (stored) {
+        applyHeroVariant(stored);
+        const experimentsPayload = { [EXP_ID]: stored };
+        attachCtaTracking(experimentsPayload);
+        window.TelemedTelemetry?.track?.("landing_view", { experiments: experimentsPayload });
+        return;
+      }
+
+      const exp = await loadExperiment(EXP_ID);
+      const variant = pickVariantDeterministic(sessionId, exp);
+      localStorage.setItem(STORE_KEY, variant);
+      applyHeroVariant(variant);
+
+      const experimentsPayload = { [EXP_ID]: variant };
+      attachCtaTracking(experimentsPayload);
+      window.TelemedTelemetry?.track?.("landing_view", { experiments: experimentsPayload });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
 </body>
 </html>

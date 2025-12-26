@@ -124,87 +124,103 @@ router.post("/ads/spend/bulk", async (req, res) => {
   res.json({ ok: true, inserted: inserted.length, errors });
 });
 
+// CAC Real - gasto manual por canal/campanha + conversões globais (prontuarios_consulta.signed_at)
+// NOTA: CAC por campanha "de verdade" requer UTMs no booking para agregar signed/platformFee por utm_campaign.
+// Atualmente mostra: gastos por grupo + totais globais de conversão (CAC global distribuído por linha de gasto).
 router.get("/cac-real", async (req, res) => {
-  const from = req.query.from || null;
-  const to = req.query.to || null;
-  const groupBy = req.query.groupBy || "campaign";
+  const from = req.query.from;
+  const to = req.query.to;
+  const groupBy = req.query.groupBy || "channel_campaign";
 
-  const spendGroupExpr = groupBy === "adset" ? "adset_name" : groupBy === "ad" ? "ad_name" : "campaign_name";
-
-  const spendSql = `
-    SELECT
-      provider,
-      coalesce(${spendGroupExpr}, '(sem nome)') AS grp,
-      SUM(spend) AS spend
-    FROM ads_spend_daily
-    WHERE
-      date >= coalesce($1::date, (now() - interval '30 days')::date)
-      AND date <= coalesce($2::date, now()::date)
-    GROUP BY provider, grp
-    ORDER BY spend DESC
-  `;
-
-  const conversionSql = `
-    SELECT
-      coalesce(utm_campaign, '(sem campanha)') AS grp,
-      COUNT(*) AS consultas_assinadas,
-      COALESCE(SUM((properties->>'platformFee')::numeric), 0) AS receita_plataforma
-    FROM telemetry_events
-    WHERE
-      event_name = 'consult_signed'
-      AND created_at >= coalesce($1::date, (now() - interval '30 days')::date)
-      AND created_at < (coalesce($2::date, now()::date) + interval '1 day')
-    GROUP BY grp
-  `;
+  if (!from || !to) {
+    return res.status(400).json({ error: "Parâmetros obrigatórios: from, to (YYYY-MM-DD)" });
+  }
 
   try {
-    const [spendRes, convRes] = await Promise.all([
-      pool.query(spendSql, [from, to]),
-      pool.query(conversionSql, [from, to])
-    ]);
+    // 1) Totais de conversão/receita (assinadas via prontuarios_consulta + platformFee via consultations)
+    const convSql = `
+      SELECT
+        COUNT(*) AS signed,
+        COALESCE(SUM(c.platform_fee), 0) AS platform_fee
+      FROM prontuarios_consulta p
+      JOIN consultations c ON c.id::text = p.consulta_id
+      WHERE p.signed_at IS NOT NULL
+        AND p.signed_at::date >= $1::date
+        AND p.signed_at::date <= $2::date
+    `;
+    const convRes = await pool.query(convSql, [from, to]);
+    const signedTotal = parseInt(convRes.rows[0]?.signed || 0);
+    const platformFeeTotal = parseFloat(convRes.rows[0]?.platform_fee || 0);
 
-    const convMap = new Map();
-    for (const r of convRes.rows) {
-      convMap.set(r.grp, {
-        consultas_assinadas: parseInt(r.consultas_assinadas),
-        receita_plataforma: parseFloat(r.receita_plataforma)
-      });
+    // 2) Gastos manuais agregados (ads_spend_daily)
+    const spendSql = `
+      SELECT
+        provider AS channel,
+        COALESCE(campaign_name, '') AS campaign_name,
+        COALESCE(SUM(spend), 0) AS spend
+      FROM ads_spend_daily
+      WHERE date >= $1::date AND date <= $2::date
+      GROUP BY provider, COALESCE(campaign_name, '')
+      ORDER BY spend DESC
+    `;
+    const spendRes = await pool.query(spendSql, [from, to]);
+    const spendRows = spendRes.rows.map(r => ({
+      channel: r.channel,
+      campaignName: r.campaign_name || "",
+      spend: parseFloat(r.spend || 0)
+    }));
+
+    // 3) Reagrupar conforme groupBy
+    const keyOf = (r) => {
+      if (groupBy === "channel") return `channel:${r.channel}`;
+      if (groupBy === "campaign") return `campaign:${r.campaignName || ""}`;
+      return `channel_campaign:${r.channel}::${r.campaignName || ""}`;
+    };
+
+    const buckets = new Map();
+    for (const r of spendRows) {
+      const key = keyOf(r);
+      const existing = buckets.get(key) || {
+        channel: groupBy === "campaign" ? null : r.channel,
+        campaignName: groupBy === "channel" ? null : (r.campaignName || ""),
+        spend: 0,
+      };
+      existing.spend += r.spend;
+      buckets.set(key, existing);
     }
 
-    const rows = spendRes.rows.map(r => {
-      const conv = convMap.get(r.grp) || { consultas_assinadas: 0, receita_plataforma: 0 };
-      const spend = parseFloat(r.spend);
-      const cac = conv.consultas_assinadas > 0 ? spend / conv.consultas_assinadas : null;
-      const cacPercent = conv.receita_plataforma > 0 ? spend / conv.receita_plataforma : null;
+    const rows = Array.from(buckets.values())
+      .sort((a, b) => b.spend - a.spend)
+      .map(b => {
+        const cac = signedTotal > 0 ? b.spend / signedTotal : null;
+        const cacPercent = platformFeeTotal > 0 ? b.spend / platformFeeTotal : null;
 
-      return {
-        provider: r.provider,
-        campaign: r.grp,
-        spend,
-        consultasAssinadas: conv.consultas_assinadas,
-        receitaPlataforma: conv.receita_plataforma,
-        cac: cac ? parseFloat(cac.toFixed(2)) : null,
-        cacPercentual: cacPercent ? parseFloat(cacPercent.toFixed(4)) : null
-      };
-    });
+        return {
+          channel: b.channel,
+          campaignName: b.campaignName,
+          spend: parseFloat(b.spend.toFixed(2)),
+          signed: signedTotal,
+          platformFee: parseFloat(platformFeeTotal.toFixed(2)),
+          cac: cac == null ? null : parseFloat(cac.toFixed(2)),
+          cacPercent: cacPercent == null ? null : parseFloat(cacPercent.toFixed(4)),
+        };
+      });
 
-    const totalSpend = rows.reduce((acc, r) => acc + r.spend, 0);
-    const totalConsultas = rows.reduce((acc, r) => acc + r.consultasAssinadas, 0);
-    const totalReceita = rows.reduce((acc, r) => acc + r.receitaPlataforma, 0);
-    const avgCac = totalConsultas > 0 ? totalSpend / totalConsultas : null;
-    const avgCacPercent = totalReceita > 0 ? totalSpend / totalReceita : null;
+    // Totais
+    const spendTotal = spendRows.reduce((acc, r) => acc + r.spend, 0);
+    const totalCAC = signedTotal > 0 ? spendTotal / signedTotal : null;
+    const totalCACPercent = platformFeeTotal > 0 ? spendTotal / platformFeeTotal : null;
 
     res.json({
-      range: { from, to },
-      groupBy,
-      summary: {
-        totalSpend,
-        totalConsultas,
-        totalReceita,
-        avgCac: avgCac ? parseFloat(avgCac.toFixed(2)) : null,
-        avgCacPercent: avgCacPercent ? parseFloat(avgCacPercent.toFixed(4)) : null
+      range: { from, to, groupBy },
+      rows,
+      totals: {
+        spend: parseFloat(spendTotal.toFixed(2)),
+        signed: signedTotal,
+        platformFee: parseFloat(platformFeeTotal.toFixed(2)),
+        cac: totalCAC == null ? null : parseFloat(totalCAC.toFixed(2)),
+        cacPercent: totalCACPercent == null ? null : parseFloat(totalCACPercent.toFixed(4)),
       },
-      rows
     });
   } catch (err) {
     console.error("[cac-real] error:", err);
