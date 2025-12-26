@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import { pool } from "../db/pool.js";
+
 const router = express.Router();
-const { pool } = require("../db");
 
 const FUNNEL_EVENTS = [
   "landing_view",
@@ -95,19 +96,18 @@ router.get("/funnel", async (req, res) => {
       for (const ev of FUNNEL_EVENTS) {
         if (!funnel[ev]) funnel[ev] = { events: 0, sessions: 0 };
       }
-      return { ...r, funnel };
-    });
 
-    const conversionRates = {};
-    if (rows.length > 0 && rows[0].funnel) {
-      const f = rows[0].funnel;
-      const landingS = f.landing_view?.sessions || 0;
-      const bookingS = f.booking_confirmed?.sessions || 0;
-      const finishedS = f.consult_finished?.sessions || 0;
-      
-      conversionRates.landing_to_booking = landingS > 0 ? ((bookingS / landingS) * 100).toFixed(2) : "0.00";
-      conversionRates.booking_to_finished = bookingS > 0 ? ((finishedS / bookingS) * 100).toFixed(2) : "0.00";
-    }
+      const landingS = funnel.landing_view?.sessions || 0;
+      const bookingS = funnel.booking_confirmed?.sessions || 0;
+      const finishedS = funnel.consult_finished?.sessions || 0;
+
+      const conversionRates = {
+        landing_to_booking: landingS > 0 ? ((bookingS / landingS) * 100).toFixed(2) : "0.00",
+        booking_to_finished: bookingS > 0 ? ((finishedS / bookingS) * 100).toFixed(2) : "0.00",
+      };
+
+      return { ...r, funnel, conversionRates };
+    });
 
     res.json({
       from: from || null,
@@ -116,7 +116,6 @@ router.get("/funnel", async (req, res) => {
       events: FUNNEL_EVENTS,
       rows,
       revenue,
-      conversionRates,
     });
   } catch (err) {
     console.error("[funnel] metrics error:", err);
@@ -164,4 +163,4 @@ router.get("/funnel/daily", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

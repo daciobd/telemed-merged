@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import { pool } from "../db/pool.js";
+
 const router = express.Router();
-const { pool } = require("../db");
 
 const lastSeen = new Map();
 function shouldDrop(sessionId, eventName, ms = 2000) {
@@ -147,4 +148,4 @@ async function runMigration() {
 
 runMigration();
 
-module.exports = router;
+export default router;

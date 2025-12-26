@@ -279,11 +279,11 @@ const { default: virtualOfficeRoutes } = await import('./apps/telemed-internal/s
 app.use('/api/virtual-office', virtualOfficeRoutes);
 
 // Rotas de Telemetria (eventos de conversão, UTM tracking)
-const telemetryRoutes = require('./apps/telemed-internal/src/routes/telemetry.routes.js');
+const { default: telemetryRoutes } = await import('./apps/telemed-internal/src/routes/telemetry.routes.js');
 app.use('/api/telemetry', telemetryRoutes);
 
 // Rotas de Funil (métricas de conversão e receita)
-const funnelRoutes = require('./apps/telemed-internal/src/routes/funnel.routes.js');
+const { default: funnelRoutes } = await import('./apps/telemed-internal/src/routes/funnel.routes.js');
 app.use('/metrics/v2', funnelRoutes);
 
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');

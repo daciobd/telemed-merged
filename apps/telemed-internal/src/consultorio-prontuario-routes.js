@@ -3,6 +3,7 @@ import PDFDocument from "pdfkit";
 import { pool } from "./db/pool.js";
 import { diffProntuario, insertAudit } from "./services/prontuarioAudit.service.js";
 import { validateChecklist, logQualityEvent } from "./services/prontuarioChecklist.service.js";
+import { emitTelemetryEvent } from "./services/telemetryEmitter.js";
 
 const router = express.Router();
 
@@ -323,6 +324,20 @@ router.post("/prontuario/:consultaId/finalizar", async (req, res) => {
       issues: checkResult.warnings,
     });
 
+    emitTelemetryEvent({
+      eventName: "consult_finished",
+      userId: after.medico_id,
+      properties: {
+        prontuarioId: after.id,
+        consultaId: after.consulta_id,
+        medicoId: after.medico_id,
+        pacienteId: after.paciente_id,
+        warningsCount: checkResult.warnings.length,
+      },
+      ip: req.ip || req.headers["x-forwarded-for"]?.split(",")[0],
+      userAgent: req.get("user-agent"),
+    }).catch((e) => console.error("[telemetry] consult_finished error:", e));
+
     return res.json({
       ok: true,
       consulta_id: after.consulta_id,
@@ -614,6 +629,21 @@ router.post("/prontuario/:consultaId/assinar", async (req, res) => {
 
     await client.query("COMMIT");
     client.release();
+
+    emitTelemetryEvent({
+      eventName: "consult_signed",
+      userId: after.medico_id,
+      properties: {
+        prontuarioId: after.id,
+        consultaId: after.consulta_id,
+        medicoId: after.medico_id,
+        pacienteId: after.paciente_id,
+        signedBy: ia_metadata.assinado_por,
+      },
+      ip: req.ip || req.headers["x-forwarded-for"]?.split(",")[0],
+      userAgent: req.get("user-agent"),
+    }).catch((e) => console.error("[telemetry] consult_signed error:", e));
+
     res.json({ ok: true, ia_metadata: after.ia_metadata, signed_at: after.signed_at });
   } catch (err) {
     await client.query("ROLLBACK");
