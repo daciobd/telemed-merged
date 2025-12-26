@@ -292,6 +292,25 @@ console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*'
 console.log('✅ Rotas de Stats carregadas em /api/consultorio/stats');
 console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
 
+// Rotas de Telemetria e Funil (Marketing/Analytics)
+const { default: telemetryRoutes } = await import('./routes/telemetry.routes.js');
+const { default: funnelRoutes } = await import('./routes/funnel.routes.js');
+const { default: retargetRoutes } = await import('./routes/retarget.routes.js');
+const { default: cacRoutes } = await import('./routes/cac.routes.js');
+const { default: experimentsRoutes } = await import('./routes/experiments.routes.js');
+
+app.use('/api/telemetry', telemetryRoutes);
+app.use('/metrics/v2', funnelRoutes);
+app.use('/api/internal/retarget', retargetRoutes);
+app.use('/metrics/v2/marketing', cacRoutes);
+app.use('/api/experiments', experimentsRoutes);
+
+console.log('✅ Rotas de Telemetria carregadas em /api/telemetry/*');
+console.log('✅ Rotas de Funil carregadas em /metrics/v2/*');
+console.log('✅ Rotas de Retarget carregadas em /api/internal/retarget/*');
+console.log('✅ Rotas de CAC carregadas em /metrics/v2/marketing/*');
+console.log('✅ Rotas de Experiments carregadas em /api/experiments/*');
+
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect
 app.post('/_diag/auction/bids', async (req, res) => {
