@@ -79,21 +79,38 @@ function FunnelCard({ label, value, sessions, trend }: { label: string; value: n
   );
 }
 
-function CampaignTable({ rows, revenue }: { rows: FunnelRow[]; revenue: RevenueRow[] | null }) {
-  const revenueMap = new Map<string, RevenueRow>();
+interface RevenueRowExtended extends RevenueRow {
+  utm_source?: string;
+  utm_medium?: string;
+}
+
+function CampaignTable({ rows, revenue, groupBy }: { rows: FunnelRow[]; revenue: RevenueRowExtended[] | null; groupBy: string }) {
+  const revenueMap = new Map<string, RevenueRowExtended>();
   if (revenue) {
     for (const r of revenue) {
-      const key = r.utm_campaign || "all";
+      let key = "all";
+      if (groupBy === "utm_campaign") key = r.utm_campaign || "all";
+      else if (groupBy === "utm_source") key = r.utm_source || "all";
+      else if (groupBy === "utm_medium") key = r.utm_medium || "all";
       revenueMap.set(key, r);
     }
   }
+
+  function getRowKey(row: FunnelRow): string {
+    if (groupBy === "utm_campaign") return row.utm_campaign || "all";
+    if (groupBy === "utm_source") return row.utm_source || "all";
+    if (groupBy === "utm_medium") return row.utm_medium || "all";
+    return "all";
+  }
+
+  const groupLabel = groupBy === "utm_campaign" ? "Campanha" : groupBy === "utm_source" ? "Source" : groupBy === "utm_medium" ? "Medium" : "Total";
 
   return (
     <div className="overflow-x-auto" data-testid="campaign-table">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
-            <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Campanha</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">{groupLabel}</th>
             <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Visitas</th>
             <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Agendamentos</th>
             <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">CVR</th>
@@ -103,8 +120,9 @@ function CampaignTable({ rows, revenue }: { rows: FunnelRow[]; revenue: RevenueR
         </thead>
         <tbody>
           {rows.map((row, idx) => {
-            const campaign = row.utm_campaign || row.utm_source || row.utm_medium || row.all || "(sem campanha)";
-            const rev = revenueMap.get(campaign);
+            const rowKey = getRowKey(row);
+            const displayLabel = row.utm_campaign || row.utm_source || row.utm_medium || row.all || "(sem dados)";
+            const rev = revenueMap.get(rowKey);
             const landingSessions = row.funnel.landing_view?.sessions || 0;
             const bookingSessions = row.funnel.booking_confirmed?.sessions || 0;
 
@@ -114,7 +132,7 @@ function CampaignTable({ rows, revenue }: { rows: FunnelRow[]; revenue: RevenueR
                 className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 data-testid={`campaign-row-${idx}`}
               >
-                <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{campaign}</td>
+                <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{displayLabel}</td>
                 <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{landingSessions}</td>
                 <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">{bookingSessions}</td>
                 <td className="py-3 px-4 text-right">
@@ -290,7 +308,7 @@ export default function ManagerMarketing() {
                 </CardHeader>
                 <CardContent>
                   {funnelData?.rows && funnelData.rows.length > 0 ? (
-                    <CampaignTable rows={funnelData.rows} revenue={funnelData.revenue} />
+                    <CampaignTable rows={funnelData.rows} revenue={funnelData.revenue} groupBy={groupBy} />
                   ) : (
                     <p className="text-gray-500 dark:text-gray-400 text-center py-8">
                       Nenhum dado de funil no período selecionado
