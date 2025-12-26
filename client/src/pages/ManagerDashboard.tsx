@@ -113,6 +113,128 @@ function CacRealCard({ days, onNavigate }: { days: number; onNavigate: (path: st
   );
 }
 
+type CacAlertsResponse = {
+  ok: boolean;
+  range: { from: string; to: string; days: number };
+  thresholds: { cacMax: number; minSignups: number; minSpend: number };
+  metrics: { spendCents: number; signups: number; revenueCents: number; cacCents: number | null };
+  alerts: Array<{
+    code: string;
+    severity: "low" | "medium" | "high";
+    message: string;
+  }>;
+};
+
+function formatBRLFromCents(cents: number) {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function CacAlertsCard({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<CacAlertsResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("consultorio_token");
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`/metrics/v2/marketing/cac-real/alerts`, { credentials: "include", headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as CacAlertsResponse;
+      setData(json);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Falha ao carregar alertas de CAC.";
+      setError(msg);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const cardTone = data?.ok 
+    ? "border-green-200 bg-green-50 dark:bg-green-900/20" 
+    : "border-red-300 bg-red-50 dark:bg-red-900/20";
+
+  return (
+    <Card className={`hover:shadow-md transition-shadow border ${cardTone}`} data-testid="card-cac-alerts">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle className="text-sm font-medium text-gray-500">Alertas de CAC</CardTitle>
+        <div className="text-lg">{data?.ok ? <CheckCircle className="w-5 h-5 text-green-600" /> : <AlertTriangle className="w-5 h-5 text-red-600" />}</div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {error && <div className="text-red-600 text-xs mb-2">Erro: {error}</div>}
+        {loading && !data && <div className="text-gray-400 py-2">Carregando...</div>}
+        {data && (
+          <>
+            <div className="text-xs text-gray-500 mb-2">
+              {data.range.days} dias ({data.range.from?.slice(0,10)} → {data.range.to?.slice(0,10)})
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-sm mb-2">
+              <div>
+                <span className="text-gray-500 text-xs">Gasto</span>
+                <div className="font-medium">{formatBRLFromCents(data.metrics.spendCents)}</div>
+              </div>
+              <div>
+                <span className="text-gray-500 text-xs">Assinaturas</span>
+                <div className="font-medium">{data.metrics.signups}</div>
+              </div>
+              <div>
+                <span className="text-gray-500 text-xs">CAC</span>
+                <div className="font-medium">{data.metrics.cacCents == null ? "—" : formatBRLFromCents(data.metrics.cacCents)}</div>
+              </div>
+            </div>
+            {data.alerts.length > 0 ? (
+              <div className="mt-2 text-xs">
+                {data.alerts.slice(0, 2).map((a) => (
+                  <div key={a.code} className="flex items-center gap-1 mb-1">
+                    <span>{a.severity === "high" ? "🔥" : a.severity === "medium" ? "⚠️" : "ℹ️"}</span>
+                    <span className="font-medium">{a.code}</span>
+                    <span className="text-gray-500">— {a.message.slice(0, 40)}</span>
+                  </div>
+                ))}
+                {data.alerts.length > 2 && (
+                  <div className="text-gray-500">+{data.alerts.length - 2} alertas</div>
+                )}
+              </div>
+            ) : (
+              <div className="text-xs text-green-700 mt-2">Nenhum alerta no período.</div>
+            )}
+            <div className="mt-3 flex gap-2">
+              <button
+                className="flex-1 px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
+                onClick={load}
+                disabled={loading}
+              >
+                {loading ? "..." : "Atualizar"}
+              </button>
+              <button
+                className="flex-1 px-3 py-2 text-sm rounded-xl border bg-teal-50 hover:bg-teal-100 text-teal-700"
+                onClick={() => {
+                  const from = data?.range.from?.slice(0,10);
+                  const to = data?.range.to?.slice(0,10);
+                  const q = new URLSearchParams();
+                  if (from) q.set("from", from);
+                  if (to) q.set("to", to);
+                  onNavigate(`/manager/cac?${q.toString()}`);
+                }}
+                data-testid="link-ver-cac"
+              >
+                Ver CAC
+              </button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 type FunnelData = {
   criados: number;
   finalizados: number;
@@ -604,9 +726,12 @@ export default function ManagerDashboard() {
           </div>
 
           {/* Bloco B - Cards Marketing Compactos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* CacRealCard */}
             <CacRealCard days={days} onNavigate={setLocation} />
+            
+            {/* CacAlertsCard */}
+            <CacAlertsCard onNavigate={setLocation} />
             
             {/* Placeholder para futuras métricas de marketing */}
             <Card className="hover:shadow-md transition-shadow border border-gray-200" data-testid="card-marketing-link">
