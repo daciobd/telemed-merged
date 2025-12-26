@@ -100,7 +100,7 @@ function CacRealCard({ days, onNavigate }: { days: number; onNavigate: (path: st
               </button>
               <button
                 className="flex-1 px-3 py-2 text-sm rounded-xl border bg-teal-50 hover:bg-teal-100 text-teal-700"
-                onClick={() => onNavigate("/manager/cac")}
+                onClick={() => onNavigate("/manager/marketing/spend")}
                 data-testid="link-gastos"
               >
                 + Gastos

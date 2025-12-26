@@ -27,6 +27,7 @@ import ManagerProntuarioAudit from './pages/ManagerProntuarioAudit';
 import ManagerMarketing from './pages/ManagerMarketing';
 import ManagerCac from './pages/ManagerCac';
 import ManagerExperiments from './pages/ManagerExperiments';
+import MarketingSpendPage from './pages/MarketingSpendPage';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -112,6 +113,7 @@ export default function App() {
       <Route path="/manager/doctors/alerts" component={ManagerDoctorAlerts} />
       <Route path="/manager/prontuarios/:id/historico" component={ManagerProntuarioAudit} />
       <Route path="/manager/marketing" component={ManagerMarketing} />
+      <Route path="/manager/marketing/spend" component={MarketingSpendPage} />
       <Route path="/manager/cac" component={ManagerCac} />
       <Route path="/manager/experiments" component={ManagerExperiments} />
       

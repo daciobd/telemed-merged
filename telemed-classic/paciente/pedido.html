@@ -85,6 +85,13 @@
         </div>
       </div>
 
+      <div class="checkbox-group" id="priority-group" style="display:none;">
+        <input id="priority" name="priority" type="checkbox" data-testid="checkbox-priority" />
+        <label for="priority">Atendimento prioritário (+R$ 30) — médicos respondem mais rápido</label>
+      </div>
+
+      <div id="price-hint" style="color:#79f2a6; font-size:13px; margin:4px 0;"></div>
+
       <div class="checkbox-group">
         <input id="immediate" name="immediate" type="checkbox" checked data-testid="checkbox-immediate" />
         <label for="immediate">Consulta imediata (assim que possível)</label>
@@ -318,6 +325,131 @@
       }
 
       trackView();
+    })();
+  })();
+  </script>
+
+  <!-- A/B Experiment Loader: price_anchor_v1 -->
+  <script>
+  (function () {
+    const EXP_ENDPOINT = "/api/experiments/active";
+    const EXP_ID = "price_anchor_v1";
+    const STORE_KEY = "exp:" + EXP_ID;
+
+    const FALLBACK_EXP = {
+      id: EXP_ID,
+      isActive: true,
+      trafficPercent: 100,
+      variants: [{ name: "A", weight: 50 }, { name: "B", weight: 50 }],
+    };
+
+    function hashToInt(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return (h >>> 0);
+    }
+
+    function getSessionIdSafe() {
+      if (window.TelemedTelemetry?.sessionId) return window.TelemedTelemetry.sessionId();
+      const k = "telemed_session_id";
+      let sid = localStorage.getItem(k);
+      if (!sid) {
+        sid = "sess-" + (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+        localStorage.setItem(k, sid);
+      }
+      return sid;
+    }
+
+    function pickVariant(sessionId, exp) {
+      if (!exp?.isActive) return "A";
+      const bucket100 = hashToInt(sessionId + "|" + exp.id + "|traffic") % 100;
+      const traffic = Math.max(0, Math.min(100, parseInt(exp.trafficPercent ?? 100, 10) || 100));
+      if (bucket100 >= traffic) return "A";
+
+      const variants = Array.isArray(exp.variants) && exp.variants.length ? exp.variants : FALLBACK_EXP.variants;
+      const total = variants.reduce((s, v) => s + (parseInt(v.weight, 10) || 0), 0) || 1;
+      const bucket = hashToInt(sessionId + "|" + exp.id) % 10000;
+      let acc = 0;
+      for (const v of variants) {
+        acc += Math.round(((parseInt(v.weight, 10) || 0) / total) * 10000);
+        if (bucket < acc) return v.name;
+      }
+      return variants[0].name;
+    }
+
+    async function loadExp() {
+      try {
+        const res = await fetch(EXP_ENDPOINT, { credentials: "include" });
+        const json = await res.json();
+        return (json?.experiments || []).find(e => e.id === EXP_ID) || FALLBACK_EXP;
+      } catch {
+        return FALLBACK_EXP;
+      }
+    }
+
+    async function getPriceVariant() {
+      const stored = localStorage.getItem(STORE_KEY);
+      if (stored) return stored;
+      const exp = await loadExp();
+      const variant = pickVariant(getSessionIdSafe(), exp);
+      localStorage.setItem(STORE_KEY, variant);
+      return variant;
+    }
+
+    window.TelemedExperiments = window.TelemedExperiments || {};
+    window.TelemedExperiments.getPriceVariant = getPriceVariant;
+
+    // Apply price anchor variant
+    (async function () {
+      const variant = await getPriceVariant();
+      const experimentsPayload = { price_anchor_v1: variant };
+
+      const priceInput = document.getElementById("amount");
+      const priorityGroup = document.getElementById("priority-group");
+      const priorityChk = document.getElementById("priority");
+      const hint = document.getElementById("price-hint");
+      const submitBtn = document.querySelector('button[type="submit"]');
+
+      // Variant A: sugestão R$ 200 (controle)
+      if (variant === "A") {
+        if (priceInput && !priceInput.dataset.touched) priceInput.value = "200";
+        if (priorityChk) priorityChk.checked = false;
+        if (hint) hint.textContent = "Valor sugerido para atendimento padrão.";
+      }
+
+      // Variant B: âncora R$ 250 + prioridade habilitada
+      if (variant === "B") {
+        if (priceInput && !priceInput.dataset.touched) priceInput.value = "250";
+        if (priorityGroup) priorityGroup.style.display = "flex";
+        if (priorityChk) priorityChk.checked = true;
+        if (hint) hint.textContent = "Sugestão para atendimento mais rápido (prioridade).";
+      }
+
+      // Track visualização da âncora
+      window.TelemedTelemetry?.track?.("price_view", {
+        experiments: experimentsPayload,
+        suggestedPrice: Number(priceInput?.value || 0),
+        priorityDefault: !!priorityChk?.checked,
+      });
+
+      // Track envio de oferta com preço final
+      if (submitBtn) {
+        submitBtn.addEventListener("click", () => {
+          const base = Number(String(priceInput?.value || 0).replace(",", "."));
+          const priorityFee = priorityChk?.checked ? 30 : 0;
+          const finalPrice = base + priorityFee;
+
+          window.TelemedTelemetry?.track?.("price_submitted", {
+            offeredPrice: finalPrice,
+            basePrice: base,
+            priority: !!priorityChk?.checked,
+            experiments: experimentsPayload,
+          });
+        });
+      }
     })();
   })();
   </script>

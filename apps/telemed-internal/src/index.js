@@ -316,8 +316,11 @@ try {
   console.log('💰 Rotas de CAC carregadas em /metrics/v2/marketing/*');
   console.log('🧪 Rotas de Experiments carregadas em /api/experiments/*');
 } catch (err) {
-  console.error('❌ Erro ao carregar rotas de CAC/Experiments:', err.message);
+  console.error('❌ Erro ao carregar rotas de CAC/Experiments:', err.message, err.stack);
 }
+
+// Rotas de Marketing Spend (gerenciamento de gastos com ads)
+// NOTA: Rotas carregadas via index.js raiz
 
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect
@@ -577,6 +580,12 @@ const requireToken = (req, res, next) => {
   // Consultório Virtual endpoints: autenticação própria com JWT
   if (req.path.startsWith('/api/consultorio/')) {
     console.log(`[AUTH BYPASS] ${req.method} ${req.path} → Consultório Virtual (JWT auth)`);
+    return next();
+  }
+  
+  // Manager Dashboard endpoints: autenticação pode ser JWT ou INTERNAL_TOKEN
+  if (req.path.startsWith('/api/manager/')) {
+    console.log(`[AUTH BYPASS] ${req.method} ${req.path} → Manager Dashboard (JWT/INTERNAL_TOKEN auth)`);
     return next();
   }
   

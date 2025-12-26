@@ -298,6 +298,10 @@ app.use('/metrics/v2/marketing', cacRoutes);
 const { default: experimentsRoutes } = await import('./apps/telemed-internal/src/routes/experiments.routes.js');
 app.use('/api/experiments', experimentsRoutes);
 
+// Rotas de Marketing Spend (gerenciamento de gastos com ads)
+const { default: marketingSpendRoutes } = await import('./apps/telemed-internal/src/routes/marketing-spend.routes.js');
+app.use('/api/manager/marketing/spend', marketingSpendRoutes);
+
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
 console.log('✅ Rotas de Stats carregadas em /api/consultorio/stats');
 console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
@@ -306,6 +310,7 @@ console.log('📈 Rotas de Funil carregadas em /metrics/v2/*');
 console.log('🔄 Rotas de Retargeting carregadas em /api/internal/retarget/*');
 console.log('💰 Rotas de CAC carregadas em /metrics/v2/marketing/*');
 console.log('🧪 Rotas de Experiments carregadas em /api/experiments/*');
+console.log('💸 Rotas de Marketing Spend carregadas em /api/manager/marketing/spend/*');
 
 // ===== ENDPOINT DE DIAGNÓSTICO (opcional) =====
 // Permite testar comunicação direta com o downstream BidConnect
