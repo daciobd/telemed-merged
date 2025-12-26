@@ -61,12 +61,14 @@ export default function PendenciasUnsigned() {
   const queryParams = useMemo(() => getQueryParams(), []);
   const initialDays = queryParams.get("days") === "7" ? 7 : 30;
   const initialMedicoId = queryParams.get("medico_id");
+  const initialMinHours = Number(queryParams.get("minHours") || 0);
   
   const [data, setData] = useState<PendingResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [days, setDays] = useState(initialDays);
   const [medicoId, setMedicoId] = useState<string | null>(initialMedicoId);
+  const [minHours, setMinHours] = useState(initialMinHours);
   const [page, setPage] = useState(0);
   const limit = 20;
 
@@ -114,9 +116,10 @@ export default function PendenciasUnsigned() {
     const params = new URLSearchParams();
     params.set("days", String(days));
     if (medicoId) params.set("medico_id", medicoId);
+    if (minHours > 0) params.set("minHours", String(minHours));
     const newUrl = `/manager/pendencias?${params.toString()}`;
     window.history.replaceState(null, "", `/consultorio${newUrl}`);
-  }, [days, medicoId]);
+  }, [days, medicoId, minHours]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -127,6 +130,7 @@ export default function PendenciasUnsigned() {
       
       let url = `/api/manager/metrics/v2/pending/unsigned?days=${days}&limit=${limit}&offset=${offset}`;
       if (medicoId) url += `&medico_id=${medicoId}`;
+      if (minHours > 0) url += `&minHours=${minHours}`;
       
       const res = await fetch(url, { credentials: "include", headers });
 
@@ -146,7 +150,7 @@ export default function PendenciasUnsigned() {
 
   useEffect(() => {
     fetchData();
-  }, [days, page, medicoId]);
+  }, [days, page, medicoId, minHours]);
 
   const totalPages = data?.paging ? Math.ceil(data.paging.total / limit) : 0;
 

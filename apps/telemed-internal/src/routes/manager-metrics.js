@@ -331,7 +331,7 @@ router.get("/metrics/v2/daily", requireManager, async (req, res) => {
 
 // ============================================
 // GET /metrics/v2/pending/unsigned - Listagem finalizados sem assinatura
-// Query params: ?days=30&limit=200&offset=0&medico_id=...
+// Query params: ?days=30&limit=200&offset=0&medico_id=...&minHours=0
 // ============================================
 router.get("/metrics/v2/pending/unsigned", requireManager, async (req, res) => {
   try {
@@ -339,6 +339,7 @@ router.get("/metrics/v2/pending/unsigned", requireManager, async (req, res) => {
     const limit = Math.max(1, Math.min(500, Number(req.query.limit ?? 200)));
     const offset = Math.max(0, Number(req.query.offset ?? 0));
     const medicoId = req.query.medico_id ? String(req.query.medico_id) : null;
+    const minHours = Math.max(0, Number(req.query.minHours ?? 0));
 
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -385,6 +386,12 @@ router.get("/metrics/v2/pending/unsigned", requireManager, async (req, res) => {
       query += ` AND p.medico_id = $${params.length + 1}`;
       params.push(medicoId);
     }
+    
+    // Filtro por idade mínima (SLA drill-down) - usa finalized_at para consistência com tempo_parado_min
+    if (minHours > 0) {
+      query += ` AND EXTRACT(EPOCH FROM (NOW() - p.finalized_at)) / 3600 >= $${params.length + 1}`;
+      params.push(minHours);
+    }
 
     query += ` ORDER BY p.finalized_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
@@ -403,8 +410,14 @@ router.get("/metrics/v2/pending/unsigned", requireManager, async (req, res) => {
     const countParams = [since];
 
     if (medicoId) {
-      countQuery += ` AND p.medico_id = $2`;
+      countQuery += ` AND p.medico_id = $${countParams.length + 1}`;
       countParams.push(medicoId);
+    }
+    
+    // Filtro por idade mínima (SLA drill-down) - count - usa finalized_at para consistência
+    if (minHours > 0) {
+      countQuery += ` AND EXTRACT(EPOCH FROM (NOW() - p.finalized_at)) / 3600 >= $${countParams.length + 1}`;
+      countParams.push(minHours);
     }
 
     const countResult = await pool.query(countQuery, countParams);
