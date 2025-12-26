@@ -229,10 +229,15 @@ router.get("/cac-real", async (req, res) => {
 });
 
 // CAC Real Detalhado - endpoint para tela /manager/cac com filtros + tabela + CSV
+// NOTA: consultations NÃO tem campos UTM. CAC é calculado como:
+//   - Gastos: ads_spend_daily.provider (canal) + campaign_name
+//   - Conversões: prontuarios_consulta.signed_at
+//   - Receita: consultations.platform_fee (via JOIN consulta_id)
 router.get("/cac-real/details", async (req, res) => {
   const from = req.query.from;
   const to = req.query.to;
   const channel = req.query.channel || "all";
+  const campaign = req.query.campaign || "";
   const onlySigned = req.query.onlySigned === "1";
   const groupBy = req.query.groupBy || "day"; // "day" | "week"
 
@@ -241,86 +246,112 @@ router.get("/cac-real/details", async (req, res) => {
   }
 
   try {
-    // 1) Gastos diários da tabela ads_spend_daily (agrupados por data + canal)
-    let spendSql = `
-      SELECT
-        ${groupBy === "week" ? "date_trunc('week', date)::date" : "date"} AS period_date,
-        provider AS channel,
-        COALESCE(campaign_name, '') AS description,
-        COALESCE(SUM(spend), 0) AS spend
-      FROM ads_spend_daily
-      WHERE date >= $1::date AND date <= $2::date
-        ${channel !== "all" ? `AND provider = $3` : ""}
-      GROUP BY ${groupBy === "week" ? "date_trunc('week', date)::date" : "date"}, provider, COALESCE(campaign_name, '')
-      ORDER BY period_date DESC, provider, spend DESC
-    `;
-    const spendParams = channel !== "all" ? [from, to, channel] : [from, to];
-    const spendRes = await pool.query(spendSql, spendParams);
+    const truncUnit = groupBy === "week" ? "week" : "day";
 
-    // 2) Assinaturas por dia (prontuarios_consulta.signed_at)
-    let signupsSql = `
-      SELECT
-        ${groupBy === "week" ? "date_trunc('week', signed_at::date)::date" : "signed_at::date"} AS period_date,
-        COUNT(*) AS signups
-      FROM prontuarios_consulta
-      WHERE signed_at IS NOT NULL
-        AND signed_at::date >= $1::date
-        AND signed_at::date <= $2::date
-      GROUP BY ${groupBy === "week" ? "date_trunc('week', signed_at::date)::date" : "signed_at::date"}
-    `;
-    const signupsRes = await pool.query(signupsSql, [from, to]);
-    const signupsMap = new Map();
-    for (const r of signupsRes.rows) {
-      const dateKey = r.period_date instanceof Date 
-        ? r.period_date.toISOString().slice(0, 10) 
-        : String(r.period_date).slice(0, 10);
-      signupsMap.set(dateKey, parseInt(r.signups || 0));
+    // Filtros dinâmicos
+    const spendFilters = [];
+    const spendParams = [from, to];
+    let paramIdx = 2;
+
+    if (channel && channel !== "all") {
+      paramIdx++;
+      spendFilters.push(`provider = $${paramIdx}`);
+      spendParams.push(channel);
+    }
+    if (campaign) {
+      paramIdx++;
+      spendFilters.push(`campaign_name ILIKE $${paramIdx}`);
+      spendParams.push(`%${campaign}%`);
     }
 
-    // 3) Construir rows[] com spend + signups + cac por linha
-    const rows = [];
+    const spendFilterSQL = spendFilters.length ? `AND ${spendFilters.join(" AND ")}` : "";
+
+    // CTE: gastos agrupados por período + canal + campanha
+    // CTE: conversões + receita (sem UTM, é global por período)
+    // FULL OUTER JOIN para ter linhas mesmo sem gasto ou sem conversão
+    const sql = `
+      WITH spend AS (
+        SELECT
+          date_trunc('${truncUnit}', date::timestamp)::date AS period,
+          COALESCE(provider, 'unknown') AS channel,
+          COALESCE(campaign_name, '') AS campaign,
+          SUM(COALESCE(spend, 0))::numeric AS spend_reais
+        FROM ads_spend_daily
+        WHERE date::date >= $1::date
+          AND date::date <= $2::date
+          ${spendFilterSQL}
+        GROUP BY 1, 2, 3
+      ),
+      conv AS (
+        SELECT
+          date_trunc('${truncUnit}', pc.signed_at)::date AS period,
+          COUNT(*)::int AS signups,
+          SUM(COALESCE(c.platform_fee, 0))::numeric AS revenue_reais
+        FROM prontuarios_consulta pc
+        LEFT JOIN consultations c ON c.id::text = pc.consulta_id
+        WHERE pc.signed_at IS NOT NULL
+          AND pc.signed_at::date >= $1::date
+          AND pc.signed_at::date <= $2::date
+        GROUP BY 1
+      ),
+      joined AS (
+        SELECT
+          COALESCE(s.period, cv.period) AS period,
+          COALESCE(s.channel, 'unknown') AS channel,
+          COALESCE(s.campaign, '') AS campaign,
+          COALESCE(s.spend_reais, 0)::numeric AS spend_reais,
+          COALESCE(cv.signups, 0)::int AS signups,
+          COALESCE(cv.revenue_reais, 0)::numeric AS revenue_reais
+        FROM spend s
+        FULL OUTER JOIN conv cv ON cv.period = s.period
+      )
+      SELECT
+        period,
+        channel,
+        campaign,
+        ROUND(spend_reais * 100)::bigint AS spend_cents,
+        signups,
+        ROUND(revenue_reais * 100)::bigint AS revenue_cents,
+        CASE WHEN signups > 0 THEN ROUND((spend_reais / signups) * 100)::bigint ELSE NULL END AS cac_cents
+      FROM joined
+      ${onlySigned ? "WHERE signups > 0" : ""}
+      ORDER BY period DESC, channel ASC, campaign ASC;
+    `;
+
+    const { rows } = await pool.query(sql, spendParams);
+
+    // Totais
     let spendTotal = 0;
     let signupsTotal = 0;
+    let revenueTotal = 0;
 
-    for (const r of spendRes.rows) {
-      const dateKey = r.period_date instanceof Date 
-        ? r.period_date.toISOString().slice(0, 10) 
-        : String(r.period_date).slice(0, 10);
-      const spend = parseFloat(r.spend || 0);
-      const signups = signupsMap.get(dateKey) || 0;
-
-      // Se onlySigned=true, só incluir linhas onde há assinaturas
-      if (onlySigned && signups === 0) continue;
-
-      const cac = signups > 0 ? spend / signups : 0;
-      spendTotal += spend;
-
-      rows.push({
-        date: dateKey,
-        channel: r.channel,
-        description: r.description || "",
-        spend: Math.round(spend * 100), // centavos
-        signups,
-        cac: Math.round(cac * 100), // centavos
-      });
+    for (const r of rows) {
+      spendTotal += parseInt(r.spend_cents || 0);
+      signupsTotal += parseInt(r.signups || 0);
+      revenueTotal += parseInt(r.revenue_cents || 0);
     }
 
-    // Calcular signupsTotal (único por período, não duplicar)
-    for (const [, v] of signupsMap) {
-      signupsTotal += v;
-    }
-
-    const cacTotal = signupsTotal > 0 ? spendTotal / signupsTotal : 0;
+    const cacTotal = signupsTotal > 0 ? Math.round(spendTotal / signupsTotal) : null;
 
     res.json({
+      range: { from, to, groupBy: truncUnit, channel: channel || null, campaign: campaign || null, onlySigned },
       unit: "cents",
       currency: "BRL",
-      summary: {
-        spendTotal: Math.round(spendTotal * 100),
-        signupsTotal,
-        cac: Math.round(cacTotal * 100),
+      totals: {
+        spend_cents: spendTotal,
+        signups: signupsTotal,
+        revenue_cents: revenueTotal,
+        cac_cents: cacTotal,
       },
-      rows,
+      rows: rows.map((r) => ({
+        period: r.period instanceof Date ? r.period.toISOString().slice(0, 10) : String(r.period).slice(0, 10),
+        channel: r.channel,
+        campaign: r.campaign,
+        spend_cents: parseInt(r.spend_cents || 0),
+        signups: parseInt(r.signups || 0),
+        revenue_cents: parseInt(r.revenue_cents || 0),
+        cac_cents: r.cac_cents === null ? null : parseInt(r.cac_cents),
+      })),
     });
   } catch (err) {
     console.error("[cac-real/details] error:", err);

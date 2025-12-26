@@ -5,30 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, DollarSign, Users, Target, Download, RefreshCw, Filter } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Target, Download, RefreshCw, Filter, TrendingUp } from "lucide-react";
 
-type Channel = "all" | "google" | "meta" | "tiktok" | "outros";
+type Channel = "all" | "google" | "meta" | "tiktok" | "outros" | "google_ads" | "meta_ads";
 
 type CacRow = {
-  date: string;
+  period: string;
   channel: string;
-  description?: string;
-  spend: number;
+  campaign: string;
+  spend_cents: number;
   signups: number;
-  cac: number;
+  revenue_cents: number;
+  cac_cents: number | null;
 };
 
-type CacSummary = {
-  spendTotal: number;
-  signupsTotal: number;
-  cac: number;
+type CacTotals = {
+  spend_cents: number;
+  signups: number;
+  revenue_cents: number;
+  cac_cents: number | null;
 };
 
 type CacResponse = {
-  summary: CacSummary;
+  range: { from: string; to: string; groupBy: string; channel: string | null; campaign: string | null; onlySigned: boolean };
+  totals: CacTotals;
   rows: CacRow[];
   currency?: "BRL";
-  unit?: "cents" | "reais";
+  unit?: "cents";
 };
 
 function toISODate(d: Date) {
@@ -45,18 +48,17 @@ function downloadCSV(filename: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-function rowsToCSV(rows: CacRow[], unit: "cents" | "reais" = "cents") {
-  const header = ["data", "canal", "descricao", "gasto", "assinaturas", "cac"];
+function rowsToCSV(rows: CacRow[]) {
+  const header = ["periodo", "canal", "campanha", "gasto_brl", "assinaturas", "receita_brl", "cac_brl"];
   const lines = rows.map((r) => {
-    const spend = unit === "cents" ? (r.spend / 100).toFixed(2) : String(r.spend);
-    const cac = unit === "cents" ? (r.cac / 100).toFixed(2) : String(r.cac);
     return [
-      r.date,
+      r.period,
       r.channel,
-      (r.description ?? "").replace(/"/g, '""'),
-      spend,
+      (r.campaign || "").replace(/"/g, '""'),
+      (r.spend_cents / 100).toFixed(2),
       String(r.signups),
-      cac,
+      (r.revenue_cents / 100).toFixed(2),
+      r.cac_cents === null ? "" : (r.cac_cents / 100).toFixed(2),
     ]
       .map((v) => `"${v}"`)
       .join(",");
@@ -64,8 +66,9 @@ function rowsToCSV(rows: CacRow[], unit: "cents" | "reais" = "cents") {
   return [header.join(","), ...lines].join("\n");
 }
 
-function formatMoney(value: number, unit: "cents" | "reais") {
-  const reais = unit === "cents" ? value / 100 : value;
+function formatMoney(cents: number | null) {
+  if (cents === null) return "—";
+  const reais = cents / 100;
   return reais.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
@@ -80,7 +83,7 @@ export default function ManagerCac() {
   const defaultTo = useMemo(() => toISODate(today), [today]);
   const defaultFrom = useMemo(() => {
     const d = new Date(today);
-    d.setDate(d.getDate() - 13);
+    d.setDate(d.getDate() - 29);
     return toISODate(d);
   }, [today]);
 
@@ -89,6 +92,7 @@ export default function ManagerCac() {
   const [from, setFrom] = useState(params.get("from") || defaultFrom);
   const [to, setTo] = useState(params.get("to") || defaultTo);
   const [channel, setChannel] = useState<Channel>((params.get("channel") as Channel) || "all");
+  const [campaign, setCampaign] = useState(params.get("campaign") || "");
   const [onlySigned, setOnlySigned] = useState(params.get("onlySigned") === "1");
   const [groupBy, setGroupBy] = useState<"day" | "week">((params.get("groupBy") as "day" | "week") || "day");
 
@@ -101,6 +105,7 @@ export default function ManagerCac() {
     q.set("from", from);
     q.set("to", to);
     if (channel !== "all") q.set("channel", channel);
+    if (campaign) q.set("campaign", campaign);
     if (onlySigned) q.set("onlySigned", "1");
     if (groupBy !== "day") q.set("groupBy", groupBy);
     setLocation(`/manager/cac?${q.toString()}`);
@@ -115,6 +120,7 @@ export default function ManagerCac() {
       q.set("from", from);
       q.set("to", to);
       if (channel !== "all") q.set("channel", channel);
+      if (campaign) q.set("campaign", campaign);
       if (onlySigned) q.set("onlySigned", "1");
       if (groupBy) q.set("groupBy", groupBy);
 
@@ -140,16 +146,10 @@ export default function ManagerCac() {
 
   useEffect(() => {
     load();
-  }, [from, to, channel, onlySigned, groupBy]);
+  }, [from, to, channel, campaign, onlySigned, groupBy]);
 
-  const unit = data?.unit || "cents";
-
-  const cacAlertThreshold = 60; // CAC > 60% da receita = alerta
-  const cacPercent = data?.summary
-    ? data.summary.signupsTotal > 0
-      ? ((data.summary.cac / 100) / 180) * 100 // assumindo ticket médio R$180
-      : 0
-    : 0;
+  const cacAlertThreshold = 10800; // R$108 = 60% de R$180 (ticket médio) em centavos
+  const isHighCacTotal = data?.totals?.cac_cents && data.totals.cac_cents > cacAlertThreshold;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
@@ -232,12 +232,26 @@ export default function ManagerCac() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="google_ads">Google Ads</SelectItem>
+                  <SelectItem value="meta_ads">Meta Ads</SelectItem>
                   <SelectItem value="google">Google</SelectItem>
                   <SelectItem value="meta">Meta</SelectItem>
                   <SelectItem value="tiktok">TikTok</SelectItem>
                   <SelectItem value="outros">Outros</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs text-gray-500">Campanha</Label>
+              <Input
+                type="text"
+                value={campaign}
+                onChange={(e) => setCampaign(e.target.value)}
+                placeholder="Buscar..."
+                className="w-32"
+                data-testid="input-campaign"
+              />
             </div>
 
             <div className="flex flex-col gap-1">
@@ -279,7 +293,7 @@ export default function ManagerCac() {
               disabled={!data?.rows?.length}
               onClick={() => {
                 if (!data) return;
-                const csv = rowsToCSV(data.rows, unit);
+                const csv = rowsToCSV(data.rows);
                 downloadCSV(`cac-real_${from}_a_${to}.csv`, csv);
               }}
               data-testid="btn-export-csv"
@@ -292,7 +306,7 @@ export default function ManagerCac() {
       </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -305,7 +319,7 @@ export default function ManagerCac() {
                   <Skeleton className="h-6 w-24 mt-1" />
                 ) : (
                   <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid="kpi-spend">
-                    {data ? formatMoney(data.summary.spendTotal, unit) : "—"}
+                    {data ? formatMoney(data.totals.spend_cents) : "—"}
                   </p>
                 )}
               </div>
@@ -325,7 +339,7 @@ export default function ManagerCac() {
                   <Skeleton className="h-6 w-16 mt-1" />
                 ) : (
                   <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid="kpi-signups">
-                    {data ? data.summary.signupsTotal : "—"}
+                    {data ? data.totals.signups : "—"}
                   </p>
                 )}
               </div>
@@ -333,19 +347,39 @@ export default function ManagerCac() {
           </CardContent>
         </Card>
 
-        <Card className={cacPercent > cacAlertThreshold ? "border-red-400 bg-red-50 dark:bg-red-900/20" : ""}>
+        <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${cacPercent > cacAlertThreshold ? "bg-red-100 dark:bg-red-900" : "bg-purple-100 dark:bg-purple-900"}`}>
-                <Target className={`w-5 h-5 ${cacPercent > cacAlertThreshold ? "text-red-600 dark:text-red-400" : "text-purple-600 dark:text-purple-400"}`} />
+              <div className="p-2 bg-teal-100 dark:bg-teal-900 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Receita (Platform Fee)</p>
+                {loading ? (
+                  <Skeleton className="h-6 w-24 mt-1" />
+                ) : (
+                  <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid="kpi-revenue">
+                    {data ? formatMoney(data.totals.revenue_cents) : "—"}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={isHighCacTotal ? "border-red-400 bg-red-50 dark:bg-red-900/20" : ""}>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${isHighCacTotal ? "bg-red-100 dark:bg-red-900" : "bg-purple-100 dark:bg-purple-900"}`}>
+                <Target className={`w-5 h-5 ${isHighCacTotal ? "text-red-600 dark:text-red-400" : "text-purple-600 dark:text-purple-400"}`} />
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">CAC</p>
                 {loading ? (
                   <Skeleton className="h-6 w-24 mt-1" />
                 ) : (
-                  <p className={`text-xl font-bold ${cacPercent > cacAlertThreshold ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`} data-testid="kpi-cac">
-                    {data ? formatMoney(data.summary.cac, unit) : "—"}
+                  <p className={`text-xl font-bold ${isHighCacTotal ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`} data-testid="kpi-cac">
+                    {data ? formatMoney(data.totals.cac_cents) : "—"}
                   </p>
                 )}
               </div>
@@ -379,33 +413,34 @@ export default function ManagerCac() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Data</th>
+                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Período</th>
                     <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Canal</th>
-                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Descrição</th>
+                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Campanha</th>
                     <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">Gasto</th>
                     <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">Assinaturas</th>
+                    <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">Receita</th>
                     <th className="py-3 px-4 font-medium text-gray-600 dark:text-gray-300 text-right">CAC</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(data?.rows || []).map((r, idx) => {
-                    const rowCacReais = r.cac / 100;
-                    const isHighCac = rowCacReais > 180 * 0.6; // CAC > 60% do ticket médio
-                    const isNoConversion = r.spend > 0 && r.signups === 0;
+                    const isHighCac = r.cac_cents !== null && r.cac_cents > cacAlertThreshold;
+                    const isNoConversion = r.spend_cents > 0 && r.signups === 0;
 
                     return (
                       <tr
-                        key={`${r.date}-${r.channel}-${idx}`}
+                        key={`${r.period}-${r.channel}-${r.campaign}-${idx}`}
                         className={`border-b border-gray-100 dark:border-gray-800 ${isHighCac || isNoConversion ? "bg-red-50 dark:bg-red-900/20" : ""}`}
                         data-testid={`cac-row-${idx}`}
                       >
-                        <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{r.date}</td>
+                        <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{r.period}</td>
                         <td className="py-3 px-4 capitalize text-gray-600 dark:text-gray-300">{r.channel}</td>
-                        <td className="py-3 px-4 text-gray-900 dark:text-white">{r.description || "—"}</td>
-                        <td className="py-3 px-4 text-right font-medium">{formatMoney(r.spend, unit)}</td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">{r.campaign || "—"}</td>
+                        <td className="py-3 px-4 text-right font-medium">{formatMoney(r.spend_cents)}</td>
                         <td className="py-3 px-4 text-right">{r.signups}</td>
+                        <td className="py-3 px-4 text-right">{formatMoney(r.revenue_cents)}</td>
                         <td className={`py-3 px-4 text-right font-medium ${isHighCac ? "text-red-600 dark:text-red-400" : ""}`}>
-                          {formatMoney(r.cac, unit)}
+                          {formatMoney(r.cac_cents)}
                         </td>
                       </tr>
                     );
@@ -413,7 +448,7 @@ export default function ManagerCac() {
 
                   {!data?.rows?.length && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={7} className="py-8 text-center text-gray-500 dark:text-gray-400">
                         Sem dados no período selecionado.
                       </td>
                     </tr>
