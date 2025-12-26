@@ -1723,4 +1723,309 @@ router.get("/heatmap", requireManager, async (req, res) => {
   }
 });
 
+// ============================================
+// 1) BUSCA GLOBAL - pacientes, médicos, prontuários
+// GET /search?q=...&from=YYYY-MM-DD&to=YYYY-MM-DD&status=...&limit=20
+// ============================================
+router.get("/search", requireManager, async (req, res) => {
+  const start = Date.now();
+  try {
+    const { q = "", from, to, status, limit: limitStr } = req.query;
+    const limitNum = Math.max(1, Math.min(50, Number(limitStr ?? 20)));
+    
+    if (!q || q.trim().length < 2) {
+      return res.json({
+        ok: true,
+        q,
+        tookMs: Date.now() - start,
+        groups: { prontuarios: [], pacientes: [], medicos: [] }
+      });
+    }
+    
+    const search = q.trim();
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(search);
+    const normalizedPhone = search.replace(/[\s()\-+]/g, "").replace(/^55/, "");
+    
+    let prontuarios = [];
+    let pacientes = [];
+    let medicos = [];
+    
+    // Se parece UUID, buscar prontuário direto (short-circuit, não busca pacientes/médicos)
+    if (isUUID) {
+      const { rows } = await pool.query(`
+        SELECT 
+          p.id, p.status, p.created_at, p.finalized_at, p.signed_at,
+          p.paciente_id, p.medico_id, p.queixa_principal
+        FROM prontuarios_consulta p
+        WHERE p.id = $1
+        LIMIT 1
+      `, [search]);
+      prontuarios = rows.map(r => ({
+        id: r.id,
+        status: r.status,
+        createdAt: r.created_at,
+        finalizedAt: r.finalized_at,
+        signedAt: r.signed_at,
+        pacienteId: r.paciente_id,
+        medicoId: r.medico_id,
+        queixaPrincipal: r.queixa_principal?.substring(0, 100)
+      }));
+      
+      // Short-circuit: para UUID retornamos direto sem buscar pacientes/médicos
+      return res.json({
+        ok: true,
+        q,
+        tookMs: Date.now() - start,
+        groups: { prontuarios, pacientes: [], medicos: [] }
+      });
+    }
+    
+    // Busca textual (nome, email, telefone)
+    {
+      // Buscar pacientes por nome, email, telefone
+      const patQ = await pool.query(`
+        SELECT 
+          u.id, u.full_name AS nome, u.email, u.phone AS telefone
+        FROM users u
+        INNER JOIN patients pt ON pt.user_id = u.id
+        WHERE 
+          u.full_name ILIKE $1
+          OR u.email ILIKE $1
+          OR REPLACE(REPLACE(REPLACE(REPLACE(u.phone, ' ', ''), '-', ''), '(', ''), ')', '') LIKE $2
+        ORDER BY u.full_name
+        LIMIT $3
+      `, [`%${search}%`, `%${normalizedPhone}%`, limitNum]);
+      pacientes = patQ.rows.map(r => ({
+        id: r.id,
+        nome: r.nome,
+        email: r.email,
+        telefone: r.telefone
+      }));
+      
+      // Buscar médicos por nome, email
+      const docQ = await pool.query(`
+        SELECT 
+          u.id, u.full_name AS nome, u.email, d.crm
+        FROM users u
+        INNER JOIN doctors d ON d.user_id = u.id
+        WHERE 
+          u.full_name ILIKE $1
+          OR u.email ILIKE $1
+        ORDER BY u.full_name
+        LIMIT $2
+      `, [`%${search}%`, limitNum]);
+      medicos = docQ.rows.map(r => ({
+        id: r.id,
+        nome: r.nome,
+        email: r.email,
+        crm: r.crm
+      }));
+      
+      // Buscar prontuários por período/status + busca no paciente/médico
+      let prontuarioQuery = `
+        SELECT 
+          p.id, p.status, p.created_at, p.finalized_at, p.signed_at,
+          p.paciente_id, p.medico_id, p.queixa_principal
+        FROM prontuarios_consulta p
+        WHERE 1=1
+      `;
+      const params = [];
+      let idx = 1;
+      
+      if (from) {
+        prontuarioQuery += ` AND p.created_at >= $${idx}`;
+        params.push(from);
+        idx++;
+      }
+      if (to) {
+        prontuarioQuery += ` AND p.created_at <= $${idx}`;
+        params.push(to);
+        idx++;
+      }
+      if (status) {
+        prontuarioQuery += ` AND p.status = $${idx}`;
+        params.push(status);
+        idx++;
+      }
+      
+      // Se tem pacientes/médicos encontrados, buscar prontuários deles
+      const patIds = pacientes.map(p => String(p.id));
+      const docIds = medicos.map(d => String(d.id));
+      
+      if (patIds.length > 0 || docIds.length > 0) {
+        const conditions = [];
+        if (patIds.length > 0) {
+          conditions.push(`p.paciente_id = ANY($${idx})`);
+          params.push(patIds);
+          idx++;
+        }
+        if (docIds.length > 0) {
+          conditions.push(`p.medico_id = ANY($${idx})`);
+          params.push(docIds);
+          idx++;
+        }
+        prontuarioQuery += ` AND (${conditions.join(" OR ")})`;
+      }
+      
+      prontuarioQuery += ` ORDER BY p.created_at DESC LIMIT $${idx}`;
+      params.push(limitNum);
+      
+      if (patIds.length > 0 || docIds.length > 0 || from || to || status) {
+        const { rows } = await pool.query(prontuarioQuery, params);
+        prontuarios = rows.map(r => ({
+          id: r.id,
+          status: r.status,
+          createdAt: r.created_at,
+          finalizedAt: r.finalized_at,
+          signedAt: r.signed_at,
+          pacienteId: r.paciente_id,
+          medicoId: r.medico_id,
+          queixaPrincipal: r.queixa_principal?.substring(0, 100)
+        }));
+      }
+    }
+    
+    return res.json({
+      ok: true,
+      q,
+      tookMs: Date.now() - start,
+      groups: {
+        prontuarios,
+        pacientes,
+        medicos
+      }
+    });
+  } catch (err) {
+    console.error("[search] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro na busca" });
+  }
+});
+
+// ============================================
+// 2) RANKING DE PENDÊNCIAS POR MÉDICO (SLA + backlog)
+// GET /doctors/alerts?days=30&criticalHours=48&limit=10
+// ============================================
+router.get("/doctors/alerts", requireManager, async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
+    const criticalHours = Math.max(1, Math.min(168, Number(req.query.criticalHours ?? 48)));
+    const limitNum = Math.max(1, Math.min(50, Number(req.query.limit ?? 10)));
+    
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    
+    // Query agregada por médico
+    const { rows } = await pool.query(`
+      WITH base AS (
+        SELECT
+          p.medico_id,
+          p.status,
+          p.created_at,
+          p.updated_at,
+          p.signed_at,
+          p.finalized_at,
+          EXTRACT(EPOCH FROM (NOW() - p.created_at))/3600 AS age_hours_created,
+          EXTRACT(EPOCH FROM (NOW() - p.updated_at))/3600 AS age_hours_updated
+        FROM prontuarios_consulta p
+        WHERE p.created_at >= $1
+          AND p.medico_id IS NOT NULL
+          AND p.medico_id <> ''
+      ),
+      agg AS (
+        SELECT
+          medico_id,
+          COUNT(*) FILTER (
+            WHERE (status IN ('draft','final') AND signed_at IS NULL)
+          )::int AS pendencias_total,
+          COUNT(*) FILTER (
+            WHERE (status IN ('draft','final') AND signed_at IS NULL AND age_hours_created >= 24)
+          )::int AS pendencias_24h,
+          COUNT(*) FILTER (
+            WHERE (status IN ('draft','final') AND signed_at IS NULL AND age_hours_created >= $2)
+          )::int AS criticos
+        FROM base
+        GROUP BY medico_id
+      ),
+      trend AS (
+        SELECT
+          p.medico_id,
+          COUNT(*) FILTER (WHERE p.created_at >= NOW() - INTERVAL '7 days')::int AS d7,
+          COUNT(*) FILTER (WHERE p.created_at >= NOW() - INTERVAL '30 days')::int AS d30
+        FROM prontuarios_consulta p
+        WHERE p.created_at >= NOW() - INTERVAL '30 days'
+          AND p.status IN ('draft','final') AND p.signed_at IS NULL
+          AND p.medico_id IS NOT NULL AND p.medico_id <> ''
+        GROUP BY p.medico_id
+      )
+      SELECT
+        a.medico_id,
+        COALESCE(u.full_name, 'Médico ' || a.medico_id) AS medico_nome,
+        COALESCE(u.email, '') AS medico_email,
+        a.pendencias_total,
+        a.pendencias_24h,
+        a.criticos,
+        COALESCE(t.d7, 0) AS d7,
+        COALESCE(t.d30, 0) AS d30,
+        CASE WHEN COALESCE(t.d30, 0) > 0 
+          THEN ROUND(COALESCE(t.d7, 0)::numeric / t.d30::numeric, 2)
+          ELSE 0 
+        END AS ratio
+      FROM agg a
+      LEFT JOIN users u ON 
+        a.medico_id ~ '^[0-9]+$' AND u.id = a.medico_id::int
+      LEFT JOIN trend t ON t.medico_id = a.medico_id
+      ORDER BY a.criticos DESC, a.pendencias_24h DESC, a.pendencias_total DESC
+    `, [since.toISOString(), criticalHours]);
+    
+    // Ordenar para os 3 rankings
+    const byCritical = [...rows]
+      .sort((a, b) => b.criticos - a.criticos || b.pendencias_24h - a.pendencias_24h)
+      .slice(0, limitNum);
+    
+    const by24h = [...rows]
+      .sort((a, b) => b.pendencias_24h - a.pendencias_24h || b.criticos - a.criticos)
+      .slice(0, limitNum);
+    
+    const byTotal = [...rows]
+      .sort((a, b) => b.pendencias_total - a.pendencias_total || b.criticos - a.criticos)
+      .slice(0, limitNum);
+    
+    return res.json({
+      ok: true,
+      range: { days, criticalHours },
+      top: {
+        byCritical: byCritical.map(r => ({
+          medicoId: r.medico_id,
+          medicoNome: r.medico_nome,
+          medicoEmail: r.medico_email,
+          criticos: r.criticos,
+          pendencias24h: r.pendencias_24h,
+          pendenciasTotal: r.pendencias_total,
+          trend: { d7: r.d7, d30: r.d30, ratio: parseFloat(r.ratio) || 0 }
+        })),
+        by24h: by24h.map(r => ({
+          medicoId: r.medico_id,
+          medicoNome: r.medico_nome,
+          medicoEmail: r.medico_email,
+          criticos: r.criticos,
+          pendencias24h: r.pendencias_24h,
+          pendenciasTotal: r.pendencias_total,
+          trend: { d7: r.d7, d30: r.d30, ratio: parseFloat(r.ratio) || 0 }
+        })),
+        byTotal: byTotal.map(r => ({
+          medicoId: r.medico_id,
+          medicoNome: r.medico_nome,
+          medicoEmail: r.medico_email,
+          criticos: r.criticos,
+          pendencias24h: r.pendencias_24h,
+          pendenciasTotal: r.pendencias_total,
+          trend: { d7: r.d7, d30: r.d30, ratio: parseFloat(r.ratio) || 0 }
+        }))
+      }
+    });
+  } catch (err) {
+    console.error("[doctors/alerts] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao buscar alertas" });
+  }
+});
+
 export default router;

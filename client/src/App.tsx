@@ -21,6 +21,8 @@ import PendenciasUnsigned from './pages/PendenciasUnsigned';
 import ManagerMarketplace from './pages/ManagerMarketplace';
 import ManagerNotificacoes from './pages/ManagerNotificacoes';
 import ManagerReceitaOperacao from './pages/ManagerReceitaOperacao';
+import ManagerSearch from './pages/ManagerSearch';
+import ManagerDoctorAlerts from './pages/ManagerDoctorAlerts';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -102,6 +104,8 @@ export default function App() {
       <Route path="/manager/marketplace" component={ManagerMarketplace} />
       <Route path="/manager/notificacoes" component={ManagerNotificacoes} />
       <Route path="/manager/receita/operacao" component={ManagerReceitaOperacao} />
+      <Route path="/manager/search" component={ManagerSearch} />
+      <Route path="/manager/doctors/alerts" component={ManagerDoctorAlerts} />
       
       {/* Default redirect */}
       <Route path="/">
