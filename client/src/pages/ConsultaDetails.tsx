@@ -7,6 +7,7 @@ import ScribeMedicalPanel from '@/features/consultorio/components/ScribeMedicalP
 import AtendimentoForm from '@/features/consultorio/components/AtendimentoForm';
 import DiagnosticoCID, { type Hipotese } from '@/features/consultorio/components/DiagnosticoCID';
 import ClinicalTabs from '@/features/consultorio/components/ClinicalTabs';
+import ChecklistModal from '@/features/consultorio/components/ChecklistModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -218,6 +219,7 @@ export default function ConsultaDetails() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openAssinatura, setOpenAssinatura] = useState(false);
+  const [openChecklist, setOpenChecklist] = useState(false);
 
   const { data: apiConsultation, isLoading } = useQuery<ConsultationDetails>({
     queryKey: ['/api/consultorio/consultas', consultationId],
@@ -337,10 +339,19 @@ export default function ConsultaDetails() {
     onSuccess: (data) => {
       setIsFinalized(true);
       setFinalizedAt(data.finalized_at);
-      toast({
-        title: "Atendimento finalizado",
-        description: "O prontuário foi salvo e não pode mais ser editado.",
-      });
+      
+      if (data.warnings && data.warnings.length > 0) {
+        const warningLabels = data.warnings.map((w: { label: string }) => w.label).join(", ");
+        toast({
+          title: "Atendimento finalizado com avisos",
+          description: `Campos recomendados não preenchidos: ${warningLabels}`,
+        });
+      } else {
+        toast({
+          title: "Atendimento finalizado",
+          description: "O prontuário foi salvo e não pode mais ser editado.",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -441,9 +452,34 @@ export default function ConsultaDetails() {
       encaminhamentos: encaminhamento,
     }, {
       onSuccess: () => {
-        finalizeMutation.mutate();
+        setOpenChecklist(true);
       }
     });
+  };
+
+  const doFinalize = () => {
+    finalizeMutation.mutate();
+  };
+
+  const scrollToField = (field: string) => {
+    const fieldMap: Record<string, string> = {
+      queixa_principal: "input-queixa",
+      anamnese: "textarea-anamnese",
+      hipoteses_cid: "cid-autocomplete",
+      seguimento: "textarea-seguimento",
+      prescricao: "textarea-prescricao",
+      exames: "textarea-exames",
+      encaminhamentos: "textarea-encaminhamento",
+      alertas: "textarea-alertas",
+    };
+    const testId = fieldMap[field];
+    if (testId) {
+      const el = document.querySelector(`[data-testid="${testId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        (el as HTMLElement).focus?.();
+      }
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -797,6 +833,14 @@ export default function ConsultaDetails() {
         onOpenChange={setOpenAssinatura}
         onSave={(dataUrl) => assinaturaMutation.mutate(dataUrl)}
         isSaving={assinaturaMutation.isPending}
+      />
+
+      <ChecklistModal
+        open={openChecklist}
+        onOpenChange={setOpenChecklist}
+        consultaId={consultationId}
+        onProceed={doFinalize}
+        onScrollToField={scrollToField}
       />
     </ConsultorioLayout>
   );
