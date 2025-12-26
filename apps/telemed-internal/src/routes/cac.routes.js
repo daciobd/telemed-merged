@@ -228,6 +228,106 @@ router.get("/cac-real", async (req, res) => {
   }
 });
 
+// CAC Real Detalhado - endpoint para tela /manager/cac com filtros + tabela + CSV
+router.get("/cac-real/details", async (req, res) => {
+  const from = req.query.from;
+  const to = req.query.to;
+  const channel = req.query.channel || "all";
+  const onlySigned = req.query.onlySigned === "1";
+  const groupBy = req.query.groupBy || "day"; // "day" | "week"
+
+  if (!from || !to) {
+    return res.status(400).json({ error: "Parâmetros obrigatórios: from, to (YYYY-MM-DD)" });
+  }
+
+  try {
+    // 1) Gastos diários da tabela ads_spend_daily (agrupados por data + canal)
+    let spendSql = `
+      SELECT
+        ${groupBy === "week" ? "date_trunc('week', date)::date" : "date"} AS period_date,
+        provider AS channel,
+        COALESCE(campaign_name, '') AS description,
+        COALESCE(SUM(spend), 0) AS spend
+      FROM ads_spend_daily
+      WHERE date >= $1::date AND date <= $2::date
+        ${channel !== "all" ? `AND provider = $3` : ""}
+      GROUP BY ${groupBy === "week" ? "date_trunc('week', date)::date" : "date"}, provider, COALESCE(campaign_name, '')
+      ORDER BY period_date DESC, provider, spend DESC
+    `;
+    const spendParams = channel !== "all" ? [from, to, channel] : [from, to];
+    const spendRes = await pool.query(spendSql, spendParams);
+
+    // 2) Assinaturas por dia (prontuarios_consulta.signed_at)
+    let signupsSql = `
+      SELECT
+        ${groupBy === "week" ? "date_trunc('week', signed_at::date)::date" : "signed_at::date"} AS period_date,
+        COUNT(*) AS signups
+      FROM prontuarios_consulta
+      WHERE signed_at IS NOT NULL
+        AND signed_at::date >= $1::date
+        AND signed_at::date <= $2::date
+      GROUP BY ${groupBy === "week" ? "date_trunc('week', signed_at::date)::date" : "signed_at::date"}
+    `;
+    const signupsRes = await pool.query(signupsSql, [from, to]);
+    const signupsMap = new Map();
+    for (const r of signupsRes.rows) {
+      const dateKey = r.period_date instanceof Date 
+        ? r.period_date.toISOString().slice(0, 10) 
+        : String(r.period_date).slice(0, 10);
+      signupsMap.set(dateKey, parseInt(r.signups || 0));
+    }
+
+    // 3) Construir rows[] com spend + signups + cac por linha
+    const rows = [];
+    let spendTotal = 0;
+    let signupsTotal = 0;
+
+    for (const r of spendRes.rows) {
+      const dateKey = r.period_date instanceof Date 
+        ? r.period_date.toISOString().slice(0, 10) 
+        : String(r.period_date).slice(0, 10);
+      const spend = parseFloat(r.spend || 0);
+      const signups = signupsMap.get(dateKey) || 0;
+
+      // Se onlySigned=true, só incluir linhas onde há assinaturas
+      if (onlySigned && signups === 0) continue;
+
+      const cac = signups > 0 ? spend / signups : 0;
+      spendTotal += spend;
+
+      rows.push({
+        date: dateKey,
+        channel: r.channel,
+        description: r.description || "",
+        spend: Math.round(spend * 100), // centavos
+        signups,
+        cac: Math.round(cac * 100), // centavos
+      });
+    }
+
+    // Calcular signupsTotal (único por período, não duplicar)
+    for (const [, v] of signupsMap) {
+      signupsTotal += v;
+    }
+
+    const cacTotal = signupsTotal > 0 ? spendTotal / signupsTotal : 0;
+
+    res.json({
+      unit: "cents",
+      currency: "BRL",
+      summary: {
+        spendTotal: Math.round(spendTotal * 100),
+        signupsTotal,
+        cac: Math.round(cacTotal * 100),
+      },
+      rows,
+    });
+  } catch (err) {
+    console.error("[cac-real/details] error:", err);
+    res.status(500).json({ error: "Erro ao calcular CAC detalhado" });
+  }
+});
+
 router.get("/ads/spend", async (req, res) => {
   const from = req.query.from || null;
   const to = req.query.to || null;
