@@ -1315,9 +1315,15 @@ app.post('/api/export-pdf/wells-score', (req, res) => {
 
 // Arquivos estáticos configurados acima (antes do SPA fallback)
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[telemed] listening on 0.0.0.0:${PORT}`);
-  
-  // Iniciar job de limpeza automática
-  startCleanupJob();
-});
+// Export app for testing (Jest/Supertest)
+export { app };
+
+// Só inicia o servidor se não estiver em modo de teste
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[telemed] listening on 0.0.0.0:${PORT}`);
+    
+    // Iniciar job de limpeza automática
+    startCleanupJob();
+  });
+}
