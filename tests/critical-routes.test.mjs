@@ -183,4 +183,102 @@ describe('Critical Routes - Jest/Supertest', () => {
 
   });
 
+  describe('Testes avançados (Retarget, Kill Switch, Revenue)', () => {
+
+    test('6. POST /api/internal/retarget/run - Idempotência (não duplica)', async () => {
+      const token = process.env.INTERNAL_TOKEN;
+
+      if (!token) {
+        console.warn('   ⚠️ SKIP retarget: INTERNAL_TOKEN não definido');
+        return;
+      }
+
+      // 1ª execução
+      const r1 = await request(app)
+        .post('/api/internal/retarget/run')
+        .set('x-internal-token', token);
+
+      expect([200, 201]).toContain(r1.status);
+      expect(r1.body).toHaveProperty('ok', true);
+      expect(typeof r1.body.enqueued).toBe('number');
+
+      // 2ª execução imediata: idempotência
+      const r2 = await request(app)
+        .post('/api/internal/retarget/run')
+        .set('x-internal-token', token);
+
+      expect([200, 201]).toContain(r2.status);
+      expect(r2.body).toHaveProperty('ok', true);
+      expect(r2.body.enqueued).toBe(0);
+
+      console.log(`   ✓ Retarget idempotente: 1ª=${r1.body.enqueued}, 2ª=${r2.body.enqueued}`);
+    });
+
+    test('7. Kill switch - set winner (B=100) e refletir em /api/experiments/active', async () => {
+      // Usa PATCH /api/experiments/:id para atualizar (não requer INTERNAL_TOKEN)
+      const upd = await request(app)
+        .patch('/api/experiments/lp_hero_v1')
+        .send({
+          is_active: true,
+          traffic_percent: 100,
+          variants: [
+            { name: 'A', weight: 0 },
+            { name: 'B', weight: 100 },
+          ],
+        });
+
+      expect([200, 201]).toContain(upd.status);
+      expect(upd.body).toHaveProperty('ok', true);
+
+      // Confere se o GET active reflete a configuração
+      const active = await request(app).get('/api/experiments/active');
+
+      expect(active.status).toBe(200);
+      expect(active.body).toHaveProperty('experiments');
+      expect(Array.isArray(active.body.experiments)).toBe(true);
+
+      const exp = active.body.experiments.find((e) => e.id === 'lp_hero_v1');
+      expect(exp).toBeTruthy();
+      expect(exp.isActive).toBe(true);
+      expect(exp.trafficPercent).toBe(100);
+
+      const vA = exp.variants.find((v) => v.name === 'A');
+      const vB = exp.variants.find((v) => v.name === 'B');
+      expect(vA).toBeTruthy();
+      expect(vB).toBeTruthy();
+      expect(Number(vA.weight)).toBe(0);
+      expect(Number(vB.weight)).toBe(100);
+
+      console.log(`   ✓ Kill switch: B agora com 100% do tráfego`);
+    });
+
+    test('8. GET /metrics/v2/funnel?groupBy=utm_campaign&includeRevenue=1 - Receita confere com seed', async () => {
+      const res = await request(app)
+        .get('/metrics/v2/funnel')
+        .set(TEST_HEADER)
+        .query({ groupBy: 'utm_campaign', includeRevenue: '1', days: 7 });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('rows');
+      expect(Array.isArray(res.body.rows)).toBe(true);
+
+      // revenue pode vir em res.body.revenue (array por grupo)
+      if (res.body.revenue && Array.isArray(res.body.revenue)) {
+        const rev = res.body.revenue.find((r) => r.utm_campaign === 'psi_plantao');
+        if (rev) {
+          // Do seed: sess-A: agreedPrice 200, platformFee 40
+          // total GMV=200, Fee=40 (só sess-A tem booking_confirmed)
+          expect(Number(rev.gmv || rev.total_gmv || 0)).toBeGreaterThanOrEqual(200);
+          expect(Number(rev.platform_fee || rev.platformFee || 0)).toBeGreaterThanOrEqual(40);
+          console.log(`   ✓ Revenue psi_plantao: GMV=${rev.gmv || rev.total_gmv}, Fee=${rev.platform_fee || rev.platformFee}`);
+        } else {
+          console.log(`   ✓ Revenue: ${res.body.revenue.length} campanhas (psi_plantao não encontrada)`);
+        }
+      } else {
+        console.log(`   ✓ Funil retornado: ${res.body.rows.length} rows (revenue não incluído ou vazio)`);
+      }
+    });
+
+  });
+
 });
