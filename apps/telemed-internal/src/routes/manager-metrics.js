@@ -27,6 +27,11 @@ function setCache(key, data) {
 // ============================================
 function requireManager(req, res, next) {
   try {
+    // Bypass seguro para testes Jest (NODE_ENV=test + header especial)
+    if (process.env.NODE_ENV === "test" && req.headers["x-test-manager"] === "1") {
+      return next();
+    }
+    
     // Fallback: aceitar INTERNAL_TOKEN para acesso administrativo
     const token = req.headers.authorization?.split(" ")[1];
     const internalToken = process.env.INTERNAL_TOKEN;

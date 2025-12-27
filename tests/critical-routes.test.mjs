@@ -1,12 +1,13 @@
 import { jest, describe, beforeAll, afterAll, test, expect } from '@jest/globals';
 import request from 'supertest';
-import { execSync } from 'node:child_process';
 import pg from 'pg';
 
 const { Pool } = pg;
 
 let app;
 let pool;
+
+const TEST_HEADER = { 'x-test-manager': '1' };
 
 describe('Critical Routes - Jest/Supertest', () => {
   
@@ -44,8 +45,16 @@ describe('Critical Routes - Jest/Supertest', () => {
         INSERT INTO telemetry_events (event_name, session_id, created_at, utm_campaign, properties)
         VALUES
           ('landing_view', 'sess-A', now() - interval '2 days', 'psi_plantao', '{"experiments":{"lp_hero_v1":"A"}}'),
+          ('landing_view', 'sess-B', now() - interval '2 days', 'psi_plantao', '{"experiments":{"lp_hero_v1":"B"}}'),
           ('offer_created', 'sess-A', now() - interval '2 days' + interval '5 minutes', 'psi_plantao', '{"offeredPrice":200}'),
           ('booking_confirmed', 'sess-A', now() - interval '2 days' + interval '15 minutes', 'psi_plantao', '{"agreedPrice":200,"platformFee":40}')
+        ON CONFLICT DO NOTHING;
+      `);
+
+      await pool.query(`
+        INSERT INTO prontuario_audit (prontuario_id, actor_email, actor_role, action, created_at, changed_fields, before, after)
+        VALUES
+          ('11111111-1111-1111-1111-111111111111'::uuid, 'test@telemed.test', 'doctor', 'update', now() - interval '1 hour', ARRAY['conduta'], '{"conduta":"Antiga"}'::jsonb, '{"conduta":"Nova"}'::jsonb)
         ON CONFLICT DO NOTHING;
       `);
       
@@ -67,6 +76,7 @@ describe('Critical Routes - Jest/Supertest', () => {
         await pool.query(`DELETE FROM ads_spend_daily WHERE notes = 'Seed test'`);
         await pool.query(`DELETE FROM telemetry_events WHERE session_id LIKE 'sess-%'`);
         await pool.query(`DELETE FROM experiments WHERE id IN ('lp_hero_v1','offer_ui_v1','price_anchor_v1')`);
+        await pool.query(`DELETE FROM prontuario_audit WHERE actor_email LIKE '%@telemed.test'`);
       } catch (err) {
         console.error('⚠️ Erro na limpeza:', err.message);
       }
@@ -74,86 +84,103 @@ describe('Critical Routes - Jest/Supertest', () => {
     }
   });
 
-  test('1. GET /api/manager/search - Busca global', async () => {
-    const res = await request(app)
-      .get('/api/manager/search')
-      .query({ q: 'teste' });
+  describe('Rotas protegidas (bypass via x-test-manager)', () => {
     
-    expect(res.status).toBeLessThan(500);
-    
-    if (res.status === 200) {
-      expect(res.body).toHaveProperty('results');
-      console.log(`   ✓ Busca retornou ${res.body.results?.length || 0} resultados`);
-    } else if (res.status === 404) {
-      console.log('   ⚠️ Endpoint não implementado (404)');
-    } else {
-      console.log(`   ⚠️ Status ${res.status}: ${JSON.stringify(res.body).slice(0, 100)}`);
-    }
+    test('1. GET /api/manager/search - Busca global com payload', async () => {
+      const res = await request(app)
+        .get('/api/manager/search')
+        .set(TEST_HEADER)
+        .query({ q: 'teste', limit: 10 });
+      
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('groups');
+      expect(res.body.groups).toHaveProperty('pacientes');
+      expect(Array.isArray(res.body.groups.pacientes)).toBe(true);
+      
+      console.log(`   ✓ Busca retornou grupos: ${Object.keys(res.body.groups).join(', ')}`);
+    });
+
+    test('5. GET /api/manager/prontuarios/:id/audit - Auditoria com payload', async () => {
+      const testId = '11111111-1111-1111-1111-111111111111';
+      
+      const res = await request(app)
+        .get(`/api/manager/prontuarios/${testId}/audit`)
+        .set(TEST_HEADER)
+        .query({ limit: 10 });
+      
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('events');
+      expect(Array.isArray(res.body.events)).toBe(true);
+      expect(res.body.events.length).toBeGreaterThan(0);
+      
+      console.log(`   ✓ Auditoria: ${res.body.events.length} evento(s)`);
+    });
+
   });
 
-  test('2. GET /metrics/v2/doctors/alerts - Alertas de médicos', async () => {
-    const res = await request(app)
-      .get('/metrics/v2/doctors/alerts')
-      .query({ days: 7 });
+  describe('Rotas públicas ou sem auth', () => {
     
-    expect(res.status).toBeLessThan(500);
-    
-    if (res.status === 200) {
+    test('2. GET /metrics/v2/doctors/alerts - Alertas de médicos', async () => {
+      const res = await request(app)
+        .get('/metrics/v2/doctors/alerts')
+        .set(TEST_HEADER)
+        .query({ days: 7 });
+      
+      expect(res.status).toBe(200);
       expect(res.body).toBeDefined();
-      console.log(`   ✓ Alertas: ${JSON.stringify(res.body).slice(0, 100)}`);
-    } else if (res.status === 404) {
-      console.log('   ⚠️ Endpoint não implementado (404)');
-    } else {
-      console.log(`   ⚠️ Status ${res.status}`);
-    }
-  });
+      
+      console.log(`   ✓ Alertas: ${JSON.stringify(res.body).slice(0, 80)}...`);
+    });
 
-  test('3. GET /metrics/v2/funnel - Funil de telemetria', async () => {
-    const res = await request(app)
-      .get('/metrics/v2/funnel')
-      .query({ days: 7 });
-    
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('rows');
-    expect(res.body).toHaveProperty('events');
-    
-    console.log(`   ✓ Funil: ${res.body.rows?.length || 0} campanhas, ${res.body.events?.length || 0} eventos`);
-  });
+    test('3. GET /metrics/v2/funnel - Funil de telemetria', async () => {
+      const res = await request(app)
+        .get('/metrics/v2/funnel')
+        .query({ days: 7 });
+      
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('rows');
+      expect(res.body).toHaveProperty('events');
+      expect(Array.isArray(res.body.events)).toBe(true);
+      
+      console.log(`   ✓ Funil: ${res.body.rows?.length || 0} campanhas, ${res.body.events?.length || 0} eventos`);
+    });
 
-  test('4. GET /metrics/v2/ab - Experimentos A/B', async () => {
-    const res = await request(app)
-      .get('/metrics/v2/ab')
-      .query({ days: 7, experiment: 'lp_hero_v1' });
-    
-    expect(res.status).toBeLessThan(500);
-    
-    if (res.status === 200) {
+    test('4. GET /metrics/v2/ab - Experimentos A/B', async () => {
+      const res = await request(app)
+        .get('/metrics/v2/ab')
+        .query({ days: 7, experiment: 'lp_hero_v1' });
+      
+      expect(res.status).toBe(200);
       expect(res.body).toBeDefined();
-      console.log(`   ✓ A/B: ${JSON.stringify(res.body).slice(0, 100)}`);
-    } else if (res.status === 404) {
-      console.log('   ⚠️ Endpoint não implementado (404)');
-    } else {
-      console.log(`   ⚠️ Status ${res.status}`);
-    }
+      
+      console.log(`   ✓ A/B lp_hero_v1: ${JSON.stringify(res.body).slice(0, 80)}...`);
+    });
+
   });
 
-  test('5. GET /api/manager/prontuarios/:id/audit - Auditoria de prontuário', async () => {
-    const testId = 'test-prontuario-123';
+  describe('Validação de auth 401 (sem bypass)', () => {
     
-    const res = await request(app)
-      .get(`/api/manager/prontuarios/${testId}/audit`);
-    
-    expect(res.status).toBeLessThan(500);
-    
-    if (res.status === 200) {
-      expect(res.body).toBeDefined();
-      const auditCount = res.body.audit?.length || res.body.length || 0;
-      console.log(`   ✓ Auditoria: ${auditCount} registros`);
-    } else if (res.status === 404) {
-      console.log('   ⚠️ Prontuário não encontrado ou endpoint não implementado');
-    } else {
-      console.log(`   ⚠️ Status ${res.status}`);
-    }
+    test('1a. GET /api/manager/search - Retorna 401 sem header', async () => {
+      const res = await request(app)
+        .get('/api/manager/search')
+        .query({ q: 'teste' });
+      
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
+      
+      console.log(`   ✓ Auth bloqueou corretamente: ${res.body.error}`);
+    });
+
+    test('5a. GET /api/manager/prontuarios/:id/audit - Retorna 401 sem header', async () => {
+      const res = await request(app)
+        .get('/api/manager/prontuarios/any-id/audit');
+      
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
+      
+      console.log(`   ✓ Auth bloqueou corretamente: ${res.body.error}`);
+    });
+
   });
 
 });
