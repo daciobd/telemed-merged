@@ -54,7 +54,7 @@ describe('Critical Routes - Jest/Supertest', () => {
       await pool.query(`
         INSERT INTO prontuario_audit (prontuario_id, actor_email, actor_role, action, created_at, changed_fields, before, after)
         VALUES
-          ('11111111-1111-1111-1111-111111111111'::uuid, 'test@telemed.test', 'doctor', 'update', now() - interval '1 hour', ARRAY['conduta'], '{"conduta":"Antiga"}'::jsonb, '{"conduta":"Nova"}'::jsonb)
+          ('00000001-0000-0000-0000-000000000001'::uuid, 'test@telemed.test', 'doctor', 'update', now() - interval '1 hour', ARRAY['conduta'], '{"conduta":"Antiga"}'::jsonb, '{"conduta":"Nova"}'::jsonb)
         ON CONFLICT DO NOTHING;
       `);
       
@@ -101,7 +101,7 @@ describe('Critical Routes - Jest/Supertest', () => {
     });
 
     test('5. GET /api/manager/prontuarios/:id/audit - Auditoria com payload', async () => {
-      const testId = '11111111-1111-1111-1111-111111111111';
+      const testId = '00000001-0000-0000-0000-000000000001';
       
       const res = await request(app)
         .get(`/api/manager/prontuarios/${testId}/audit`)
