@@ -364,6 +364,7 @@ router.get("/cac-real/details", async (req, res) => {
     const cacTotal = signupsTotal > 0 ? Math.floor(spendTotal / signupsTotal) : null;
 
     res.json({
+      _version: "cac-details-2025-12-28a",
       range: { from, to, groupBy: truncUnit, provider: provider || null, campaign: campaign || null, onlySigned },
       unit: "cents",
       currency: "BRL",
@@ -388,8 +389,11 @@ router.get("/cac-real/details", async (req, res) => {
       })),
     });
   } catch (err) {
-    console.error("[cac-real/details] error:", err);
-    res.status(500).json({ error: "Erro ao calcular CAC detalhado" });
+    console.error("[cac-real/details] error:", err.message, err.stack);
+    res.status(500).json({ 
+      error: "Erro ao calcular CAC detalhado",
+      requestId: req.headers["x-request-id"] || null,
+    });
   }
 });
 
@@ -470,6 +474,7 @@ router.get("/cac-real/alerts", async (req, res) => {
     }
 
     res.json({
+      _version: "cac-alerts-2025-12-28a",
       ok: alerts.length === 0,
       range: { from, to, days },
       thresholds: { cacMax, minSignups, minSpend },
@@ -477,8 +482,11 @@ router.get("/cac-real/alerts", async (req, res) => {
       alerts,
     });
   } catch (err) {
-    console.error("[cac-real/alerts] error:", err);
-    res.status(500).json({ error: "Failed to compute CAC alerts" });
+    console.error("[cac-real/alerts] error:", err.message, err.stack);
+    res.status(500).json({ 
+      error: "Failed to compute CAC alerts",
+      requestId: req.headers["x-request-id"] || null,
+    });
   }
 });
 
