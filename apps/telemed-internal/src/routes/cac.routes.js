@@ -46,23 +46,42 @@ router.get("/diag", async (req, res) => {
       SELECT column_name, data_type 
       FROM information_schema.columns 
       WHERE table_name = 'prontuarios_consulta' 
-      ORDER BY ordinal_position LIMIT 10
+      ORDER BY ordinal_position
     `);
     
-    const adsCount = await pool.query("SELECT COUNT(*) AS cnt FROM ads_spend_daily");
-    const prontuarioCount = await pool.query("SELECT COUNT(*) AS cnt FROM prontuarios_consulta WHERE signed_at IS NOT NULL");
+    // Check if specific columns exist
+    const prontuarioCols = prontuarioTable.rows.map(r => r.column_name);
+    const hasSignedAt = prontuarioCols.includes('signed_at');
+    const hasConsultaId = prontuarioCols.includes('consulta_id');
+    const hasConsultationId = prontuarioCols.includes('consultation_id');
+    
+    let adsCount = 0;
+    try {
+      const r = await pool.query("SELECT COUNT(*) AS cnt FROM ads_spend_daily");
+      adsCount = parseInt(r.rows[0].cnt);
+    } catch (e) { adsCount = -1; }
+    
+    let prontuarioCount = 0;
+    try {
+      const r = await pool.query("SELECT COUNT(*) AS cnt FROM prontuarios_consulta");
+      prontuarioCount = parseInt(r.rows[0].cnt);
+    } catch (e) { prontuarioCount = -1; }
     
     res.json({
-      _version: "diag-2025-12-29a",
+      _version: "diag-2025-12-29b",
       db: dbInfo.rows[0],
       ads_spend_daily: {
-        columns: adsTable.rows,
-        count: parseInt(adsCount.rows[0].cnt)
+        columns: adsTable.rows.map(r => r.column_name),
+        count: adsCount
       },
       prontuarios_consulta: {
-        columns: prontuarioTable.rows,
-        signed_count: parseInt(prontuarioCount.rows[0].cnt)
-      }
+        columns: prontuarioCols,
+        count: prontuarioCount,
+        has_signed_at: hasSignedAt,
+        has_consulta_id: hasConsultaId,
+        has_consultation_id: hasConsultationId
+      },
+      issue: !hasSignedAt ? "MISSING signed_at column - need to add it" : null
     });
   } catch (err) {
     res.status(500).json({ 
