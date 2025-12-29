@@ -30,6 +30,48 @@ async function ensureAdsSpendTable() {
 
 ensureAdsSpendTable().catch(err => console.error("[cac] Failed to create ads_spend_daily:", err.message));
 
+// TEMP: Endpoint de diagnóstico de schema (remover após debug)
+router.get("/diag", async (req, res) => {
+  try {
+    const dbInfo = await pool.query("SELECT current_database() AS db, current_schema() AS schema");
+    
+    const adsTable = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'ads_spend_daily' 
+      ORDER BY ordinal_position
+    `);
+    
+    const prontuarioTable = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'prontuarios_consulta' 
+      ORDER BY ordinal_position LIMIT 10
+    `);
+    
+    const adsCount = await pool.query("SELECT COUNT(*) AS cnt FROM ads_spend_daily");
+    const prontuarioCount = await pool.query("SELECT COUNT(*) AS cnt FROM prontuarios_consulta WHERE signed_at IS NOT NULL");
+    
+    res.json({
+      _version: "diag-2025-12-29a",
+      db: dbInfo.rows[0],
+      ads_spend_daily: {
+        columns: adsTable.rows,
+        count: parseInt(adsCount.rows[0].cnt)
+      },
+      prontuarios_consulta: {
+        columns: prontuarioTable.rows,
+        signed_count: parseInt(prontuarioCount.rows[0].cnt)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      error: err.message, 
+      stack: err.stack?.split("\n").slice(0, 5)
+    });
+  }
+});
+
 router.post("/ads/spend", async (req, res) => {
   const { provider, account_id, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, spend, currency, date } = req.body;
 
