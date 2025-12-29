@@ -308,18 +308,19 @@ router.post(
     try {
       const { email, password } = req.validatedBody;
 
-      // Buscar usuário
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      // Buscar usuário (usando SQL raw para compatibilidade com schema legado)
+      const userResult = await pool.query(
+        `SELECT id, email, password_hash, full_name, role FROM users WHERE email = $1 LIMIT 1`,
+        [email]
+      );
+      const user = userResult.rows[0];
+      
       if (!user) {
         return res.status(401).json({ error: "Email ou senha incorretos" });
       }
 
       // Verificar senha
-      const validPassword = await bcrypt.compare(password, user.passwordHash);
+      const validPassword = await bcrypt.compare(password, user.password_hash);
       if (!validPassword) {
         return res.status(401).json({ error: "Email ou senha incorretos" });
       }
@@ -327,12 +328,11 @@ router.post(
       // Buscar dados adicionais se for médico
       let accountType = null;
       if (user.role === "doctor") {
-        const [doctor] = await db
-          .select()
-          .from(doctors)
-          .where(eq(doctors.userId, user.id))
-          .limit(1);
-        accountType = doctor?.accountType;
+        const doctorResult = await pool.query(
+          `SELECT account_type FROM doctors WHERE user_id = $1 LIMIT 1`,
+          [user.id]
+        );
+        accountType = doctorResult.rows[0]?.account_type;
       }
 
       // Gerar token
@@ -346,7 +346,7 @@ router.post(
         user: {
           id: user.id,
           email: user.email,
-          fullName: user.fullName,
+          fullName: user.full_name,
           role: user.role,
           accountType,
         },
