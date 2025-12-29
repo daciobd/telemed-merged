@@ -6,6 +6,7 @@ import { eq, and, desc, sql, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
+import { pool } from "./db/pool.js";
 import {
   validate,
   registerPatientSchema,
@@ -243,33 +244,31 @@ router.post(
       // Hash da senha
       const passwordHash = await bcrypt.hash(data.password, 10);
 
-      // Criar usuário
-      const [newUser] = await db
-        .insert(users)
-        .values({
-          email: data.email,
-          passwordHash,
-          fullName: data.fullName,
-          phone: data.phone,
-          cpf: data.cpf,
-          role: "doctor",
-        })
-        .returning();
+      // Criar usuário (usando SQL raw para compatibilidade com schema legado)
+      const userResult = await pool.query(
+        `INSERT INTO users (email, password_hash, full_name, phone, cpf, role)
+         VALUES ($1, $2, $3, $4, $5, 'doctor')
+         RETURNING id, email, full_name, phone, cpf, role`,
+        [data.email, passwordHash, data.fullName, data.phone || null, data.cpf || null]
+      );
+      const newUser = userResult.rows[0];
 
-      // Criar perfil de médico
-      const [doctor] = await db
-        .insert(doctors)
-        .values({
-          userId: newUser.id,
-          crm,
-          crmState,
-          specialties,
-          accountType: businessModel,
-          customUrl: data.customUrl || null,
-          isActive: true,
-          isVerified: false,
-        })
-        .returning();
+      // Mapear accountType para enum válido do banco
+      const accountTypeMap = {
+        'marketplace': 'marketplace',
+        'virtual_office': 'virtual_office', 
+        'hybrid': 'hybrid'
+      };
+      const dbAccountType = accountTypeMap[businessModel] || 'marketplace';
+
+      // Criar perfil de médico (usando SQL raw para compatibilidade com schema legado)
+      const doctorResult = await pool.query(
+        `INSERT INTO doctors (user_id, crm, crm_state, specialties, account_type, custom_url, is_active, is_verified)
+         VALUES ($1, $2, $3, $4::json, $5::account_type, $6, true, false)
+         RETURNING id, user_id, crm, crm_state, specialties, account_type, custom_url`,
+        [newUser.id, crm, crmState || null, JSON.stringify(specialties), dbAccountType, data.customUrl || null]
+      );
+      const doctor = doctorResult.rows[0];
 
       // Gerar token
       const token = jwt.sign(
