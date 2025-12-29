@@ -75,6 +75,20 @@ const apiLimiter = rateLimit({
 router.use(apiLimiter);
 
 // ============================================
+// TEMP DEBUG — remover depois
+// ============================================
+router.get("/__debug/db", async (req, res) => {
+  try {
+    const r = await pool.query(
+      "SELECT current_database() AS db, current_schema() AS schema"
+    );
+    res.json(r.rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================
 // JWT SECRET VERIFICATION (at router initialization)
 // ============================================
 
