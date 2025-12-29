@@ -30,67 +30,6 @@ async function ensureAdsSpendTable() {
 
 ensureAdsSpendTable().catch(err => console.error("[cac] Failed to create ads_spend_daily:", err.message));
 
-// TEMP: Endpoint de diagnóstico de schema (remover após debug)
-router.get("/diag", async (req, res) => {
-  try {
-    const dbInfo = await pool.query("SELECT current_database() AS db, current_schema() AS schema");
-    
-    const adsTable = await pool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'ads_spend_daily' 
-      ORDER BY ordinal_position
-    `);
-    
-    const prontuarioTable = await pool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'prontuarios_consulta' 
-      ORDER BY ordinal_position
-    `);
-    
-    // Check if specific columns exist
-    const prontuarioCols = prontuarioTable.rows.map(r => r.column_name);
-    const hasSignedAt = prontuarioCols.includes('signed_at');
-    const hasConsultaId = prontuarioCols.includes('consulta_id');
-    const hasConsultationId = prontuarioCols.includes('consultation_id');
-    
-    let adsCount = 0;
-    try {
-      const r = await pool.query("SELECT COUNT(*) AS cnt FROM ads_spend_daily");
-      adsCount = parseInt(r.rows[0].cnt);
-    } catch (e) { adsCount = -1; }
-    
-    let prontuarioCount = 0;
-    try {
-      const r = await pool.query("SELECT COUNT(*) AS cnt FROM prontuarios_consulta");
-      prontuarioCount = parseInt(r.rows[0].cnt);
-    } catch (e) { prontuarioCount = -1; }
-    
-    res.json({
-      _version: "diag-2025-12-29b",
-      db: dbInfo.rows[0],
-      ads_spend_daily: {
-        columns: adsTable.rows.map(r => r.column_name),
-        count: adsCount
-      },
-      prontuarios_consulta: {
-        columns: prontuarioCols,
-        count: prontuarioCount,
-        has_signed_at: hasSignedAt,
-        has_consulta_id: hasConsultaId,
-        has_consultation_id: hasConsultationId
-      },
-      issue: !hasSignedAt ? "MISSING signed_at column - need to add it" : null
-    });
-  } catch (err) {
-    res.status(500).json({ 
-      error: err.message, 
-      stack: err.stack?.split("\n").slice(0, 5)
-    });
-  }
-});
-
 router.post("/ads/spend", async (req, res) => {
   const { provider, account_id, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, spend, currency, date } = req.body;
 
