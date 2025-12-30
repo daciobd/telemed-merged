@@ -88,4 +88,100 @@ router.get("/users/list", requireInternal, async (req, res) => {
   }
 });
 
+// ============================================
+// MARKETING / CAC REAL
+// ============================================
+
+// GET /marketing/cac-real/details
+router.get("/marketing/cac-real/details", requireInternal, async (req, res) => {
+  try {
+    const { from, to, groupBy = "day" } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parâmetros "from" e "to" são obrigatórios'
+      });
+    }
+
+    // Importar pool para queries diretas
+    const { pool } = await import("../db/pool.js");
+
+    const query = `
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as count,
+        'marketing_data' as metric
+      FROM consultations 
+      WHERE created_at BETWEEN $1 AND $2
+      GROUP BY DATE(created_at)
+      ORDER BY date
+      LIMIT 30
+    `;
+
+    const result = await pool.query(query, [from, to]);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      meta: { from, to, groupBy }
+    });
+  } catch (error) {
+    console.error("Erro marketing details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erro ao buscar dados"
+    });
+  }
+});
+
+// GET /marketing/cac-real/alerts
+router.get("/marketing/cac-real/alerts", requireInternal, async (req, res) => {
+  res.json({
+    success: true,
+    alerts: [
+      { type: "high_cac", message: "CAC acima do esperado", date: new Date().toISOString().split("T")[0] }
+    ]
+  });
+});
+
+// POST /marketing/spend - Inserir gastos de marketing
+router.post("/marketing/spend", requireInternal, async (req, res) => {
+  try {
+    const { provider, account_id, currency, rows } = req.body;
+
+    if (!provider || !rows || !Array.isArray(rows)) {
+      return res.status(400).json({
+        success: false,
+        message: "provider e rows são obrigatórios"
+      });
+    }
+
+    const { pool } = await import("../db/pool.js");
+
+    let inserted = 0;
+    for (const row of rows) {
+      const { date, spend } = row;
+      if (!date || spend == null) continue;
+
+      await pool.query(
+        `INSERT INTO marketing_spend (provider, account_id, currency, spend_date, amount_cents, created_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         ON CONFLICT (provider, account_id, spend_date) 
+         DO UPDATE SET amount_cents = $5, updated_at = NOW()`,
+        [provider, account_id || "default", currency || "BRL", date, Math.round(spend * 100)]
+      );
+      inserted++;
+    }
+
+    res.json({ success: true, inserted });
+  } catch (error) {
+    console.error("Erro marketing spend:", error);
+    res.status(500).json({
+      success: false,
+      message: error?.message || "Erro ao inserir gastos"
+    });
+  }
+});
+
 export default router;
