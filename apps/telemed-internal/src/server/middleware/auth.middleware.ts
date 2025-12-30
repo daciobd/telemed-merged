@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { db } from '../../db';
-import { users } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { db } from "../../db";
+import { users } from "../../db/schema";
+import { eq } from "drizzle-orm";
 
 // Extender interface do Express Request
 declare global {
@@ -11,7 +11,7 @@ declare global {
       user?: {
         id: number;
         email: string;
-        role: 'patient' | 'doctor' | 'admin';
+        role: "patient" | "doctor" | "admin";
         fullName: string;
       };
     }
@@ -27,25 +27,45 @@ interface JwtPayload {
 export const authenticate = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
+    // ✅ Bypass para testes internos (curl/monitoramento) — restrito a métricas/debug
+    const internalToken = req.header("x-internal-token");
+    const path = req.path || "";
+
+    const isAllowedPath =
+      path.startsWith("/metrics/") ||
+      path.startsWith("/api/metrics/") ||
+      path.includes("/__debug/");
+
+    if (
+      isAllowedPath &&
+      internalToken &&
+      process.env.INTERNAL_TOKEN &&
+      internalToken === process.env.INTERNAL_TOKEN
+    ) {
+      console.log("[AUTH] internal bypass", { path });
+      return next();
+    }
+
     // Pegar token do header
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: 'Token não fornecido',
+        message: "Token não fornecido",
       });
     }
 
     const token = authHeader.substring(7); // Remove "Bearer "
+    // ...
 
     // Verificar token
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'default-secret'
+      process.env.JWT_SECRET || "default-secret",
     ) as JwtPayload;
 
     // Buscar usuário no banco
@@ -58,7 +78,7 @@ export const authenticate = async (
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Usuário não encontrado',
+        message: "Usuário não encontrado",
       });
     }
 
@@ -66,7 +86,7 @@ export const authenticate = async (
     req.user = {
       id: user.id,
       email: user.email,
-      role: user.role as 'patient' | 'doctor' | 'admin',
+      role: user.role as "patient" | "doctor" | "admin",
       fullName: user.fullName,
     };
 
@@ -75,20 +95,20 @@ export const authenticate = async (
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({
         success: false,
-        message: 'Token inválido',
+        message: "Token inválido",
       });
     }
 
     if (error instanceof jwt.TokenExpiredError) {
       return res.status(401).json({
         success: false,
-        message: 'Token expirado',
+        message: "Token expirado",
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: 'Erro ao autenticar',
+      message: "Erro ao autenticar",
     });
   }
 };
@@ -97,12 +117,12 @@ export const authenticate = async (
 export const requireDoctor = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  if (req.user?.role !== 'doctor') {
+  if (req.user?.role !== "doctor") {
     return res.status(403).json({
       success: false,
-      message: 'Acesso restrito a médicos',
+      message: "Acesso restrito a médicos",
     });
   }
   next();
@@ -112,12 +132,12 @@ export const requireDoctor = (
 export const requirePatient = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  if (req.user?.role !== 'patient') {
+  if (req.user?.role !== "patient") {
     return res.status(403).json({
       success: false,
-      message: 'Acesso restrito a pacientes',
+      message: "Acesso restrito a pacientes",
     });
   }
   next();
@@ -127,12 +147,12 @@ export const requirePatient = (
 export const requireAdmin = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== "admin") {
     return res.status(403).json({
       success: false,
-      message: 'Acesso restrito a administradores',
+      message: "Acesso restrito a administradores",
     });
   }
   next();
