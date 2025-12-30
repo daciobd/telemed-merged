@@ -11,6 +11,7 @@ import consultationRoutes from './routes/consultation.routes';
 import virtualOfficeRoutes from './routes/virtual-office.routes';
 import bidRoutes from './routes/bid.routes';
 import patientRoutes from './routes/patient.routes';
+import internalRouter from './routes/internal';
 
 // Importar middlewares
 import { errorHandler } from './middleware/error.middleware';
@@ -75,6 +76,7 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/dr', virtualOfficeRoutes); // Página pública: /api/dr/:customUrl
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/bids', bidRoutes);
+app.use('/api/internal', internalRouter);
 app.use('/api/patients', patientRoutes);
 
 // ============================================
@@ -101,3 +103,7 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
+// Rotas internas (admin/monitoring)
+
+// Rotas internas (admin/monitoring)
