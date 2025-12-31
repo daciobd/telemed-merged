@@ -50,7 +50,7 @@ export const createConsultationSchema = z.object({
 });
 
 export const updateConsultationSchema = z.object({
-  status: z.enum(['pending', 'doctor_matched', 'scheduled', 'in_progress', 'completed', 'cancelled']).optional(),
+  status: z.enum(['pending', 'doctor_matched', 'payment_pending', 'scheduled', 'in_progress', 'completed', 'cancelled']).optional(),
   scheduledFor: z.string().optional(),
   clinicalNotes: z.string().optional(),
   diagnosis: z.string().optional(),

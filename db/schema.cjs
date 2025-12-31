@@ -9,6 +9,7 @@ exports.monthlyPlanEnum = (0, pg_core_1.pgEnum)('monthly_plan', ['basic', 'profe
 exports.consultationStatusEnum = (0, pg_core_1.pgEnum)('consultation_status', [
     'pending',
     'doctor_matched',
+    'payment_pending',
     'scheduled',
     'in_progress',
     'completed',

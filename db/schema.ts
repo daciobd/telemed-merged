@@ -7,6 +7,7 @@ export const monthlyPlanEnum = pgEnum('monthly_plan', ['basic', 'professional', 
 export const consultationStatusEnum = pgEnum('consultation_status', [
   'pending',
   'doctor_matched',
+  'payment_pending',
   'scheduled',
   'in_progress',
   'completed',

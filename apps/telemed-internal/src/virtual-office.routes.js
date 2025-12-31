@@ -203,7 +203,7 @@ router.post("/:customUrl/book", async (req, res) => {
         consultationType: consultationType || "primeira_consulta",
         scheduledFor: new Date(scheduledFor),
         chiefComplaint: chiefComplaint || "",
-        status: "scheduled",
+        status: "payment_pending",
         agreedPrice: String(price),
         platformFee: String(platformFee),
         doctorEarnings: String(doctorEarnings),

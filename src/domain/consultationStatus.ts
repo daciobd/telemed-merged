@@ -2,7 +2,6 @@ export const CONSULTATION_STATUS = {
   PENDING: "pending",
   DOCTOR_MATCHED: "doctor_matched",
   PAYMENT_PENDING: "payment_pending",
-  PAID: "paid",
   SCHEDULED: "scheduled",
   IN_PROGRESS: "in_progress",
   COMPLETED: "completed",

@@ -655,7 +655,7 @@ router.post(
           consultationType: tipo,
           isMarketplace: false,
           scheduledFor: datahora ? new Date(datahora) : new Date(),
-          status: "scheduled",
+          status: "payment_pending",
         })
         .returning();
 
@@ -1197,7 +1197,7 @@ router.post(
           isMarketplace: false, // Não é marketplace, é agendamento direto
           scheduledFor: new Date(scheduledFor),
           agreedPrice: agreedPrice.toString(),
-          status: "scheduled", // Já agendada
+          status: "payment_pending", // Aguardando pagamento
           chiefComplaint: chiefComplaint || null,
         })
         .returning();
