@@ -21,6 +21,7 @@ import {
 } from "./consultorio-validation.js";
 import { getOpenAIKey, isOpenAIConfigured } from "./config/openai.js";
 import prontuarioRoutes from "./consultorio-prontuario-routes.js";
+import { checkPaymentBeforeStatusChange } from "./middleware/paymentGuard.js";
 
 // Compat CJS/ESM: Render aceita qualquer uma dessas formas
 const db = dbModule.db || dbModule.default || dbModule;
@@ -795,6 +796,18 @@ router.put(
           return res
             .status(403)
             .json({ error: "Sem permissão para atualizar esta consulta" });
+        }
+      }
+
+      // BLOQUEIO CRÍTICO: Verificar pagamento antes de avançar status
+      if (updates.status) {
+        const paymentCheck = await checkPaymentBeforeStatusChange(parseInt(id), updates.status);
+        if (!paymentCheck.allowed) {
+          return res.status(402).json({
+            error: "Pagamento obrigatório",
+            message: paymentCheck.reason,
+            code: "PAYMENT_REQUIRED",
+          });
         }
       }
 
