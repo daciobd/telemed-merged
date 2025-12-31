@@ -184,4 +184,78 @@ router.post("/marketing/spend", requireInternal, async (req, res) => {
   }
 });
 
+// ============================================
+// QA: POST /consultations/:id/status
+// Testa bloqueio de pagamento (paymentGuard)
+// ============================================
+router.post("/consultations/:id/status", requireInternal, async (req, res) => {
+  try {
+    const consultationId = parseInt(req.params.id, 10);
+    const { status } = req.body;
+
+    if (!consultationId || !status) {
+      return res.status(400).json({ ok: false, error: "id e status são obrigatórios" });
+    }
+
+    const { pool } = await import("../db/pool.js");
+
+    // Buscar consulta atual
+    const { rows: [consultation] } = await pool.query(
+      "SELECT id, status, patient_id, doctor_id FROM consultations WHERE id = $1",
+      [consultationId]
+    );
+
+    if (!consultation) {
+      return res.status(404).json({ ok: false, error: "Consulta não encontrada" });
+    }
+
+    // Status que exigem pagamento confirmado
+    const requiresPayment = ["scheduled", "in_progress", "completed"];
+    
+    if (requiresPayment.includes(status)) {
+      // Verificar se existe pagamento confirmado
+      const { rows: [payment] } = await pool.query(
+        `SELECT id, status, paid_at 
+         FROM payments 
+         WHERE consultation_id = $1 
+           AND status = 'completed' 
+           AND paid_at IS NOT NULL
+         LIMIT 1`,
+        [consultationId]
+      );
+
+      if (!payment) {
+        console.log("[QA] Bloqueio de pagamento ativado", { consultationId, targetStatus: status });
+        return res.status(402).json({
+          ok: false,
+          error: "Pagamento não confirmado",
+          message: `Não é possível avançar para '${status}' sem pagamento confirmado (payments.status='completed' AND paid_at IS NOT NULL)`,
+          currentStatus: consultation.status,
+          targetStatus: status,
+          paymentRequired: true
+        });
+      }
+    }
+
+    // Atualizar status
+    await pool.query(
+      "UPDATE consultations SET status = $1, updated_at = NOW() WHERE id = $2",
+      [status, consultationId]
+    );
+
+    console.log("[QA] Status atualizado", { consultationId, from: consultation.status, to: status });
+
+    return res.json({
+      ok: true,
+      message: `Status atualizado de '${consultation.status}' para '${status}'`,
+      consultationId,
+      previousStatus: consultation.status,
+      newStatus: status
+    });
+  } catch (err) {
+    console.error("[internal/consultations/status] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "Erro ao atualizar status" });
+  }
+});
+
 export default router;
