@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
-const { virtualOfficeSettings, consultations, users } = schema;
+const { virtualOfficeSettings, consultations, users, doctors } = schema;
 
 function calcFees(agreedPrice) {
   const feeRate = 0.2;
@@ -32,39 +32,51 @@ router.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
 
-    const settings = await db
+    // 1) Buscar doctor pelo custom_url
+    const doctorRows = await db
       .select()
-      .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.custom_url, customUrl))
+      .from(doctors)
+      .where(eq(doctors.custom_url, customUrl))
       .limit(1);
 
-    if (!settings || settings.length === 0) {
+    if (!doctorRows || doctorRows.length === 0) {
       return res.status(404).json({ error: "Consultório não encontrado" });
     }
 
-    const [setting] = settings;
-    const doctor = await db
+    const doctor = doctorRows[0];
+
+    // 2) Settings opcionais
+    const settingsRows = await db
       .select()
-      .from(users)
-      .where(eq(users.id, setting.doctor_id))
+      .from(virtualOfficeSettings)
+      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
       .limit(1);
 
-    if (!doctor || doctor.length === 0) {
-      return res.status(404).json({ error: "Médico não encontrado" });
-    }
+    const setting = settingsRows?.[0] || null;
 
-    res.json({
+    // 3) Dados do user do médico
+    const userRows = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, doctor.user_id))
+      .limit(1);
+
+    const user = userRows?.[0] || null;
+
+    return res.json({
       doctor: {
-        id: doctor[0].id,
-        fullName: doctor[0].full_name,
-        specialties: doctor[0].specialties || [],
-        bio: doctor[0].bio,
-        consultationPricing: setting.consultation_pricing || {},
+        id: doctor.id,
+        fullName: user?.full_name || null,
+        specialties: doctor.specialties || [],
+        bio: doctor.bio || null,
+        consultationPricing: doctor.consultation_pricing || {},
+        availability: doctor.availability || {},
       },
+      settings: setting,
     });
   } catch (error) {
     console.error("Error fetching doctor:", error);
-    res.status(500).json({ error: "Erro ao carregar consultório" });
+    return res.status(500).json({ error: "Erro ao carregar consultório" });
   }
 });
 
@@ -175,49 +187,51 @@ router.get("/my-patients", authenticate, async (req, res) => {
 router.post("/:customUrl/book", async (req, res) => {
   try {
     const { customUrl } = req.params;
-    const { patientId, consultationType, scheduledFor, chiefComplaint } =
-      req.body;
+    const { patientId, consultationType, scheduledFor, chiefComplaint } = req.body;
 
-    const { doctors } = schema;
+    // 1) Doctor por custom_url (snake_case)
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.customUrl, customUrl))
+      .where(eq(doctors.custom_url, customUrl))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
       return res.status(404).json({ error: "Consultório não encontrado" });
     }
 
-    const [doctor] = doctorRows;
-    const doctorId = doctor.id;
-    const pricing = doctor.consultationPricing || {};
-    const price = Number(pricing[consultationType] || pricing["primeira_consulta"] || 0);
+    const doctor = doctorRows[0];
+
+    // 2) Pricing correto (snake_case)
+    const pricing = doctor.consultation_pricing || {};
+    const ct = consultationType || "primeira_consulta";
+    const price = Number(pricing[ct] ?? pricing["primeira_consulta"] ?? 0);
     const { platformFee, doctorEarnings } = calcFees(price);
 
+    // 3) Inserir com nomes de colunas snake_case
     const created = await db
       .insert(consultations)
       .values({
-        patientId: patientId || 1,
-        doctorId: doctorId,
-        consultationType: consultationType || "primeira_consulta",
-        scheduledFor: new Date(scheduledFor),
-        chiefComplaint: chiefComplaint || "",
-        status: "payment_pending",
-        agreedPrice: String(price),
-        platformFee: String(platformFee),
-        doctorEarnings: String(doctorEarnings),
-        isMarketplace: false,
+        patient_id: patientId,
+        doctor_id: doctor.id,
+        consultation_type: ct,
+        scheduled_for: scheduledFor ? new Date(scheduledFor) : null,
+        chief_complaint: chiefComplaint || "",
+        status: "pending",
+        agreed_price: price,
+        platform_fee: platformFee,
+        doctor_earnings: doctorEarnings,
+        is_marketplace: false,
       })
       .returning();
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Consulta agendada com sucesso",
       consultation: created[0],
     });
   } catch (error) {
     console.error("Error booking consultation:", error);
-    res.status(500).json({ error: "Erro ao agendar consulta" });
+    return res.status(500).json({ error: "Erro ao agendar consulta" });
   }
 });
 
