@@ -1,0 +1,20 @@
+                                                                       Table "public.patients"
+      Column       |            Type             | Collation | Nullable |               Default                | Storage  | Compression | Stats target | Description 
+-------------------+-----------------------------+-----------+----------+--------------------------------------+----------+-------------+--------------+-------------
+ id                | integer                     |           | not null | nextval('patients_id_seq'::regclass) | plain    |             |              | 
+ user_id           | integer                     |           | not null |                                      | plain    |             |              | 
+ date_of_birth     | timestamp without time zone |           |          |                                      | plain    |             |              | 
+ gender            | text                        |           |          |                                      | extended |             |              | 
+ address           | jsonb                       |           |          |                                      | extended |             |              | 
+ medical_history   | jsonb                       |           |          |                                      | extended |             |              | 
+ emergency_contact | jsonb                       |           |          |                                      | extended |             |              | 
+ created_at        | timestamp without time zone |           |          | now()                                | plain    |             |              | 
+Indexes:
+    "patients_pkey" PRIMARY KEY, btree (id)
+    "patients_user_id_key" UNIQUE CONSTRAINT, btree (user_id)
+Foreign-key constraints:
+    "patients_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id)
+Referenced by:
+    TABLE "consultations" CONSTRAINT "consultations_patient_id_fkey" FOREIGN KEY (patient_id) REFERENCES patients(id)
+Access method: heap
+
