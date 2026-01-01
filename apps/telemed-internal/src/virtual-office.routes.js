@@ -27,66 +27,30 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// GET /api/virtual-office/:customUrl - Página pública do médico
-router.get("/:customUrl", async (req, res) => {
-  try {
-    const { customUrl } = req.params;
-
-    // 1) Buscar doctor pelo custom_url
-    const doctorRows = await db
-      .select()
-      .from(doctors)
-      .where(eq(doctors.custom_url, customUrl))
-      .limit(1);
-
-    if (!doctorRows || doctorRows.length === 0) {
-      return res.status(404).json({ error: "Consultório não encontrado" });
-    }
-
-    const doctor = doctorRows[0];
-
-    // 2) Settings opcionais
-    const settingsRows = await db
-      .select()
-      .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
-      .limit(1);
-
-    const setting = settingsRows?.[0] || null;
-
-    // 3) Dados do user do médico
-    const userRows = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, doctor.user_id))
-      .limit(1);
-
-    const user = userRows?.[0] || null;
-
-    return res.json({
-      doctor: {
-        id: doctor.id,
-        fullName: user?.full_name || null,
-        specialties: doctor.specialties || [],
-        bio: doctor.bio || null,
-        consultationPricing: doctor.consultation_pricing || {},
-        availability: doctor.availability || {},
-      },
-      settings: setting,
-    });
-  } catch (error) {
-    console.error("Error fetching doctor:", error);
-    return res.status(500).json({ error: "Erro ao carregar consultório" });
-  }
-});
+// ============================================
+// ROTAS ESPECÍFICAS (DEVEM VIR ANTES DE /:customUrl)
+// ============================================
 
 // GET /api/virtual-office/settings - Obter configurações (autenticado)
 router.get("/settings", authenticate, async (req, res) => {
   try {
+    // Buscar doctor pelo user_id
+    const doctorRows = await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.user_id, req.user.id))
+      .limit(1);
+
+    if (!doctorRows || doctorRows.length === 0) {
+      return res.json({ settings: null });
+    }
+
+    const doctor = doctorRows[0];
+
     const settings = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, req.user.id))
+      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
       .limit(1);
 
     if (!settings || settings.length === 0) {
@@ -105,24 +69,41 @@ router.patch("/settings", authenticate, async (req, res) => {
   try {
     const { customUrl, consultationPricing } = req.body;
 
-    if (!customUrl) {
-      return res.status(400).json({ error: "URL personalizada é obrigatória" });
+    // Buscar doctor pelo user_id
+    const doctorRows = await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.user_id, req.user.id))
+      .limit(1);
+
+    if (!doctorRows || doctorRows.length === 0) {
+      return res.status(404).json({ error: "Perfil de médico não encontrado" });
     }
 
+    const doctor = doctorRows[0];
+
+    // Atualizar custom_url no doctor se fornecido
+    if (customUrl) {
+      await db
+        .update(doctors)
+        .set({ custom_url: customUrl.toLowerCase() })
+        .where(eq(doctors.id, doctor.id));
+    }
+
+    // Atualizar ou criar settings
     const existing = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, req.user.id))
+      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
       .limit(1);
 
     if (existing && existing.length > 0) {
       const updated = await db
         .update(virtualOfficeSettings)
         .set({
-          custom_url: customUrl.toLowerCase(),
           consultation_pricing: consultationPricing || {},
         })
-        .where(eq(virtualOfficeSettings.doctor_id, req.user.id))
+        .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
         .returning();
 
       return res.json({ settings: updated[0] });
@@ -130,8 +111,7 @@ router.patch("/settings", authenticate, async (req, res) => {
       const created = await db
         .insert(virtualOfficeSettings)
         .values({
-          doctor_id: req.user.id,
-          custom_url: customUrl.toLowerCase(),
+          doctor_id: doctor.id,
           consultation_pricing: consultationPricing || {},
         })
         .returning();
@@ -147,10 +127,23 @@ router.patch("/settings", authenticate, async (req, res) => {
 // GET /api/virtual-office/my-patients - Meus pacientes (autenticado)
 router.get("/my-patients", authenticate, async (req, res) => {
   try {
+    // Buscar doctor pelo user_id
+    const doctorRows = await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.user_id, req.user.id))
+      .limit(1);
+
+    if (!doctorRows || doctorRows.length === 0) {
+      return res.status(404).json({ error: "Perfil de médico não encontrado" });
+    }
+
+    const doctor = doctorRows[0];
+
     const consultsByDoc = await db
       .select()
       .from(consultations)
-      .where(eq(consultations.doctor_id, req.user.id));
+      .where(eq(consultations.doctor_id, doctor.id));
 
     const patientIds = [...new Set(consultsByDoc.map((c) => c.patient_id))];
 
@@ -182,6 +175,10 @@ router.get("/my-patients", authenticate, async (req, res) => {
     res.status(500).json({ error: "Erro ao carregar pacientes" });
   }
 });
+
+// ============================================
+// ROTAS DINÂMICAS (DEVEM VIR POR ÚLTIMO)
+// ============================================
 
 // POST /api/virtual-office/:customUrl/book - Agendar consulta
 router.post("/:customUrl/book", async (req, res) => {
@@ -232,6 +229,59 @@ router.post("/:customUrl/book", async (req, res) => {
   } catch (error) {
     console.error("Error booking consultation:", error);
     return res.status(500).json({ error: "Erro ao agendar consulta" });
+  }
+});
+
+// GET /api/virtual-office/:customUrl - Página pública do médico (ÚLTIMO!)
+router.get("/:customUrl", async (req, res) => {
+  try {
+    const { customUrl } = req.params;
+
+    // 1) Buscar doctor pelo custom_url
+    const doctorRows = await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.custom_url, customUrl))
+      .limit(1);
+
+    if (!doctorRows || doctorRows.length === 0) {
+      return res.status(404).json({ error: "Consultório não encontrado" });
+    }
+
+    const doctor = doctorRows[0];
+
+    // 2) Settings opcionais
+    const settingsRows = await db
+      .select()
+      .from(virtualOfficeSettings)
+      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
+      .limit(1);
+
+    const setting = settingsRows?.[0] || null;
+
+    // 3) Dados do user do médico
+    const userRows = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, doctor.user_id))
+      .limit(1);
+
+    const user = userRows?.[0] || null;
+
+    return res.json({
+      doctor: {
+        id: doctor.id,
+        fullName: user?.full_name || null,
+        specialties: doctor.specialties || [],
+        bio: doctor.bio || null,
+        consultationPricing: doctor.consultation_pricing || {},
+        availability: doctor.availability || {},
+      },
+      settings: setting,
+    });
+  } catch (error) {
+    console.error("Error fetching doctor:", error);
+    return res.status(500).json({ error: "Erro ao carregar consultório" });
   }
 });
 
