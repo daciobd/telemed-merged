@@ -184,13 +184,14 @@ router.get("/my-patients", authenticate, async (req, res) => {
 router.post("/:customUrl/book", async (req, res) => {
   try {
     const { customUrl } = req.params;
+    const customUrlNorm = String(customUrl || "").trim().toLowerCase();
     const { patientId, consultationType, scheduledFor, chiefComplaint } = req.body;
 
-    // 1) Doctor por custom_url (snake_case)
+    // 1) Doctor por customUrl (Drizzle camelCase)
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.customUrl, customUrl))
+      .where(eq(doctors.customUrl, customUrlNorm))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
@@ -236,12 +237,13 @@ router.post("/:customUrl/book", async (req, res) => {
 router.get("/:customUrl", async (req, res) => {
   try {
     const { customUrl } = req.params;
+    const customUrlNorm = String(customUrl || "").trim().toLowerCase();
 
-    // 1) Buscar doctor pelo custom_url
+    // 1) Buscar doctor pelo customUrl (Drizzle camelCase)
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.customUrl, customUrl))
+      .where(eq(doctors.customUrl, customUrlNorm))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
