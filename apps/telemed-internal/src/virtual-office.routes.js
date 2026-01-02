@@ -194,8 +194,15 @@ router.get("/:customUrl/slots", async (req, res) => {
       return res.status(400).json({ error: "Parâmetros 'from' e 'to' são obrigatórios (YYYY-MM-DD)" });
     }
 
-    const from = new Date(`${fromStr}T00:00:00.000Z`);
-    const to = new Date(`${toStr}T00:00:00.000Z`);
+    // Trata "from/to" como datas no fuso de São Paulo (UTC-03)
+    function spStartOfDay(yyyy_mm_dd) {
+      const d = new Date(`${yyyy_mm_dd}T00:00:00.000Z`);
+      d.setUTCHours(d.getUTCHours() + 3); // agora representa 00:00 em -03
+      return d;
+    }
+
+    const from = spStartOfDay(fromStr);
+    const to = spStartOfDay(toStr);
     if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
       return res.status(400).json({ error: "Datas inválidas. Use YYYY-MM-DD" });
     }
@@ -233,7 +240,12 @@ router.get("/:customUrl/slots", async (req, res) => {
         .filter(Boolean)
     );
 
-    const dayMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+    // Função para obter dia da semana em horário SP
+    function spWeekdayKey(dateUtc) {
+      const sp = new Date(dateUtc.getTime() - 3 * 60 * 60000);
+      const dayMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+      return dayMap[sp.getUTCDay()];
+    }
 
     function* slotGenerator(dayDate, ranges) {
       for (const range of ranges) {
@@ -242,10 +254,10 @@ router.get("/:customUrl/slots", async (req, res) => {
         const [eh, em] = endStr.split(":").map(Number);
 
         const start = new Date(dayDate);
-        start.setUTCHours(sh, sm, 0, 0);
+        start.setUTCHours(sh + 3, sm, 0, 0); // ranges são em horário SP, +3 para UTC
 
         const end = new Date(dayDate);
-        end.setUTCHours(eh, em, 0, 0);
+        end.setUTCHours(eh + 3, em, 0, 0);
 
         for (let t = new Date(start); t < end; t = new Date(t.getTime() + durationMin * 60000)) {
           yield new Date(t);
@@ -255,7 +267,7 @@ router.get("/:customUrl/slots", async (req, res) => {
 
     const slots = [];
     for (let d = new Date(from); d < to; d = new Date(d.getTime() + 24 * 60 * 60000)) {
-      const weekdayKey = dayMap[d.getUTCDay()];
+      const weekdayKey = spWeekdayKey(d);
       const ranges = availability[weekdayKey] || [];
       for (const slot of slotGenerator(d, ranges)) {
         const iso = slot.toISOString();
