@@ -230,7 +230,7 @@ router.get("/:customUrl/slots", async (req, res) => {
           eq(consultations.doctorId, doctor.id),
           gte(consultations.scheduledFor, from),
           lt(consultations.scheduledFor, to),
-          inArray(consultations.status, ["scheduled", "in_progress"])
+          inArray(consultations.status, ["pending", "scheduled", "in_progress"])
         )
       );
 
