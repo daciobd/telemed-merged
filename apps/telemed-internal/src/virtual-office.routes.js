@@ -38,7 +38,7 @@ router.get("/settings", authenticate, async (req, res) => {
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.user_id, req.user.id))
+      .where(eq(doctors.userId, req.user.id))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
@@ -50,7 +50,7 @@ router.get("/settings", authenticate, async (req, res) => {
     const settings = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
+      .where(eq(virtualOfficeSettings.doctorId, doctor.id))
       .limit(1);
 
     if (!settings || settings.length === 0) {
@@ -73,7 +73,7 @@ router.patch("/settings", authenticate, async (req, res) => {
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.user_id, req.user.id))
+      .where(eq(doctors.userId, req.user.id))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
@@ -82,11 +82,11 @@ router.patch("/settings", authenticate, async (req, res) => {
 
     const doctor = doctorRows[0];
 
-    // Atualizar custom_url no doctor se fornecido
+    // Atualizar customUrl no doctor se fornecido
     if (customUrl) {
       await db
         .update(doctors)
-        .set({ custom_url: customUrl.toLowerCase() })
+        .set({ customUrl: customUrl.toLowerCase() })
         .where(eq(doctors.id, doctor.id));
     }
 
@@ -94,16 +94,16 @@ router.patch("/settings", authenticate, async (req, res) => {
     const existing = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
+      .where(eq(virtualOfficeSettings.doctorId, doctor.id))
       .limit(1);
 
     if (existing && existing.length > 0) {
       const updated = await db
         .update(virtualOfficeSettings)
         .set({
-          consultation_pricing: consultationPricing || {},
+          consultationPricing: consultationPricing || {},
         })
-        .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
+        .where(eq(virtualOfficeSettings.doctorId, doctor.id))
         .returning();
 
       return res.json({ settings: updated[0] });
@@ -111,8 +111,8 @@ router.patch("/settings", authenticate, async (req, res) => {
       const created = await db
         .insert(virtualOfficeSettings)
         .values({
-          doctor_id: doctor.id,
-          consultation_pricing: consultationPricing || {},
+          doctorId: doctor.id,
+          consultationPricing: consultationPricing || {},
         })
         .returning();
 
@@ -131,7 +131,7 @@ router.get("/my-patients", authenticate, async (req, res) => {
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.user_id, req.user.id))
+      .where(eq(doctors.userId, req.user.id))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
@@ -143,9 +143,9 @@ router.get("/my-patients", authenticate, async (req, res) => {
     const consultsByDoc = await db
       .select()
       .from(consultations)
-      .where(eq(consultations.doctor_id, doctor.id));
+      .where(eq(consultations.doctorId, doctor.id));
 
-    const patientIds = [...new Set(consultsByDoc.map((c) => c.patient_id))];
+    const patientIds = [...new Set(consultsByDoc.map((c) => c.patientId))];
 
     const patients = [];
     for (const patientId of patientIds) {
@@ -157,11 +157,11 @@ router.get("/my-patients", authenticate, async (req, res) => {
 
       if (patient && patient.length > 0) {
         const totalConsults = consultsByDoc.filter(
-          (c) => c.patient_id === patientId,
+          (c) => c.patientId === patientId,
         ).length;
         patients.push({
           id: patient[0].id,
-          fullName: patient[0].full_name,
+          fullName: patient[0].fullName,
           email: patient[0].email,
           phone: patient[0].phone,
           totalConsultations: totalConsults,
@@ -190,7 +190,7 @@ router.post("/:customUrl/book", async (req, res) => {
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.custom_url, customUrl))
+      .where(eq(doctors.customUrl, customUrl))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
@@ -200,25 +200,25 @@ router.post("/:customUrl/book", async (req, res) => {
     const doctor = doctorRows[0];
 
     // 2) Pricing correto (snake_case)
-    const pricing = doctor.consultation_pricing || {};
+    const pricing = doctor.consultationPricing || {};
     const ct = consultationType || "primeira_consulta";
     const price = Number(pricing[ct] ?? pricing["primeira_consulta"] ?? 0);
     const { platformFee, doctorEarnings } = calcFees(price);
 
-    // 3) Inserir com nomes de colunas snake_case
+    // 3) Inserir com nomes Drizzle (camelCase)
     const created = await db
       .insert(consultations)
       .values({
-        patient_id: patientId,
-        doctor_id: doctor.id,
-        consultation_type: ct,
-        scheduled_for: scheduledFor ? new Date(scheduledFor) : null,
-        chief_complaint: chiefComplaint || "",
+        patientId: patientId,
+        doctorId: doctor.id,
+        consultationType: ct,
+        scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+        chiefComplaint: chiefComplaint || "",
         status: "pending",
-        agreed_price: price,
-        platform_fee: platformFee,
-        doctor_earnings: doctorEarnings,
-        is_marketplace: false,
+        agreedPrice: String(price),
+        platformFee: String(platformFee),
+        doctorEarnings: String(doctorEarnings),
+        isMarketplace: false,
       })
       .returning();
 
@@ -241,7 +241,7 @@ router.get("/:customUrl", async (req, res) => {
     const doctorRows = await db
       .select()
       .from(doctors)
-      .where(eq(doctors.custom_url, customUrl))
+      .where(eq(doctors.customUrl, customUrl))
       .limit(1);
 
     if (!doctorRows || doctorRows.length === 0) {
@@ -254,7 +254,7 @@ router.get("/:customUrl", async (req, res) => {
     const settingsRows = await db
       .select()
       .from(virtualOfficeSettings)
-      .where(eq(virtualOfficeSettings.doctor_id, doctor.id))
+      .where(eq(virtualOfficeSettings.doctorId, doctor.id))
       .limit(1);
 
     const setting = settingsRows?.[0] || null;
@@ -263,7 +263,7 @@ router.get("/:customUrl", async (req, res) => {
     const userRows = await db
       .select()
       .from(users)
-      .where(eq(users.id, doctor.user_id))
+      .where(eq(users.id, doctor.userId))
       .limit(1);
 
     const user = userRows?.[0] || null;
@@ -271,10 +271,10 @@ router.get("/:customUrl", async (req, res) => {
     return res.json({
       doctor: {
         id: doctor.id,
-        fullName: user?.full_name || null,
+        fullName: user?.fullName || null,
         specialties: doctor.specialties || [],
         bio: doctor.bio || null,
-        consultationPricing: doctor.consultation_pricing || {},
+        consultationPricing: doctor.consultationPricing || {},
         availability: doctor.availability || {},
       },
       settings: setting,
