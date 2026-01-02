@@ -1,7 +1,7 @@
 import express from "express";
 import { db } from "../../../db/index.js";
 import * as schema from "../../../db/schema.cjs";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, gte, lt, inArray } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
 const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
@@ -214,14 +214,16 @@ router.get("/:customUrl/slots", async (req, res) => {
     const availability = doctor.availability || {};
     const durationMin = Number(doctor.consultationDuration || 30);
 
-    // Consultas ocupadas no período (apenas status ativos)
+    // Consultas ocupadas no período (apenas scheduled/in_progress no range)
     const busyRows = await db
       .select({ scheduledFor: consultations.scheduledFor })
       .from(consultations)
       .where(
         and(
           eq(consultations.doctorId, doctor.id),
-          inArray(consultations.status, ACTIVE_STATUSES)
+          gte(consultations.scheduledFor, from),
+          lt(consultations.scheduledFor, to),
+          inArray(consultations.status, ["scheduled", "in_progress"])
         )
       );
 
