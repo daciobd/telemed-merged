@@ -9,6 +9,63 @@ const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"
 const router = express.Router();
 const { virtualOfficeSettings, consultations, users, doctors } = schema;
 
+// ============================================
+// PRICING HELPERS (valores em centavos para precisão)
+// ============================================
+
+function normalizeMoneyToCents(value) {
+  if (value == null) return null;
+  
+  // Se já é inteiro grande (ex: 12000), assume centavos
+  if (typeof value === "number") {
+    if (Number.isInteger(value) && value >= 1000) return value;
+    return Math.round(value * 100); // reais -> centavos
+  }
+  
+  // Se vier string "120" ou "120.50"
+  if (typeof value === "string") {
+    const v = Number(value.replace(",", "."));
+    if (Number.isFinite(v)) return Math.round(v * 100);
+  }
+  
+  return null;
+}
+
+function getPricingForType(consultationPricing, consultationType) {
+  if (!consultationPricing) return null;
+  
+  // Caso seja número (preço único)
+  if (typeof consultationPricing === "number" || typeof consultationPricing === "string") {
+    const cents = normalizeMoneyToCents(consultationPricing);
+    return cents ? { priceCents: cents, duration: 30 } : null;
+  }
+  
+  // Caso seja objeto {price,duration}
+  if (consultationPricing.price != null) {
+    const cents = normalizeMoneyToCents(consultationPricing.price);
+    const duration = consultationPricing.duration ?? 30;
+    return cents ? { priceCents: cents, duration } : null;
+  }
+  
+  // Caso seja mapa por tipo + default
+  const byType = consultationPricing[consultationType];
+  const def = consultationPricing.default;
+  
+  const chosen = byType ?? def;
+  if (!chosen) return null;
+  
+  const cents = normalizeMoneyToCents(chosen.price);
+  const duration = chosen.duration ?? 30;
+  return cents ? { priceCents: cents, duration } : null;
+}
+
+function calcFeesFromCents(agreedPriceCents) {
+  const platformFeeCents = Math.round(agreedPriceCents * 0.20);
+  const doctorEarningsCents = agreedPriceCents - platformFeeCents;
+  return { platformFeeCents, doctorEarningsCents };
+}
+
+// Legacy (manter compatibilidade)
 function calcFees(agreedPrice) {
   const feeRate = 0.2;
   const platformFee = Math.round(agreedPrice * feeRate * 100) / 100;
@@ -363,11 +420,24 @@ router.post("/:customUrl/book", async (req, res) => {
       return res.status(409).json({ error: "Horário indisponível" });
     }
 
-    // 5) Pricing
-    const pricing = doctor.consultationPricing || {};
+    // 5) Pricing usando novo sistema de normalização
     const ct = consultationType || "primeira_consulta";
-    const price = Number(pricing[ct] ?? pricing["primeira_consulta"] ?? 0);
-    const { platformFee, doctorEarnings } = calcFees(price);
+    const pricingData = getPricingForType(doctor.consultationPricing, ct);
+    
+    if (!pricingData) {
+      return res.status(400).json({
+        error: "pricing_not_configured",
+        message: "Médico sem preço configurado"
+      });
+    }
+    
+    const agreedPriceCents = pricingData.priceCents;
+    const { platformFeeCents, doctorEarningsCents } = calcFeesFromCents(agreedPriceCents);
+    
+    // Converter para string "0.00" para salvar no banco
+    const agreedPrice = (agreedPriceCents / 100).toFixed(2);
+    const platformFee = (platformFeeCents / 100).toFixed(2);
+    const doctorEarnings = (doctorEarningsCents / 100).toFixed(2);
 
     // 6) Inserir com nomes Drizzle (camelCase)
     const created = await db
@@ -379,10 +449,11 @@ router.post("/:customUrl/book", async (req, res) => {
         scheduledFor: scheduledDate,
         chiefComplaint: chiefComplaint || "",
         status: "pending",
-        agreedPrice: String(price),
-        platformFee: String(platformFee),
-        doctorEarnings: String(doctorEarnings),
+        agreedPrice: agreedPrice,
+        platformFee: platformFee,
+        doctorEarnings: doctorEarnings,
         isMarketplace: false,
+        duration: pricingData.duration,
       })
       .returning();
 
@@ -433,6 +504,20 @@ router.get("/:customUrl", async (req, res) => {
 
     const user = userRows?.[0] || null;
 
+    // 4) Formatar pricing para exibição
+    const rawPricing = doctor.consultationPricing;
+    const defaultPricing = getPricingForType(rawPricing, "default") || getPricingForType(rawPricing, "primeira_consulta");
+    
+    let pricingDisplay = null;
+    if (defaultPricing) {
+      const priceReais = (defaultPricing.priceCents / 100).toFixed(2).replace(".", ",");
+      pricingDisplay = {
+        raw: rawPricing,
+        default: defaultPricing,
+        display: `R$ ${priceReais}`
+      };
+    }
+
     return res.json({
       doctor: {
         id: doctor.id,
@@ -441,6 +526,7 @@ router.get("/:customUrl", async (req, res) => {
         bio: doctor.bio || null,
         consultationPricing: doctor.consultationPricing || {},
         availability: doctor.availability || {},
+        pricing: pricingDisplay,
       },
       settings: setting,
     });
