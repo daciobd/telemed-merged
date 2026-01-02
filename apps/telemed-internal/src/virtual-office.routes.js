@@ -346,20 +346,21 @@ router.post("/:customUrl/book", async (req, res) => {
       return res.status(409).json({ error: "Horário indisponível" });
     }
 
-    // 4) Checar conflito (mesmo horário - apenas scheduled/in_progress)
+    // 4) Bloquear double-booking com query direta no banco
     const conflictRows = await db
-      .select({ id: consultations.id, scheduledFor: consultations.scheduledFor, status: consultations.status })
+      .select({ id: consultations.id, status: consultations.status })
       .from(consultations)
-      .where(eq(consultations.doctorId, doctor.id));
+      .where(
+        and(
+          eq(consultations.doctorId, doctor.id),
+          eq(consultations.scheduledFor, scheduledDate),
+          inArray(consultations.status, ["pending", "scheduled", "in_progress"])
+        )
+      )
+      .limit(1);
 
-    const hasExactConflict = conflictRows.some((c) => {
-      if (!c.scheduledFor) return false;
-      const iso = new Date(c.scheduledFor).toISOString();
-      return iso === scheduledDate.toISOString() && (c.status === "scheduled" || c.status === "in_progress");
-    });
-
-    if (hasExactConflict) {
-      return res.status(409).json({ error: "Horário já ocupado" });
+    if (conflictRows.length > 0) {
+      return res.status(409).json({ error: "Horário indisponível" });
     }
 
     // 5) Pricing
