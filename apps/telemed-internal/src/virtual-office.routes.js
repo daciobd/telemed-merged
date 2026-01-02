@@ -86,7 +86,7 @@ router.patch("/settings", authenticate, async (req, res) => {
     if (customUrl) {
       await db
         .update(doctors)
-        .set({ customUrl: customUrl.toLowerCase() })
+        .set({ custom_url: customUrl.toLowerCase() })
         .where(eq(doctors.id, doctor.id));
     }
 
