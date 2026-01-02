@@ -314,16 +314,27 @@ router.post("/:customUrl/book", async (req, res) => {
       return res.status(400).json({ error: "scheduledFor inválido (use ISO)" });
     }
 
-    // 3) Checar se o horário está dentro da disponibilidade do médico
+    // 3) Checar se o horário está dentro da disponibilidade do médico (timezone SP)
     const availability = doctor.availability || {};
-    const dayMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
-    const weekdayKey = dayMap[scheduledDate.getUTCDay()];
+    
+    // Converte UTC para horário SP (-03) para obter dia da semana correto
+    function spWeekdayKeyBook(dateUtc) {
+      const sp = new Date(dateUtc.getTime() - 3 * 60 * 60000);
+      const dayMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+      return dayMap[sp.getUTCDay()];
+    }
+    
+    const weekdayKey = spWeekdayKeyBook(scheduledDate);
     const ranges = availability[weekdayKey] || [];
 
-    function isWithinRanges(dateObj, rangesArr) {
-      if (rangesArr.length === 0) return true; // Se não tem disponibilidade definida, aceita
-      const hh = String(dateObj.getUTCHours()).padStart(2, "0");
-      const mm = String(dateObj.getUTCMinutes()).padStart(2, "0");
+    // Valida se horário UTC está dentro dos ranges (que já foram convertidos SP→UTC no /slots)
+    // Ranges são em horário SP, scheduledDate vem em UTC (já convertido +3h pelo frontend/slots)
+    function isWithinRangesSP(dateUtc, rangesArr) {
+      if (rangesArr.length === 0) return true;
+      // Converte UTC para horário SP para comparar com ranges locais
+      const spDate = new Date(dateUtc.getTime() - 3 * 60 * 60000);
+      const hh = String(spDate.getUTCHours()).padStart(2, "0");
+      const mm = String(spDate.getUTCMinutes()).padStart(2, "0");
       const time = `${hh}:${mm}`;
       return rangesArr.some((r) => {
         const [a, b] = r.split("-");
@@ -331,25 +342,23 @@ router.post("/:customUrl/book", async (req, res) => {
       });
     }
 
-    if (ranges.length > 0 && !isWithinRanges(scheduledDate, ranges)) {
+    if (ranges.length > 0 && !isWithinRangesSP(scheduledDate, ranges)) {
       return res.status(409).json({ error: "Horário indisponível" });
     }
 
-    // 4) Checar conflito (mesmo horário - apenas status ativos)
+    // 4) Checar conflito (mesmo horário - apenas scheduled/in_progress)
     const conflictRows = await db
-      .select({ id: consultations.id, scheduledFor: consultations.scheduledFor })
+      .select({ id: consultations.id, scheduledFor: consultations.scheduledFor, status: consultations.status })
       .from(consultations)
-      .where(
-        and(
-          eq(consultations.doctorId, doctor.id),
-          inArray(consultations.status, ACTIVE_STATUSES)
-        )
-      );
+      .where(eq(consultations.doctorId, doctor.id));
 
-    const hasExact = conflictRows.some(
-      (r) => r.scheduledFor && new Date(r.scheduledFor).toISOString() === scheduledDate.toISOString()
-    );
-    if (hasExact) {
+    const hasExactConflict = conflictRows.some((c) => {
+      if (!c.scheduledFor) return false;
+      const iso = new Date(c.scheduledFor).toISOString();
+      return iso === scheduledDate.toISOString() && (c.status === "scheduled" || c.status === "in_progress");
+    });
+
+    if (hasExactConflict) {
       return res.status(409).json({ error: "Horário já ocupado" });
     }
 
