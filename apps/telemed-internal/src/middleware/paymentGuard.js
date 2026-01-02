@@ -7,6 +7,39 @@ export async function checkPaymentBeforeStatusChange(consultationId, newStatus) 
     return { allowed: true };
   }
 
+  // 1) Descobrir doctor_id da consulta
+  const consult = await pool.query(
+    `SELECT doctor_id
+     FROM consultations
+     WHERE id = $1
+     LIMIT 1`,
+    [consultationId]
+  );
+
+  if (consult.rows.length === 0) {
+    // Se não achou consulta, não bloqueia aqui (deixa outras camadas lidarem)
+    return { allowed: true };
+  }
+
+  const doctorId = consult.rows[0].doctor_id;
+
+  // 2) Ver se o consultório exige pré-pagamento
+  const settings = await pool.query(
+    `SELECT require_prepayment
+     FROM virtual_office_settings
+     WHERE doctor_id = $1
+     LIMIT 1`,
+    [doctorId]
+  );
+
+  const requirePrepayment =
+    settings.rows.length > 0 ? !!settings.rows[0].require_prepayment : true; // default: true
+
+  if (!requirePrepayment) {
+    return { allowed: true };
+  }
+
+  // 3) Exigir pagamento confirmado
   const result = await pool.query(
     `SELECT p.status as payment_status, p.paid_at
      FROM payments p
@@ -35,9 +68,7 @@ export function paymentGuardMiddleware(extractStatusFn) {
       const consultationId = parseInt(req.params.id);
       const newStatus = extractStatusFn(req);
 
-      if (!newStatus) {
-        return next();
-      }
+      if (!newStatus) return next();
 
       const check = await checkPaymentBeforeStatusChange(consultationId, newStatus);
 

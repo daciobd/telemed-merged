@@ -1,8 +1,10 @@
 import express from "express";
 import { db } from "../../../db/index.js";
 import * as schema from "../../../db/schema.cjs";
-import { eq } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import jwt from "jsonwebtoken";
+
+const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
 
 const router = express.Router();
 const { virtualOfficeSettings, consultations, users, doctors } = schema;
@@ -180,6 +182,94 @@ router.get("/my-patients", authenticate, async (req, res) => {
 // ROTAS DINÂMICAS (DEVEM VIR POR ÚLTIMO)
 // ============================================
 
+// GET /api/virtual-office/:customUrl/slots?from=YYYY-MM-DD&to=YYYY-MM-DD
+router.get("/:customUrl/slots", async (req, res) => {
+  try {
+    const { customUrl } = req.params;
+    const customUrlNorm = String(customUrl || "").trim().toLowerCase();
+
+    const fromStr = String(req.query.from || "");
+    const toStr = String(req.query.to || "");
+    if (!fromStr || !toStr) {
+      return res.status(400).json({ error: "Parâmetros 'from' e 'to' são obrigatórios (YYYY-MM-DD)" });
+    }
+
+    const from = new Date(`${fromStr}T00:00:00.000Z`);
+    const to = new Date(`${toStr}T00:00:00.000Z`);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return res.status(400).json({ error: "Datas inválidas. Use YYYY-MM-DD" });
+    }
+
+    const doctorRows = await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.customUrl, customUrlNorm))
+      .limit(1);
+
+    if (!doctorRows || doctorRows.length === 0) {
+      return res.status(404).json({ error: "Consultório não encontrado" });
+    }
+
+    const doctor = doctorRows[0];
+    const availability = doctor.availability || {};
+    const durationMin = Number(doctor.consultationDuration || 30);
+
+    // Consultas ocupadas no período (apenas status ativos)
+    const busyRows = await db
+      .select({ scheduledFor: consultations.scheduledFor })
+      .from(consultations)
+      .where(
+        and(
+          eq(consultations.doctorId, doctor.id),
+          inArray(consultations.status, ACTIVE_STATUSES)
+        )
+      );
+
+    const busySet = new Set(
+      busyRows
+        .map((r) => (r.scheduledFor ? new Date(r.scheduledFor).toISOString() : null))
+        .filter(Boolean)
+    );
+
+    const dayMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+
+    function* slotGenerator(dayDate, ranges) {
+      for (const range of ranges) {
+        const [startStr, endStr] = range.split("-");
+        const [sh, sm] = startStr.split(":").map(Number);
+        const [eh, em] = endStr.split(":").map(Number);
+
+        const start = new Date(dayDate);
+        start.setUTCHours(sh, sm, 0, 0);
+
+        const end = new Date(dayDate);
+        end.setUTCHours(eh, em, 0, 0);
+
+        for (let t = new Date(start); t < end; t = new Date(t.getTime() + durationMin * 60000)) {
+          yield new Date(t);
+        }
+      }
+    }
+
+    const slots = [];
+    for (let d = new Date(from); d < to; d = new Date(d.getTime() + 24 * 60 * 60000)) {
+      const weekdayKey = dayMap[d.getUTCDay()];
+      const ranges = availability[weekdayKey] || [];
+      for (const slot of slotGenerator(d, ranges)) {
+        const iso = slot.toISOString();
+        if (!busySet.has(iso)) {
+          slots.push(iso);
+        }
+      }
+    }
+
+    return res.json({ doctorId: doctor.id, from: fromStr, to: toStr, durationMin, slots });
+  } catch (error) {
+    console.error("Error fetching slots:", error);
+    return res.status(500).json({ error: "Erro ao carregar agenda" });
+  }
+});
+
 // POST /api/virtual-office/:customUrl/book - Agendar consulta
 router.post("/:customUrl/book", async (req, res) => {
   try {
@@ -200,20 +290,69 @@ router.post("/:customUrl/book", async (req, res) => {
 
     const doctor = doctorRows[0];
 
-    // 2) Pricing correto (snake_case)
+    // 2) Validar scheduledFor
+    if (!scheduledFor) {
+      return res.status(400).json({ error: "scheduledFor é obrigatório" });
+    }
+
+    const scheduledDate = new Date(scheduledFor);
+    if (Number.isNaN(scheduledDate.getTime())) {
+      return res.status(400).json({ error: "scheduledFor inválido (use ISO)" });
+    }
+
+    // 3) Checar se o horário está dentro da disponibilidade do médico
+    const availability = doctor.availability || {};
+    const dayMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+    const weekdayKey = dayMap[scheduledDate.getUTCDay()];
+    const ranges = availability[weekdayKey] || [];
+
+    function isWithinRanges(dateObj, rangesArr) {
+      if (rangesArr.length === 0) return true; // Se não tem disponibilidade definida, aceita
+      const hh = String(dateObj.getUTCHours()).padStart(2, "0");
+      const mm = String(dateObj.getUTCMinutes()).padStart(2, "0");
+      const time = `${hh}:${mm}`;
+      return rangesArr.some((r) => {
+        const [a, b] = r.split("-");
+        return time >= a && time < b;
+      });
+    }
+
+    if (ranges.length > 0 && !isWithinRanges(scheduledDate, ranges)) {
+      return res.status(409).json({ error: "Horário indisponível" });
+    }
+
+    // 4) Checar conflito (mesmo horário - apenas status ativos)
+    const conflictRows = await db
+      .select({ id: consultations.id, scheduledFor: consultations.scheduledFor })
+      .from(consultations)
+      .where(
+        and(
+          eq(consultations.doctorId, doctor.id),
+          inArray(consultations.status, ACTIVE_STATUSES)
+        )
+      );
+
+    const hasExact = conflictRows.some(
+      (r) => r.scheduledFor && new Date(r.scheduledFor).toISOString() === scheduledDate.toISOString()
+    );
+    if (hasExact) {
+      return res.status(409).json({ error: "Horário já ocupado" });
+    }
+
+    // 5) Pricing
     const pricing = doctor.consultationPricing || {};
     const ct = consultationType || "primeira_consulta";
     const price = Number(pricing[ct] ?? pricing["primeira_consulta"] ?? 0);
     const { platformFee, doctorEarnings } = calcFees(price);
 
-    // 3) Inserir com nomes Drizzle (camelCase)
+    // 6) Inserir com nomes Drizzle (camelCase)
     const created = await db
       .insert(consultations)
       .values({
         patientId: patientId,
         doctorId: doctor.id,
         consultationType: ct,
-        scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
+        scheduledFor: scheduledDate,
         chiefComplaint: chiefComplaint || "",
         status: "pending",
         agreedPrice: String(price),
