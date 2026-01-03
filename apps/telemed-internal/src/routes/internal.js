@@ -185,6 +185,57 @@ router.post("/marketing/spend", requireInternal, async (req, res) => {
 });
 
 // ============================================
+// POST /payments/confirm - Confirmar pagamento e agendar consulta
+// ============================================
+router.post("/payments/confirm", requireInternal, async (req, res) => {
+  try {
+    const { consultationId } = req.body;
+    const id = Number(consultationId);
+
+    if (!id || Number.isNaN(id)) {
+      return res.status(400).json({ ok: false, error: "missing_or_invalid_consultationId" });
+    }
+
+    const { pool } = await import("../db/pool.js");
+
+    // 1) Atualizar payment para paid
+    const pay = await pool.query(
+      `UPDATE payments SET status = 'paid', paid_at = now()
+       WHERE consultation_id = $1 AND status = 'pending'
+       RETURNING id, consultation_id, status, paid_at, amount`,
+      [id]
+    );
+
+    if (pay.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: "payment_not_found_or_not_pending" });
+    }
+
+    // 2) Atualizar consulta para scheduled
+    const cons = await pool.query(
+      `UPDATE consultations SET status = 'scheduled', updated_at = now()
+       WHERE id = $1 AND status = 'pending'
+       RETURNING id, status, scheduled_for`,
+      [id]
+    );
+
+    console.log("[PAYMENT CONFIRM]", {
+      consultationId: id,
+      paymentId: pay.rows[0].id,
+      at: new Date().toISOString()
+    });
+
+    return res.json({
+      ok: true,
+      payment: pay.rows[0],
+      consultation: cons.rows[0] ?? null
+    });
+  } catch (err) {
+    console.error("[internal/payments/confirm] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "internal_error" });
+  }
+});
+
+// ============================================
 // QA: POST /consultations/:id/status
 // Testa bloqueio de pagamento (paymentGuard)
 // ============================================
