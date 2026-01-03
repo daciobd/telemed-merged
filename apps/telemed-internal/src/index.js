@@ -636,6 +636,12 @@ const requireToken = (req, res, next) => {
     return next();
   }
   
+  // Internal payments endpoint: autenticação própria inline
+  if (req.path.startsWith('/api/internal/payments/')) {
+    console.log(`[AUTH BYPASS] ${req.method} ${req.path} → Internal Payments (inline auth)`);
+    return next();
+  }
+  
   const tok = req.header('X-Internal-Token');
   const expectedToken = process.env.INTERNAL_TOKEN || '';
   
