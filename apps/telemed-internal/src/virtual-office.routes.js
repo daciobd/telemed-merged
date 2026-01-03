@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
 
 const router = express.Router();
-const { virtualOfficeSettings, consultations, users, doctors } = schema;
+const { virtualOfficeSettings, consultations, users, doctors, payments } = schema;
 
 // ============================================
 // PRICING HELPERS (valores em centavos para precisão)
@@ -236,6 +236,70 @@ router.get("/my-patients", authenticate, async (req, res) => {
 });
 
 // ============================================
+// ENDPOINT INTERNO: Confirmar Pagamento (simulador gateway)
+// ============================================
+
+// POST /api/virtual-office/internal/payments/:consultationId/confirm
+router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
+  try {
+    // Validar token interno
+    const internalToken = req.headers["x-internal-token"];
+    if (internalToken !== process.env.INTERNAL_TOKEN) {
+      return res.status(401).json({ error: "Token interno inválido" });
+    }
+
+    const consultationId = parseInt(req.params.consultationId, 10);
+    if (Number.isNaN(consultationId)) {
+      return res.status(400).json({ error: "consultationId inválido" });
+    }
+
+    // 1) Buscar payment pendente
+    const paymentRows = await db
+      .select()
+      .from(payments)
+      .where(
+        and(
+          eq(payments.consultationId, consultationId),
+          eq(payments.status, "pending")
+        )
+      )
+      .limit(1);
+
+    if (!paymentRows || paymentRows.length === 0) {
+      return res.status(404).json({ error: "Pagamento pendente não encontrado" });
+    }
+
+    const payment = paymentRows[0];
+
+    // 2) Atualizar payment para 'paid'
+    await db
+      .update(payments)
+      .set({ 
+        status: "paid", 
+        paidAt: new Date(),
+      })
+      .where(eq(payments.id, payment.id));
+
+    // 3) Atualizar consulta para 'scheduled'
+    await db
+      .update(consultations)
+      .set({ status: "scheduled" })
+      .where(eq(consultations.id, consultationId));
+
+    return res.json({
+      message: "Pagamento confirmado. Consulta agendada.",
+      paymentId: payment.id,
+      consultationId,
+      newPaymentStatus: "paid",
+      newConsultationStatus: "scheduled",
+    });
+  } catch (error) {
+    console.error("Error confirming payment:", error);
+    return res.status(500).json({ error: "Erro ao confirmar pagamento" });
+  }
+});
+
+// ============================================
 // ROTAS DINÂMICAS (DEVEM VIR POR ÚLTIMO)
 // ============================================
 
@@ -439,7 +503,17 @@ router.post("/:customUrl/book", async (req, res) => {
     const platformFee = (platformFeeCents / 100).toFixed(2);
     const doctorEarnings = (doctorEarningsCents / 100).toFixed(2);
 
-    // 6) Inserir com nomes Drizzle (camelCase)
+    // 6) Buscar settings para verificar require_prepayment
+    const settingsRows = await db
+      .select()
+      .from(virtualOfficeSettings)
+      .where(eq(virtualOfficeSettings.doctorId, doctor.id))
+      .limit(1);
+    
+    const settings = settingsRows?.[0] || null;
+    const requirePrepayment = settings?.requirePrepayment ?? true;
+
+    // 7) Inserir consulta (status "pending" sempre, só vai para "scheduled" após pagamento)
     const created = await db
       .insert(consultations)
       .values({
@@ -457,9 +531,39 @@ router.post("/:customUrl/book", async (req, res) => {
       })
       .returning();
 
+    const consultation = created[0];
+    let paymentRecord = null;
+
+    // 8) Se require_prepayment=true, criar payment pendente
+    if (requirePrepayment) {
+      const paymentCreated = await db
+        .insert(payments)
+        .values({
+          consultationId: consultation.id,
+          amount: agreedPrice,
+          status: "pending",
+          paymentType: "consultation",
+        })
+        .returning();
+      
+      paymentRecord = paymentCreated[0];
+    } else {
+      // Se não exige pagamento, já agenda diretamente
+      await db
+        .update(consultations)
+        .set({ status: "scheduled" })
+        .where(eq(consultations.id, consultation.id));
+      
+      consultation.status = "scheduled";
+    }
+
     return res.status(201).json({
-      message: "Consulta agendada com sucesso",
-      consultation: created[0],
+      message: requirePrepayment 
+        ? "Consulta criada. Aguardando pagamento para confirmar."
+        : "Consulta agendada com sucesso",
+      consultation,
+      payment: paymentRecord,
+      requirePrepayment,
     });
   } catch (error) {
     console.error("Error booking consultation:", error);
