@@ -301,9 +301,56 @@ app.use('/api/telemetry', telemetryRoutes);
 app.use('/metrics/v2', funnelRoutes);
 app.use('/api/internal/retarget', retargetRoutes);
 
+// ===== ENDPOINT INTERNO: Confirmar Pagamento =====
+app.post('/api/internal/payments/confirm', async (req, res) => {
+  try {
+    const internalToken = req.headers['x-internal-token'];
+    if (internalToken !== process.env.INTERNAL_TOKEN) {
+      return res.status(401).json({ error: 'invalid_token' });
+    }
+
+    const { consultationId } = req.body ?? {};
+    const id = Number(consultationId);
+
+    if (!id || Number.isNaN(id)) {
+      return res.status(400).json({ error: 'missing_or_invalid_consultationId' });
+    }
+
+    const { pool } = await import('./db/pool.js');
+
+    const pay = await pool.query(
+      `UPDATE payments SET status = 'paid', paid_at = now()
+       WHERE consultation_id = $1 AND status = 'pending'
+       RETURNING id, consultation_id, status, paid_at, amount`,
+      [id]
+    );
+
+    if (pay.rowCount === 0) {
+      return res.status(404).json({ error: 'payment_not_found_or_not_pending' });
+    }
+
+    const cons = await pool.query(
+      `UPDATE consultations SET status = 'scheduled'
+       WHERE id = $1 AND status = 'pending'
+       RETURNING id, status, scheduled_for`,
+      [id]
+    );
+
+    return res.json({
+      ok: true,
+      payment: pay.rows[0],
+      consultation: cons.rows[0] ?? null,
+    });
+  } catch (err) {
+    console.error('Error confirming payment:', err);
+    return res.status(500).json({ error: 'internal_error' });
+  }
+});
+
 console.log('📊 Rotas de Telemetria carregadas em /api/telemetry/*');
 console.log('📈 Rotas de Funil carregadas em /metrics/v2/*');
 console.log('🔄 Rotas de Retargeting carregadas em /api/internal/retarget/*');
+console.log('💳 Rota de Pagamentos carregada em /api/internal/payments/*');
 
 // Rotas de CAC e Experiments (após as rotas básicas)
 try {
