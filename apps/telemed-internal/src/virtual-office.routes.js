@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
 
 const router = express.Router();
-const { virtualOfficeSettings, consultations, users, doctors, payments } = schema;
+const { virtualOfficeSettings, consultations, users, doctors, payments, patients } = schema;
 
 // ============================================
 // PRICING HELPERS (valores em centavos para precisão)
@@ -484,6 +484,21 @@ router.post("/:customUrl/book", async (req, res) => {
       return res.status(409).json({ error: "Horário indisponível" });
     }
 
+    // 4.5) Validar se paciente existe
+    if (!patientId) {
+      return res.status(400).json({ error: "patientId é obrigatório" });
+    }
+    
+    const patientRows = await db
+      .select({ id: patients.id })
+      .from(patients)
+      .where(eq(patients.id, patientId))
+      .limit(1);
+    
+    if (!patientRows || patientRows.length === 0) {
+      return res.status(404).json({ error: "patient_not_found" });
+    }
+
     // 5) Pricing usando novo sistema de normalização
     const ct = consultationType || "primeira_consulta";
     const pricingData = getPricingForType(doctor.consultationPricing, ct);
@@ -567,6 +582,18 @@ router.post("/:customUrl/book", async (req, res) => {
     });
   } catch (error) {
     console.error("Error booking consultation:", error);
+    
+    // Safety net: mapear FK violation para 404
+    if (error?.code === "23503") {
+      const detail = String(error?.detail || "").toLowerCase();
+      if (detail.includes("patient")) {
+        return res.status(404).json({ error: "patient_not_found" });
+      }
+      if (detail.includes("doctor")) {
+        return res.status(404).json({ error: "doctor_not_found" });
+      }
+    }
+    
     return res.status(500).json({ error: "Erro ao agendar consulta" });
   }
 });
