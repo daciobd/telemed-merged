@@ -347,6 +347,62 @@ app.post('/api/internal/payments/confirm', async (req, res) => {
   }
 });
 
+// ===== ENDPOINT INTERNO: Expirar Consultas Pendentes (TTL) =====
+app.post('/api/internal/consultations/expire-pending', async (req, res) => {
+  try {
+    const internalToken = req.headers['x-internal-token'];
+    if (internalToken !== process.env.INTERNAL_TOKEN) {
+      return res.status(401).json({ error: 'invalid_token' });
+    }
+
+    const { ttlMinutes } = req.body ?? {};
+    const ttl = Number(ttlMinutes ?? process.env.PAYMENT_HOLD_MINUTES ?? 15);
+
+    if (!ttl || Number.isNaN(ttl) || ttl <= 0) {
+      return res.status(400).json({ error: 'missing_or_invalid_ttlMinutes' });
+    }
+
+    const { pool } = await import('./db/pool.js');
+
+    const q = `
+      WITH expired AS (
+        UPDATE consultations
+        SET status = 'cancelled',
+            updated_at = now()
+        WHERE status = 'pending'
+          AND created_at < now() - make_interval(mins => $1)
+        RETURNING id
+      ),
+      cancelled_payments AS (
+        UPDATE payments
+        SET status = 'cancelled'
+        WHERE status = 'pending'
+          AND consultation_id IN (SELECT id FROM expired)
+        RETURNING id
+      )
+      SELECT
+        (SELECT count(*) FROM expired) AS expired_consultations,
+        (SELECT count(*) FROM cancelled_payments) AS cancelled_payments;
+    `;
+
+    const r = await pool.query(q, [ttl]);
+    const row = r.rows?.[0] ?? { expired_consultations: 0, cancelled_payments: 0 };
+
+    return res.json({
+      ok: true,
+      ttlMinutes: ttl,
+      expiredConsultations: Number(row.expired_consultations || 0),
+      cancelledPayments: Number(row.cancelled_payments || 0),
+    });
+  } catch (err) {
+    console.error('[internal/consultations/expire-pending] erro:', err);
+    return res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+console.log('⏳ Rota de Expiração carregada em /api/internal/consultations/*');
+
+
 console.log('📊 Rotas de Telemetria carregadas em /api/telemetry/*');
 console.log('📈 Rotas de Funil carregadas em /metrics/v2/*');
 console.log('🔄 Rotas de Retargeting carregadas em /api/internal/retarget/*');
