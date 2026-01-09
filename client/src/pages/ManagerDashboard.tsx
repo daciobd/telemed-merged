@@ -374,7 +374,7 @@ export default function ManagerDashboard() {
 
   // Ordenação da tabela de médicos
   const sortedDoctors = useMemo(() => {
-    const list = doctors?.doctors ? [...doctors.doctors] : [];
+    const list = Array.isArray(doctors?.doctors) ? [...doctors.doctors] : [];
     
     const filtered = onlyWithPendencies
       ? list.filter((r) => r.finalizadosSemAssinatura > 0)
