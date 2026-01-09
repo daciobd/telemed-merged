@@ -189,22 +189,25 @@ function CacAlertsCard({ onNavigate }: { onNavigate: (path: string) => void }) {
                 <div className="font-medium">{data.metrics.cacCents == null ? "—" : formatBRLFromCents(data.metrics.cacCents)}</div>
               </div>
             </div>
-            {data.alerts.length > 0 ? (
-              <div className="mt-2 text-xs">
-                {data.alerts.slice(0, 2).map((a) => (
-                  <div key={a.code} className="flex items-center gap-1 mb-1">
-                    <span>{a.severity === "high" ? "🔥" : a.severity === "medium" ? "⚠️" : "ℹ️"}</span>
-                    <span className="font-medium">{a.code}</span>
-                    <span className="text-gray-500">— {a.message.slice(0, 40)}</span>
-                  </div>
-                ))}
-                {data.alerts.length > 2 && (
-                  <div className="text-gray-500">+{data.alerts.length - 2} alertas</div>
-                )}
-              </div>
-            ) : (
-              <div className="text-xs text-green-700 mt-2">Nenhum alerta no período.</div>
-            )}
+            {(() => {
+              const alerts = Array.isArray(data.alerts) ? data.alerts : data.alerts ? [data.alerts] : [];
+              return alerts.length > 0 ? (
+                <div className="mt-2 text-xs">
+                  {alerts.slice(0, 2).map((a: { code: string; severity: string; message: string }) => (
+                    <div key={a.code} className="flex items-center gap-1 mb-1">
+                      <span>{a.severity === "high" ? "🔥" : a.severity === "medium" ? "⚠️" : "ℹ️"}</span>
+                      <span className="font-medium">{a.code}</span>
+                      <span className="text-gray-500">— {a.message.slice(0, 40)}</span>
+                    </div>
+                  ))}
+                  {alerts.length > 2 && (
+                    <div className="text-gray-500">+{alerts.length - 2} alertas</div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-xs text-green-700 mt-2">Nenhum alerta no período.</div>
+              );
+            })()}
             <div className="mt-3 flex gap-2">
               <button
                 className="flex-1 px-3 py-2 text-sm rounded-xl border bg-white hover:bg-gray-50"
