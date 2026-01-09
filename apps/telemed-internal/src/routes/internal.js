@@ -185,7 +185,7 @@ router.post("/marketing/spend", requireInternal, async (req, res) => {
 });
 
 // ============================================
-// POST /payments/confirm - Confirmar pagamento e agendar consulta
+// POST /payments/confirm - Confirmar pagamento e agendar consulta (IDEMPOTENTE)
 // ============================================
 router.post("/payments/confirm", requireInternal, async (req, res) => {
   try {
@@ -198,36 +198,80 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
 
     const { pool } = await import("../db/pool.js");
 
-    // 1) Atualizar payment para paid
-    const pay = await pool.query(
-      `UPDATE payments SET status = 'paid', paid_at = now()
-       WHERE consultation_id = $1 AND status = 'pending'
-       RETURNING id, consultation_id, status, paid_at, amount`,
+    // 1) Buscar payment mais recente da consulta
+    const p = await pool.query(
+      `SELECT id, status, paid_at, amount
+       FROM payments
+       WHERE consultation_id = $1
+       ORDER BY id DESC
+       LIMIT 1`,
       [id]
     );
 
-    if (pay.rowCount === 0) {
-      return res.status(404).json({ ok: false, error: "payment_not_found_or_not_pending" });
+    if (p.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: "payment_not_found" });
     }
 
-    // 2) Atualizar consulta para scheduled
+    const payment = p.rows[0];
+    let paymentRow = payment;
+    let wasIdempotent = false;
+
+    // 2) Se pending → marcar como paid; se já paid → idempotente
+    if (payment.status === "pending") {
+      const payUpd = await pool.query(
+        `UPDATE payments
+         SET status = 'paid',
+             paid_at = now()
+         WHERE id = $1
+         RETURNING id, consultation_id, status, paid_at, amount`,
+        [payment.id]
+      );
+      paymentRow = payUpd.rows[0];
+    } else if (payment.status === "paid") {
+      wasIdempotent = true;
+    } else {
+      // cancelled/failed/etc
+      return res.status(409).json({
+        ok: false,
+        error: "payment_not_pending",
+        paymentStatus: payment.status
+      });
+    }
+
+    // 3) Garantir consulta scheduled (idempotente)
     const cons = await pool.query(
-      `UPDATE consultations SET status = 'scheduled', updated_at = now()
+      `UPDATE consultations
+       SET status = 'scheduled', updated_at = now()
        WHERE id = $1 AND status = 'pending'
        RETURNING id, status, scheduled_for`,
       [id]
     );
 
+    // Se já estava scheduled, buscar estado atual
+    let consultationRow = cons.rows[0];
+    if (!consultationRow) {
+      const c2 = await pool.query(
+        `SELECT id, status, scheduled_for
+         FROM consultations
+         WHERE id = $1
+         LIMIT 1`,
+        [id]
+      );
+      consultationRow = c2.rows[0] ?? null;
+    }
+
     console.log("[PAYMENT CONFIRM]", {
       consultationId: id,
-      paymentId: pay.rows[0].id,
+      paymentId: paymentRow.id,
+      idempotent: wasIdempotent,
       at: new Date().toISOString()
     });
 
     return res.json({
       ok: true,
-      payment: pay.rows[0],
-      consultation: cons.rows[0] ?? null
+      payment: paymentRow,
+      consultation: consultationRow,
+      idempotent: wasIdempotent
     });
   } catch (err) {
     console.error("[internal/payments/confirm] erro:", err);
