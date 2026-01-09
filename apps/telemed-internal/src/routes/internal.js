@@ -236,6 +236,28 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
 });
 
 // ============================================
+// GET /dbinfo - Debug: info do banco de dados
+// ============================================
+router.get("/dbinfo", requireInternal, async (req, res) => {
+  try {
+    const { pool } = await import("../db/pool.js");
+    const r = await pool.query(`
+      SELECT
+        current_database() AS db,
+        current_user AS usr,
+        inet_server_addr() AS host,
+        inet_server_port() AS port,
+        now() AS now
+    `);
+
+    return res.json({ ok: true, dbinfo: r.rows[0] });
+  } catch (err) {
+    console.error("[internal/dbinfo] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "internal_error" });
+  }
+});
+
+// ============================================
 // POST /consultations/expire-pending - Expirar consultas pendentes (TTL)
 // ============================================
 router.post("/consultations/expire-pending", requireInternal, async (req, res) => {
