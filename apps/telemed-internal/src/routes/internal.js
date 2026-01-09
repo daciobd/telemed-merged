@@ -236,6 +236,63 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
 });
 
 // ============================================
+// POST /consultations/expire-pending - Expirar consultas pendentes (TTL)
+// ============================================
+router.post("/consultations/expire-pending", requireInternal, async (req, res) => {
+  try {
+    const { ttlMinutes } = req.body ?? {};
+    const ttl = Number(ttlMinutes ?? process.env.PAYMENT_HOLD_MINUTES ?? 15);
+
+    if (!ttl || Number.isNaN(ttl) || ttl <= 0) {
+      return res.status(400).json({ ok: false, error: "missing_or_invalid_ttlMinutes" });
+    }
+
+    const { pool } = await import("../db/pool.js");
+
+    const q = `
+      WITH expired AS (
+        UPDATE consultations
+        SET status = 'cancelled',
+            updated_at = now()
+        WHERE status = 'pending'
+          AND created_at < now() - make_interval(mins => $1)
+        RETURNING id
+      ),
+      cancelled_payments AS (
+        UPDATE payments
+        SET status = 'cancelled'
+        WHERE status = 'pending'
+          AND consultation_id IN (SELECT id FROM expired)
+        RETURNING id
+      )
+      SELECT
+        (SELECT count(*) FROM expired) AS expired_consultations,
+        (SELECT count(*) FROM cancelled_payments) AS cancelled_payments;
+    `;
+
+    const r = await pool.query(q, [ttl]);
+    const row = r.rows?.[0] ?? { expired_consultations: 0, cancelled_payments: 0 };
+
+    console.log("[EXPIRE PENDING]", {
+      ttlMinutes: ttl,
+      expiredConsultations: Number(row.expired_consultations || 0),
+      cancelledPayments: Number(row.cancelled_payments || 0),
+      at: new Date().toISOString()
+    });
+
+    return res.json({
+      ok: true,
+      ttlMinutes: ttl,
+      expiredConsultations: Number(row.expired_consultations || 0),
+      cancelledPayments: Number(row.cancelled_payments || 0)
+    });
+  } catch (err) {
+    console.error("[internal/consultations/expire-pending] erro:", err);
+    return res.status(500).json({ ok: false, error: err?.message || "internal_error" });
+  }
+});
+
+// ============================================
 // QA: POST /consultations/:id/status
 // Testa bloqueio de pagamento (paymentGuard)
 // ============================================
