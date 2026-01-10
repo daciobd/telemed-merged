@@ -315,7 +315,8 @@ router.post("/consultations/expire-pending", requireInternal, async (req, res) =
     }
 
     // Converter para segundos (permite float para QA: 0.5 min = 30s)
-    const ttlSeconds = Math.round(ttl * 60);
+    // ceil + min 1s evita TTL=0
+    const ttlSeconds = Math.max(1, Math.ceil(ttl * 60));
 
     const { pool } = await import("../db/pool.js");
 
