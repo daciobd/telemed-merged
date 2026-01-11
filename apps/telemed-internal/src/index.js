@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import consultorioRoutes from './consultorio-routes.js';
 import seedRoutes from './routes/seed.routes.js';
 import statsRoutes from './routes/stats.js';
+import internalRouter from './routes/internal.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -300,6 +301,10 @@ const { default: retargetRoutes } = await import('./routes/retarget.routes.js');
 app.use('/api/telemetry', telemetryRoutes);
 app.use('/metrics/v2', funnelRoutes);
 app.use('/api/internal/retarget', retargetRoutes);
+
+// Rotas internas centralizadas (expire-pending, dbinfo, etc)
+app.use('/api/internal', internalRouter);
+console.log('✅ internalRouter montado em /api/internal/*');
 
 // ===== ENDPOINT INTERNO: Confirmar Pagamento =====
 app.post('/api/internal/payments/confirm', async (req, res) => {
