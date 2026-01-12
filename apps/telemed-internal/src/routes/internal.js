@@ -280,6 +280,17 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
 });
 
 // ============================================
+// GET /db-info - Debug: info do banco de dados (alias)
+// ============================================
+router.get("/db-info", requireInternal, async (_req, res) => {
+  const { pool } = await import("../db/pool.js");
+  const r = await pool.query(
+    "SELECT current_database() db, inet_server_addr() ip, inet_server_port() port"
+  );
+  res.json({ ok: true, ...r.rows[0] });
+});
+
+// ============================================
 // GET /dbinfo - Debug: info do banco de dados
 // ============================================
 router.get("/dbinfo", requireInternal, async (req, res) => {

@@ -22,3 +22,6 @@ pool.on("connect", () => {
 pool.on("error", (err) => {
   console.error("❌ [prontuario-pool] Erro no pool:", err.message);
 });
+console.log("[DB POOL]", {
+  databaseUrl: process.env.DATABASE_URL?.slice(0, 30),
+});
