@@ -290,6 +290,11 @@ app.use('/api/consultorio', statsRoutes);
 const { default: virtualOfficeRoutes } = await import('./virtual-office.routes.js');
 app.use('/api/virtual-office', virtualOfficeRoutes);
 
+const { default: agendaRoutes } = await import('./routes/agenda.routes.js');
+app.use('/api/consultorio', agendaRoutes);
+console.log('📅 Agenda carregada em /api/consultorio/agenda');
+
+
 console.log('✅ Rotas do Consultório Virtual carregadas em /api/consultorio/*');
 console.log('✅ Rotas de Stats carregadas em /api/consultorio/stats');
 console.log('✅ Rotas de Virtual Office carregadas em /api/virtual-office/*');
