@@ -357,6 +357,10 @@ app.post('/api/internal/payments/confirm', async (req, res) => {
 console.log('⏳ Rota de Expiração carregada em /api/internal/consultations/*');
 
 
+const { default: agendaRoutes } = await import("./routes/agenda.routes.js");
+app.use("/api/consultorio", agendaRoutes);
+console.log("📅 Agenda carregada em /api/consultorio/agenda");
+
 console.log('📊 Rotas de Telemetria carregadas em /api/telemetry/*');
 console.log('📈 Rotas de Funil carregadas em /metrics/v2/*');
 console.log('🔄 Rotas de Retargeting carregadas em /api/internal/retarget/*');
