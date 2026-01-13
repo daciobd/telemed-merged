@@ -21,6 +21,7 @@ const app = express();
 // TelemedMerged: Feature flags e configurações
 const FEATURE_PRICING = String(process.env.FEATURE_PRICING ?? 'true') === 'true';
 const AUCTION_SERVICE_URL = process.env.AUCTION_SERVICE_URL || 'http://localhost:5001/api';
+const INTERNAL_BASE_URL = process.env.INTERNAL_BASE_URL; // ex: https://telemed-internal.onrender.com
 
 app.set('trust proxy', 1);
 
@@ -263,7 +264,23 @@ app.use(express.json());
 // ============================================
 
 // Rotas do Consultório Virtual (autenticação, médicos, consultas)
-app.use('/api/consultorio', consultorioRoutes);
+// Modo proxy (serviços separados) ou monolito (tudo local)
+if (INTERNAL_BASE_URL) {
+  app.use(
+    "/api/consultorio",
+    createProxyMiddleware({
+      target: INTERNAL_BASE_URL,
+      changeOrigin: true,
+      xfwd: true,
+      proxyTimeout: 30000,
+      timeout: 30000,
+    })
+  );
+  console.log("🔁 Proxy /api/consultorio ->", INTERNAL_BASE_URL);
+} else {
+  app.use("/api/consultorio", consultorioRoutes);
+  console.log("🏠 Local /api/consultorio (sem proxy)");
+}
 
 // Rotas de Stats (Manager Dashboard)
 app.use('/api', statsRoutes);
