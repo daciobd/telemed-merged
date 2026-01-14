@@ -97,6 +97,8 @@ app.get("/health", (_req, res) => {
   res.json({
     ok: true,
     service: process.env.SERVICE_NAME || "telemed-unified",
+    consultorio_mode: process.env.INTERNAL_BASE_URL ? "proxy" : "local",
+    internal_base_url: process.env.INTERNAL_BASE_URL || null,
     feature_pricing: FEATURE_PRICING,
     auction_target: AUCTION_SERVICE_URL,
     timestamp: new Date().toISOString(),
@@ -1267,13 +1269,11 @@ app.get("/internal/physicians/search", async (req, res) => {
 app.post("/internal/appointments/from-bid", async (req, res) => {
   const { bidId, patientId, physicianId, mode } = req.body || {};
   if (!bidId || !patientId) {
-    return res
-      .status(400)
-      .json({
-        ok: false,
-        error: "bidId_and_patientId_required",
-        requestId: req.id,
-      });
+    return res.status(400).json({
+      ok: false,
+      error: "bidId_and_patientId_required",
+      requestId: req.id,
+    });
   }
   const mockAppointment = {
     id: `appt-${Date.now()}`,
