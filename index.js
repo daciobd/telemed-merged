@@ -313,8 +313,21 @@ if (INTERNAL_BASE_URL) {
       target: INTERNAL_BASE_URL,
       changeOrigin: true,
       xfwd: true,
+      // ✅ recoloca o prefixo que o Express “tirou”
+      pathRewrite: (path) => `/api/consultorio${path}`,
       proxyTimeout: 30000,
       timeout: 30000,
+      logLevel: "debug",
+      onProxyReq: (proxyReq, req) => {
+        console.log(
+          `[CONSULTORIO PROXY REQ] ${req.method} ${req.originalUrl} → ${INTERNAL_BASE_URL}${proxyReq.path}`,
+        );
+      },
+      onProxyRes: (proxyRes, req) => {
+        console.log(
+          `[CONSULTORIO PROXY RES] ${req.method} ${req.originalUrl} ← ${proxyRes.statusCode}`,
+        );
+      },
     }),
   );
   console.log("🔁 Proxy /api/consultorio ->", INTERNAL_BASE_URL);
