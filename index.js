@@ -17,6 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+export { app };
 
 // TelemedMerged: Feature flags e configurações
 const FEATURE_PRICING =
@@ -612,9 +613,9 @@ app.get("/consultorio/meet/:consultationId", (req, res) => {
   const t = req.query.t || "";
   res.redirect(
     302,
-    `/consultorio/meet?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`
+    `/consultorio/?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`
   );
-
+});
 
 app.use("/consultorio", express.static(consultorioDist));
 
@@ -1621,9 +1622,6 @@ app.post("/api/export-pdf/wells-score", (req, res) => {
 });
 
 // Arquivos estáticos configurados acima (antes do SPA fallback)
-
-// Export app for testing (Jest/Supertest)
-export { app };
 
 // Só inicia o servidor se não estiver em modo de teste
 if (process.env.NODE_ENV !== "test") {
