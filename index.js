@@ -605,6 +605,14 @@ app.use("/assets", express.static(path.join(__dirname, "attached_assets")));
 
 // ====== CONSULTÓRIO VIRTUAL (React) — Tema Teal ======
 const consultorioDist = path.join(__dirname, "client/dist");
+
+// Rota de sala de consulta (redireciona para SPA com params)
+app.get("/consultorio/meet/:consultationId", (req, res) => {
+  const { consultationId } = req.params;
+  const t = req.query.t || "";
+  res.redirect(302, `/consultorio/?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`);
+});
+
 app.use("/consultorio", express.static(consultorioDist));
 
 // Fallback SPA — React precisa disso (usando regex para Express 5 compatibilidade)

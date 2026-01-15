@@ -1,4 +1,5 @@
 import express from "express";
+import { randomUUID } from "crypto";
 import { db, users } from "../../../../db/index.js";
 import { eq } from "drizzle-orm";
 
@@ -238,20 +239,25 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
       });
     }
 
-    // 3) Garantir consulta scheduled (idempotente)
+    // 3) Garantir consulta scheduled + gerar meetingUrl (idempotente)
+    const meetToken = randomUUID();
+    const meetingUrl = `/consultorio/meet/${id}?t=${meetToken}`;
+
     const cons = await pool.query(
       `UPDATE consultations
-       SET status = 'scheduled', updated_at = now()
+       SET status = 'scheduled',
+           meeting_url = COALESCE(meeting_url, $2),
+           updated_at = now()
        WHERE id = $1 AND status = 'pending'
-       RETURNING id, status, scheduled_for`,
-      [id]
+       RETURNING id, status, scheduled_for, meeting_url`,
+      [id, meetingUrl]
     );
 
     // Se já estava scheduled, buscar estado atual
     let consultationRow = cons.rows[0];
     if (!consultationRow) {
       const c2 = await pool.query(
-        `SELECT id, status, scheduled_for
+        `SELECT id, status, scheduled_for, meeting_url
          FROM consultations
          WHERE id = $1
          LIMIT 1`,

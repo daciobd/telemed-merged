@@ -1,7 +1,8 @@
 import express from "express";
+import crypto from "crypto";
 import { db } from "../../../db/index.js";
 import * as schema from "../../../db/schema.cjs";
-import { eq, and, gte, lt, inArray } from "drizzle-orm";
+import { eq, and, gte, lt, inArray, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
 const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
@@ -280,11 +281,25 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
       })
       .where(eq(payments.id, payment.id));
 
-    // 3) Atualizar consulta para 'scheduled'
+    // 3) Atualizar consulta para 'scheduled' + gerar meetingUrl
+    const meetToken = crypto.randomUUID();
+    const meetingUrl = `/consultorio/meet/${consultationId}?t=${meetToken}`;
+
     await db
       .update(consultations)
-      .set({ status: "scheduled" })
+      .set({ 
+        status: "scheduled",
+        meetingUrl: sql`COALESCE(${consultations.meetingUrl}, ${meetingUrl})`,
+        updatedAt: new Date(),
+      })
       .where(eq(consultations.id, consultationId));
+
+    // Buscar consulta atualizada
+    const updatedConsult = await db
+      .select({ id: consultations.id, meetingUrl: consultations.meetingUrl })
+      .from(consultations)
+      .where(eq(consultations.id, consultationId))
+      .limit(1);
 
     return res.json({
       message: "Pagamento confirmado. Consulta agendada.",
@@ -292,6 +307,7 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
       consultationId,
       newPaymentStatus: "paid",
       newConsultationStatus: "scheduled",
+      meetingUrl: updatedConsult[0]?.meetingUrl ?? meetingUrl,
     });
   } catch (error) {
     console.error("Error confirming payment:", error);
