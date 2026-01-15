@@ -610,8 +610,11 @@ const consultorioDist = path.join(__dirname, "client/dist");
 app.get("/consultorio/meet/:consultationId", (req, res) => {
   const { consultationId } = req.params;
   const t = req.query.t || "";
-  res.redirect(302, `/consultorio/?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`);
-});
+  res.redirect(
+    302,
+    `/consultorio/meet?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`
+  );
+
 
 app.use("/consultorio", express.static(consultorioDist));
 
