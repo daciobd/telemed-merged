@@ -672,18 +672,57 @@ router.post(
   },
 );
 
-// GET /api/consultorio/meet/:id/validate - Validar sessão de consulta (público)
+// GET /api/consultorio/meet/:id/validate - Validar sessão de consulta (público, JWT)
 router.get("/meet/:id/validate", async (req, res) => {
+  const MEET_TOKEN_SECRET = process.env.MEET_TOKEN_SECRET || process.env.JWT_SECRET;
+  
   try {
     const consultationId = parseInt(req.params.id, 10);
-    const token = req.query.t;
+    const token = String(req.query.t || "");
 
-    if (!consultationId || !token) {
-      return res.status(400).json({ valid: false, message: "Parâmetros inválidos" });
+    if (!consultationId || Number.isNaN(consultationId)) {
+      return res.status(400).json({ valid: false, message: "ID de consulta inválido" });
+    }
+    if (!token) {
+      return res.status(401).json({ valid: false, message: "Token não fornecido" });
+    }
+    if (!MEET_TOKEN_SECRET) {
+      console.error("[meet/validate] MEET_TOKEN_SECRET não configurado");
+      return res.status(500).json({ valid: false, message: "Configuração de segurança ausente" });
     }
 
+    // 1) Validar JWT (assinatura, iss, aud, nbf, exp)
+    let payload;
+    try {
+      payload = jwt.verify(token, MEET_TOKEN_SECRET, {
+        issuer: "telemed",
+        audience: "consultorio-meet",
+      });
+    } catch (e) {
+      const msg = e?.message || String(e);
+      if (msg.includes("jwt expired")) {
+        return res.status(410).json({ valid: false, message: "Link expirado. Solicite um novo." });
+      }
+      if (msg.includes("jwt not active")) {
+        return res.status(403).json({ valid: false, message: "Link ainda não válido. Aguarde o horário." });
+      }
+      return res.status(401).json({ valid: false, message: "Token JWT inválido." });
+    }
+
+    // 2) Validar cid bate com :id
+    if (!payload || Number(payload.cid) !== consultationId) {
+      return res.status(401).json({ valid: false, message: "Token não corresponde à consulta." });
+    }
+
+    // 3) Validar role
+    const role = payload.role;
+    if (role !== "doctor" && role !== "patient") {
+      return res.status(401).json({ valid: false, message: "Role inválida no token." });
+    }
+
+    // 4) Buscar consulta no DB
     const result = await pool.query(
-      `SELECT c.id, c.status, c.scheduled_for, c.meeting_url,
+      `SELECT c.id, c.status, c.scheduled_for, c.duration,
               du.full_name as doctor_name, pu.full_name as patient_name
        FROM consultations c
        LEFT JOIN doctors d ON c.doctor_id = d.id
@@ -700,22 +739,31 @@ router.get("/meet/:id/validate", async (req, res) => {
 
     const consultation = result.rows[0];
 
-    if (!consultation.meeting_url || !consultation.meeting_url.includes(token)) {
-      return res.status(403).json({ valid: false, message: "Token inválido ou expirado" });
-    }
-
+    // 5) Verificar status válido
     if (consultation.status !== "scheduled" && consultation.status !== "in_progress") {
-      return res.status(400).json({ valid: false, message: "Consulta não está disponível" });
+      return res.status(403).json({ 
+        valid: false, 
+        message: consultation.status === "pending" 
+          ? "Consulta ainda não confirmada. Aguarde o pagamento."
+          : `Consulta em status: ${consultation.status}` 
+      });
     }
 
     res.json({
       valid: true,
+      role,
       consultation: {
         id: consultation.id,
-        doctorName: consultation.doctor_name,
-        patientName: consultation.patient_name,
+        doctorName: consultation.doctor_name ? `Dr(a). ${consultation.doctor_name}` : "Médico",
+        patientName: consultation.patient_name || "Paciente",
         scheduledFor: consultation.scheduled_for,
+        duration: consultation.duration || 30,
         status: consultation.status,
+      },
+      tokenInfo: {
+        nbf: payload.nbf,
+        exp: payload.exp,
+        now: Math.floor(Date.now() / 1000),
       },
     });
   } catch (error) {
