@@ -672,6 +672,58 @@ router.post(
   },
 );
 
+// GET /api/consultorio/meet/:id/validate - Validar sessão de consulta (público)
+router.get("/meet/:id/validate", async (req, res) => {
+  try {
+    const consultationId = parseInt(req.params.id, 10);
+    const token = req.query.t;
+
+    if (!consultationId || !token) {
+      return res.status(400).json({ valid: false, message: "Parâmetros inválidos" });
+    }
+
+    const result = await pool.query(
+      `SELECT c.id, c.status, c.scheduled_for, c.meeting_url,
+              du.full_name as doctor_name, pu.full_name as patient_name
+       FROM consultations c
+       LEFT JOIN doctors d ON c.doctor_id = d.id
+       LEFT JOIN users du ON d.user_id = du.id
+       LEFT JOIN patients p ON c.patient_id = p.id
+       LEFT JOIN users pu ON p.user_id = pu.id
+       WHERE c.id = $1`,
+      [consultationId]
+    );
+
+    if (!result.rows || result.rows.length === 0) {
+      return res.status(404).json({ valid: false, message: "Consulta não encontrada" });
+    }
+
+    const consultation = result.rows[0];
+
+    if (!consultation.meeting_url || !consultation.meeting_url.includes(token)) {
+      return res.status(403).json({ valid: false, message: "Token inválido ou expirado" });
+    }
+
+    if (consultation.status !== "scheduled" && consultation.status !== "in_progress") {
+      return res.status(400).json({ valid: false, message: "Consulta não está disponível" });
+    }
+
+    res.json({
+      valid: true,
+      consultation: {
+        id: consultation.id,
+        doctorName: consultation.doctor_name,
+        patientName: consultation.patient_name,
+        scheduledFor: consultation.scheduled_for,
+        status: consultation.status,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao validar sessão meet:", error);
+    res.status(500).json({ valid: false, message: "Erro interno" });
+  }
+});
+
 // GET /api/consultorio/consultations - Listar consultas do usuário
 router.get("/consultations", authenticate, async (req, res) => {
   try {

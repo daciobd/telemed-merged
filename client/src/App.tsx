@@ -28,6 +28,7 @@ import ManagerMarketing from './pages/ManagerMarketing';
 import ManagerCac from './pages/ManagerCac';
 import ManagerExperiments from './pages/ManagerExperiments';
 import MarketingSpendPage from './pages/MarketingSpendPage';
+import MeetRoom from './pages/MeetRoom';
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -49,6 +50,14 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
 
 export default function App() {
   const { user } = useAuth();
+
+  const params = new URLSearchParams(window.location.search);
+  const meetId = params.get("meet");
+  const token = params.get("t");
+
+  if (meetId && token) {
+    return <MeetRoom meetId={meetId} token={token} />;
+  }
 
   return (
     <Switch>
