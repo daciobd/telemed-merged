@@ -257,176 +257,149 @@ router.get("/my-patients", authenticate, async (req, res) => {
 });
 
 // ============================================
-// ENDPOINT INTERNO: Confirmar Pagamento (simulador gateway)
-// ============================================
-
+// ENDPOINT CANÔNICO INTERNO: Confirmar Pagamento
 // POST /api/virtual-office/internal/payments/:consultationId/confirm
+// - Idempotente
+// - Transacional
+// - Retorna estado final + links JWT
+// ============================================
 router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
+  // 1) Validar token interno
+  const internalToken = req.headers["x-internal-token"];
+  if (internalToken !== process.env.INTERNAL_TOKEN) {
+    return res.status(401).json({ error: "token_interno_invalido" });
+  }
+
+  const id = parseInt(req.params.consultationId, 10);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "missing_or_invalid_consultationId" });
+  }
+
   try {
-    // Validar token interno
-    const internalToken = req.headers["x-internal-token"];
-    if (internalToken !== process.env.INTERNAL_TOKEN) {
-      return res.status(401).json({ error: "Token interno inválido" });
-    }
-
-    const consultationId = parseInt(req.params.consultationId, 10);
-    if (Number.isNaN(consultationId)) {
-      return res.status(400).json({ error: "consultationId inválido" });
-    }
-
-    // 1) Buscar payment (pendente ou já pago para idempotência)
-    const paymentRows = await db
-      .select()
-      .from(payments)
-      .where(eq(payments.consultationId, consultationId))
-      .limit(1);
-
-    if (!paymentRows || paymentRows.length === 0) {
-      return res.status(404).json({ error: "Pagamento não encontrado para esta consulta" });
-    }
-
-    const payment = paymentRows[0];
-
-    // Idempotência: se já está pago, retornar links existentes
-    if (payment.status === "paid") {
-      const existingConsult = await db
-        .select({
-          id: consultations.id,
-          meetingUrl: consultations.meetingUrl,
-          scheduledFor: consultations.scheduledFor,
-          duration: consultations.duration,
-          status: consultations.status,
-        })
-        .from(consultations)
-        .where(eq(consultations.id, consultationId))
+    // Executar em transação
+    const result = await db.transaction(async (tx) => {
+      // 2) Buscar payment (qualquer status para idempotência)
+      const paymentRows = await tx
+        .select()
+        .from(payments)
+        .where(eq(payments.consultationId, id))
         .limit(1);
 
-      // Gerar novos tokens JWT (mesmo se já confirmado)
-      let patientJoinUrl = null;
-      let doctorJoinUrl = null;
-      
-      if (existingConsult?.[0]?.scheduledFor) {
-        try {
-          const { token } = signMeetTokenPatient({
-            consultationId,
-            scheduledForISO: existingConsult[0].scheduledFor,
-            durationMinutes: existingConsult[0].duration || 30,
-          });
-          patientJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
-        } catch (e) { /* ignore */ }
-        
-        try {
-          const { token } = signMeetTokenDoctor({
-            consultationId,
-            scheduledForISO: existingConsult[0].scheduledFor,
-            durationMinutes: existingConsult[0].duration || 30,
-          });
-          doctorJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
-        } catch (e) { /* ignore */ }
+      if (!paymentRows || paymentRows.length === 0) {
+        throw { code: 404, error: "payment_not_found" };
       }
 
-      return res.json({
-        message: "Pagamento já confirmado anteriormente.",
-        paymentId: payment.id,
-        consultationId,
-        newPaymentStatus: payment.status,
-        newConsultationStatus: existingConsult?.[0]?.status || "scheduled",
-        meetingUrl: existingConsult?.[0]?.meetingUrl || null,
-        patientJoinUrl,
-        doctorJoinUrl,
-        idempotent: true,
-      });
-    }
+      let payment = paymentRows[0];
 
-    // Se não está pending, status inválido
-    if (payment.status !== "pending") {
-      return res.status(409).json({ 
-        error: `Pagamento em status inválido: ${payment.status}`,
-        currentStatus: payment.status,
-      });
-    }
+      // 3) Se pending, atualizar para paid (idempotente via WHERE)
+      if (payment.status === "pending") {
+        const updatedPayment = await tx
+          .update(payments)
+          .set({ 
+            status: "paid", 
+            paidAt: sql`COALESCE(${payments.paidAt}, now())`,
+          })
+          .where(and(
+            eq(payments.consultationId, id),
+            eq(payments.status, "pending")
+          ))
+          .returning();
+        
+        if (updatedPayment?.[0]) {
+          payment = updatedPayment[0];
+        }
+      }
 
-    // 2) Atualizar payment para 'paid'
-    await db
-      .update(payments)
-      .set({ 
-        status: "paid", 
-        paidAt: new Date(),
-      })
-      .where(eq(payments.id, payment.id));
+      // 4) Atualizar consulta para scheduled (idempotente via WHERE)
+      await tx
+        .update(consultations)
+        .set({ 
+          status: "scheduled",
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(consultations.id, id),
+          eq(consultations.status, "pending")
+        ));
 
-    // 3) Atualizar consulta para 'scheduled' + gerar meetingUrl
-    const meetToken = crypto.randomUUID();
-    const meetingUrl = `/consultorio/meet/${consultationId}?t=${meetToken}`;
+      // 5) Buscar estado final da consulta
+      const consultRows = await tx
+        .select({
+          id: consultations.id,
+          status: consultations.status,
+          scheduledFor: consultations.scheduledFor,
+          duration: consultations.duration,
+          meetingUrl: consultations.meetingUrl,
+        })
+        .from(consultations)
+        .where(eq(consultations.id, id))
+        .limit(1);
 
-    await db
-      .update(consultations)
-      .set({ 
-        status: "scheduled",
-        meetingUrl: sql`COALESCE(${consultations.meetingUrl}, ${meetingUrl})`,
-        updatedAt: new Date(),
-      })
-      .where(eq(consultations.id, consultationId));
+      if (!consultRows || consultRows.length === 0) {
+        throw { code: 404, error: "consultation_not_found" };
+      }
 
-    // Buscar consulta atualizada (incluindo scheduledFor e duration)
-    const updatedConsult = await db
-      .select({
-        id: consultations.id,
-        meetingUrl: consultations.meetingUrl,
-        scheduledFor: consultations.scheduledFor,
-        duration: consultations.duration,
-      })
-      .from(consultations)
-      .where(eq(consultations.id, consultationId))
-      .limit(1);
+      return { payment, consultation: consultRows[0] };
+    });
 
-    // gera link do paciente com token que expira
+    // 6) Gerar links JWT (fora da transação, é read-only)
+    const { payment, consultation } = result;
     let patientJoinUrl = null;
-    try {
-      const scheduledForISO = updatedConsult?.[0]?.scheduledFor;
-      const durationMinutes = updatedConsult?.[0]?.duration || 30;
-
-      const { token } = signMeetTokenPatient({
-        consultationId,
-        scheduledForISO,
-        durationMinutes,
-      });
-
-      patientJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
-    } catch (e) {
-      console.warn("[meet-link] could not generate patientJoinUrl:", e?.message || String(e));
-    }
-
-    // gera link do médico com token que expira
     let doctorJoinUrl = null;
-    try {
-      const scheduledForISO = updatedConsult?.[0]?.scheduledFor;
-      const durationMinutes = updatedConsult?.[0]?.duration || 30;
 
-      const { token } = signMeetTokenDoctor({
-        consultationId,
-        scheduledForISO,
-        durationMinutes,
-      });
+    if (consultation.scheduledFor) {
+      const scheduledForISO = consultation.scheduledFor;
+      const durationMinutes = consultation.duration || 30;
 
-      doctorJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
-    } catch (e) {
-      console.warn("[meet-link] could not generate doctorJoinUrl:", e?.message || String(e));
+      try {
+        const { token } = signMeetTokenPatient({
+          consultationId: id,
+          scheduledForISO,
+          durationMinutes,
+        });
+        patientJoinUrl = `/consultorio/meet/${id}?t=${encodeURIComponent(token)}`;
+      } catch (e) {
+        console.warn("[confirm] patientJoinUrl error:", e?.message);
+      }
+
+      try {
+        const { token } = signMeetTokenDoctor({
+          consultationId: id,
+          scheduledForISO,
+          durationMinutes,
+        });
+        doctorJoinUrl = `/consultorio/meet/${id}?t=${encodeURIComponent(token)}`;
+      } catch (e) {
+        console.warn("[confirm] doctorJoinUrl error:", e?.message);
+      }
     }
 
     return res.json({
-      message: "Pagamento confirmado. Consulta agendada.",
-      paymentId: payment.id,
-      consultationId,
-      newPaymentStatus: "paid",
-      newConsultationStatus: "scheduled",
-      meetingUrl: updatedConsult[0]?.meetingUrl ?? meetingUrl,
+      ok: true,
+      payment: {
+        id: payment.id,
+        consultationId: payment.consultationId,
+        status: payment.status,
+        paidAt: payment.paidAt,
+        amount: payment.amount,
+      },
+      consultation: {
+        id: consultation.id,
+        status: consultation.status,
+        scheduledFor: consultation.scheduledFor,
+        duration: consultation.duration,
+        meetingUrl: consultation.meetingUrl,
+      },
       patientJoinUrl,
       doctorJoinUrl,
     });
   } catch (error) {
-    console.error("[virtual-office/payments/confirm] erro:", error);
-    return res.status(500).json({ error: error?.message || "Erro interno" });
+    // Erros estruturados da transação
+    if (error?.code === 404 || error?.code === 409) {
+      return res.status(error.code).json({ error: error.error });
+    }
+    console.error("[confirm] transaction error:", error);
+    return res.status(500).json({ error: "internal_error" });
   }
 });
 
