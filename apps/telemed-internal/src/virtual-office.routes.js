@@ -32,13 +32,12 @@ function signMeetToken({ consultationId, role, scheduledForISO, durationMinutes 
   const nbf = Math.floor(startMs / 1000);
   const exp = Math.floor(endMs / 1000);
 
-  const nowSec = Math.floor(Date.now() / 1000);
-  const expiresIn = Math.max(60, exp - nowSec);
-
+  // jwt.sign: nbf e exp devem estar no payload para serem absolutos
+  // As opções notBefore e expiresIn são RELATIVAS ao iat
   const token = jwt.sign(
-    { cid: Number(consultationId), role },
+    { cid: Number(consultationId), role, nbf, exp },
     MEET_TOKEN_SECRET,
-    { issuer: "telemed", audience: "consultorio-meet", notBefore: nbf, expiresIn }
+    { issuer: "telemed", audience: "consultorio-meet" }
   );
 
   return { token, nbf, exp };

@@ -48,6 +48,22 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
   return <Component />;
 }
 
+function MeetRoomRoute() {
+  const meetId = sessionStorage.getItem("meet_id") || "";
+  const token = sessionStorage.getItem("meet_token") || "";
+  const role = sessionStorage.getItem("meet_role") || "patient";
+  
+  if (!meetId || !token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-600">Sessão expirada. Acesse novamente pelo link da consulta.</p>
+      </div>
+    );
+  }
+  
+  return <MeetRoom meetId={meetId} token={token} role={role as "patient" | "doctor"} />;
+}
+
 export default function App() {
   const { user } = useAuth();
 
@@ -56,11 +72,15 @@ export default function App() {
   const token = params.get("t");
 
   if (meetId && token) {
-    return <MeetRoom meetId={meetId} token={token} />;
+    const role = params.get("role") || "patient";
+    return <MeetRoom meetId={meetId} token={token} role={role as "patient" | "doctor"} />;
   }
 
   return (
     <Switch>
+      {/* MeetRoom route - accessed via sessionStorage redirect */}
+      <Route path="/meetroom/:id" component={MeetRoomRoute} />
+      
       {/* Auth routes - paths are relative to base="/consultorio" */}
       {/* Login: sempre mostra o componente, redirect é feito pelo Login.tsx após autenticar */}
       <Route path="/login" component={Login} />

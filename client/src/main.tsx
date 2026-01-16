@@ -39,6 +39,21 @@ const queryClient = new QueryClient({
   },
 });
 
+// ===== Captura query params do meet e guarda em sessionStorage =====
+const params = new URLSearchParams(window.location.search);
+const meet = params.get("meet");
+const token = params.get("t");
+const role = params.get("role");
+
+if (meet && token) {
+  sessionStorage.setItem("meet_token", token);
+  sessionStorage.setItem("meet_role", role || "patient");
+  sessionStorage.setItem("meet_id", meet);
+  
+  // Limpa query params e redireciona para rota do MeetRoom
+  window.history.replaceState({}, "", `/consultorio/meetroom/${meet}`);
+}
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 

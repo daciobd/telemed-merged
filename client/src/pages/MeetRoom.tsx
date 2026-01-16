@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Video, Clock, User, AlertCircle, Loader2 } from 'lucide-react';
+import { Video, Clock, User, AlertCircle, Loader2, Stethoscope, FileText, Phone } from 'lucide-react';
 
 interface MeetRoomProps {
   meetId: string;
   token: string;
+  role: "patient" | "doctor";
 }
 
 interface ConsultationData {
@@ -14,7 +15,7 @@ interface ConsultationData {
   status?: string;
 }
 
-export default function MeetRoom({ meetId, token }: MeetRoomProps) {
+export default function MeetRoom({ meetId, token, role }: MeetRoomProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [consultation, setConsultation] = useState<ConsultationData | null>(null);
@@ -75,6 +76,8 @@ export default function MeetRoom({ meetId, token }: MeetRoomProps) {
     );
   }
 
+  const isDoctor = role === "doctor";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-white">
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -82,6 +85,11 @@ export default function MeetRoom({ meetId, token }: MeetRoomProps) {
           <div className="flex items-center gap-3">
             <Video className="w-8 h-8 text-teal-600" />
             <span className="text-xl font-bold text-gray-900">TeleMed</span>
+            {isDoctor && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                Médico
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Clock className="w-4 h-4" />
@@ -95,20 +103,36 @@ export default function MeetRoom({ meetId, token }: MeetRoomProps) {
           <div className="aspect-video bg-gray-900 flex items-center justify-center">
             <div className="text-center text-white">
               <Video className="w-20 h-20 mx-auto mb-4 opacity-50" />
-              <h2 className="text-2xl font-semibold mb-2">Sala de Espera</h2>
-              <p className="text-gray-400">Aguardando início da consulta...</p>
+              <h2 className="text-2xl font-semibold mb-2">
+                {isDoctor ? "Sala de Atendimento" : "Sala de Espera"}
+              </h2>
+              <p className="text-gray-400">
+                {isDoctor 
+                  ? "Paciente aguardando. Inicie a consulta quando estiver pronto."
+                  : "Aguardando o médico iniciar a consulta..."
+                }
+              </p>
             </div>
           </div>
 
           <div className="p-6 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
-                  <User className="w-6 h-6 text-teal-600" />
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  isDoctor ? 'bg-blue-100' : 'bg-teal-100'
+                }`}>
+                  {isDoctor ? (
+                    <User className="w-6 h-6 text-blue-600" />
+                  ) : (
+                    <Stethoscope className="w-6 h-6 text-teal-600" />
+                  )}
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {consultation?.doctorName || 'Médico'}
+                    {isDoctor 
+                      ? (consultation?.patientName || 'Paciente')
+                      : (consultation?.doctorName || 'Médico')
+                    }
                   </p>
                   <p className="text-sm text-gray-500">
                     {consultation?.scheduledFor 
@@ -126,21 +150,53 @@ export default function MeetRoom({ meetId, token }: MeetRoomProps) {
                 >
                   Testar Áudio
                 </button>
-                <button 
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
-                  disabled
-                >
-                  Entrar na Sala
-                </button>
+                
+                {isDoctor ? (
+                  <>
+                    <button 
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                      disabled
+                    >
+                      <FileText className="w-4 h-4" />
+                      Prontuário
+                    </button>
+                    <button 
+                      className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition flex items-center gap-2"
+                      disabled
+                    >
+                      <Phone className="w-4 h-4" />
+                      Iniciar Consulta
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
+                    disabled
+                  >
+                    Entrar na Sala
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className={`mt-6 p-4 rounded-lg border ${
+          isDoctor ? 'bg-blue-50 border-blue-200' : 'bg-blue-50 border-blue-200'
+        }`}>
           <p className="text-sm text-blue-800">
-            <strong>Dica:</strong> Verifique sua câmera e microfone antes de entrar na consulta.
-            A videochamada será iniciada quando o médico estiver pronto.
+            {isDoctor ? (
+              <>
+                <strong>Médico:</strong> O paciente está na sala de espera. 
+                Quando estiver pronto, clique em "Iniciar Consulta". 
+                Use o botão "Prontuário" para acessar as informações do paciente.
+              </>
+            ) : (
+              <>
+                <strong>Dica:</strong> Verifique sua câmera e microfone antes de entrar na consulta.
+                A videochamada será iniciada quando o médico estiver pronto.
+              </>
+            )}
           </p>
         </div>
       </main>

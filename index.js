@@ -668,16 +668,7 @@ app.use("/assets", express.static(path.join(__dirname, "attached_assets")));
 // ====== CONSULTÓRIO VIRTUAL (React) — Tema Teal ======
 const consultorioDist = path.join(__dirname, "client/dist");
 
-// Rota de sala de consulta (redireciona para SPA com params)
-app.get("/consultorio/meet/:consultationId", (req, res) => {
-  const { consultationId } = req.params;
-  const t = req.query.t || "";
-  res.redirect(
-    302,
-    `/consultorio/?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`,
-  );
-});
-// ===== Meet redirect com validação (expira + role) =====
+// ===== Meet redirect com validação JWT (expira + role) =====
 app.get("/consultorio/meet/:consultationId", async (req, res) => {
   try {
     const consultationId = Number(req.params.consultationId);
