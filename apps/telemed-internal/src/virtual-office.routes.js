@@ -274,23 +274,77 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
       return res.status(400).json({ error: "consultationId inválido" });
     }
 
-    // 1) Buscar payment pendente
+    // 1) Buscar payment (pendente ou já pago para idempotência)
     const paymentRows = await db
       .select()
       .from(payments)
-      .where(
-        and(
-          eq(payments.consultationId, consultationId),
-          eq(payments.status, "pending")
-        )
-      )
+      .where(eq(payments.consultationId, consultationId))
       .limit(1);
 
     if (!paymentRows || paymentRows.length === 0) {
-      return res.status(404).json({ error: "Pagamento pendente não encontrado" });
+      return res.status(404).json({ error: "Pagamento não encontrado para esta consulta" });
     }
 
     const payment = paymentRows[0];
+
+    // Idempotência: se já está pago, retornar links existentes
+    if (payment.status === "paid") {
+      const existingConsult = await db
+        .select({
+          id: consultations.id,
+          meetingUrl: consultations.meetingUrl,
+          scheduledFor: consultations.scheduledFor,
+          duration: consultations.duration,
+          status: consultations.status,
+        })
+        .from(consultations)
+        .where(eq(consultations.id, consultationId))
+        .limit(1);
+
+      // Gerar novos tokens JWT (mesmo se já confirmado)
+      let patientJoinUrl = null;
+      let doctorJoinUrl = null;
+      
+      if (existingConsult?.[0]?.scheduledFor) {
+        try {
+          const { token } = signMeetTokenPatient({
+            consultationId,
+            scheduledForISO: existingConsult[0].scheduledFor,
+            durationMinutes: existingConsult[0].duration || 30,
+          });
+          patientJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
+        } catch (e) { /* ignore */ }
+        
+        try {
+          const { token } = signMeetTokenDoctor({
+            consultationId,
+            scheduledForISO: existingConsult[0].scheduledFor,
+            durationMinutes: existingConsult[0].duration || 30,
+          });
+          doctorJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
+        } catch (e) { /* ignore */ }
+      }
+
+      return res.json({
+        message: "Pagamento já confirmado anteriormente.",
+        paymentId: payment.id,
+        consultationId,
+        newPaymentStatus: payment.status,
+        newConsultationStatus: existingConsult?.[0]?.status || "scheduled",
+        meetingUrl: existingConsult?.[0]?.meetingUrl || null,
+        patientJoinUrl,
+        doctorJoinUrl,
+        idempotent: true,
+      });
+    }
+
+    // Se não está pending, status inválido
+    if (payment.status !== "pending") {
+      return res.status(409).json({ 
+        error: `Pagamento em status inválido: ${payment.status}`,
+        currentStatus: payment.status,
+      });
+    }
 
     // 2) Atualizar payment para 'paid'
     await db
