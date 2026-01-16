@@ -5,32 +5,53 @@ import * as schema from "../../../db/schema.cjs";
 import { eq, and, gte, lt, inArray, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
-const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
-
 const router = express.Router();
-const { virtualOfficeSettings, consultations, users, doctors, payments, patients } = schema;
 
-// ============================================
-// PRICING HELPERS (valores em centavos para precisão)
-// ============================================
+const { users, patients, doctors, consultations, virtualOfficeSettings, payments } = schema;
 
-function normalizeMoneyToCents(value) {
-  if (value == null) return null;
-  
-  // Se já é inteiro grande (ex: 12000), assume centavos
-  if (typeof value === "number") {
-    if (Number.isInteger(value) && value >= 1000) return value;
-    return Math.round(value * 100); // reais -> centavos
+const ACTIVE_STATUSES = ["pending", "scheduled", "in_progress", "doctor_matched"];
+// ===== Meet token helpers (PACIENTE) =====
+const MEET_TOKEN_SECRET = process.env.MEET_TOKEN_SECRET || process.env.JWT_SECRET || null;
+
+// pode entrar 10 min antes e até 60 min depois do fim (ajuste se quiser)
+const MEET_EARLY_MINUTES = Number(process.env.MEET_EARLY_MINUTES || 10);
+const MEET_LATE_MINUTES = Number(process.env.MEET_LATE_MINUTES || 60);
+function signMeetToken({ consultationId, role, scheduledForISO, durationMinutes = 30 }) {
+  if (!MEET_TOKEN_SECRET) throw new Error("MEET_TOKEN_SECRET_not_configured");
+
+  if (role !== "patient" && role !== "doctor") {
+    throw new Error("invalid_role");
   }
-  
-  // Se vier string "120" ou "120.50"
-  if (typeof value === "string") {
-    const v = Number(value.replace(",", "."));
-    if (Number.isFinite(v)) return Math.round(v * 100);
-  }
-  
-  return null;
+
+  const scheduledMs = new Date(scheduledForISO).getTime();
+  if (!Number.isFinite(scheduledMs)) throw new Error("invalid_scheduledFor");
+
+  const startMs = scheduledMs - MEET_EARLY_MINUTES * 60_000;
+  const endMs = scheduledMs + durationMinutes * 60_000 + MEET_LATE_MINUTES * 60_000;
+
+  const nbf = Math.floor(startMs / 1000);
+  const exp = Math.floor(endMs / 1000);
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const expiresIn = Math.max(60, exp - nowSec);
+
+  const token = jwt.sign(
+    { cid: Number(consultationId), role },
+    MEET_TOKEN_SECRET,
+    { issuer: "telemed", audience: "consultorio-meet", notBefore: nbf, expiresIn }
+  );
+
+  return { token, nbf, exp };
 }
+
+function signMeetTokenPatient({ consultationId, scheduledForISO, durationMinutes = 30 }) {
+  return signMeetToken({ consultationId, role: "patient", scheduledForISO, durationMinutes });
+}
+
+function signMeetTokenDoctor({ consultationId, scheduledForISO, durationMinutes = 30 }) {
+  return signMeetToken({ consultationId, role: "doctor", scheduledForISO, durationMinutes });
+}
+
 
 function getPricingForType(consultationPricing, consultationType) {
   if (!consultationPricing) return null;
@@ -294,12 +315,51 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
       })
       .where(eq(consultations.id, consultationId));
 
-    // Buscar consulta atualizada
+    // Buscar consulta atualizada (incluindo scheduledFor e duration)
     const updatedConsult = await db
-      .select({ id: consultations.id, meetingUrl: consultations.meetingUrl })
+      .select({
+        id: consultations.id,
+        meetingUrl: consultations.meetingUrl,
+        scheduledFor: consultations.scheduledFor,
+        duration: consultations.duration,
+      })
       .from(consultations)
       .where(eq(consultations.id, consultationId))
       .limit(1);
+
+    // gera link do paciente com token que expira
+    let patientJoinUrl = null;
+    try {
+      const scheduledForISO = updatedConsult?.[0]?.scheduledFor;
+      const durationMinutes = updatedConsult?.[0]?.duration || 30;
+
+      const { token } = signMeetTokenPatient({
+        consultationId,
+        scheduledForISO,
+        durationMinutes,
+      });
+
+      patientJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
+    } catch (e) {
+      console.warn("[meet-link] could not generate patientJoinUrl:", e?.message || String(e));
+    }
+
+    // gera link do médico com token que expira
+    let doctorJoinUrl = null;
+    try {
+      const scheduledForISO = updatedConsult?.[0]?.scheduledFor;
+      const durationMinutes = updatedConsult?.[0]?.duration || 30;
+
+      const { token } = signMeetTokenDoctor({
+        consultationId,
+        scheduledForISO,
+        durationMinutes,
+      });
+
+      doctorJoinUrl = `/consultorio/meet/${consultationId}?t=${encodeURIComponent(token)}`;
+    } catch (e) {
+      console.warn("[meet-link] could not generate doctorJoinUrl:", e?.message || String(e));
+    }
 
     return res.json({
       message: "Pagamento confirmado. Consulta agendada.",
@@ -308,10 +368,12 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
       newPaymentStatus: "paid",
       newConsultationStatus: "scheduled",
       meetingUrl: updatedConsult[0]?.meetingUrl ?? meetingUrl,
+      patientJoinUrl,
+      doctorJoinUrl,
     });
   } catch (error) {
-    console.error("Error confirming payment:", error);
-    return res.status(500).json({ error: "Erro ao confirmar pagamento" });
+    console.error("[virtual-office/payments/confirm] erro:", error);
+    return res.status(500).json({ error: error?.message || "Erro interno" });
   }
 });
 

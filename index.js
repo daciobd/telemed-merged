@@ -12,6 +12,68 @@ import seedRoutes from "./apps/telemed-internal/src/routes/seed.routes.js";
 import statsRoutes from "./apps/telemed-internal/src/routes/stats.js";
 import internalRoutes from "./apps/telemed-internal/src/routes/internal.js";
 import managerMetricsRoutes from "./apps/telemed-internal/src/routes/manager-metrics.js";
+// ===== Meet link token (expira + papel doctor/patient) =====
+const MEET_TOKEN_SECRET =
+  process.env.MEET_TOKEN_SECRET || process.env.JWT_SECRET || null;
+
+// janela: pode entrar 10 min antes e até 60 min depois do fim
+const MEET_EARLY_MINUTES = Number(process.env.MEET_EARLY_MINUTES || 10);
+const MEET_LATE_MINUTES = Number(process.env.MEET_LATE_MINUTES || 60);
+
+// gera token assinado com exp/nbf
+function signMeetToken({
+  consultationId,
+  role,
+  scheduledForISO,
+  durationMinutes = 30,
+}) {
+  if (!MEET_TOKEN_SECRET) throw new Error("MEET_TOKEN_SECRET_not_configured");
+
+  const scheduledMs = new Date(scheduledForISO).getTime();
+  if (!Number.isFinite(scheduledMs)) throw new Error("invalid_scheduledFor");
+
+  const startMs = scheduledMs - MEET_EARLY_MINUTES * 60_000;
+  const endMs =
+    scheduledMs + durationMinutes * 60_000 + MEET_LATE_MINUTES * 60_000;
+
+  const nbf = Math.floor(startMs / 1000);
+  const exp = Math.floor(endMs / 1000);
+
+  const token = jwt.sign(
+    { cid: Number(consultationId), role },
+    MEET_TOKEN_SECRET,
+    {
+      issuer: "telemed",
+      audience: "consultorio-meet",
+      notBefore: nbf,
+      expiresIn: Math.max(60, exp - Math.floor(Date.now() / 1000)),
+    },
+  );
+
+  return { token, nbf, exp };
+}
+
+// valida token e confere cid
+function verifyMeetToken(token, consultationId) {
+  if (!MEET_TOKEN_SECRET) throw new Error("MEET_TOKEN_SECRET_not_configured");
+
+  const payload = jwt.verify(token, MEET_TOKEN_SECRET, {
+    issuer: "telemed",
+    audience: "consultorio-meet",
+  });
+
+  if (!payload || Number(payload.cid) !== Number(consultationId)) {
+    const err = new Error("meet_token_cid_mismatch");
+    err.code = "cid_mismatch";
+    throw err;
+  }
+  if (payload.role !== "doctor" && payload.role !== "patient") {
+    const err = new Error("meet_token_role_invalid");
+    err.code = "role_invalid";
+    throw err;
+  }
+  return payload; // { cid, role, iat, nbf, exp, ... }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -612,8 +674,82 @@ app.get("/consultorio/meet/:consultationId", (req, res) => {
   const t = req.query.t || "";
   res.redirect(
     302,
-    `/consultorio/?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`
+    `/consultorio/?meet=${encodeURIComponent(consultationId)}&t=${encodeURIComponent(t)}`,
   );
+});
+// ===== Meet redirect com validação (expira + role) =====
+app.get("/consultorio/meet/:consultationId", async (req, res) => {
+  try {
+    const consultationId = Number(req.params.consultationId);
+    const token = String(req.query.t || "");
+
+    if (!consultationId || Number.isNaN(consultationId)) {
+      return res.status(400).send("invalid consultationId");
+    }
+    if (!token) {
+      return res.status(401).send("missing meet token");
+    }
+
+    // valida assinatura + nbf/exp + cid
+    const payload = verifyMeetToken(token, consultationId);
+
+    // Se passou, manda pro SPA com query params (igual você já faz)
+    return res.redirect(
+      302,
+      `/consultorio/?meet=${consultationId}&t=${encodeURIComponent(token)}&role=${payload.role}`,
+    );
+  } catch (e) {
+    const msg = e?.message || String(e);
+
+    // JWT expirado → 410 (expirou)
+    if (msg.includes("jwt expired")) {
+      return res.status(410).send("meet link expired");
+    }
+    // JWT antes do nbf → 403 (cedo demais)
+    if (msg.includes("jwt not active")) {
+      return res.status(403).send("meet link not yet valid");
+    }
+
+    return res.status(401).send(`invalid meet link (${msg})`);
+  }
+});
+// ===== SPA usa isso pra saber role e expiração =====
+app.get("/api/consultorio/meet/session", (req, res) => {
+  try {
+    const consultationId = Number(req.query.meet);
+    const token = String(req.query.t || "");
+
+    if (!consultationId || Number.isNaN(consultationId)) {
+      return res.status(400).json({ ok: false, error: "invalid_meet" });
+    }
+    if (!token) {
+      return res.status(401).json({ ok: false, error: "missing_token" });
+    }
+
+    const payload = verifyMeetToken(token, consultationId);
+
+    return res.json({
+      ok: true,
+      consultationId,
+      role: payload.role,
+      exp: payload.exp,
+      nbf: payload.nbf,
+      now: Math.floor(Date.now() / 1000),
+    });
+  } catch (e) {
+    const msg = e?.message || String(e);
+
+    if (msg.includes("jwt expired"))
+      return res.status(410).json({ ok: false, error: "meet_link_expired" });
+    if (msg.includes("jwt not active"))
+      return res
+        .status(403)
+        .json({ ok: false, error: "meet_link_not_yet_valid" });
+
+    return res
+      .status(401)
+      .json({ ok: false, error: "meet_link_invalid", details: msg });
+  }
 });
 
 app.use("/consultorio", express.static(consultorioDist));
