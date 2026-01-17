@@ -1,3 +1,4 @@
+console.log("✅ BOOT index.js (telemed-merged) - consultorio mount version: 2026-01-17-A");
 import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
@@ -82,6 +83,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// ✅ ADICIONE ESTAS 5 LINHAS DEPOIS:
+app.get("/api/__whoami", (req, res) => {
+  res.json({ 
+    ok: true, 
+    from: "telemed-merged index.js", 
+    v: "2026-01-17-A",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // TelemedMerged: Feature flags e configurações
 const FEATURE_PRICING =
