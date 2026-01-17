@@ -342,37 +342,8 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
       return { payment, consultation: consultRows[0] };
     });
 
-    // 6) Gerar links JWT (fora da transação, é read-only)
+    // 6) Retornar estado final (sem gerar URLs - acesso centralizado em /consultorio/meet)
     const { payment, consultation } = result;
-    let patientJoinUrl = null;
-    let doctorJoinUrl = null;
-
-    if (consultation.scheduledFor) {
-      const scheduledForISO = consultation.scheduledFor;
-      const durationMinutes = consultation.duration || 30;
-
-      try {
-        const { token } = signMeetTokenPatient({
-          consultationId: id,
-          scheduledForISO,
-          durationMinutes,
-        });
-        patientJoinUrl = `/consultorio/meet/${id}?t=${encodeURIComponent(token)}`;
-      } catch (e) {
-        console.warn("[confirm] patientJoinUrl error:", e?.message);
-      }
-
-      try {
-        const { token } = signMeetTokenDoctor({
-          consultationId: id,
-          scheduledForISO,
-          durationMinutes,
-        });
-        doctorJoinUrl = `/consultorio/meet/${id}?t=${encodeURIComponent(token)}`;
-      } catch (e) {
-        console.warn("[confirm] doctorJoinUrl error:", e?.message);
-      }
-    }
 
     return res.json({
       ok: true,
@@ -390,8 +361,6 @@ router.post("/internal/payments/:consultationId/confirm", async (req, res) => {
         duration: consultation.duration,
         meetingUrl: consultation.meetingUrl,
       },
-      patientJoinUrl,
-      doctorJoinUrl,
     });
   } catch (error) {
     // Erros estruturados da transação
