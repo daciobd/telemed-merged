@@ -66,6 +66,17 @@ app.get('/', (req, res) => {
     docs: '/api/docs'
   });
 });
+app.get("/__routes", (req, res) => {
+  // @ts-ignore
+  const routes = app._router?.stack
+    ?.filter((l: any) => l.route)
+    .map((l: any) => ({
+      method: Object.keys(l.route.methods)[0]?.toUpperCase(),
+      path: l.route.path,
+    })) || [];
+
+  res.json({ count: routes.length, routes });
+});
 
 // ============================================
 // ROTAS DA API

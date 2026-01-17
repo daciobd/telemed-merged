@@ -1,12 +1,13 @@
 import express from "express";
 import multer from "multer";
-import * as dbModule from "../../../db/index.js";
-import * as schema from "../../../db/schema.cjs";
+import dbModule from "../../../db/index.js";
+import schema from "../../../db/schema.cjs";
 import { eq, and, desc, sql, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import { pool } from "./db/pool.js";
+
 import {
   validate,
   registerPatientSchema,
@@ -19,9 +20,14 @@ import {
   directBookingSchema,
   createConsultationByDoctorSchema,
 } from "./consultorio-validation.js";
+
 import { getOpenAIKey, isOpenAIConfigured } from "./config/openai.js";
+
 import prontuarioRoutes from "./consultorio-prontuario-routes.js";
-import { checkPaymentBeforeStatusChange } from "./middleware/paymentGuard.js";
+
+import {
+  checkPaymentBeforeStatusChange,
+} from "./middleware/paymentGuard.js";
 
 // Compat CJS/ESM: Render aceita qualquer uma dessas formas
 const db = dbModule.db || dbModule.default || dbModule;
@@ -81,7 +87,7 @@ router.use(apiLimiter);
 router.get("/__debug/db", async (req, res) => {
   try {
     const r = await pool.query(
-      "SELECT current_database() AS db, current_schema() AS schema"
+      "SELECT current_database() AS db, current_schema() AS schema",
     );
     res.json(r.rows[0]);
   } catch (e) {
@@ -264,24 +270,37 @@ router.post(
         `INSERT INTO users (email, password_hash, full_name, phone, cpf, role)
          VALUES ($1, $2, $3, $4, $5, 'doctor')
          RETURNING id, email, full_name, phone, cpf, role`,
-        [data.email, passwordHash, data.fullName, data.phone || null, data.cpf || null]
+        [
+          data.email,
+          passwordHash,
+          data.fullName,
+          data.phone || null,
+          data.cpf || null,
+        ],
       );
       const newUser = userResult.rows[0];
 
       // Mapear accountType para enum válido do banco
       const accountTypeMap = {
-        'marketplace': 'marketplace',
-        'virtual_office': 'virtual_office', 
-        'hybrid': 'hybrid'
+        marketplace: "marketplace",
+        virtual_office: "virtual_office",
+        hybrid: "hybrid",
       };
-      const dbAccountType = accountTypeMap[businessModel] || 'marketplace';
+      const dbAccountType = accountTypeMap[businessModel] || "marketplace";
 
       // Criar perfil de médico (usando SQL raw para compatibilidade com schema legado)
       const doctorResult = await pool.query(
         `INSERT INTO doctors (user_id, crm, crm_state, specialties, account_type, custom_url, is_active, is_verified)
          VALUES ($1, $2, $3, $4::json, $5::account_type, $6, true, false)
          RETURNING id, user_id, crm, crm_state, specialties, account_type, custom_url`,
-        [newUser.id, crm, crmState || null, JSON.stringify(specialties), dbAccountType, data.customUrl || null]
+        [
+          newUser.id,
+          crm,
+          crmState || null,
+          JSON.stringify(specialties),
+          dbAccountType,
+          data.customUrl || null,
+        ],
       );
       const doctor = doctorResult.rows[0];
 
@@ -326,10 +345,10 @@ router.post(
       // Buscar usuário (usando SQL raw para compatibilidade com schema legado)
       const userResult = await pool.query(
         `SELECT id, email, password_hash, full_name, role FROM users WHERE email = $1 LIMIT 1`,
-        [email]
+        [email],
       );
       const user = userResult.rows[0];
-      
+
       if (!user) {
         return res.status(401).json({ error: "Email ou senha incorretos" });
       }
@@ -345,7 +364,7 @@ router.post(
       if (user.role === "doctor") {
         const doctorResult = await pool.query(
           `SELECT account_type FROM doctors WHERE user_id = $1 LIMIT 1`,
-          [user.id]
+          [user.id],
         );
         accountType = doctorResult.rows[0]?.account_type;
       }
@@ -577,7 +596,11 @@ router.post(
 
       // Verificar se é médico
       if (role !== "doctor") {
-        return res.status(403).json({ error: "Apenas médicos podem criar consultas por esta rota" });
+        return res
+          .status(403)
+          .json({
+            error: "Apenas médicos podem criar consultas por esta rota",
+          });
       }
 
       const [doctor] = await db
@@ -590,11 +613,12 @@ router.post(
         return res.status(404).json({ error: "Médico não encontrado" });
       }
 
-      const { paciente_nome, paciente_cpf, paciente_telefone, datahora, tipo } = req.validatedBody;
+      const { paciente_nome, paciente_cpf, paciente_telefone, datahora, tipo } =
+        req.validatedBody;
 
       // Buscar ou criar paciente (se CPF fornecido)
       let patientId = null;
-      
+
       if (paciente_cpf) {
         // Buscar paciente existente pelo CPF
         const [existingUser] = await db
@@ -609,7 +633,7 @@ router.post(
             .from(patients)
             .where(eq(patients.userId, existingUser.id))
             .limit(1);
-          
+
           if (existingPatient) {
             patientId = existingPatient.id;
           }
@@ -622,7 +646,7 @@ router.post(
         const placeholderEmail = `paciente_${Date.now()}@placeholder.telemed`;
         const randomPassword = `system_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
-        
+
         const [newUser] = await db
           .insert(users)
           .values({
@@ -659,36 +683,45 @@ router.post(
         })
         .returning();
 
-      res.status(201).json({ 
-        ok: true, 
+      res.status(201).json({
+        ok: true,
         consulta_id: consultation.id,
         paciente_nome,
-        message: "Consulta criada com sucesso"
+        message: "Consulta criada com sucesso",
       });
     } catch (error) {
       console.error("Erro ao criar consulta (doctor-create):", error);
-      res.status(500).json({ error: "Erro ao criar consulta", details: error?.message });
+      res
+        .status(500)
+        .json({ error: "Erro ao criar consulta", details: error?.message });
     }
   },
 );
 
 // GET /api/consultorio/meet/:id/validate - Validar sessão de consulta (público, JWT)
 router.get("/meet/:id/validate", async (req, res) => {
-  const MEET_TOKEN_SECRET = process.env.MEET_TOKEN_SECRET || process.env.JWT_SECRET;
-  
+  const MEET_TOKEN_SECRET =
+    process.env.MEET_TOKEN_SECRET || process.env.JWT_SECRET;
+
   try {
     const consultationId = parseInt(req.params.id, 10);
     const token = String(req.query.t || "");
 
     if (!consultationId || Number.isNaN(consultationId)) {
-      return res.status(400).json({ valid: false, message: "ID de consulta inválido" });
+      return res
+        .status(400)
+        .json({ valid: false, message: "ID de consulta inválido" });
     }
     if (!token) {
-      return res.status(401).json({ valid: false, message: "Token não fornecido" });
+      return res
+        .status(401)
+        .json({ valid: false, message: "Token não fornecido" });
     }
     if (!MEET_TOKEN_SECRET) {
       console.error("[meet/validate] MEET_TOKEN_SECRET não configurado");
-      return res.status(500).json({ valid: false, message: "Configuração de segurança ausente" });
+      return res
+        .status(500)
+        .json({ valid: false, message: "Configuração de segurança ausente" });
     }
 
     // 1) Validar JWT (assinatura, iss, aud, nbf, exp)
@@ -701,23 +734,36 @@ router.get("/meet/:id/validate", async (req, res) => {
     } catch (e) {
       const msg = e?.message || String(e);
       if (msg.includes("jwt expired")) {
-        return res.status(410).json({ valid: false, message: "Link expirado. Solicite um novo." });
+        return res
+          .status(410)
+          .json({ valid: false, message: "Link expirado. Solicite um novo." });
       }
       if (msg.includes("jwt not active")) {
-        return res.status(403).json({ valid: false, message: "Link ainda não válido. Aguarde o horário." });
+        return res
+          .status(403)
+          .json({
+            valid: false,
+            message: "Link ainda não válido. Aguarde o horário.",
+          });
       }
-      return res.status(401).json({ valid: false, message: "Token JWT inválido." });
+      return res
+        .status(401)
+        .json({ valid: false, message: "Token JWT inválido." });
     }
 
     // 2) Validar cid bate com :id
     if (!payload || Number(payload.cid) !== consultationId) {
-      return res.status(401).json({ valid: false, message: "Token não corresponde à consulta." });
+      return res
+        .status(403)
+        .json({ valid: false, message: "Token não corresponde à consulta." });
     }
 
     // 3) Validar role
     const role = payload.role;
     if (role !== "doctor" && role !== "patient") {
-      return res.status(401).json({ valid: false, message: "Role inválida no token." });
+      return res
+        .status(401)
+        .json({ valid: false, message: "Role inválida no token." });
     }
 
     // 4) Buscar consulta no DB
@@ -730,45 +776,87 @@ router.get("/meet/:id/validate", async (req, res) => {
        LEFT JOIN patients p ON c.patient_id = p.id
        LEFT JOIN users pu ON p.user_id = pu.id
        WHERE c.id = $1`,
-      [consultationId]
+      [consultationId],
     );
 
     if (!result.rows || result.rows.length === 0) {
-      return res.status(404).json({ valid: false, message: "Consulta não encontrada" });
+      return res
+        .status(404)
+        .json({ valid: false, message: "Consulta não encontrada" });
     }
 
     const consultation = result.rows[0];
 
     // 5) Verificar status válido
-    if (consultation.status !== "scheduled" && consultation.status !== "in_progress") {
-      return res.status(403).json({ 
-        valid: false, 
-        message: consultation.status === "pending" 
+    const allowed = new Set(["scheduled", "in_progress"]);
+    if (!allowed.has(consultation.status)) {
+      const prePayment = new Set([
+        "payment_pending",
+        "pending",
+        "doctor_matched",
+        "created",
+      ]);
+      return res.status(403).json({
+        valid: false,
+        message: prePayment.has(consultation.status)
           ? "Consulta ainda não confirmada. Aguarde o pagamento."
-          : `Consulta em status: ${consultation.status}` 
+          : `Consulta em status: ${consultation.status}`,
       });
     }
+    // 6) Janela baseada no DB (evita token válido em consulta remarcada)
+    if (consultation.status === "scheduled" && consultation.scheduled_for) {
+      const scheduledAt = new Date(consultation.scheduled_for).getTime();
+      const durationMin = Number(consultation.duration) || 30;
+
+      const now = Date.now();
+      const nbfDb = scheduledAt - 20 * 60 * 1000; // 20 min antes
+      const expDb = scheduledAt + (durationMin + 90) * 60 * 1000; // duração + 90 min
+
+      if (now < nbfDb) {
+        return res
+          .status(403)
+          .json({
+            valid: false,
+            message: "Link ainda não válido. Aguarde o horário.",
+          });
+      }
+      if (now > expDb) {
+        return res
+          .status(410)
+          .json({ valid: false, message: "Link expirado. Solicite um novo." });
+      }
+    }
+
+    const debug = process.env.NODE_ENV !== "production";
 
     res.json({
       valid: true,
       role,
       consultation: {
         id: consultation.id,
-        doctorName: consultation.doctor_name ? `Dr(a). ${consultation.doctor_name}` : "Médico",
+        doctorName: consultation.doctor_name
+          ? `Dr(a). ${consultation.doctor_name}`
+          : "Médico",
         patientName: consultation.patient_name || "Paciente",
         scheduledFor: consultation.scheduled_for,
         duration: consultation.duration || 30,
         status: consultation.status,
       },
-      tokenInfo: {
-        nbf: payload.nbf,
-        exp: payload.exp,
-        now: Math.floor(Date.now() / 1000),
-      },
+      ...(debug
+        ? {
+            tokenInfo: {
+              nbf: payload.nbf,
+              exp: payload.exp,
+              now: Math.floor(Date.now() / 1000),
+            },
+          }
+        : {}),
     });
+
+    return;
   } catch (error) {
     console.error("Erro ao validar sessão meet:", error);
-    res.status(500).json({ valid: false, message: "Erro interno" });
+    return res.status(500).json({ valid: false, message: "Erro interno" });
   }
 });
 
@@ -901,7 +989,10 @@ router.put(
 
       // BLOQUEIO CRÍTICO: Verificar pagamento antes de avançar status
       if (updates.status) {
-        const paymentCheck = await checkPaymentBeforeStatusChange(parseInt(id), updates.status);
+        const paymentCheck = await checkPaymentBeforeStatusChange(
+          parseInt(id),
+          updates.status,
+        );
         if (!paymentCheck.allowed) {
           return res.status(402).json({
             error: "Pagamento obrigatório",
@@ -1148,8 +1239,8 @@ router.put("/bids/:id/accept", authenticate, async (req, res) => {
       .where(
         and(
           eq(bids.consultationId, bid.consultationId),
-          eq(bids.isAccepted, true)
-        )
+          eq(bids.isAccepted, true),
+        ),
       )
       .limit(1);
 
@@ -1480,7 +1571,7 @@ router.get("/marketplace", authenticate, async (req, res) => {
         cidade: "São Paulo - SP",
         origem: "Marketplace TeleMed",
         status: "disponivel",
-        chiefComplaint: "Paciente busca avaliação psiquiátrica para ansiedade"
+        chiefComplaint: "Paciente busca avaliação psiquiátrica para ansiedade",
       },
       {
         id: "c2",
@@ -1491,7 +1582,7 @@ router.get("/marketplace", authenticate, async (req, res) => {
         cidade: "Rio de Janeiro - RJ",
         origem: "Marketplace TeleMed",
         status: "disponivel",
-        chiefComplaint: "Check-up de rotina e renovação de receitas"
+        chiefComplaint: "Check-up de rotina e renovação de receitas",
       },
       {
         id: "c3",
@@ -1502,7 +1593,7 @@ router.get("/marketplace", authenticate, async (req, res) => {
         cidade: "Belo Horizonte - MG",
         origem: "Marketplace TeleMed",
         status: "disponivel",
-        chiefComplaint: "Avaliação de manchas na pele"
+        chiefComplaint: "Avaliação de manchas na pele",
       },
       {
         id: "c4",
@@ -1513,7 +1604,7 @@ router.get("/marketplace", authenticate, async (req, res) => {
         cidade: "Curitiba - PR",
         origem: "Marketplace TeleMed",
         status: "disponivel",
-        chiefComplaint: "Acompanhamento de hipertensão arterial"
+        chiefComplaint: "Acompanhamento de hipertensão arterial",
       },
       {
         id: "c5",
@@ -1524,8 +1615,8 @@ router.get("/marketplace", authenticate, async (req, res) => {
         cidade: "Porto Alegre - RS",
         origem: "Marketplace TeleMed",
         status: "disponivel",
-        chiefComplaint: "Controle de diabetes tipo 2"
-      }
+        chiefComplaint: "Controle de diabetes tipo 2",
+      },
     ];
 
     res.json(mockConsultas);
@@ -1546,7 +1637,7 @@ router.get("/minhas-consultas", authenticate, async (req, res) => {
         dataHora: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
         duracao: 50,
         status: "agendada",
-        valorAcordado: 180.0
+        valorAcordado: 180.0,
       },
       {
         id: "mc2",
@@ -1555,7 +1646,7 @@ router.get("/minhas-consultas", authenticate, async (req, res) => {
         dataHora: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
         duracao: 30,
         status: "agendada",
-        valorAcordado: 120.0
+        valorAcordado: 120.0,
       },
       {
         id: "mc3",
@@ -1564,7 +1655,7 @@ router.get("/minhas-consultas", authenticate, async (req, res) => {
         dataHora: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
         duracao: 50,
         status: "concluida",
-        valorAcordado: 180.0
+        valorAcordado: 180.0,
       },
       {
         id: "mc4",
@@ -1573,8 +1664,8 @@ router.get("/minhas-consultas", authenticate, async (req, res) => {
         dataHora: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         duracao: 30,
         status: "concluida",
-        valorAcordado: 120.0
-      }
+        valorAcordado: 120.0,
+      },
     ];
 
     res.json(mockConsultas);
@@ -1592,7 +1683,7 @@ router.get("/dashboard/stats", authenticate, async (req, res) => {
       consultasHoje: 2,
       consultasSemana: 8,
       novasMarketplace: 5,
-      ganhosEsteMes: 2340.00
+      ganhosEsteMes: 2340.0,
     };
 
     res.json(stats);
@@ -1607,20 +1698,20 @@ router.get("/dashboard/proximas", authenticate, async (req, res) => {
   try {
     const hoje = new Date();
     hoje.setHours(hoje.getHours() + 2);
-    
+
     const mockProximas = [
       {
         id: "p1",
         paciente: "Maria Silva",
         dataHora: hoje.toISOString(),
-        especialidade: "Psiquiatria Adulto"
+        especialidade: "Psiquiatria Adulto",
       },
       {
         id: "p2",
         paciente: "João Santos",
         dataHora: new Date(hoje.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-        especialidade: "Clínica Geral"
-      }
+        especialidade: "Clínica Geral",
+      },
     ];
 
     res.json(mockProximas);
@@ -1634,7 +1725,7 @@ router.get("/dashboard/proximas", authenticate, async (req, res) => {
 router.get("/consultas/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Dados mock para demonstração
     const mockConsulta = {
       id,
@@ -1648,10 +1739,12 @@ router.get("/consultas/:id", authenticate, async (req, res) => {
         idade: 35,
         sexo: "Feminino",
         email: "maria.silva@email.com",
-        telefone: "(11) 99999-8888"
+        telefone: "(11) 99999-8888",
       },
-      queixaPrincipal: "Paciente relata sintomas de ansiedade e dificuldade para dormir há cerca de 3 meses.",
-      observacoes: "Primeira consulta. Paciente encaminhada pelo clínico geral."
+      queixaPrincipal:
+        "Paciente relata sintomas de ansiedade e dificuldade para dormir há cerca de 3 meses.",
+      observacoes:
+        "Primeira consulta. Paciente encaminhada pelo clínico geral.",
     };
 
     res.json(mockConsulta);
@@ -1665,11 +1758,13 @@ router.get("/consultas/:id", authenticate, async (req, res) => {
 router.post("/lances", authenticate, async (req, res) => {
   try {
     const { consultationId, bidAmount } = req.body;
-    
+
     if (!consultationId || !bidAmount) {
-      return res.status(400).json({ error: "consultationId e bidAmount são obrigatórios" });
+      return res
+        .status(400)
+        .json({ error: "consultationId e bidAmount são obrigatórios" });
     }
-    
+
     // Simular salvamento do lance
     const lance = {
       id: `lance_${Date.now()}`,
@@ -1677,11 +1772,11 @@ router.post("/lances", authenticate, async (req, res) => {
       bidAmount,
       doctorId: req.user.id,
       status: "pending",
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    
+
     console.log("Lance enviado:", lance);
-    
+
     res.json({ success: true, lance });
   } catch (error) {
     console.error("Erro ao enviar lance:", error);
@@ -1706,7 +1801,7 @@ router.post("/dr-ai/anamnese", async (req, res) => {
     if (!isOpenAIConfigured()) {
       console.log("[dr-ai] OpenAI não configurado - retornando erro 503");
       return res.status(503).json({
-        error: "IA desativada: defina OPENAI_API_KEY no ambiente."
+        error: "IA desativada: defina OPENAI_API_KEY no ambiente.",
       });
     }
 
@@ -1782,11 +1877,11 @@ Tarefa:
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPrompt },
       ],
       response_format: { type: "json_object" },
       max_tokens: 1000,
-      temperature: 0.7
+      temperature: 0.7,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -1795,16 +1890,20 @@ Tarefa:
     }
 
     const parsed = JSON.parse(content);
-    
-    console.log("[dr-ai] Anamnese gerada com sucesso para:", queixaPrincipal.substring(0, 50));
-    
+
+    console.log(
+      "[dr-ai] Anamnese gerada com sucesso para:",
+      queixaPrincipal.substring(0, 50),
+    );
+
     return res.json({
       resumo: parsed.resumo || "",
       hipoteses: parsed.hipoteses || [],
       exames: parsed.exames || [],
-      aviso: parsed.aviso || "Sugestões geradas por IA para apoio ao raciocínio clínico. A avaliação presencial do médico é essencial."
+      aviso:
+        parsed.aviso ||
+        "Sugestões geradas por IA para apoio ao raciocínio clínico. A avaliação presencial do médico é essencial.",
     });
-
   } catch (error) {
     console.error("[dr-ai] Erro ao gerar anamnese:", error);
     return res.status(500).json({ error: "Falha ao gerar anamnese com IA" });
@@ -1816,12 +1915,14 @@ Tarefa:
 // ============================================
 
 function formatStructuredToText(s) {
-  const hipotesesStr = Array.isArray(s.avaliacao_hipoteses) && s.avaliacao_hipoteses.length > 0
-    ? s.avaliacao_hipoteses.join("; ")
-    : "Não informado";
-  const examesStr = Array.isArray(s.exames_sugeridos) && s.exames_sugeridos.length > 0
-    ? s.exames_sugeridos.join(", ")
-    : "Não informado";
+  const hipotesesStr =
+    Array.isArray(s.avaliacao_hipoteses) && s.avaliacao_hipoteses.length > 0
+      ? s.avaliacao_hipoteses.join("; ")
+      : "Não informado";
+  const examesStr =
+    Array.isArray(s.exames_sugeridos) && s.exames_sugeridos.length > 0
+      ? s.exames_sugeridos.join(", ")
+      : "Não informado";
 
   return (
     `Evolução clínica (Scribe Medical)\n\n` +
@@ -1841,98 +1942,131 @@ function formatStructuredToText(s) {
 }
 
 // POST /api/consultorio/scribe/processar - Receber áudio e gerar evolução
-router.post("/scribe/processar", scribeUpload.single("audio"), async (req, res) => {
-  try {
-    const { consultaId } = req.body || {};
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ error: "Arquivo de áudio é obrigatório (campo 'audio')." });
-    }
-
-    // Modo de operação: "stub" (demo) ou "ai" (real)
-    const mode = (process.env.SCRIBE_MODE || "stub").toLowerCase();
-
-    // ===== MODO STUB (demo pronta) =====
-    if (mode !== "ai") {
-      const structuredStub = {
-        queixa_principal: `Paciente comparece à consulta ${consultaId ? `(ID: ${consultaId})` : ""} relatando sintomas compatíveis com quadro clínico em investigação.`,
-        hda: "Refere início dos sintomas há alguns dias, com evolução progressiva. Descreve impacto funcional moderado nas atividades diárias.",
-        antecedentes_medicacoes_alergias: "Conforme relato verbal durante consulta. Revisar prontuário para histórico completo.",
-        revisao_sistemas_exame: "Sem intercorrências significativas descritas no registro enviado.",
-        avaliacao_hipoteses: ["Quadro sugere necessidade de investigação adicional", "Hipóteses a considerar conforme história clínica detalhada"],
-        exames_sugeridos: ["Hemograma completo", "Glicemia de jejum"],
-        plano_conduta: "Orientar medidas iniciais, solicitar exames complementares se indicado, agendar retorno para reavaliação.",
-        prescricao_mencionada: "Não informado",
-        encaminhamentos: "Não informado",
-        alertas_seguranca: "Não informado",
-        seguimento: "Retorno agendado conforme necessidade clínica.",
-        observacao: "Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável."
-      };
-
-      const textoStub = formatStructuredToText(structuredStub);
-      return res.json({ texto: textoStub, structured: structuredStub });
-    }
-
-    // ===== MODO IA REAL =====
-    if (!isOpenAIConfigured()) {
-      return res.status(503).json({
-        error: "Scribe IA desativado: defina OPENAI_API_KEY no ambiente ou use SCRIBE_MODE=stub."
-      });
-    }
-
-    const OpenAI = (await import("openai")).default;
-    const openai = new OpenAI({ apiKey: getOpenAIKey() });
-
-    // 1) Transcrever áudio
-    const transcription = await openai.audio.transcriptions.create({
-      model: "whisper-1",
-      file: new File([file.buffer], file.originalname || "audio.mp3", { type: file.mimetype }),
-    });
-
-    const transcriptText = transcription?.text || "";
-    if (!transcriptText.trim()) {
-      return res.status(422).json({ error: "Não foi possível transcrever o áudio." });
-    }
-
-    // 2) Estruturar evolução com prompt clínico
-    const { buildScribePrompt } = await import("./config/scribePrompt.js");
-    const messages = buildScribePrompt({ transcript: transcriptText, consultaId });
-
-    const completion = await openai.chat.completions.create({
-      model: process.env.SCRIBE_MODEL || "gpt-4o-mini",
-      temperature: 0.2,
-      messages,
-    });
-
-    const rawContent = completion.choices?.[0]?.message?.content?.trim();
-    if (!rawContent) {
-      return res.status(502).json({ error: "Falha ao gerar evolução com IA." });
-    }
-
-    // Tentar parsear JSON da resposta
-    let structured;
+router.post(
+  "/scribe/processar",
+  scribeUpload.single("audio"),
+  async (req, res) => {
     try {
-      // Remover possíveis crases/markdown que a IA pode adicionar
-      const cleanJson = rawContent.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
-      structured = JSON.parse(cleanJson);
-    } catch (parseErr) {
-      console.warn("[scribe] Resposta não é JSON válido, retornando como texto legado:", parseErr.message);
-      // Fallback: retornar como texto legado se não for JSON válido
-      return res.json({ texto: rawContent, structured: null });
+      const { consultaId } = req.body || {};
+      const file = req.file;
+
+      if (!file) {
+        return res
+          .status(400)
+          .json({ error: "Arquivo de áudio é obrigatório (campo 'audio')." });
+      }
+
+      // Modo de operação: "stub" (demo) ou "ai" (real)
+      const mode = (process.env.SCRIBE_MODE || "stub").toLowerCase();
+
+      // ===== MODO STUB (demo pronta) =====
+      if (mode !== "ai") {
+        const structuredStub = {
+          queixa_principal: `Paciente comparece à consulta ${consultaId ? `(ID: ${consultaId})` : ""} relatando sintomas compatíveis com quadro clínico em investigação.`,
+          hda: "Refere início dos sintomas há alguns dias, com evolução progressiva. Descreve impacto funcional moderado nas atividades diárias.",
+          antecedentes_medicacoes_alergias:
+            "Conforme relato verbal durante consulta. Revisar prontuário para histórico completo.",
+          revisao_sistemas_exame:
+            "Sem intercorrências significativas descritas no registro enviado.",
+          avaliacao_hipoteses: [
+            "Quadro sugere necessidade de investigação adicional",
+            "Hipóteses a considerar conforme história clínica detalhada",
+          ],
+          exames_sugeridos: ["Hemograma completo", "Glicemia de jejum"],
+          plano_conduta:
+            "Orientar medidas iniciais, solicitar exames complementares se indicado, agendar retorno para reavaliação.",
+          prescricao_mencionada: "Não informado",
+          encaminhamentos: "Não informado",
+          alertas_seguranca: "Não informado",
+          seguimento: "Retorno agendado conforme necessidade clínica.",
+          observacao:
+            "Registro gerado automaticamente com apoio de IA e revisado/validado pelo médico responsável.",
+        };
+
+        const textoStub = formatStructuredToText(structuredStub);
+        return res.json({ texto: textoStub, structured: structuredStub });
+      }
+
+      // ===== MODO IA REAL =====
+      if (!isOpenAIConfigured()) {
+        return res.status(503).json({
+          error:
+            "Scribe IA desativado: defina OPENAI_API_KEY no ambiente ou use SCRIBE_MODE=stub.",
+        });
+      }
+
+      const OpenAI = (await import("openai")).default;
+      const openai = new OpenAI({ apiKey: getOpenAIKey() });
+
+      // 1) Transcrever áudio
+      const transcription = await openai.audio.transcriptions.create({
+        model: "whisper-1",
+        file: new File([file.buffer], file.originalname || "audio.mp3", {
+          type: file.mimetype,
+        }),
+      });
+
+      const transcriptText = transcription?.text || "";
+      if (!transcriptText.trim()) {
+        return res
+          .status(422)
+          .json({ error: "Não foi possível transcrever o áudio." });
+      }
+
+      // 2) Estruturar evolução com prompt clínico
+      const { buildScribePrompt } = await import("./config/scribePrompt.js");
+      const messages = buildScribePrompt({
+        transcript: transcriptText,
+        consultaId,
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: process.env.SCRIBE_MODEL || "gpt-4o-mini",
+        temperature: 0.2,
+        messages,
+      });
+
+      const rawContent = completion.choices?.[0]?.message?.content?.trim();
+      if (!rawContent) {
+        return res
+          .status(502)
+          .json({ error: "Falha ao gerar evolução com IA." });
+      }
+
+      // Tentar parsear JSON da resposta
+      let structured;
+      try {
+        // Remover possíveis crases/markdown que a IA pode adicionar
+        const cleanJson = rawContent
+          .replace(/```json\s*/gi, "")
+          .replace(/```\s*/gi, "")
+          .trim();
+        structured = JSON.parse(cleanJson);
+      } catch (parseErr) {
+        console.warn(
+          "[scribe] Resposta não é JSON válido, retornando como texto legado:",
+          parseErr.message,
+        );
+        // Fallback: retornar como texto legado se não for JSON válido
+        return res.json({ texto: rawContent, structured: null });
+      }
+
+      // Gerar texto formatado a partir do JSON estruturado
+      const texto = formatStructuredToText(structured);
+
+      console.log(
+        "[scribe] Evolução gerada com sucesso para consulta:",
+        consultaId,
+      );
+      return res.json({ texto, structured });
+    } catch (err) {
+      console.error("[scribe] Erro:", err);
+      return res
+        .status(500)
+        .json({ error: "Erro interno ao processar áudio do Scribe." });
     }
-
-    // Gerar texto formatado a partir do JSON estruturado
-    const texto = formatStructuredToText(structured);
-
-    console.log("[scribe] Evolução gerada com sucesso para consulta:", consultaId);
-    return res.json({ texto, structured });
-
-  } catch (err) {
-    console.error("[scribe] Erro:", err);
-    return res.status(500).json({ error: "Erro interno ao processar áudio do Scribe." });
-  }
-});
+  },
+);
 
 // ============================================
 // PRONTUÁRIO DA CONSULTA (autosave, finalização)

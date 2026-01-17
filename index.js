@@ -6,8 +6,11 @@ import crypto from "crypto";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
+
 import jwt from "jsonwebtoken";
 import consultorioRoutes from "./apps/telemed-internal/src/consultorio-routes.js";
+
 import seedRoutes from "./apps/telemed-internal/src/routes/seed.routes.js";
 import statsRoutes from "./apps/telemed-internal/src/routes/stats.js";
 import internalRoutes from "./apps/telemed-internal/src/routes/internal.js";

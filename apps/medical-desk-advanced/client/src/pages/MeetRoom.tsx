@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 
 function useQuery() {
@@ -9,20 +9,89 @@ function useQuery() {
   }, [loc]);
 }
 
+type ValidateResponse =
+  | {
+      valid: true;
+      role: "doctor" | "patient";
+      consultation: {
+        id: number;
+        doctorName: string;
+        patientName: string;
+        scheduledFor: string | null;
+        duration: number;
+        status: string;
+      };
+    }
+  | {
+      valid: false;
+      message?: string;
+    };
+
 export default function MeetRoom() {
   const q = useQuery();
 
-  const meet = q.get("meet") || "";
-  const t = q.get("t") || "";
+  const meet = (q.get("meet") || "").trim();
+  const token = (q.get("t") || "").trim();
 
-  const consultationId = meet.trim();
-  const token = t.trim();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [info, setInfo] = useState<ValidateResponse | null>(null);
 
-  const canOpen = Boolean(consultationId);
+  const canTryValidate = Boolean(meet && token);
 
-  const directUrl = canOpen
-    ? `/consultorio/meet/${encodeURIComponent(consultationId)}?t=${encodeURIComponent(token)}`
+  const directUrl = canTryValidate
+    ? `/consultorio/meet/${encodeURIComponent(meet)}?t=${encodeURIComponent(token)}`
     : "";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      setErrorMsg("");
+      setInfo(null);
+
+      if (!canTryValidate) return;
+
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/consultorio/meet/${encodeURIComponent(meet)}/validate?t=${encodeURIComponent(token)}`,
+        );
+
+        const data = (await res.json()) as ValidateResponse;
+
+        if (cancelled) return;
+
+        setInfo(data);
+
+        if (res.ok && "valid" in data && data.valid === true) {
+          // ✅ token ok + DB ok → entra na sala
+          window.location.assign(directUrl);
+          return;
+        }
+
+        // caso inválido
+        const msg =
+          ("message" in data && data.message) ||
+          (res.status === 401 ? "Token inválido." : "") ||
+          (res.status === 403 ? "Acesso não autorizado." : "") ||
+          (res.status === 404 ? "Consulta não encontrada." : "") ||
+          (res.status === 410 ? "Link expirado. Solicite um novo." : "") ||
+          `Não foi possível validar (HTTP ${res.status}).`;
+
+        setErrorMsg(msg);
+      } catch (e: any) {
+        if (!cancelled) setErrorMsg(e?.message || "Erro ao validar link.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [canTryValidate, meet, token, directUrl]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -32,7 +101,7 @@ export default function MeetRoom() {
             <div>
               <h1 className="text-2xl font-semibold">Sala de espera</h1>
               <p className="mt-1 text-sm text-slate-600">
-                Link de entrada gerado após confirmação de pagamento.
+                Validando o link de entrada do consultório…
               </p>
             </div>
             <span className="rounded-full bg-teal-50 text-teal-700 text-xs font-medium px-3 py-1 border border-teal-100">
@@ -43,18 +112,46 @@ export default function MeetRoom() {
           <div className="mt-6 space-y-3">
             <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
               <div className="text-xs text-slate-500">Consulta</div>
-              <div className="text-lg font-semibold">
-                {consultationId || "—"}
-              </div>
+              <div className="text-lg font-semibold">{meet || "—"}</div>
             </div>
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <div className="text-xs text-slate-500">Token</div>
-              <div className="text-sm font-mono break-all">{token || "—"}</div>
-              <div className="mt-2 text-xs text-slate-500">
-                (Em produção, você pode esconder isso e só usar no backend.)
+            {loading ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                Validando…
               </div>
-            </div>
+            ) : null}
+
+            {errorMsg ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                {errorMsg}
+                {canTryValidate ? (
+                  <div className="mt-2 text-xs text-amber-900/80">
+                    Se você acha que está correto, tente recarregar.
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {"valid" in (info || {}) && info?.valid ? (
+              <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900">
+                Link validado. Entrando na sala…
+              </div>
+            ) : null}
+
+            {!meet ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Falta o parâmetro <b>meet</b> na URL.
+                <div className="mt-2 font-mono text-xs break-all">
+                  /consultorio/?meet=36&t=...
+                </div>
+              </div>
+            ) : null}
+
+            {meet && !token ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Falta o parâmetro <b>t</b> (token) na URL.
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -73,7 +170,7 @@ export default function MeetRoom() {
               Recarregar
             </button>
 
-            {canOpen ? (
+            {canTryValidate ? (
               <a
                 href={directUrl}
                 className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold bg-white border border-slate-200 hover:bg-slate-50"
@@ -83,14 +180,9 @@ export default function MeetRoom() {
             ) : null}
           </div>
 
-          {!canOpen ? (
-            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              Falta o parâmetro <b>meet</b> na URL. Exemplo:
-              <div className="mt-2 font-mono text-xs break-all">
-                /consultorio/meet/36?t=... → /consultorio/?meet=36&t=...
-              </div>
-            </div>
-          ) : null}
+          <div className="mt-6 text-xs text-slate-500">
+            Dica: o token não é exibido por segurança.
+          </div>
         </div>
       </div>
     </div>
