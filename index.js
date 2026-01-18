@@ -83,6 +83,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.get("/api/consultorio/ping", (_req, res) => res.json({ ok: true, service: "telemed-unified" }));
 
 // ✅ ADICIONE ESTAS 5 LINHAS DEPOIS:
 app.get("/api/__whoami", (req, res) => {
@@ -409,6 +410,8 @@ if (INTERNAL_BASE_URL) {
   console.log("🔁 Proxy /api/consultorio ->", INTERNAL_BASE_URL);
 } else {
   app.use("/api/consultorio", consultorioRoutes);
+  app.use("/api/consulta", consultorioRoutes); // alias compat (opcional mas recomendado)
+
   console.log("🏠 Local /api/consultorio (sem proxy)");
 }
 

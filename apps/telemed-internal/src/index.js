@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import jwt from 'jsonwebtoken';
 const require = createRequire(import.meta.url);
-const consultorioRoutes = require('./consultorio-routes.cjs');
+const consultorioRoutes = require('./consultorio-routes.js');
 import seedRoutes from './routes/seed.routes.js';
 import statsRoutes from './routes/stats.js';
 import internalRouter from './routes/internal.js';
