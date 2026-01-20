@@ -29,6 +29,8 @@ import {
   checkPaymentBeforeStatusChange,
 } from "./middleware/paymentGuard.js";
 
+import { verifyMeetToken } from "./utils/meetToken.js";
+
 // Compat CJS/ESM: Render aceita qualquer uma dessas formas
 const db = dbModule.db || dbModule.default || dbModule;
 
@@ -700,9 +702,6 @@ router.post(
 
 // GET /api/consultorio/meet/:id/validate - Validar sessão de consulta (público, JWT)
 router.get("/meet/:id/validate", async (req, res) => {
-  const MEET_TOKEN_SECRET =
-    process.env.MEET_TOKEN_SECRET || process.env.JWT_SECRET;
-
   try {
     const consultationId = parseInt(req.params.id, 10);
     const token = String(req.query.t || "");
@@ -717,20 +716,11 @@ router.get("/meet/:id/validate", async (req, res) => {
         .status(401)
         .json({ valid: false, message: "Token não fornecido" });
     }
-    if (!MEET_TOKEN_SECRET) {
-      console.error("[meet/validate] MEET_TOKEN_SECRET não configurado");
-      return res
-        .status(500)
-        .json({ valid: false, message: "Configuração de segurança ausente" });
-    }
 
-    // 1) Validar JWT (assinatura, iss, aud, nbf, exp)
+    // 1) Validar JWT usando função centralizada (iss, aud, nbf, exp, cid, role)
     let payload;
     try {
-      payload = jwt.verify(token, MEET_TOKEN_SECRET, {
-        issuer: "telemed",
-        audience: "consultorio-meet",
-      });
+      payload = verifyMeetToken(token, consultationId);
     } catch (e) {
       const msg = e?.message || String(e);
       if (msg.includes("jwt expired")) {
@@ -746,27 +736,24 @@ router.get("/meet/:id/validate", async (req, res) => {
             message: "Link ainda não válido. Aguarde o horário.",
           });
       }
+      if (msg.includes("cid_mismatch")) {
+        return res
+          .status(403)
+          .json({ valid: false, message: "Token não corresponde à consulta." });
+      }
+      if (msg.includes("role_invalid")) {
+        return res
+          .status(401)
+          .json({ valid: false, message: "Role inválida no token." });
+      }
       return res
         .status(401)
         .json({ valid: false, message: "Token JWT inválido." });
     }
 
-    // 2) Validar cid bate com :id
-    if (!payload || Number(payload.cid) !== consultationId) {
-      return res
-        .status(403)
-        .json({ valid: false, message: "Token não corresponde à consulta." });
-    }
-
-    // 3) Validar role
     const role = payload.role;
-    if (role !== "doctor" && role !== "patient") {
-      return res
-        .status(401)
-        .json({ valid: false, message: "Role inválida no token." });
-    }
 
-    // 4) Buscar consulta no DB
+    // 2) Buscar consulta no DB
     const result = await pool.query(
       `SELECT c.id, c.status, c.scheduled_for, c.duration,
               du.full_name as doctor_name, pu.full_name as patient_name
