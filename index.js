@@ -26,7 +26,7 @@ const MEET_TOKEN_SECRET =
 const MEET_EARLY_MINUTES = Number(process.env.MEET_EARLY_MINUTES || 10);
 const MEET_LATE_MINUTES = Number(process.env.MEET_LATE_MINUTES || 60);
 
-// gera token assinado com exp/nbf
+// gera token assinado com exp/nbf (usando DELTAS, não timestamps absolutos)
 function signMeetToken({
   consultationId,
   role,
@@ -39,11 +39,15 @@ function signMeetToken({
   if (!Number.isFinite(scheduledMs)) throw new Error("invalid_scheduledFor");
 
   const startMs = scheduledMs - MEET_EARLY_MINUTES * 60_000;
-  const endMs =
-    scheduledMs + durationMinutes * 60_000 + MEET_LATE_MINUTES * 60_000;
+  const endMs = scheduledMs + durationMinutes * 60_000 + MEET_LATE_MINUTES * 60_000;
 
   const nbf = Math.floor(startMs / 1000);
   const exp = Math.floor(endMs / 1000);
+
+  // IMPORTANTE: notBefore e expiresIn são DELTAS (segundos a partir de agora)
+  const now = Math.floor(Date.now() / 1000);
+  const notBeforeSeconds = Math.max(0, nbf - now);
+  const expiresInSeconds = Math.max(60, exp - now);
 
   const token = jwt.sign(
     { cid: Number(consultationId), role },
@@ -51,8 +55,8 @@ function signMeetToken({
     {
       issuer: "telemed",
       audience: "consultorio-meet",
-      notBefore: nbf,
-      expiresIn: Math.max(60, exp - Math.floor(Date.now() / 1000)),
+      notBefore: notBeforeSeconds,   // DELTA: segundos até poder usar
+      expiresIn: expiresInSeconds,   // DELTA: segundos até expirar
     },
   );
 
