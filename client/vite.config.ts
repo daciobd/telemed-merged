@@ -11,6 +11,12 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, '../attached_assets'),
     },
   },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5000',
+      '/consultorio/meet': 'http://localhost:5000',
+    },
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,

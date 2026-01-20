@@ -4,7 +4,7 @@ import { Video, Clock, User, AlertCircle, Loader2, Stethoscope, FileText, Phone 
 interface MeetRoomProps {
   meetId: string;
   token: string;
-  role: "patient" | "doctor";
+  role: "patient" | "doctor"; // props role é decorativo, a fonte da verdade vem do servidor
 }
 
 interface ConsultationData {
@@ -15,10 +15,11 @@ interface ConsultationData {
   status?: string;
 }
 
-export default function MeetRoom({ meetId, token, role }: MeetRoomProps) {
+export default function MeetRoom({ meetId, token }: MeetRoomProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [consultation, setConsultation] = useState<ConsultationData | null>(null);
+  const [serverRole, setServerRole] = useState<"patient" | "doctor" | null>(null);
 
   useEffect(() => {
     async function validateSession() {
@@ -32,6 +33,7 @@ export default function MeetRoom({ meetId, token, role }: MeetRoomProps) {
         }
         
         setConsultation(data.consultation);
+        setServerRole(data.role); // Usar role do servidor, não do query param
       } catch (err) {
         setError('Erro ao conectar com o servidor');
       } finally {
@@ -76,7 +78,7 @@ export default function MeetRoom({ meetId, token, role }: MeetRoomProps) {
     );
   }
 
-  const isDoctor = role === "doctor";
+  const isDoctor = serverRole === "doctor";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-white">
