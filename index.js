@@ -1,4 +1,6 @@
-console.log("✅ BOOT index.js (telemed-merged) - consultorio mount version: 2026-01-17-A");
+console.log(
+  "✅ BOOT index.js (telemed-merged) - consultorio mount version: 2026-01-17-A",
+);
 import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
@@ -83,24 +85,69 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.get("/api/consultorio/ping", (_req, res) => res.json({ ok: true, service: "telemed-unified" }));
 
-// ✅ ADICIONE ESTAS 5 LINHAS DEPOIS:
-app.get("/api/__whoami", (req, res) => {
-  res.json({ 
-    ok: true, 
-    from: "telemed-merged index.js", 
+/* =========================
+   DEBUG / HEALTH PRIMEIRO
+   ========================= */
+app.get("/api/consultorio/ping", (_req, res) =>
+  res.json({ ok: true, service: "telemed-unified" }),
+);
+
+app.get("/api/__whoami", (_req, res) => {
+  res.json({
+    ok: true,
+    from: "telemed-merged index.js",
     v: "2026-01-17-A",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
+
+/* =========================
+   CONSULTÓRIO (ESCOLHA UM)
+
+   ========================= */
+// ===== Consultório mode (proxy vs local) =====
+const CONSULTORIO_MODE = process.env.CONSULTORIO_MODE || "local"; // "proxy" | "local"
+const INTERNAL_BASE_URL =
+  process.env.INTERNAL_BASE_URL ||
+  process.env.TELEMED_INTERNAL_BASE_URL ||
+  "https://telemed-internal.onrender.com";
+
+if (CONSULTORIO_MODE === "proxy" && !INTERNAL_BASE_URL) {
+  console.warn("[consultorio] CONSULTORIO_MODE=proxy mas INTERNAL_BASE_URL está vazio");
+}
+
+if (CONSULTORIO_MODE === "proxy") {
+  console.log("🏥 Consultório em modo PROXY →", INTERNAL_BASE_URL);
+
+  app.use(
+    "/api/consultorio",
+    createProxyMiddleware({
+      target: INTERNAL_BASE_URL,
+      changeOrigin: true,
+      secure: true,
+      xfwd: true,
+      timeout: 15000,
+      proxyTimeout: 15000,
+      onError(err, _req, res) {
+        console.error("[proxy /api/consultorio]", err?.message || err);
+        res.status(502).json({
+          error: "proxy_failed",
+          details: err?.message,
+        });
+      },
+    }),
+  );
+} else {
+  console.log("🏥 Consultório em modo LOCAL");
+  app.use("/api/consultorio", consultorioRoutes);
+}
 
 // TelemedMerged: Feature flags e configurações
 const FEATURE_PRICING =
   String(process.env.FEATURE_PRICING ?? "true") === "true";
 const AUCTION_SERVICE_URL =
   process.env.AUCTION_SERVICE_URL || "http://localhost:5001/api";
-const INTERNAL_BASE_URL = process.env.INTERNAL_BASE_URL; // ex: https://telemed-internal.onrender.com
 
 app.set("trust proxy", 1);
 
@@ -383,37 +430,6 @@ app.use(express.json());
 
 // Rotas do Consultório Virtual (autenticação, médicos, consultas)
 // Modo proxy (serviços separados) ou monolito (tudo local)
-if (INTERNAL_BASE_URL) {
-  app.use(
-    "/api/consultorio",
-    createProxyMiddleware({
-      target: INTERNAL_BASE_URL,
-      changeOrigin: true,
-      xfwd: true,
-      // ✅ recoloca o prefixo que o Express “tirou”
-      pathRewrite: (path) => `/api/consultorio${path}`,
-      proxyTimeout: 30000,
-      timeout: 30000,
-      logLevel: "debug",
-      onProxyReq: (proxyReq, req) => {
-        console.log(
-          `[CONSULTORIO PROXY REQ] ${req.method} ${req.originalUrl} → ${INTERNAL_BASE_URL}${proxyReq.path}`,
-        );
-      },
-      onProxyRes: (proxyRes, req) => {
-        console.log(
-          `[CONSULTORIO PROXY RES] ${req.method} ${req.originalUrl} ← ${proxyRes.statusCode}`,
-        );
-      },
-    }),
-  );
-  console.log("🔁 Proxy /api/consultorio ->", INTERNAL_BASE_URL);
-} else {
-  app.use("/api/consultorio", consultorioRoutes);
-  app.use("/api/consulta", consultorioRoutes); // alias compat (opcional mas recomendado)
-
-  console.log("🏠 Local /api/consultorio (sem proxy)");
-}
 
 // Rotas de Stats (Manager Dashboard)
 app.use("/api", statsRoutes);
