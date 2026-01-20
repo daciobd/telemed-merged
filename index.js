@@ -727,18 +727,16 @@ app.get("/consultorio/meet/:consultationId", async (req, res) => {
       `/consultorio/?meet=${consultationId}&t=${encodeURIComponent(token)}&role=${payload.role}`,
     );
   } catch (e) {
-    const msg = e?.message || String(e);
-
-    // JWT expirado → 410 (expirou)
-    if (msg.includes("jwt expired")) {
-      return res.status(410).send("meet link expired");
-    }
-    // JWT antes do nbf → 403 (cedo demais)
-    if (msg.includes("jwt not active")) {
-      return res.status(403).send("meet link not yet valid");
-    }
-
-    return res.status(401).send(`invalid meet link (${msg})`);
+    const code = e?.code || "invalid";
+    const status = e?.httpStatus || 401;
+    const messages = {
+      expired: "meet link expired",
+      not_active: "meet link not yet valid",
+      cid_mismatch: "token does not match consultation",
+      role_invalid: "invalid role in token",
+      invalid: "invalid meet link",
+    };
+    return res.status(status).send(messages[code] || messages.invalid);
   }
 });
 // ===== SPA usa isso pra saber role e expiração =====
@@ -765,18 +763,16 @@ app.get("/api/consultorio/meet/session", (req, res) => {
       now: Math.floor(Date.now() / 1000),
     });
   } catch (e) {
-    const msg = e?.message || String(e);
-
-    if (msg.includes("jwt expired"))
-      return res.status(410).json({ ok: false, error: "meet_link_expired" });
-    if (msg.includes("jwt not active"))
-      return res
-        .status(403)
-        .json({ ok: false, error: "meet_link_not_yet_valid" });
-
-    return res
-      .status(401)
-      .json({ ok: false, error: "meet_link_invalid", details: msg });
+    const code = e?.code || "invalid";
+    const status = e?.httpStatus || 401;
+    const errors = {
+      expired: "meet_link_expired",
+      not_active: "meet_link_not_yet_valid",
+      cid_mismatch: "token_cid_mismatch",
+      role_invalid: "token_role_invalid",
+      invalid: "meet_link_invalid",
+    };
+    return res.status(status).json({ ok: false, error: errors[code] || errors.invalid });
   }
 });
 

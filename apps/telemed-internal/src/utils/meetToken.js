@@ -50,19 +50,37 @@ export function signMeetTokenDoctor({ consultationId, scheduledForISO, durationM
 export function verifyMeetToken(token, consultationId) {
   if (!MEET_TOKEN_SECRET) throw new Error("MEET_TOKEN_SECRET_not_configured");
 
-  const payload = jwt.verify(token, MEET_TOKEN_SECRET, {
-    issuer: "telemed",
-    audience: "consultorio-meet",
-  });
+  let payload;
+  try {
+    payload = jwt.verify(token, MEET_TOKEN_SECRET, {
+      issuer: "telemed",
+      audience: "consultorio-meet",
+    });
+  } catch (e) {
+    const err = new Error(e.message);
+    if (e.name === "TokenExpiredError" || e.message?.includes("expired")) {
+      err.code = "expired";
+      err.httpStatus = 410;
+    } else if (e.name === "NotBeforeError" || e.message?.includes("not active")) {
+      err.code = "not_active";
+      err.httpStatus = 403;
+    } else {
+      err.code = "invalid";
+      err.httpStatus = 401;
+    }
+    throw err;
+  }
 
   if (!payload || Number(payload.cid) !== Number(consultationId)) {
     const err = new Error("meet_token_cid_mismatch");
     err.code = "cid_mismatch";
+    err.httpStatus = 401;
     throw err;
   }
   if (payload.role !== "doctor" && payload.role !== "patient") {
     const err = new Error("meet_token_role_invalid");
     err.code = "role_invalid";
+    err.httpStatus = 401;
     throw err;
   }
   return payload;

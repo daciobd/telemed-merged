@@ -722,33 +722,18 @@ router.get("/meet/:id/validate", async (req, res) => {
     try {
       payload = verifyMeetToken(token, consultationId);
     } catch (e) {
-      const msg = e?.message || String(e);
-      if (msg.includes("jwt expired")) {
-        return res
-          .status(410)
-          .json({ valid: false, message: "Link expirado. Solicite um novo." });
-      }
-      if (msg.includes("jwt not active")) {
-        return res
-          .status(403)
-          .json({
-            valid: false,
-            message: "Link ainda não válido. Aguarde o horário.",
-          });
-      }
-      if (msg.includes("cid_mismatch")) {
-        return res
-          .status(403)
-          .json({ valid: false, message: "Token não corresponde à consulta." });
-      }
-      if (msg.includes("role_invalid")) {
-        return res
-          .status(401)
-          .json({ valid: false, message: "Role inválida no token." });
-      }
+      const code = e?.code || "invalid";
+      const status = e?.httpStatus || 401;
+      const messages = {
+        expired: "Link expirado. Solicite um novo.",
+        not_active: "Link ainda não válido. Aguarde o horário.",
+        cid_mismatch: "Token não corresponde à consulta.",
+        role_invalid: "Role inválida no token.",
+        invalid: "Token JWT inválido.",
+      };
       return res
-        .status(401)
-        .json({ valid: false, message: "Token JWT inválido." });
+        .status(status)
+        .json({ valid: false, message: messages[code] || messages.invalid });
     }
 
     const role = payload.role;
