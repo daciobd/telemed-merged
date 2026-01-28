@@ -1,7 +1,7 @@
 import express from "express";
-import { randomUUID } from "crypto";
 import { db, users } from "../../../../db/index.js";
 import { eq } from "drizzle-orm";
+import { signMeetTokenPatient, signMeetTokenDoctor } from "../utils/meetToken.js";
 
 const router = express.Router();
 
@@ -239,8 +239,20 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
       });
     }
 
-    // 3) Garantir consulta scheduled + gerar meetingUrl (idempotente)
-    const meetToken = randomUUID();
+    // 3) Buscar scheduled_for para gerar JWT corretamente
+    const cInfo = await pool.query(
+      `SELECT scheduled_for, duration FROM consultations WHERE id = $1`,
+      [id]
+    );
+    const scheduledForISO = cInfo.rows[0]?.scheduled_for?.toISOString() || new Date(Date.now() + 30*60_000).toISOString();
+    const durationMinutes = cInfo.rows[0]?.duration || 30;
+
+    // Gerar JWT token para paciente
+    const { token: meetToken } = signMeetTokenPatient({ 
+      consultationId: id, 
+      scheduledForISO, 
+      durationMinutes 
+    });
     const meetingUrl = `/consultorio/meet/${id}?t=${meetToken}`;
 
     const cons = await pool.query(
