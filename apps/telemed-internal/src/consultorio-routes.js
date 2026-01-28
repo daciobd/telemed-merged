@@ -80,6 +80,15 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter específico para /meet/:id/validate (anti-enumeração)
+const validateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: 30, // 30 req/min por IP
+  message: { valid: false, message: "Muitas tentativas. Aguarde um momento." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Aplicar rate limiter geral em todas as rotas
 router.use(apiLimiter);
 
@@ -701,17 +710,19 @@ router.post(
 );
 
 // GET /api/consultorio/meet/:id/validate - Validar sessão de consulta (público, JWT)
-router.get("/meet/:id/validate", async (req, res) => {
+router.get("/meet/:id/validate", validateLimiter, async (req, res) => {
   try {
     const consultationId = parseInt(req.params.id, 10);
     const token = String(req.query.t || "");
 
     if (!consultationId || Number.isNaN(consultationId)) {
+      console.log("[MEET_VALIDATE_FAIL]", { cid: consultationId, code: "invalid_id" });
       return res
         .status(400)
         .json({ valid: false, message: "ID de consulta inválido" });
     }
     if (!token) {
+      console.log("[MEET_VALIDATE_FAIL]", { cid: consultationId, code: "no_token" });
       return res
         .status(401)
         .json({ valid: false, message: "Token não fornecido" });
@@ -724,6 +735,7 @@ router.get("/meet/:id/validate", async (req, res) => {
     } catch (e) {
       const code = e?.code || "invalid";
       const status = e?.httpStatus || 401;
+      console.log("[MEET_VALIDATE_FAIL]", { cid: consultationId, code });
       const messages = {
         expired: "Link expirado. Solicite um novo.",
         not_active: "Link ainda não válido. Aguarde o horário.",
@@ -768,6 +780,7 @@ router.get("/meet/:id/validate", async (req, res) => {
         "doctor_matched",
         "created",
       ]);
+      console.log("[MEET_VALIDATE_FAIL]", { cid: consultationId, role, code: "invalid_status", status: consultation.status });
       return res.status(403).json({
         valid: false,
         message: prePayment.has(consultation.status)
@@ -785,6 +798,7 @@ router.get("/meet/:id/validate", async (req, res) => {
       const expDb = scheduledAt + (durationMin + 90) * 60 * 1000; // duração + 90 min
 
       if (now < nbfDb) {
+        console.log("[MEET_VALIDATE_FAIL]", { cid: consultationId, role, code: "not_active" });
         return res
           .status(403)
           .json({
@@ -793,6 +807,7 @@ router.get("/meet/:id/validate", async (req, res) => {
           });
       }
       if (now > expDb) {
+        console.log("[MEET_VALIDATE_FAIL]", { cid: consultationId, role, code: "expired" });
         return res
           .status(410)
           .json({ valid: false, message: "Link expirado. Solicite um novo." });
@@ -800,6 +815,8 @@ router.get("/meet/:id/validate", async (req, res) => {
     }
 
     const debug = process.env.NODE_ENV !== "production";
+
+    console.log("[MEET_VALIDATE_OK]", { cid: consultationId, role });
 
     res.json({
       valid: true,
