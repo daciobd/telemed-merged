@@ -247,13 +247,19 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
     const scheduledForISO = cInfo.rows[0]?.scheduled_for?.toISOString() || new Date(Date.now() + 30*60_000).toISOString();
     const durationMinutes = cInfo.rows[0]?.duration || 30;
 
-    // Gerar JWT token para paciente
-    const { token: meetToken } = signMeetTokenPatient({ 
+    // Gerar JWT tokens para paciente E médico
+    const { token: patientToken } = signMeetTokenPatient({ 
       consultationId: id, 
       scheduledForISO, 
       durationMinutes 
     });
-    const meetingUrl = `/consultorio/meet/${id}?t=${meetToken}`;
+    const { token: doctorToken } = signMeetTokenDoctor({ 
+      consultationId: id, 
+      scheduledForISO, 
+      durationMinutes 
+    });
+    const meetingUrl = `/consultorio/meet/${id}?t=${patientToken}`;
+    const doctorJoinUrl = `/consultorio/meet/${id}?t=${doctorToken}`;
 
     const cons = await pool.query(
       `UPDATE consultations
@@ -289,6 +295,7 @@ router.post("/payments/confirm", requireInternal, async (req, res) => {
       ok: true,
       payment: paymentRow,
       consultation: consultationRow,
+      doctorJoinUrl,
       idempotent: wasIdempotent
     });
   } catch (err) {
