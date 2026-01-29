@@ -164,8 +164,10 @@ app.use(
   }),
 );
 
-// NÃO aplicar express.json() globalmente - causa problema com proxy!
-// Será aplicado seletivamente após os proxies
+// Body parsers - aplicar ANTES das rotas (exceto proxies que já foram montados acima)
+// Rotas de proxy (http-proxy-middleware) já foram montadas antes e não são afetadas
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Security headers middleware
 app.use((req, res, next) => {
@@ -422,11 +424,6 @@ console.log(
   `   Mode: ${USE_LOCAL_AUCTION_MOCK ? "MOCK STANDALONE" : "REAL SERVICE"}`,
 );
 console.log(`   Feature enabled: ${FEATURE_PRICING}`);
-
-// ===== JSON BODY PARSER (após proxies) =====
-// Agora que os proxies foram montados, podemos parsear JSON
-// para as demais rotas sem interferir no proxy
-app.use(express.json());
 
 // ============================================
 // CONSULTÓRIO VIRTUAL API ENDPOINTS
