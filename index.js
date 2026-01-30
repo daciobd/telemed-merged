@@ -1,5 +1,5 @@
 console.log(
-  "✅ BOOT index.js (telemed-merged) - consultorio mount version: 2026-01-17-A",
+  "✅ BOOT index.js (telemed-merged) - consultorio mount version: 2026-01-30-B",
 );
 import express from "express";
 import cors from "cors";
