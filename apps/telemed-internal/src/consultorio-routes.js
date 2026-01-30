@@ -50,8 +50,9 @@ const {
 
 const router = express.Router();
 
-// Body parser para JSON (necessário pois o index.js aplica depois dos proxies)
+// Body parsers (redundância para garantir em qualquer entrypoint)
 router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
 
 // Multer para upload de áudio do Scribe
 const scribeUpload = multer({

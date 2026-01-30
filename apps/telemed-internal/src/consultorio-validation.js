@@ -127,7 +127,13 @@ export const validate = (schema) => {
         message: issue.message
       }));
       
-      console.log("[VALIDATION FAIL]", { path: req.path, details });
+      console.warn("[VALIDATION FAIL]", {
+        method: req.method,
+        path: req.originalUrl,
+        contentType: req.headers["content-type"],
+        hasBody: req.body && Object.keys(req.body).length > 0,
+        details
+      });
       
       return res.status(400).json({
         error: 'Dados inválidos',
