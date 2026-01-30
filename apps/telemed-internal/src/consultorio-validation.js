@@ -109,23 +109,34 @@ export const createConsultationByDoctorSchema = z.object({
 
 export const validate = (schema) => {
   return (req, res, next) => {
-    try {
-      const validated = schema.parse(req.body);
-      req.validatedBody = validated;
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Dados inválidos',
-          details: (error.errors || []).map(e => ({
-            field: (e.path || []).join('.'),
-            message: e.message || 'Erro de validação'
-          }))
-        });
-      }
-      // Outros erros: passar adiante
-      console.error('Validation error:', error);
-      return res.status(500).json({ error: 'Erro interno ao validar dados' });
+    // Debug: log body type para diagnóstico em produção
+    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_VALIDATION === 'true') {
+      console.log("[VALIDATE BODY]", { 
+        path: req.path,
+        bodyType: typeof req.body, 
+        bodyKeys: req.body ? Object.keys(req.body) : null 
+      });
     }
+
+    // Usar safeParse para evitar throw
+    const parsed = schema.safeParse(req.body);
+
+    if (!parsed.success) {
+      const details = parsed.error.issues.map((issue) => ({
+        path: issue.path.join('.') || '(root)',
+        message: issue.message
+      }));
+      
+      console.log("[VALIDATION FAIL]", { path: req.path, details });
+      
+      return res.status(400).json({
+        error: 'Dados inválidos',
+        details
+      });
+    }
+
+    // Sucesso: usar dados parseados
+    req.validatedBody = parsed.data;
+    next();
   };
 };
