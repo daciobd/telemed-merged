@@ -22,6 +22,12 @@ pool.on("connect", () => {
 pool.on("error", (err) => {
   console.error("❌ [prontuario-pool] Erro no pool:", err.message);
 });
-console.log("[DB POOL]", {
-  databaseUrl: process.env.DATABASE_URL?.slice(0, 30),
+// Log mascarado para debug de conexão
+const maskedUrl = dbUrl 
+  ? dbUrl.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@').slice(0, 80) + '...'
+  : 'NOT_DEFINED';
+console.log("[DB POOL]", { 
+  maskedUrl,
+  hasDbUrl: !!dbUrl,
+  envKeys: Object.keys(process.env).filter(k => k.includes('PG') || k.includes('DATABASE') || k.includes('POSTGRES')).join(',')
 });

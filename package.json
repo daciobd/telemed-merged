@@ -18,6 +18,7 @@
     "@types/supertest": "^6.0.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.22",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",
