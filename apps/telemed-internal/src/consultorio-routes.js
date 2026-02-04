@@ -368,8 +368,15 @@ router.post(
         return res.status(401).json({ error: "Email ou senha incorretos" });
       }
 
-      // Verificar senha
-      const validPassword = await bcrypt.compare(password, user.password_hash);
+      // Verificar senha com tratamento de erro
+      let validPassword = false;
+      try {
+        validPassword = await bcrypt.compare(password, user.password_hash);
+      } catch (err) {
+        console.error('[LOGIN] bcrypt.compare failed:', err.message);
+        return res.status(401).json({ error: "Email ou senha incorretos" });
+      }
+      
       if (!validPassword) {
         return res.status(401).json({ error: "Email ou senha incorretos" });
       }
